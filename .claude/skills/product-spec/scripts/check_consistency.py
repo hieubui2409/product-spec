@@ -46,6 +46,26 @@ ENUMS = {
     "lang": {"en", "vi"},
 }
 
+# List-typed frontmatter fields. If a generate-templates regression (or a
+# manual hand-edit) leaves these as a bare scalar like "TBD", downstream
+# renderers iterate it per character and emit phantom personas / dangling
+# links. Catch the shape error at validate time so the PO is told exactly
+# which field is wrong, instead of staring at three "unknown BRD goal T/B/D"
+# errors and wondering what happened.
+LIST_FIELDS = (
+    "personas",
+    "metrics",
+    "brd_goals",
+    "risks",
+    "acceptance_criteria",
+)
+
+# Soft cap surfaced as a warn during PO interview. Brainstorm §3 + §11 +
+# interview-vision V2 set "cap 2-4 (soft)". Enforced as a warn here so the
+# PO sees an explicit signal at validate time instead of trusting the LLM
+# to remember to push back during interview.
+PERSONA_SOFT_CAP = 4
+
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
 
 
@@ -82,6 +102,35 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             if v not in ENUMS[field]:
                 findings.append(_f("unknown_enum", "error", n, f"Field {field}={v!r} not in {sorted(ENUMS[field])}.", field=field, value=v))
 
+        for field in LIST_FIELDS:
+            v = n.get(field)
+            if v is None:
+                continue
+            if not isinstance(v, list):
+                findings.append(_f(
+                    "invalid_type",
+                    "error",
+                    n,
+                    f"Field {field}={v!r} must be a YAML list; got {type(v).__name__}.",
+                    field=field,
+                    value=v,
+                ))
+
+        # Soft cap on personas — surface as a warn (not blocking). Lives
+        # alongside enum checks because the cap shape is closed (count) even
+        # though the list contents are free text.
+        personas = n.get("personas")
+        if isinstance(personas, list) and len(personas) > PERSONA_SOFT_CAP:
+            findings.append(_f(
+                "persona_cap_exceeded",
+                "warn",
+                n,
+                f"{n['id']} declares {len(personas)} personas; soft cap is {PERSONA_SOFT_CAP}. "
+                f"Consider narrowing to the primary buyers.",
+                count=len(personas),
+                cap=PERSONA_SOFT_CAP,
+            ))
+
         if ntype == "story":
             ac = _resolve_ac(n)
             if not ac:
@@ -90,6 +139,51 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 findings.append(_f("low_ac_count", "warn", n, f"Story has {len(ac)} acceptance criteria; >=2 recommended.", count=len(ac)))
 
     findings.extend(_status_inconsistency(graph))
+    findings.extend(_session_md_gitignore(graph))
+    return findings
+
+
+def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Brainstorm §16 mandates `.session.md` be committed (cross-machine
+    resume). A common accidental footgun is the project-wide `.gitignore`
+    excluding `.md` or `docs/product/*` patterns and silently dropping it.
+
+    This check only runs when we have a project root and is best-effort: it
+    looks for the session file and for `.gitignore` patterns that would
+    likely match it. False positives are acceptable; the finding is `warn`.
+    """
+    findings: List[Dict[str, Any]] = []
+    root_path_raw = graph.get("root_path")
+    if not root_path_raw:
+        # Not exposed by the graph today — best-effort skip when missing.
+        return findings
+    root = Path(root_path_raw)
+    session = root / "docs" / "product" / ".session.md"
+    gitignore = root / ".gitignore"
+    if not gitignore.exists() or not session.exists():
+        return findings
+    try:
+        patterns = gitignore.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return findings
+    for raw in patterns:
+        p = raw.strip()
+        if not p or p.startswith("#"):
+            continue
+        # Crude match: a literal `.session.md` or a glob covering it.
+        if ".session.md" in p or p in ("*.md", "docs/product/**", "docs/**"):
+            findings.append({
+                "check": "session_md_gitignored",
+                "severity": "warn",
+                "artifact_id": None,
+                "file": ".gitignore",
+                "detail": (
+                    f".gitignore pattern {p!r} likely excludes docs/product/.session.md. "
+                    f"§16 requires the session file to be committed for cross-machine resume."
+                ),
+                "context": {"pattern": p},
+            })
+            break
     return findings
 
 
@@ -105,23 +199,38 @@ def _resolve_ac(node: Dict[str, Any]) -> List[Any]:
 def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    for n in graph["nodes"]:
-        parent_id = n.get("epic") or n.get("prd")
-        if not parent_id:
-            continue
-        parent = nodes_by_id.get(parent_id)
-        if not parent:
-            continue
-        cs = STATUS_ORDER.get(n.get("status") or "", -1)
+
+    def _flag(child: Dict[str, Any], parent: Dict[str, Any]) -> None:
+        cs = STATUS_ORDER.get(child.get("status") or "", -1)
         ps = STATUS_ORDER.get(parent.get("status") or "", -1)
         if cs > ps and cs >= 0 and ps >= 0:
             findings.append(_f(
                 "status_inconsistency",
                 "warn",
-                n,
-                f"{n['id']} status={n.get('status')!r} is more advanced than parent {parent_id} status={parent.get('status')!r}.",
-                parent_id=parent_id,
+                child,
+                f"{child['id']} status={child.get('status')!r} is more advanced than parent {parent['id']} status={parent.get('status')!r}.",
+                parent_id=parent["id"],
             ))
+
+    for n in graph["nodes"]:
+        # story -> epic, epic -> prd via direct scalar parent field.
+        parent_id = n.get("epic") or n.get("prd")
+        if parent_id:
+            parent = nodes_by_id.get(parent_id)
+            if parent:
+                _flag(n, parent)
+
+        # prd -> brd_goal via list. Originally skipped; an approved PRD whose
+        # BRD goals are still draft is a real inconsistency the LLM-judgment
+        # layer cannot see structurally.
+        if n.get("type") == "prd":
+            for gid in n.get("brd_goals") or []:
+                if not isinstance(gid, str):
+                    continue
+                goal = nodes_by_id.get(gid)
+                if goal:
+                    _flag(n, goal)
+
     return findings
 
 

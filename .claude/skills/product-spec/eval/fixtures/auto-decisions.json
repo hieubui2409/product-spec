@@ -1,0 +1,19 @@
+{
+  "_comment": "Pre-baked PO decisions for ambiguous splits surfaced by --auto on braindump.txt. Replayed instead of AskUserQuestion confirm-batch prompts.",
+  "lang": "en",
+  "brd_goals": [
+    {"id": "BRD-G1", "title": "Onboard 100 boutique brands in 12 months", "metrics": ["brands-with-active-listings"]},
+    {"id": "BRD-G2", "title": "Achieve 80% 90-day repeat-purchase rate", "metrics": ["repeat-rate-90d"]}
+  ],
+  "prds": [
+    {"slug": "AUTH", "title": "Authentication & Account", "brd_goals": ["BRD-G1"], "horizon": "now"},
+    {"slug": "CATALOG", "title": "Brand Catalog & Discovery", "brd_goals": ["BRD-G1", "BRD-G2"], "horizon": "now"},
+    {"slug": "CHECKOUT", "title": "One-Page Checkout", "brd_goals": ["BRD-G2"], "horizon": "now"},
+    {"slug": "ADMIN", "title": "Store-Admin Tools", "brd_goals": ["BRD-G1"], "horizon": "next"}
+  ],
+  "ambiguous_resolutions": [
+    {"item": "follow brand + notify on drop", "decision": "story under epic PRD-CATALOG-E1 (discovery)"},
+    {"item": "scheduled drops", "decision": "epic PRD-ADMIN-E2"},
+    {"item": "gift cards", "decision": "out of scope v1 (moscow: wont)"}
+  ]
+}

@@ -116,7 +116,9 @@ def main() -> int:
         return 2
     target = Path(sys.argv[1])
     result = parse_file(target)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    # YAML parses ISO date strings into datetime.date objects; default=str
+    # serializes them as ISO 8601 strings so the JSON dump round-trips cleanly.
+    print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

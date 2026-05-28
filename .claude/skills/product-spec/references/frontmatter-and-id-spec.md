@@ -15,7 +15,7 @@ Parent-scoped — globally unique by construction, lineage readable, no central 
 
 **Slug rules:** uppercase ASCII letters and digits only; hyphen permitted but prefer flat (e.g., `AUTH`, `BILLING`, `ONBOARDING`). No spaces, no diacritics. The slug is permanent — renaming a PRD does not update existing epic/story IDs (they keep the original lineage).
 
-**Next-`<n>`-within-parent rule:** `generate_templates.py` scans existing siblings (by ID prefix) and assigns `max(siblings) + 1`. On a single `--auto` brain-dump batch, the script keeps an in-memory counter so all IDs assigned in one run are unique even before files are written.
+**Next-`<n>`-within-parent rule:** `generate_templates.py` scans existing siblings (by ID prefix) and assigns `max(siblings) + 1`. On a single `--auto` brain-dump batch the orchestration layer drives a sequence of calls and passes each pre-allocated ID via `--id` (override). The script also accepts an in-process `session_used` list of already-issued IDs in a single batch so it never re-uses one before files are written.
 
 ## Universal Fields (every artifact)
 
@@ -39,7 +39,8 @@ Stories, epics, PRDs, and BRD goals carry explicit parent references in frontmat
 | story | `epic` | epic ID, e.g. `PRD-AUTH-E1` | yes |
 | epic | `prd` | PRD ID, e.g. `PRD-AUTH` | yes |
 | PRD | `brd_goals` | list of BRD goal IDs, e.g. `[BRD-G1, BRD-G3]` | yes (≥1) |
-| BRD goal | `parent` | always `BRD` (singleton) | yes |
+
+BRD goals do not carry an explicit `parent` field — BRD is a singleton container and goals attach to PRODUCT directly in the rendered tree.
 
 Resolved by `spec_graph.py` to build the directed graph `story → epic → prd → brd_goal → vision`. A missing referent = `dangling_link` finding. A node with no inbound expected child = `unaddressed_parent` (gap-analysis input — structural only).
 
@@ -72,6 +73,27 @@ List of metric references (free-text identifiers). PRDs reference BRD-goal metri
 ```yaml
 metrics: [conversion-rate, time-to-checkout]
 ```
+
+### BRD `goals` (under `brd.md` `goals:` key)
+
+`goals:` is **list-of-dicts**, not a list of bare IDs. Each goal entry MUST carry the following keys; `spec_graph.py` expands them into `type: goal` nodes (`BRD-G<n>`) that PRDs reference via `brd_goals: [BRD-G<n>, …]`. Flat ID strings cause `dangling_link` findings at validate time.
+
+```yaml
+# inside brd.md frontmatter
+goals:
+  - id: BRD-G1                                  # parent-scoped ID, required
+    title: "Onboard 100 boutique brands in 12 months"  # required, prose
+    metrics: [brands-onboarded]                 # required, ≥1 metric slug
+    status: draft                               # required, closed enum
+    owner: Jane Doe                             # required, accountable person
+  - id: BRD-G2
+    title: "Achieve 80% 90-day repeat-purchase rate"
+    metrics: [repeat-rate-90d]
+    status: draft
+    owner: Jane Doe
+```
+
+The BRD template (`assets/templates/brd.md`) carries a YAML comment block above `goals:` repeating this shape so a PO opening a freshly generated `brd.md` sees the contract inline.
 
 ### `acceptance_criteria` (stories only)
 List of strings, each a single AC. Scripts count and presence-check; LLM evaluates testability.

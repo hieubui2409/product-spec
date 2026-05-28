@@ -54,22 +54,19 @@ The LLM composes `AskUserQuestion` calls from these records and skips questions 
 - **EN:** "Looking 1–3 years out, what bigger picture does this product fit into?"
 - **VI:** "Nhìn 1–3 năm tới, bức tranh lớn của sản phẩm là gì?"
 
-## V6 — Horizon (now/next/later)
-
-**target:** vision frontmatter `horizon`
-
-- **EN:** "Is this current vision the 'now' priority, the 'next' chapter, or a 'later' aspiration?"
-- **VI:** "Tầm nhìn này là ưu tiên 'bây giờ', chương 'tiếp theo', hay khát vọng 'sau này'?"
-- **Options:** `now` · `next` · `later`
-
-## V7 — Current Implementation
+## V6 — Current Implementation
 
 **target:** `PRODUCT.md → current_implementation`
 
 - **EN:** "Where are we today — concept, prototype, MVP, in-market?"
 - **VI:** "Hiện tại đang ở đâu — ý tưởng, prototype, MVP, đã ra thị trường?"
 
-## V8 — Deployment
+> Note: an earlier V6 asked the PO to set `vision.horizon`. The vision template
+> intentionally omits `horizon` (vision is timeless strategy — horizon belongs
+> on PRDs/epics/stories). The horizon question was removed to stop collecting
+> an answer that would land nowhere.
+
+## V7 — Deployment
 
 **target:** `PRODUCT.md → deployment`
 

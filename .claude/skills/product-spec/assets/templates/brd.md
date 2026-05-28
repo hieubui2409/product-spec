@@ -11,6 +11,20 @@ owner: {{owner}}
 version: {{version}}
 created: {{created}}
 updated: {{updated}}
+# goals: list-of-dicts. Each entry MUST carry id/title/metrics/status/owner.
+# See references/frontmatter-and-id-spec.md → "BRD goals (under brd.md `goals:` key)".
+# Example shape (delete this block and the example once your real goals are filled):
+#   goals:
+#     - id: BRD-G1
+#       title: "Onboard 100 boutique brands in 12 months"
+#       metrics: [brands-onboarded]
+#       status: draft
+#       owner: Jane Doe
+#     - id: BRD-G2
+#       title: "Achieve 80% 90-day repeat-purchase rate"
+#       metrics: [repeat-rate-90d]
+#       status: draft
+#       owner: Jane Doe
 goals: {{goals}}
 ---
 

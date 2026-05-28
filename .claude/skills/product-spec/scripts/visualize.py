@@ -33,20 +33,34 @@ VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "ris
 FORMATS = ("ascii", "mermaid", "html")
 
 
-def _render_ascii(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]]) -> str:
+def _render_ascii(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
     if view == "delta":
         if not baseline:
             return "(no baseline yet — run --validate to create one)"
         return render_ascii.delta(graph, baseline)
-    return getattr(render_ascii, view)(graph)
+    fn = getattr(render_ascii, view)
+    # tree/roadmap accept (lang, filter_wont); persona accepts (filter_wont);
+    # moscow accepts (lang) only (counts are inherent — filter doesn't apply).
+    if view in ("tree", "roadmap"):
+        return fn(graph, lang=lang, filter_wont=filter_wont)
+    if view == "moscow":
+        return fn(graph, lang=lang)
+    if view == "persona":
+        return fn(graph, filter_wont=filter_wont)
+    return fn(graph)
 
 
-def _render_mermaid(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]]) -> str:
+def _render_mermaid(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
     if view == "delta":
         if not baseline:
-            return "<pre>(no baseline yet — run --validate to create one)</pre>"
+            return "```\n(no baseline yet — run --validate to create one)\n```"
         return render_mermaid.delta(graph, baseline)
-    return getattr(render_mermaid, view)(graph)
+    fn = getattr(render_mermaid, view)
+    if view in ("tree", "roadmap"):
+        return fn(graph, lang=lang, filter_wont=filter_wont)
+    if view == "moscow":
+        return fn(graph, lang=lang)
+    return fn(graph)
 
 
 def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -55,13 +69,27 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
         p = Path(override)
         if not p.is_absolute():
             p = snap_dir / override
-        return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+        if not p.exists():
+            # Originally returned None silently — the dispatcher then rendered
+            # the generic "no baseline yet" message and a PO who typoed a
+            # filename never learned why their --diff was ignored.
+            available = sorted(snap_dir.glob("*.json")) if snap_dir.exists() else []
+            available_names = [s.name for s in available]
+            raise FileNotFoundError(
+                f"--diff baseline not found: {p}. "
+                f"Available snapshots in {snap_dir}: {available_names or '(none)'}"
+            )
+        return json.loads(p.read_text(encoding="utf-8"))
     if not snap_dir.exists():
         return None
     snaps = sorted(snap_dir.glob("*.json"))
-    if len(snaps) < 2:
+    if not snaps:
         return None
-    return json.loads(snaps[-2].read_text(encoding="utf-8"))
+    # With 1 snapshot, compare against the live graph (current). With 2+, use
+    # the second-most-recent so the freshly-taken snapshot doesn't shadow the
+    # change the PO is trying to see.
+    target = snaps[-2] if len(snaps) >= 2 else snaps[-1]
+    return json.loads(target.read_text(encoding="utf-8"))
 
 
 def main() -> int:
@@ -71,6 +99,11 @@ def main() -> int:
     ap.add_argument("--format", default="ascii", choices=FORMATS)
     ap.add_argument("--lang", default="en", choices=["en", "vi"])
     ap.add_argument("--diff", default=None, help="path or filename of a baseline snapshot in .snapshots/")
+    ap.add_argument(
+        "--filter-wont", action="store_true",
+        help="hide deferred items (moscow=wont or scope=out) from tree/roadmap/persona. "
+             "Default keeps them visible with a `*` marker.",
+    )
     args = ap.parse_args()
 
     root = Path(args.root).resolve()
@@ -78,18 +111,30 @@ def main() -> int:
     baseline = _load_baseline(root, args.diff) if args.view == "delta" else None
 
     if args.format == "ascii":
-        body = _render_ascii(args.view, graph, baseline)
+        body = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
         print(body)
         return 0
 
     if args.format == "mermaid":
-        body = _render_mermaid(args.view, graph, baseline)
+        body = _render_mermaid(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
         print(body)
         return 0
 
     # html
-    mermaid_text = _render_mermaid(args.view, graph, baseline)
-    out = render_html.write(root, args.view, "mermaid", mermaid_text, graph, lang=args.lang)
+    mermaid_text = _render_mermaid(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
+    # Mermaid renderers return either a ```mermaid fenced block (true Mermaid
+    # DSL) or a plain ``` fenced block (ASCII fallback for views Mermaid can't
+    # express: heatmap, persona, risk, no-baseline delta). Only the former
+    # belongs in a <div class="mermaid"> wrapper; the latter must be HTML-
+    # escaped inside a <pre> tag so the browser renders raw text and Mermaid
+    # leaves it alone.
+    if mermaid_text.startswith("```mermaid"):
+        body_text = mermaid_text
+        view_format = "mermaid"
+    else:
+        body_text = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
+        view_format = "pre"
+    out = render_html.write(root, args.view, view_format, body_text, graph, lang=args.lang)
     print(json.dumps({"written": str(out.relative_to(root)) if out.is_relative_to(root) else str(out)}, indent=2))
     return 0
 

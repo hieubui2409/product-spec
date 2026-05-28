@@ -1,0 +1,23 @@
+{
+  "_comment": "Pre-baked PO answers for eval scenario 0 (init-from-scratch). Consumed by the LLM running the skill in eval mode; the LLM replays these answers verbatim instead of calling AskUserQuestion.",
+  "lang": "en",
+  "product": {
+    "name": "Acme Shop",
+    "one_line_description": "A web storefront for boutique fashion brands.",
+    "current_implementation": "early-stage prototype",
+    "deployment": "single-region Vercel + Supabase Postgres",
+    "roadmap_one_liner": "Launch checkout flow this quarter.",
+    "core_value": "Help boutique brands sell directly to fans without middlemen.",
+    "personas": ["shopper", "store-admin"]
+  },
+  "vision": {
+    "north_star": "Become the default direct-to-fan storefront for boutique fashion in 3 years.",
+    "problem_narrative": "Boutique brands lose 3-5% to marketplace middlemen and have no direct fan channel.",
+    "personas_detail": {
+      "shopper": "discovers brands via social, buys 2-4x per year, values curation",
+      "store-admin": "manages 1-2 boutique catalogs, ships under 50 orders/week"
+    },
+    "principles": ["DRY storefront content", "no algorithmic feed", "transparent pricing"],
+    "non_goals": ["B2B wholesale", "physical POS"]
+  }
+}

@@ -33,7 +33,7 @@ personas: {{personas}}
 
 ## Core Value | Giá trị cốt lõi
 
-{{core_value}}
+_(authoritative value lives in frontmatter `core_value` field — see top of file. Body deliberately blank to keep one source of truth.)_
 
 ## Current Implementation | Hiện trạng triển khai
 

@@ -12,9 +12,14 @@ owner: {{owner}}
 version: {{version}}
 created: {{created}}
 updated: {{updated}}
-horizon: {{horizon}}
 personas: {{personas}}
 ---
+<!--
+Note: vision.md intentionally omits `horizon`. The horizon enum (now/next/later)
+describes WHEN work happens; vision is timeless strategy. Roadmap horizon lives
+on PRDs/epics/stories. Keeping `horizon: {{horizon}}` here meant a fresh init
+always landed `horizon: TBD` which fails the closed-enum check.
+-->
 
 # Vision — {{name}} | Tầm nhìn
 
@@ -24,15 +29,15 @@ personas: {{personas}}
 
 ## Personas | Nhóm người dùng
 
-{{personas_narrative}}
+{{personas_detail}}
 
 ## Value Proposition | Đề xuất giá trị
 
 {{value_proposition}}
 
-## North-Star Metric | Chỉ số sao Bắc Đẩu
+## North-Star | Sao Bắc Đẩu
 
-{{north_star_metric}}
+{{north_star}}
 
 ## 1–3 Year Direction | Hướng đi 1–3 năm
 

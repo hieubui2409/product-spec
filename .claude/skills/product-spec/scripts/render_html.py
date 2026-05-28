@@ -29,33 +29,62 @@ CDN_FALLBACK = (
 )
 
 
-def _load_mermaid_js() -> str:
-    """Return the inline Mermaid JS payload or a CDN-fallback <script> tag."""
+def _load_vendored_mermaid_js() -> Optional[str]:
+    """Return the inline Mermaid JS payload if vendored; else None.
+
+    Split out from the CDN-fallback path so each path has a single
+    responsibility: this one only reads the local file, returns None on
+    miss. The caller decides whether to fall back.
+    """
     if VENDOR_MERMAID.exists():
         return VENDOR_MERMAID.read_text(encoding="utf-8")
-    # Fallback: load Mermaid from CDN with a visible warning. The shell
-    # template embeds this whole string inside a <script> tag, so output
-    # a `</script>` to close it, an external <script>, and reopen a
-    # placeholder script so the surrounding template stays valid.
+    return None
+
+
+def _cdn_fallback_snippet() -> str:
+    """Return a <script>-close + CDN-load + <script>-reopen snippet.
+
+    The shell template embeds the returned string inside a `<script>` tag.
+    To inject an external `<script src=...>`, this snippet closes the
+    surrounding tag, emits the CDN tag, then reopens an empty `<script>`
+    so the rest of the shell stays syntactically valid.
+    """
     warning = (
         "console.warn('product-spec: vendored mermaid.min.js is missing; "
         "falling back to CDN. Run install.sh to vendor the file for "
         "offline self-containment.');"
     )
-    cdn = (
+    return (
         "/* vendored Mermaid not found — falling back to CDN. */\n"
         + warning
         + "\n</script>\n"
         + f'<script src="{CDN_FALLBACK}"></script>\n'
         + "<script>"
     )
-    return cdn
+
+
+def _load_mermaid_js() -> str:
+    """Return either the vendored JS payload or the CDN-fallback snippet.
+
+    Thin compatibility wrapper kept so callers (and tests) that don't care
+    about the source can stay one-line. New code should prefer the two
+    explicit helpers above to make the source path obvious at the call site.
+    """
+    vendored = _load_vendored_mermaid_js()
+    return vendored if vendored is not None else _cdn_fallback_snippet()
 
 
 def _render_view_body(view_format: str, view_text: str) -> str:
-    """Wrap the per-view body so the page renders Mermaid OR pre text."""
+    """Wrap the per-view body so the page renders Mermaid OR pre text.
+
+    view_format == "mermaid"  -> extract inner Mermaid DSL from fenced block,
+                                 wrap in <div class="mermaid">.
+    view_format == "pre" / *  -> escape view_text and wrap in <pre> so the
+                                 browser renders raw ASCII (used for the
+                                 heatmap / persona / risk views where Mermaid
+                                 has no clean expression).
+    """
     if view_format == "mermaid":
-        # The view emits a fenced ```mermaid block; extract inner graph code.
         m = re.search(r"```mermaid\n(.*?)\n```", view_text, re.DOTALL)
         body = m.group(1) if m else view_text
         return f'<div class="mermaid">\n{body}\n</div>'
@@ -63,8 +92,15 @@ def _render_view_body(view_format: str, view_text: str) -> str:
 
 
 def _escape(s: str) -> str:
+    # & must be replaced first so subsequent escaped sequences don't get double-escaped.
+    # Quotes are escaped to make the function safe for attribute context as well as body
+    # context, even though current call sites only feed body text.
     return (
-        s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        s.replace("&", "&amp;")
+         .replace("<", "&lt;")
+         .replace(">", "&gt;")
+         .replace('"', "&quot;")
+         .replace("'", "&#39;")
     )
 
 
@@ -92,6 +128,11 @@ def assemble(
             + footer
         )
 
+    # ASCII-fallback views (view_format != "mermaid") render as plain <pre>;
+    # the Mermaid runtime is never used, so skipping it saves ~2.5 MB and the
+    # cost of an unnecessary `mermaid.initialize()` scan on every page load.
+    mermaid_js_payload = _load_mermaid_js() if view_format == "mermaid" else ""
+
     values = {
         "lang": lang,
         "title": title,
@@ -99,7 +140,7 @@ def assemble(
         "product_name": _escape(product_name),
         "view": view,
         "view_body": _render_view_body(view_format, view_text),
-        "mermaid_js": _load_mermaid_js(),
+        "mermaid_js": mermaid_js_payload,
         "footer_note": footer,
     }
     for k, v in values.items():

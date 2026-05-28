@@ -1,0 +1,23 @@
+{
+  "_comment": "Pre-baked delta-update inputs for eval scenario 3. Applied against fixtures/valid-spec. Expected downstream set is the deterministic answer the eval grader checks.",
+  "apply_to": "valid-spec",
+  "change": {
+    "target": "PRODUCT.md",
+    "field": "core_value",
+    "old_value": "Help boutique brands sell directly to fans without payment middlemen.",
+    "new_value": "Help boutique brands sell directly to fans without middlemen AND offer same-day fulfillment."
+  },
+  "expected_downstream_set": [
+    "BRD-G1",
+    "PRD-AUTH",
+    "PRD-AUTH-E1",
+    "PRD-AUTH-E1-S1"
+  ],
+  "expected_changelog_action": "core-value-change",
+  "expected_delta_viz_includes_ids": ["BRD-G1", "PRD-AUTH"],
+  "must_not_auto_rewrite": [
+    "prds/auth.md",
+    "epics/PRD-AUTH-E1.md",
+    "stories/PRD-AUTH-E1-S1.md"
+  ]
+}

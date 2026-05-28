@@ -7,13 +7,19 @@ End-to-end workflow for the **--validate** (+ optional **--strict**), **--approv
 ### Step 1 — Run structural scripts (in order)
 
 ```bash
-python3 scripts/spec_graph.py --root <root> --snapshot
-python3 scripts/check_traceability.py --root <root>
-python3 scripts/check_consistency.py --root <root>
-python3 scripts/build_traceability_matrix.py --root <root> --write
+./.claude/skills/.venv/bin/python3 scripts/spec_graph.py --root <root> --snapshot
+./.claude/skills/.venv/bin/python3 scripts/check_traceability.py --root <root>
+./.claude/skills/.venv/bin/python3 scripts/check_consistency.py --root <root>
+./.claude/skills/.venv/bin/python3 scripts/build_traceability_matrix.py --root <root> --write
 ```
 
 Each script emits JSON to stdout. Collect the union of `findings[]` across the three checkers. `spec_graph --snapshot` writes a snapshot JSON to `docs/product/visuals/.snapshots/` for later delta viz.
+
+For CI (no LLM in the loop), use the shell-runnable strict gate which exits non-zero on any error-severity finding:
+
+```bash
+./.claude/skills/.venv/bin/python3 scripts/strict_gate.py --root <root>
+```
 
 ### Step 2 — Layer LLM judgment on the JSON
 

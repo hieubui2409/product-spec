@@ -64,6 +64,16 @@ OUTPUT_PATH_FOR_TYPE = {
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "assets" / "templates"
 
+# Strict parent-ID patterns. Kept in sync with check_consistency.ID_PATTERN_BY_TYPE
+# so a parent passed at generate time fast-fails the same way it would be flagged
+# at validate time. Slug section is 1+15=16 chars max (uppercase, digits, hyphens).
+PARENT_PATTERN_FOR_PRD = re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$")
+PARENT_PATTERN_FOR_EPIC = re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$")
+# The slug regex above is permissive (hyphens allowed). A trailing -E<n> or
+# -E<n>-S<n> means the ID is actually an epic or story shape — reject when a
+# PRD ID is expected so callers can't accidentally pass an epic/story.
+PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY = re.compile(r"-E\d+(-S\d+)?$")
+
 OPTIONAL_RE = re.compile(
     r"<!--\s*OPTIONAL:\s*(?P<name>[a-z0-9_-]+)\s*-->(?P<body>.*?)<!--\s*/OPTIONAL\s*-->",
     re.DOTALL,
@@ -81,12 +91,27 @@ def allocate_id(graph: Dict[str, Any], target_type: str, slug: Optional[str], pa
             raise ValueError("--slug is required for type=prd")
         return f"PRD-{slug.upper()}"
     if target_type == "epic":
-        if not parent or not parent.startswith("PRD-"):
-            raise ValueError("--parent must be a PRD ID for type=epic")
+        # Parent must be a PRD ID exactly (PRD-<SLUG>, slug ≤16 chars). Reject
+        # story/epic IDs (which would emit nonsense like PRD-AUTH-E1-S1-E1) and
+        # oversized slugs (which would later trip invalid_id at validate time).
+        if (
+            not parent
+            or not PARENT_PATTERN_FOR_PRD.match(parent)
+            or PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY.search(parent)
+        ):
+            raise ValueError(
+                f"--parent must be a valid PRD ID for type=epic "
+                f"(PRD-<SLUG>, slug ≤16 chars, no -E<n>/-S<n> suffix); got {parent!r}"
+            )
         return _next_with_prefix(existing_ids, f"{parent}-E")
     if target_type == "story":
-        if not parent or "-E" not in parent:
-            raise ValueError("--parent must be an epic ID for type=story")
+        # Parent must be an epic ID exactly (PRD-<SLUG>-E<n>). Substring "-E"
+        # would also match a story ID and allow PRD-AUTH-E1-S1-S1 nonsense.
+        if not parent or not PARENT_PATTERN_FOR_EPIC.match(parent):
+            raise ValueError(
+                f"--parent must be a valid epic ID for type=story "
+                f"(pattern {PARENT_PATTERN_FOR_EPIC.pattern}); got {parent!r}"
+            )
         return _next_with_prefix(existing_ids, f"{parent}-S")
     if target_type == "product":
         return "PRODUCT"
@@ -154,6 +179,20 @@ def load_values(spec: Optional[str]) -> Dict[str, Any]:
     return json.loads(spec)
 
 
+# List-typed frontmatter fields. If the caller omits them, default to [] so
+# token substitution emits a valid YAML list — never the bare string "TBD"
+# (which downstream renderers iterate per-character: persona viz would render
+# rows 'T', 'B', 'D' and traceability would flag phantom dangling_link errors
+# for refs T/B/D). Closed list per references/frontmatter-and-id-spec.md.
+LIST_FIELDS = (
+    "personas",
+    "metrics",
+    "brd_goals",
+    "risks",
+    "acceptance_criteria",
+)
+
+
 def fill_defaults(values: Dict[str, Any], target_type: str, artifact_id: str, lang: str) -> Dict[str, Any]:
     today = dt.date.today().isoformat()
     out = {
@@ -165,8 +204,21 @@ def fill_defaults(values: Dict[str, Any], target_type: str, artifact_id: str, la
         "created": today,
         "updated": today,
     }
+    for k in LIST_FIELDS:
+        out[k] = []
     out.update(values)
     out["id"] = artifact_id
+    # Defense-in-depth: generate never mints `approved` artifacts. Approval is
+    # a separate explicit promotion flow (records owner + date + version bump).
+    # Caller-supplied `status: approved` is the most common silent-approval
+    # vector; reject it here so the script layer cannot be tricked into it
+    # even if a higher layer's safeguards regress.
+    if out.get("status") == "approved":
+        raise ValueError(
+            f"generate_templates refuses to create {target_type}={artifact_id!r} "
+            f"with status='approved'. New artifacts must start as 'draft'. "
+            f"Use the explicit approval flow (--approve) to promote later."
+        )
     return out
 
 

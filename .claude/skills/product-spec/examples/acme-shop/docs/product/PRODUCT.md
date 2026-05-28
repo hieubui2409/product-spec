@@ -24,7 +24,7 @@ A web storefront for boutique fashion brands.
 
 ## Core Value
 
-Help boutique brands sell directly to fans without middlemen.
+_(authoritative value lives in frontmatter `core_value` field — see top of file. Body deliberately blank to keep one source of truth.)_
 
 ## Current Implementation
 

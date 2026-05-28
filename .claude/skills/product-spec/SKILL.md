@@ -130,4 +130,4 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 - **Never overwrite manual prose.** Delta-update flags affected downstream nodes for review; regeneration is opt-in per node.
 - **Bilingual.** EN and VI interview banks; IDs and frontmatter keys stay English. VI ships best-effort with a pending-native-review note.
 
-See `CLAUDE.md` for the deeper LLM operating guide.
+Deeper LLM operating guidance lives in `references/` (loaded on demand by flag) and in the repo-root `CLAUDE.md` (auto-loaded by Claude Code).

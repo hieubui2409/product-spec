@@ -1,0 +1,12 @@
+We need shoppers to be able to sign up with email or Google. Once signed in
+they land on the home feed where they can browse curated brands. They should
+be able to follow a brand and get a notification when that brand drops new
+inventory. Checkout should be one-page; we don't want a multi-step funnel.
+Store admins should be able to upload product photos, set prices, manage
+inventory counts, and see basic sales reports. We also want a way for
+admins to set up a "drop" — a scheduled inventory release that goes live at
+a specific time. Long term we want to do gift cards but not in v1.
+
+Two big business goals: (1) onboard 100 boutique brands in 12 months,
+measured by brands-with-active-listings; (2) hit 80% 90-day repeat-purchase
+rate among first-time buyers.

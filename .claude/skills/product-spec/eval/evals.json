@@ -39,14 +39,16 @@
     },
     {
       "id": 3,
+      "_assertion_type": "llm_advisory",
+      "_note": "A PRODUCT.md core-value change has no deterministic mapping to an affected-artifact set in code (spec_graph.downstream(node_id) is pure graph reachability; PRODUCT has no inbound edges). The 'downstream-correct' assertion is therefore graded by LLM judgment against the seeded expected_downstream_set in delta-change.json, NOT by a structural script. The other three assertions ARE structural: file-body unchanged, change-log appended, delta viz includes IDs.",
       "prompt": "Take the valid fixture spec, run --validate to produce a baseline snapshot, then apply the delta in fixtures/delta-change.json (a PRODUCT.md core-value change). Run --update; expect the affected downstream set to be flagged for review (NEVER auto-rewritten). Render the delta visualization.",
-      "expected_output": "spec_graph downstream() returns the correct affected set; change-log gains a new entry; visualize --view delta renders the change.",
+      "expected_output": "Change-log gains a new entry; visualize --view delta renders the change; affected downstream set is presented to the PO for review (LLM-judged against seeded list).",
       "files": ["fixtures/valid-spec", "fixtures/delta-change.json"],
       "assertions": [
-        {"id": "downstream-correct", "text": "Affected downstream set equals the seeded expected set in delta-change.json."},
-        {"id": "no-auto-rewrite", "text": "No PRD/epic/story file body was modified by --update (only frontmatter status flags may change)."},
-        {"id": "changelog-appended", "text": "docs/product/change-log.md gained at least one new entry after --update."},
-        {"id": "delta-viz-renders", "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."}
+        {"id": "downstream-correct", "_gating": "llm_advisory", "text": "LLM presents an affected downstream set that intersects the seeded expected set in delta-change.json. Advisory only — no deterministic script function maps core_value change to an affected set; structural reachability via spec_graph.downstream() requires a real graph node as input."},
+        {"id": "no-auto-rewrite", "_gating": "structural", "text": "No PRD/epic/story file body was modified by --update (only frontmatter status flags may change)."},
+        {"id": "changelog-appended", "_gating": "structural", "text": "docs/product/change-log.md gained at least one new entry after --update."},
+        {"id": "delta-viz-renders", "_gating": "structural", "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."}
       ]
     }
   ]

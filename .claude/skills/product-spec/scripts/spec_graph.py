@@ -35,11 +35,16 @@ ARTIFACT_GLOBS = {
     "story": ["stories/*.md"],
 }
 
+# Reference table for the parent-link field per artifact type. Kept as
+# documentation; build_edges() inlines the same routing because story/epic
+# carry a scalar parent and PRD carries a list (brd_goals), which is hard
+# to express uniformly. The `goal` row used to claim a `parent: BRD` link;
+# the spec dropped that field — BRD is a singleton container, goals attach
+# to PRODUCT directly in the rendered tree.
 PARENT_FIELD_BY_TYPE = {
     "story": ("epic", "epic"),
     "epic": ("prd", "prd"),
     "prd": ("brd_goals", "brd_goal"),  # list field
-    "goal": ("parent", "brd"),
 }
 
 
@@ -122,16 +127,23 @@ def build_edges(nodes: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         elif ntype == "prd":
             for g in n.get("brd_goals", []):
                 edges.append({"from": n["id"], "to": g, "kind": "brd_goal"})
-        elif ntype == "goal":
-            edges.append({"from": n["id"], "to": "BRD", "kind": "brd"})
+        # Goal nodes have no outbound edge in the graph: there is no `brd`
+        # container node, and goals are rendered as direct children of
+        # PRODUCT by the tree renderers. An earlier `goal -> "BRD"` edge
+        # produced a phantom unlabeled box in the tree Mermaid output.
     return edges
 
 
 def build_graph(root: Path) -> Dict[str, Any]:
-    """Top-level: parse, build, return graph JSON shape per visualization-spec.md."""
+    """Top-level: parse, build, return graph JSON shape per visualization-spec.md.
+
+    `root_path` is included so downstream checkers (e.g. the `.session.md`
+    gitignore guard in check_consistency) can inspect repo-level state
+    without needing to be threaded a separate `root` argument.
+    """
     product_dir = root / "docs" / "product"
     if not product_dir.exists():
-        return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "parse_errors": [], "missing_product_dir": True}
+        return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "parse_errors": [], "missing_product_dir": True, "root_path": str(root)}
 
     artifacts = load_artifacts(product_dir)
     nodes = build_nodes(artifacts, product_dir)
@@ -148,6 +160,7 @@ def build_graph(root: Path) -> Dict[str, Any]:
         "edges": edges,
         "risks": risks,
         "parse_errors": parse_errors,
+        "root_path": str(root),
     }
 
 
@@ -192,12 +205,20 @@ def downstream(graph: Dict[str, Any], node_id: str) -> Set[str]:
 
 
 def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:
-    """Persist a graph snapshot under docs/product/visuals/.snapshots/<ISO>.json."""
+    """Persist a graph snapshot under docs/product/visuals/.snapshots/<ISO>.json.
+
+    Filename timestamp is derived from `graph["generated_at"]` so the file
+    name and the in-body `snapshot_at` agree to the second (earlier they
+    came from two separate `datetime.now()` calls and could drift by ms).
+    """
     snap_dir = root / "docs" / "product" / "visuals" / ".snapshots"
     snap_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    generated_at = graph.get("generated_at") or _now()
+    # generated_at is ISO 8601 with trailing "Z"; strip non-alnum to get the
+    # compact filename form (20260528T230000Z).
+    ts = generated_at.replace("-", "").replace(":", "")
     path = snap_dir / f"{ts}.json"
-    path.write_text(json.dumps({"snapshot_at": graph["generated_at"], **graph}, indent=2, ensure_ascii=False), encoding="utf-8")
+    path.write_text(json.dumps({"snapshot_at": generated_at, **graph}, indent=2, ensure_ascii=False), encoding="utf-8")
     return path
 
 
