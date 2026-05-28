@@ -96,6 +96,9 @@ assets/
 # Exception: use-mcp ships a persistent tool catalog at assets/tools.json
 !claude/skills/use-mcp/assets/
 !claude/skills/use-mcp/assets/**
+# Exception: product-spec ships templates + vendored Mermaid JS in assets/
+!.claude/skills/product-spec/assets/
+!.claude/skills/product-spec/assets/**
 
 # External repos for study/reference
 external/

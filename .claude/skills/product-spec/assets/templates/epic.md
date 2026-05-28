@@ -1,0 +1,53 @@
+<!--
+TEMPLATE: epic.md — rich. Goal + business-context links + scope + risks.
+Epic ID = PRD-<SLUG>-E<n>. References parent PRD via `prd` and addresses ≥1 BRD goal.
+-->
+---
+id: {{id}}
+type: epic
+prd: {{prd}}
+brd_goals: {{brd_goals}}
+status: {{status}}
+lang: {{lang}}
+owner: {{owner}}
+version: {{version}}
+created: {{created}}
+updated: {{updated}}
+personas: {{personas}}
+scope: {{scope}}
+moscow: {{moscow}}
+horizon: {{horizon}}
+metrics: {{metrics}}
+risks: {{risks}}
+---
+
+# {{title}} — Epic {{id}}
+
+## Goal | Mục tiêu
+
+{{goal}}
+
+## Business Context | Bối cảnh kinh doanh
+
+- **PRD requirement | Yêu cầu PRD:** {{prd_requirement_ref}}
+- **BRD goal | Mục tiêu BRD:** {{brd_goal_ref}}
+
+## Success Criteria | Tiêu chí thành công
+
+{{success_criteria}}
+
+## Scope | Phạm vi
+
+{{scope_section}}
+
+<!-- OPTIONAL: risks_section -->
+## Risks | Rủi ro
+
+{{risks_section}}
+<!-- /OPTIONAL -->
+
+<!-- OPTIONAL: stories_overview -->
+## Stories Overview | Tổng quan Stories
+
+{{stories_overview}}
+<!-- /OPTIONAL -->
