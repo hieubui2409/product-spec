@@ -1,0 +1,53 @@
+{
+  "skill_name": "cleanmatic:product-spec",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Initialize a brand new product spec for a hypothetical product called 'Acme Shop' (a web storefront for boutique fashion brands). Use the cleanmatic:product-spec skill. The PO answers are pre-baked in fixtures/init-answers.json. Produce a valid docs/product/PRODUCT.md and docs/product/vision.md.",
+      "expected_output": "docs/product/PRODUCT.md and vision.md exist; both have schema-valid frontmatter; core_value is populated; personas list cap 2-4.",
+      "files": ["fixtures/init-answers.json"],
+      "assertions": [
+        {"id": "files-created", "text": "Both docs/product/PRODUCT.md and docs/product/vision.md are created."},
+        {"id": "frontmatter-valid", "text": "frontmatter_parser.py reports ok=true for both files."},
+        {"id": "core-value-set", "text": "PRODUCT.md frontmatter has a non-empty core_value field."},
+        {"id": "persona-cap", "text": "PRODUCT.md frontmatter personas list has between 2 and 4 entries."}
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Run --auto on the brain-dump in fixtures/braindump.txt and decompose into BRD goals, PRDs, epics, and stories. Confirm-batch on ambiguous items (the pre-baked decisions are in fixtures/auto-decisions.json). Resulting spec must validate without errors.",
+      "expected_output": "BRD, at least 2 PRDs, at least 1 epic per PRD, at least 1 story per epic; check_traceability and check_consistency emit zero error-severity findings.",
+      "files": ["fixtures/braindump.txt", "fixtures/auto-decisions.json"],
+      "assertions": [
+        {"id": "brd-exists", "text": "docs/product/brd.md is created with at least one BRD-G* goal."},
+        {"id": "prds-exist", "text": "docs/product/prds/ contains at least 2 PRD files."},
+        {"id": "links-resolve", "text": "check_traceability.py reports zero dangling_link errors."},
+        {"id": "ids-valid", "text": "check_consistency.py reports zero invalid_id or dup_id errors."}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run --validate (no --strict) against the fixture spec at fixtures/broken-spec/. The spec has a seeded orphan, a missing AC, an off-core-value PRD, and an unaddressed BRD goal. Produce a validation report that flags exactly those issues — structural via the scripts, semantic via LLM judgment.",
+      "expected_output": "Validation report contains a structural dangling_link finding, a structural missing_ac finding, a structural orphan_brd_goal warn, AND a semantic core_value_drift finding from the LLM layer.",
+      "files": ["fixtures/broken-spec"],
+      "assertions": [
+        {"id": "dangling-flagged", "text": "Report includes a dangling_link finding for the seeded orphan story."},
+        {"id": "missing-ac-flagged", "text": "Report includes a missing_ac finding for the empty-AC story."},
+        {"id": "orphan-goal-flagged", "text": "Report includes an orphan_brd_goal warn for the unaddressed goal."},
+        {"id": "drift-flagged", "text": "Report includes a core_value_drift finding for the off-core-value PRD (LLM judgment)."}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Take the valid fixture spec, run --validate to produce a baseline snapshot, then apply the delta in fixtures/delta-change.json (a PRODUCT.md core-value change). Run --update; expect the affected downstream set to be flagged for review (NEVER auto-rewritten). Render the delta visualization.",
+      "expected_output": "spec_graph downstream() returns the correct affected set; change-log gains a new entry; visualize --view delta renders the change.",
+      "files": ["fixtures/valid-spec", "fixtures/delta-change.json"],
+      "assertions": [
+        {"id": "downstream-correct", "text": "Affected downstream set equals the seeded expected set in delta-change.json."},
+        {"id": "no-auto-rewrite", "text": "No PRD/epic/story file body was modified by --update (only frontmatter status flags may change)."},
+        {"id": "changelog-appended", "text": "docs/product/change-log.md gained at least one new entry after --update."},
+        {"id": "delta-viz-renders", "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."}
+      ]
+    }
+  ]
+}

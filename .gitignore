@@ -80,6 +80,9 @@ ck.md
 /.claude/skills/*
 !/.claude/skills/product-spec/
 !/.claude/skills/product-spec/**
+# Re-ignore Python cache + build artifacts inside the tracked skill
+/.claude/skills/product-spec/**/__pycache__/
+/.claude/skills/product-spec/**/*.pyc
 
 # Local-only state inside tracked claude source
 claude/agent-memory/
