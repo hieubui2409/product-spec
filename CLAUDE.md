@@ -62,7 +62,7 @@ On `--update` (delta-update), flag the affected downstream nodes and **ask** bef
 ## Bilingual Conventions
 
 - `lang: en` (default) or `lang: vi` — declared per artifact and per interview session.
-- **Frontmatter keys** stay English regardless of `lang`: `personas`, `metrics`, `moscow`, `scope`, `horizon`, `status`, `owner`, `parent`, `prd`, `epic`, `brd_goals`, `version`, `created`, `updated`.
+- **Frontmatter keys** stay English regardless of `lang`: `personas`, `metrics`, `moscow`, `scope`, `horizon`, `status`, `owner`, `prd`, `epic`, `brd_goals`, `version`, `created`, `updated`.
 - **IDs** stay English: `BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1-S1`.
 - **Prose** (vision narrative, story descriptions, AC), AskUserQuestion text, options, and markdown headings localize per `lang`.
 - **Visualization labels** (`Now/Next/Later`, `Must/Should/Could/Won't`) localize via `scripts/i18n_labels.py` when `--lang vi`.
@@ -93,7 +93,7 @@ All scripts live under `.claude/skills/product-spec/scripts/` and accept:
 <script>.py --root <project-dir> [--lang en|vi] [other flags]
 ```
 
-`--root` defaults to CWD. Scripts emit JSON to stdout. Scripts always exit 0. `--strict` gating is your job, not the script's.
+`--root` defaults to CWD. Scripts emit JSON to stdout. Analytical scripts always exit 0; `--strict` gating is your job, not the script's. The single exception is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts and exits `2` on `error` findings — usable from shell pipelines without an LLM.
 
 Run scripts via the per-skill venv created by `install.sh`:
 
@@ -169,7 +169,7 @@ All renders are deterministic: same input → same output. The graph JSON is the
 ```
 docs/product/
 ├── PRODUCT.md            (thin product-context labels — DRY home for facts)
-├── vision.md             (narrative vision + personas + north-star + horizon)
+├── vision.md             (narrative vision + personas + north-star; horizon lives in PRODUCT.md)
 ├── brd.md                (single BRD: business goals + metrics + stakeholders)
 ├── prds/<slug>.md        (one PRD per feature-area)
 ├── epics/<id>.md         (epics referenced from PRDs)

@@ -65,6 +65,20 @@ def _render_mermaid(view: str, graph: Dict[str, Any], baseline: Optional[Dict[st
 
 def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, Any]]:
     snap_dir = root / "docs" / "product" / "visuals" / ".snapshots"
+
+    def _read_snapshot(path: Path) -> Dict[str, Any]:
+        # A corrupt snapshot file (truncated write, hand-edit, merge artefact)
+        # would otherwise raise an uncaught JSONDecodeError and crash the
+        # visualize pipeline. Surface a readable error and the offending
+        # path so the PO can delete or repair it.
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"snapshot file is not valid JSON: {path} ({exc.msg} "
+                f"at line {exc.lineno} col {exc.colno})"
+            ) from exc
+
     if override:
         p = Path(override)
         if not p.is_absolute():
@@ -72,14 +86,14 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
         if not p.exists():
             # Originally returned None silently — the dispatcher then rendered
             # the generic "no baseline yet" message and a PO who typoed a
-            # filename never learned why their --diff was ignored.
+            # filename never learned why their --snapshot was ignored.
             available = sorted(snap_dir.glob("*.json")) if snap_dir.exists() else []
             available_names = [s.name for s in available]
             raise FileNotFoundError(
-                f"--diff baseline not found: {p}. "
+                f"--snapshot baseline not found: {p}. "
                 f"Available snapshots in {snap_dir}: {available_names or '(none)'}"
             )
-        return json.loads(p.read_text(encoding="utf-8"))
+        return _read_snapshot(p)
     if not snap_dir.exists():
         return None
     snaps = sorted(snap_dir.glob("*.json"))
@@ -89,7 +103,7 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
     # the second-most-recent so the freshly-taken snapshot doesn't shadow the
     # change the PO is trying to see.
     target = snaps[-2] if len(snaps) >= 2 else snaps[-1]
-    return json.loads(target.read_text(encoding="utf-8"))
+    return _read_snapshot(target)
 
 
 def main() -> int:
@@ -98,7 +112,13 @@ def main() -> int:
     ap.add_argument("--view", required=True, choices=VIEWS)
     ap.add_argument("--format", default="ascii", choices=FORMATS)
     ap.add_argument("--lang", default="en", choices=["en", "vi"])
-    ap.add_argument("--diff", default=None, help="path or filename of a baseline snapshot in .snapshots/")
+    ap.add_argument(
+        "--snapshot", default=None,
+        help="path or filename of a baseline snapshot in .snapshots/ "
+             "(used by --view delta). Alias --diff is kept for one cycle "
+             "for transitional compatibility.",
+    )
+    ap.add_argument("--diff", dest="snapshot", default=None, help=argparse.SUPPRESS)
     ap.add_argument(
         "--filter-wont", action="store_true",
         help="hide deferred items (moscow=wont or scope=out) from tree/roadmap/persona. "
@@ -108,7 +128,7 @@ def main() -> int:
 
     root = Path(args.root).resolve()
     graph = build_graph(root)
-    baseline = _load_baseline(root, args.diff) if args.view == "delta" else None
+    baseline = _load_baseline(root, args.snapshot) if args.view == "delta" else None
 
     if args.format == "ascii":
         body = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)

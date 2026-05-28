@@ -30,9 +30,19 @@ def _safe_label(s: str) -> str:
     Mermaid label syntax `node["..."]` chokes on double-quotes, newlines, and
     bracket/paren characters that mimic Mermaid's own grammar. Replace them
     with visually-similar but non-syntactic equivalents.
+
+    Angle brackets are replaced with single-guillemets so that a label value
+    like `<script>alert(1)</script>` cannot reach the browser as a live tag
+    in the self-contained HTML output: the HTML parser tokenises raw `<...>`
+    sequences before Mermaid's `securityLevel: strict` ever runs.
     """
     out = (s or "").replace('"', "'").replace("\n", " ")
-    for ch, repl in (("[", "("), ("]", ")"), ("{", "("), ("}", ")"), ("`", "'")):
+    for ch, repl in (
+        ("[", "("), ("]", ")"),
+        ("{", "("), ("}", ")"),
+        ("`", "'"),
+        ("<", "‹"), (">", "›"),
+    ):
         out = out.replace(ch, repl)
     return out
 
@@ -83,7 +93,11 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
 
 
 def _safe_id(s: str) -> str:
-    return s.replace("-", "_").replace(":", "_")
+    # Mermaid node IDs accept alphanumerics + underscores. Map `-` and `:` to
+    # distinct sequences so that, for example, `BRD-G:1` and `BRD_G_1` cannot
+    # collide on the same generated id and merge two unrelated nodes in the
+    # rendered graph.
+    return s.replace("-", "__").replace(":", "_C_")
 
 
 def heatmap(graph: Dict[str, Any]) -> str:

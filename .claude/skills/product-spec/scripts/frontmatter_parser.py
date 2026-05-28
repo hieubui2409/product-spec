@@ -72,6 +72,13 @@ def parse_text(text: str, file_label: str = "<text>") -> Dict[str, Any]:
         "error": None,
     }
 
+    # Strip a leading UTF-8 BOM if present. Windows text editors (Notepad,
+    # older VS Code presets) often save files with U+FEFF prefix, which
+    # otherwise prevents the `---` frontmatter sentinel from matching at
+    # column 0 and raises a misleading "no YAML frontmatter" error.
+    if text.startswith("﻿"):
+        text = text.lstrip("﻿")
+
     if not text.lstrip().startswith("---"):
         result["error"] = "no YAML frontmatter (file does not start with '---')"
         return result

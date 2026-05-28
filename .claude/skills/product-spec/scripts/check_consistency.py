@@ -22,7 +22,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
 from spec_graph import build_graph
@@ -139,7 +139,88 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 findings.append(_f("low_ac_count", "warn", n, f"Story has {len(ac)} acceptance criteria; >=2 recommended.", count=len(ac)))
 
     findings.extend(_status_inconsistency(graph))
+    findings.extend(_version_inconsistency(graph))
+    findings.extend(_self_reference(graph))
     findings.extend(_session_md_gitignore(graph))
+    return findings
+
+
+_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+
+
+def _parse_semver(v: Any) -> Optional[tuple]:
+    if not isinstance(v, str):
+        return None
+    m = _SEMVER_RE.match(v.strip())
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
+
+def _version_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flag any child whose semver `version` exceeds its parent's.
+
+    Rare in practice: child gets a major bump while parent stays behind.
+    Spec advertises this check; this is the concrete implementation. Only
+    flags when BOTH versions parse cleanly so a missing or malformed
+    `version:` is silently ignored (the dedicated parse check handles it).
+    """
+    findings: List[Dict[str, Any]] = []
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    for n in graph["nodes"]:
+        parent_id = n.get("epic") or n.get("prd")
+        if not parent_id:
+            continue
+        parent = nodes_by_id.get(parent_id)
+        if not parent:
+            continue
+        cv = _parse_semver(n.get("version"))
+        pv = _parse_semver(parent.get("version"))
+        if cv is None or pv is None:
+            continue
+        if cv > pv:
+            findings.append(_f(
+                "version_inconsistency",
+                "warn",
+                n,
+                f"{n['id']} version {n.get('version')} exceeds parent {parent['id']} version {parent.get('version')}.",
+                parent_id=parent["id"],
+                child_version=n.get("version"),
+                parent_version=parent.get("version"),
+            ))
+    return findings
+
+
+def _self_reference(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flag any artifact whose parent reference points at itself.
+
+    Real-world rare but a common LLM hallucination when -auto reassigns IDs.
+    Spec catalog row: `self_reference` / error.
+    """
+    findings: List[Dict[str, Any]] = []
+    for n in graph["nodes"]:
+        nid = n.get("id")
+        if not nid:
+            continue
+        for key in ("epic", "prd"):
+            ref = n.get(key)
+            if ref == nid:
+                findings.append(_f(
+                    "self_reference",
+                    "error",
+                    n,
+                    f"{nid} references itself via `{key}: {nid}`.",
+                    field=key,
+                ))
+        brd_goals = n.get("brd_goals") or []
+        if isinstance(brd_goals, list) and nid in brd_goals:
+            findings.append(_f(
+                "self_reference",
+                "error",
+                n,
+                f"{nid} references itself in `brd_goals`.",
+                field="brd_goals",
+            ))
     return findings
 
 
@@ -201,8 +282,13 @@ def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
 
     def _flag(child: Dict[str, Any], parent: Dict[str, Any]) -> None:
-        cs = STATUS_ORDER.get(child.get("status") or "", -1)
-        ps = STATUS_ORDER.get(parent.get("status") or "", -1)
+        # `STATUS_ORDER.get(...)` raises TypeError if the value is unhashable
+        # (e.g. PO wrote `status: [draft]` as a list). Coerce defensively;
+        # the malformed value will be flagged separately by `unknown_enum`.
+        child_status = child.get("status")
+        parent_status = parent.get("status")
+        cs = STATUS_ORDER.get(child_status if isinstance(child_status, str) else "", -1)
+        ps = STATUS_ORDER.get(parent_status if isinstance(parent_status, str) else "", -1)
         if cs > ps and cs >= 0 and ps >= 0:
             findings.append(_f(
                 "status_inconsistency",
@@ -267,7 +353,7 @@ def main() -> int:
         "findings": findings,
         "graph": graph,
     }
-    print(json.dumps(output, indent=2, ensure_ascii=False))
+    print(json.dumps(output, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

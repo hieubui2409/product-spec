@@ -238,14 +238,18 @@ def main() -> int:
 
     if args.downstream:
         ids = sorted(downstream(graph, args.downstream))
-        print(json.dumps({"node": args.downstream, "downstream": ids}, indent=2, ensure_ascii=False))
+        print(json.dumps({"node": args.downstream, "downstream": ids}, indent=2, ensure_ascii=False, default=str))
         return 0
 
     if args.snapshot:
         snap = write_snapshot(graph, root)
         graph["__snapshot_path"] = str(snap.relative_to(root))
 
-    print(json.dumps(graph, indent=2, ensure_ascii=False))
+    # `default=str` coerces YAML-typed values such as `status: 2026-05-29`
+    # (which PyYAML auto-parses to `datetime.date`) into ISO strings, so
+    # the script keeps its "always exit 0, emit JSON" contract instead
+    # of raising `TypeError: Object of type date is not JSON serializable`.
+    print(json.dumps(graph, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

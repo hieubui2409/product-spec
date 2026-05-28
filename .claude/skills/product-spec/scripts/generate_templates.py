@@ -73,6 +73,26 @@ PARENT_PATTERN_FOR_EPIC = re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$")
 # -E<n>-S<n> means the ID is actually an epic or story shape — reject when a
 # PRD ID is expected so callers can't accidentally pass an epic/story.
 PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY = re.compile(r"-E\d+(-S\d+)?$")
+# Bare PRD slug fast-fail (uppercase ASCII letter start, digits/hyphens, ≤16
+# chars). Must match the slug section of PARENT_PATTERN_FOR_PRD so that
+# `PRD-<SLUG>` produced below is itself a valid parent for an epic.
+SLUG_PATTERN_FOR_PRD = re.compile(r"^[A-Z][A-Z0-9-]{0,15}$")
+
+# Caller-supplied `--id` override patterns. Kept in sync with
+# check_consistency.ID_PATTERN_BY_TYPE so an --auto batch caller that
+# pre-allocates IDs cannot smuggle an invalid one past the generator.
+ID_PATTERN_OVERRIDE = {
+    "goal": re.compile(r"^BRD-G[0-9]+$"),
+    "prd": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$"),
+    "epic": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$"),
+    "story": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+-S[0-9]+$"),
+    "product": re.compile(r"^PRODUCT$"),
+    "vision": re.compile(r"^VISION$"),
+    "brd": re.compile(r"^BRD$"),
+    "exec_summary": re.compile(r"^EXEC-SUMMARY$"),
+    "sign_off": re.compile(r".+"),
+    "change_log_entry": re.compile(r".+"),
+}
 
 OPTIONAL_RE = re.compile(
     r"<!--\s*OPTIONAL:\s*(?P<name>[a-z0-9_-]+)\s*-->(?P<body>.*?)<!--\s*/OPTIONAL\s*-->",
@@ -89,7 +109,14 @@ def allocate_id(graph: Dict[str, Any], target_type: str, slug: Optional[str], pa
     if target_type == "prd":
         if not slug:
             raise ValueError("--slug is required for type=prd")
-        return f"PRD-{slug.upper()}"
+        normalised = slug.upper()
+        if not SLUG_PATTERN_FOR_PRD.match(normalised):
+            raise ValueError(
+                f"--slug must be uppercase ASCII (A-Z, 0-9, hyphen), start with "
+                f"a letter, and be ≤16 chars (matches {SLUG_PATTERN_FOR_PRD.pattern}); "
+                f"got {slug!r}"
+            )
+        return f"PRD-{normalised}"
     if target_type == "epic":
         # Parent must be a PRD ID exactly (PRD-<SLUG>, slug ≤16 chars). Reject
         # story/epic IDs (which would emit nonsense like PRD-AUTH-E1-S1-E1) and
@@ -153,7 +180,18 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
             return "TBD"
         if isinstance(v, (list, dict)):
             return json.dumps(v, ensure_ascii=False)
-        return str(v)
+        s = str(v)
+        # Reject embedded newlines in scalar values: a caller-supplied
+        # `--values '{"id":"foo\nstatus: approved"}'` would otherwise
+        # inject a duplicate YAML key and bypass the approval guard
+        # below. Multi-line content belongs in body sections, not in
+        # single-line frontmatter substitution.
+        if "\n" in s or "\r" in s:
+            raise ValueError(
+                f"value for token {{{{{k}}}}} contains a newline; "
+                f"frontmatter tokens must be single-line scalars"
+            )
+        return s
 
     rendered = TOKEN_RE.sub(tok, rendered)
 
@@ -232,6 +270,12 @@ def main() -> int:
     ap.add_argument("--keep-optional", default="", help="comma-separated names of optional sections to keep")
     ap.add_argument("--lang", default="en", choices=["en", "vi"])
     ap.add_argument("--write", action="store_true", help="write the file (default: print only)")
+    ap.add_argument(
+        "--force", action="store_true",
+        help="with --write: overwrite an existing file. Without --force, "
+             "an existing path causes the script to refuse rather than "
+             "silently clobber manual PO edits.",
+    )
     ap.add_argument("--id", default=None, help="override allocated ID (used by --auto batch)")
     args = ap.parse_args()
 
@@ -240,7 +284,20 @@ def main() -> int:
     keep_optional = [s.strip() for s in args.keep_optional.split(",") if s.strip()]
     values = load_values(args.values)
 
-    artifact_id = args.id or allocate_id(graph, args.type, args.slug, args.parent, session_used=[])
+    if args.id:
+        # A pre-allocated `--id` from an --auto braindump still has to honour
+        # the parent-scoped grammar; otherwise the LLM batch could quietly
+        # mint a story like `PRD-AUTH-S99` (missing the epic segment) and
+        # the validator would only catch it on the next pass.
+        pattern = ID_PATTERN_OVERRIDE.get(args.type)
+        if pattern and not pattern.match(args.id):
+            raise ValueError(
+                f"--id {args.id!r} does not match expected pattern "
+                f"{pattern.pattern} for type={args.type}"
+            )
+        artifact_id = args.id
+    else:
+        artifact_id = allocate_id(graph, args.type, args.slug, args.parent, session_used=[])
     values = fill_defaults(values, args.type, artifact_id, args.lang)
     if args.parent:
         if args.type == "story":
@@ -261,6 +318,15 @@ def main() -> int:
         "content": rendered,
     }
     if args.write:
+        if out_path.exists() and not args.force:
+            response["error"] = "exists"
+            response["message"] = (
+                f"refusing to overwrite existing file: "
+                f"{out_path.relative_to(root) if out_path.is_relative_to(root) else out_path}. "
+                f"Pass --force to overwrite."
+            )
+            print(json.dumps(response, indent=2, ensure_ascii=False))
+            return 0
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(rendered, encoding="utf-8")
         response["written"] = True

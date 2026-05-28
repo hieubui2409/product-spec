@@ -28,7 +28,11 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 | `unknown_enum` | script | error | a closed-enum field with a value outside the allowed set | "{file}: field {field} value '{value}' not in {allowed}." |
 | `parse_error` | script | error | YAML parse failure or missing required field | "{file}: parse error — {detail}." |
 | `status_inconsistency` | script | warn | child `approved` under parent `draft`, or descendant approval newer than ancestor | "{id} status inconsistent with parent {parent_id}." |
-| `version_inconsistency` | script | warn | child `version` higher than parent (rare; flag only) | "{id} version {v} exceeds parent {pid} version {pv}." |
+| `version_inconsistency` | script | warn | child semver `version` greater than parent's | "{id} version {v} exceeds parent {pid} version {pv}." |
+| `self_reference` | script | error | an artifact whose `epic`, `prd`, or `brd_goals` reference points at its own ID | "{id} references itself via `{field}`." |
+| `invalid_type` | script | error | a `type` field with a value outside the spec enum (`vision`, `product`, `brd`, `prd`, `epic`, `story`, `goal`, `exec_summary`) | "{file}: type '{value}' not in allowed set." |
+| `persona_cap_exceeded` | script | warn | `personas` list with > soft-cap entries (sanity check against spec drift) | "{id}: personas list ({count}) exceeds soft cap ({cap})." |
+| `session_md_gitignored` | script | warn | `docs/product/.session.md` matched by a `.gitignore` rule — session state is meant to be committed (resumable across PO sessions) | "docs/product/.session.md is gitignored; session state must be committed." |
 | `invest_quality` | LLM | warn | a story failing INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) | "Story {id}: INVEST concern — {dimension}: {explanation}." |
 | `vagueness` | LLM | warn | a story or PRD requirement using vague language ("should", "easy", "fast") without quantification | "{id}: vague language — '{phrase}'. Suggest quantification." |
 | `core_value_drift` | LLM | warn | an artifact's narrative drifts from PRODUCT.md's core-value sentence | "{id}: core-value alignment is {aligned\|weak\|off}: {rationale}." |
@@ -47,7 +51,7 @@ With `--strict`:
 - The skill stops and presents the errors; the PO must resolve before proceeding.
 - `severity: warn` never blocks.
 
-The gate is enforced in the **LLM/orchestration layer** (workflow-validate.md), not in the scripts. Scripts always exit 0; the LLM reads severities and decides.
+The gate is enforced in the **LLM/orchestration layer** (workflow-validate.md), not in the scripts. Analytical scripts (`check_traceability`, `check_consistency`, `build_traceability_matrix`, `spec_graph`, `visualize`, `generate_templates`) always exit 0 with JSON on stdout; the LLM reads severities and decides. The sole exception is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts, applies the gate, and exits `2` on `error` findings — usable from shell pipelines without an LLM.
 
 ## Severity Definitions
 

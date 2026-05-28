@@ -22,7 +22,7 @@ Parent-scoped — globally unique by construction, lineage readable, no central 
 | Field | Type | Required | Allowed values | Purpose |
 |-------|------|----------|----------------|---------|
 | `id` | string | yes | parent-scoped per table above | unique identifier |
-| `type` | enum | yes | `vision`, `product`, `brd`, `prd`, `epic`, `story`, `goal` | artifact kind |
+| `type` | enum | yes | `vision`, `product`, `brd`, `prd`, `epic`, `story`, `goal`, `exec_summary` | artifact kind |
 | `status` | enum | yes | `draft`, `review`, `approved` | lifecycle state |
 | `lang` | enum | yes | `en`, `vi` | content language (frontmatter keys stay English) |
 | `owner` | string | no | free text | who is accountable |
@@ -85,12 +85,11 @@ goals:
     title: "Onboard 100 boutique brands in 12 months"  # required, prose
     metrics: [brands-onboarded]                 # required, ≥1 metric slug
     status: draft                               # required, closed enum
-    owner: Jane Doe                             # required, accountable person
+    owner: Jane Doe                             # optional, accountable person; LLM should ask if missing
   - id: BRD-G2
     title: "Achieve 80% 90-day repeat-purchase rate"
     metrics: [repeat-rate-90d]
     status: draft
-    owner: Jane Doe
 ```
 
 The BRD template (`assets/templates/brd.md`) carries a YAML comment block above `goals:` repeating this shape so a PO opening a freshly generated `brd.md` sees the contract inline.

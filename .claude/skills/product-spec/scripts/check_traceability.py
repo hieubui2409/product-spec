@@ -113,7 +113,7 @@ def main() -> int:
         "findings": findings,
         "graph": graph,
     }
-    print(json.dumps(output, indent=2, ensure_ascii=False))
+    print(json.dumps(output, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

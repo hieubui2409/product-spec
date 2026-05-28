@@ -81,12 +81,27 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     return "\n".join(lines)
 
 
+def _hashable(v: Any) -> str:
+    """Coerce frontmatter values that should be enum scalars to a string.
+
+    A PO who writes `status: [draft]` (list) or some other unhashable shape
+    would otherwise crash dict indexing. Render the unexpected shape verbatim
+    so the validator can flag `unknown_enum` separately, but never blow up
+    the viz renderer.
+    """
+    if v is None:
+        return "?"
+    if isinstance(v, (list, dict, set)):
+        return f"?{v!r}"
+    return str(v)
+
+
 def heatmap(graph: Dict[str, Any]) -> str:
     """status grid: rows=type, cols=status."""
     counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for n in graph["nodes"]:
-        t = n["type"] or "?"
-        s = n.get("status") or "?"
+        t = _hashable(n.get("type"))
+        s = _hashable(n.get("status"))
         counts[t][s] += 1
     types = sorted(counts.keys())
     statuses = ["draft", "review", "approved"]
@@ -103,8 +118,8 @@ def scope(graph: Dict[str, Any]) -> str:
     """scope tag x MoSCoW grid."""
     cells: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for n in graph["nodes"]:
-        sc = n.get("scope") or "?"
-        ms = n.get("moscow") or "?"
+        sc = _hashable(n.get("scope"))
+        ms = _hashable(n.get("moscow"))
         cells[sc][ms] += 1
     rows = ["in", "core-value", "out"]
     cols = ["must", "should", "could", "wont"]
@@ -225,7 +240,7 @@ def moscow(graph: Dict[str, Any], lang: str = "en") -> str:
     for n in graph["nodes"]:
         if n["type"] != "story":
             continue
-        counts[n.get("moscow") or "?"] += 1
+        counts[_hashable(n.get("moscow"))] += 1
     # Width 10 accommodates the longest VI label ("Không làm" = 9 chars).
     rows = [
         f"| {label('must', lang):10}: {counts.get('must', 0):>3} | {label('should', lang):10}: {counts.get('should', 0):>3} |",

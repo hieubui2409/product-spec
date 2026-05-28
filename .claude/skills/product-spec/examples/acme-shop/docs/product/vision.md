@@ -7,7 +7,6 @@ owner: Jane Doe
 version: 1.0.0
 created: 2026-05-28
 updated: 2026-05-28
-horizon: now
 personas: [shopper, store-admin]
 ---
 

@@ -21,6 +21,15 @@ from spec_graph import build_graph
 configure_utf8_console()
 
 
+def _cell(s: Any) -> str:
+    # Markdown tables split cells on `|`, so any raw pipe inside a cell
+    # bleeds into adjacent columns. Escape it as the standard `\|` so
+    # GFM renders it visibly without breaking the table. Newlines collapse
+    # to spaces for the same reason.
+    text = "" if s is None else str(s)
+    return text.replace("|", r"\|").replace("\n", " ").replace("\r", " ") or "—"
+
+
 def build_matrix(graph: Dict[str, Any]) -> str:
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     stories = [n for n in graph["nodes"] if n.get("type") == "story"]
@@ -31,14 +40,14 @@ def build_matrix(graph: Dict[str, Any]) -> str:
         brd_goals = prd.get("brd_goals", []) if prd else []
         metric_cell = ", ".join(s.get("metrics") or []) or "—"
         rows.append([
-            s.get("id") or "—",
-            (epic.get("id") if epic else "—") or "—",
-            (prd.get("id") if prd else "—") or "—",
-            ", ".join(brd_goals) or "—",
-            metric_cell,
-            s.get("status") or "—",
-            s.get("scope") or "—",
-            s.get("moscow") or "—",
+            _cell(s.get("id")),
+            _cell(epic.get("id") if epic else None),
+            _cell(prd.get("id") if prd else None),
+            _cell(", ".join(brd_goals)) if brd_goals else "—",
+            _cell(metric_cell),
+            _cell(s.get("status")),
+            _cell(s.get("scope")),
+            _cell(s.get("moscow")),
         ])
 
     rows.sort()
@@ -93,7 +102,7 @@ def main() -> int:
         target.write_text(f"# Traceability Matrix\n\n_Generated {out['generated_at']}_\n\n{matrix}\n", encoding="utf-8")
         out["__written_to"] = str(target.relative_to(root))
 
-    print(json.dumps(out, indent=2, ensure_ascii=False))
+    print(json.dumps(out, indent=2, ensure_ascii=False, default=str))
     return 0
 
 

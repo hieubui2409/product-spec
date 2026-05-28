@@ -65,7 +65,7 @@ All PO artifacts live under `docs/product/`. The skill never writes prose outsid
 ```
 docs/product/
 ├── PRODUCT.md                # thin product-context labels (DRY home for facts)
-├── vision.md                 # narrative vision + personas + north-star + horizon
+├── vision.md                 # narrative vision + personas + north-star (horizon lives in PRODUCT.md)
 ├── brd.md                    # single BRD (business goals + metrics + stakeholders)
 ├── prds/<slug>.md            # one PRD per feature-area
 ├── epics/<id>.md             # epics referenced from PRDs
