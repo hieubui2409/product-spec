@@ -110,3 +110,4 @@ external/
 worktrees/
 # Gemini CLI settings (contains user-specific config)
 .gemini/
+Script.tar.gz

@@ -36,6 +36,19 @@ python3 .claude/skills/product-spec/scripts/visualize.py \
   --view tree --format ascii
 ```
 
+Self-contained HTML renders (any of the 9 views) regenerate on demand:
+
+```bash
+python3 .claude/skills/product-spec/scripts/visualize.py \
+  --root .claude/skills/product-spec/examples/acme-shop \
+  --view tree --format html
+```
+
+Each render lands at `docs/product/visuals/<view>-<timestamp>.html`. They are
+deliberately not committed (each Mermaid-format render embeds the vendored
+Mermaid runtime → ~2.5 MB per file). The single committed `visuals/tree.md`
+is the lightweight Mermaid-in-markdown reference.
+
 ## What's Intentionally Not Shown
 
 This worked example is intentionally lean (one PRD, one epic, one story). Real spec trees grow larger; the same conventions apply. The `examples/` directory is a reference shape, not a starter template — for that, invoke the skill on your own product.

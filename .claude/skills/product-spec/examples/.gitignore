@@ -1,0 +1,6 @@
+# Generated visualization renders. They embed the vendored Mermaid runtime
+# (~2.5 MB each for Mermaid-format views), and any developer re-running the
+# viz pipeline against the worked example would otherwise accumulate them.
+# The committed `visuals/tree.md` is the canonical lightweight reference.
+*/docs/product/visuals/*.html
+*/docs/product/visuals/.snapshots/
