@@ -1,6 +1,6 @@
 # Workflow — `--export` (F1 read-once Export)
 
-Assemble a spec slice into **one self-contained doc** (markdown or print-ready HTML) for stakeholders, a single-pass read, or an LLM feed. Built on the shared deterministic assembler (`scripts/assemble_digest.py`); the same digest powers `--viz board` / `--viz explorer`.
+Assemble a spec slice into **one self-contained doc** (markdown or print-ready HTML) for stakeholders, a single-pass read, or an LLM feed. Built on the deterministic assembler (`scripts/assemble_digest.py`, `build_digest`), which powers `--export` only. The `--viz board` / `--viz explorer` viewers build their own payloads (`render_board` / `render_explorer`) and do **not** share the digest — they filter by artifact type (`goal,prd,epic,story`), whereas `--export --layers` uses doc-layer buckets (`vision,brd,prd,epic,story`).
 
 Run via the repo venv:
 
@@ -18,8 +18,11 @@ Run via the repo venv:
 | `all` | the whole spec: vision + BRD + every goal/PRD/epic/story |
 | `<ID>` (e.g. `PRD-AUTH`) | that node + its ancestor context + its descendants |
 | `<ID>,<ID>,…` | the union of each ID's slice |
+| `VISION` / `BRD` / `PRODUCT` | the context singleton, emitted **once** (not edge-walked) |
 
-`--layers` is a comma subset of `vision,brd,prd,epic,story` (default: all). Goals belong to the `brd` layer. **Vision and BRD are NOT graph nodes** — the assembler loads them from `vision.md`/`brd.md` and **prepends them as singletons** whenever their layer is included and the selection has spec content to contextualize.
+`--layers` is a comma subset of `vision,brd,prd,epic,story` (default: all). Goals belong to the `brd` layer. **Vision, BRD and PRODUCT are context singletons** — the assembler loads them from their files and **prepends them once** whenever their layer is included and the selection has spec content to contextualize, or when they are explicitly selected. They are never edge-walked, so `--export VISION` cannot render vision twice.
+
+**No silent-empty doc.** If a selection names an ID that resolves to nothing (typo, wrong case, deleted node), or resolves to no artifacts at all, `render_export.py` exits non-zero with the offending IDs and the list of valid IDs on stderr — it never writes a frontmatter-only doc (CLAUDE.md: no silent failure). `--export all` on a fresh spec is the one allowed-empty case.
 
 ### `--layers` precedence (owner-locked, D2) + the H5 warning
 
@@ -29,7 +32,7 @@ Run via the repo venv:
 # Drops the PRD/epic/goal/vision context — keeps only the PRD's stories:
 render_export.py --root . --export PRD-AUTH --layers story
 ```
-→ header carries: `⚠ --layers ['story'] excluded the PRD context for the selected root PRD-AUTH; the doc shows only the included layers.`
+→ header carries: `⚠ --layers ['story'] excluded the PRD layer; 1 selected prd(s) appear only via their included sub-layers (e.g. PRD-AUTH).` One warning is emitted **per excluded type** (not per node), so `--export all --layers prd` over many goals/epics/stories yields a few warnings, not one per artifact.
 
 Precedence itself is **not** changed without owner sign-off. The warning is the mitigation.
 
@@ -54,6 +57,8 @@ Precedence itself is **not** changed without owner sign-off. The warning is the 
 
 1. The skill runs `render_export.py --compact-mode llm` → a doc with full bodies + `<!-- COMPACT:<id> -->` markers around the sections to condense.
 2. The LLM, in the same call, rewrites the text **between each marker pair** into a tight summary, leaving everything else byte-for-byte unchanged → one finished file.
+
+> `--compact-mode llm` requires **`--format md`**. With `--format html` the combo is **rejected** (non-zero exit): DOMPurify strips HTML comments, so the `<!-- COMPACT -->` markers vanish from the rendered page and no `.md` is written for the step-2 rewrite. Use `md`+`llm` or `html`+`struct`.
 
 ## Format — `--format` (default `md`)
 

@@ -106,7 +106,7 @@ def test_board_html_neutralizes_body_breakout():
     g, a = _xss_graph_and_artifacts()
     html = render_board.assemble_board(g, a, "status", "en", False, None)
     assert "</script><script>alert(1)</script>" not in html
-    assert "<\\/script>" in html  # the body's </ was escaped in the island
+    assert "\\u003c/script>" in html  # the body's < was escaped in the island
 
 
 def test_board_attribute_payload_only_inert_inside_json_island():
@@ -194,7 +194,7 @@ def test_explorer_html_neutralizes_body_breakout():
     g, a = _xss_graph_and_artifacts()
     html = render_explorer.assemble_explorer(g, a, "en", False, None)
     assert "</script><script>alert(1)</script>" not in html
-    assert "<\\/script>" in html
+    assert "\\u003c/script>" in html
 
 
 def test_explorer_attribute_payload_only_inert_inside_island():
@@ -223,3 +223,55 @@ def test_cli_explorer_mermaid_falls_back_to_tree(tmp_path):
     assert r.returncode == 0, r.stderr
     assert "PRODUCT:" in r.stdout            # ascii tree fallback
     assert "no Mermaid form" in r.stderr
+
+
+# ---------- viewer --layers uses ARTIFACT TYPE (goal works) — Cluster A ----------
+
+def test_board_layers_goal_keeps_goal_cards_with_type_layer():
+    g, a = _ga()
+    payload = render_board.build_payload(g, a, group_by="status", layers=["goal"])
+    assert {c["id"] for c in payload["cards"]} == {"BRD-G1", "BRD-G2"}
+    # Layer facet value = artifact type ('goal'), not the export bucket 'brd'.
+    assert all(c["layer"] == "goal" for c in payload["cards"])
+
+
+def test_explorer_goal_layer_value_and_tab_key():
+    g, a = _ga()
+    payload = render_explorer.build_payload(g, a)
+    goals = [i for i in payload["items"] if i["type"] == "goal"]
+    assert goals and all(i["layer"] == "goal" for i in goals)
+    # Flat-tabs key comes from layer_order; 'goal' must appear so its tab fills
+    # (was empty when items carried the export bucket 'brd').
+    assert "goal" in payload["layer_order"]
+
+
+def test_explorer_layers_goal_only_keeps_goals():
+    g, a = _ga()
+    payload = render_explorer.build_payload(g, a, layers=["goal"])
+    assert {i["id"] for i in payload["items"]} == {"BRD-G1", "BRD-G2"}
+    assert payload["layer_order"] == ["goal"]
+
+
+# ---------- explorer Table depth matches Tree root after layer filter (F11) ----------
+
+def test_explorer_depth_recomputed_after_layer_filter():
+    g, a = _ga()
+    # layers=goal,story prunes epic+prd → the story loses its in-set parent and
+    # becomes a Tree root; its Table depth must be 0 too or the modes disagree.
+    payload = render_explorer.build_payload(g, a, layers=["goal", "story"])
+    by_id = {i["id"]: i for i in payload["items"]}
+    s = by_id["PRD-AUTH-E1-S1"]
+    assert s["parent"] == "", "story's epic is filtered out → no in-set parent"
+    assert s["depth"] == 0, "Table indent must match the Tree root placement"
+    assert by_id["BRD-G1"]["depth"] == 0
+
+
+# ---------- ASCII explorer now honors --layers (F7) ----------
+
+def test_ascii_explorer_honors_layers():
+    g, _ = _ga()
+    full = render_ascii.explorer(g)
+    goal_only = render_ascii.explorer(g, layers=["goal"])
+    assert goal_only != full, "--layers must no longer be silently ignored"
+    assert "BRD-G1" in goal_only
+    assert "PRD-AUTH-E1-S1" not in goal_only  # non-goal layers pruned

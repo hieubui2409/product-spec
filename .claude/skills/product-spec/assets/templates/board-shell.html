@@ -14,10 +14,8 @@
     .card .cid{font-weight:600;font-size:.9rem;word-break:break-word;}
     .card .ctitle{font-size:.82rem;color:var(--muted);margin:.2rem 0 .4rem;}
     .col-empty{color:var(--muted);font-size:.8rem;padding:.4rem;}
-    .ps-detail{position:fixed;top:0;right:0;width:min(34rem,92vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:1.2rem 1.4rem;overflow:auto;z-index:60;}
-    .ps-detail .close{position:absolute;top:.6rem;right:.8rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);}
-    .ps-detail-body :first-child{margin-top:0;}
-    @media print{.board{flex-wrap:wrap;} .ps-detail{display:none;}}
+    /* .ps-detail* live in _viewer-head.html (shared design system). */
+    @media print{.board{flex-wrap:wrap;}}
   </style>
 </head>
 <body>
@@ -148,15 +146,9 @@
       });
     }
 
-    window.psOpenDetail = function (id) {
-      var c = byId[id]; if (!c) return;
-      document.getElementById("ps-detail-title").textContent = c.id + (c.title ? " — " + c.title : "");
-      // Body is the ONLY innerHTML sink, routed through the sanitize chokepoint.
-      document.getElementById("ps-detail-body").innerHTML = psRenderMarkdown(c.body || "_(no body)_");
-      document.getElementById("ps-detail").hidden = false;
-    };
-    window.psCloseDetail = function () { document.getElementById("ps-detail").hidden = true; };
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") psCloseDetail(); });
+    // Detail open/close + Escape live in _viewer-head.html (shared); register
+    // this board's id->card map so psOpenDetail can resolve clicks.
+    psRegisterDetail(byId);
 
     buildFacets();
     render();

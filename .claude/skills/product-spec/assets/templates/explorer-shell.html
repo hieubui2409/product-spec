@@ -40,10 +40,10 @@
     <div id="ps-view-tabs" class="mode" hidden></div>
     <div id="ps-view-table" class="mode" hidden></div>
   </div>
-  <aside class="ps-detail" id="ps-detail" hidden aria-label="Artifact detail" style="position:fixed;top:0;right:0;width:min(34rem,92vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:1.2rem 1.4rem;overflow:auto;z-index:60;">
-    <button class="close" onclick="psCloseDetail()" aria-label="Close" style="position:absolute;top:.6rem;right:.8rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);">×</button>
+  <aside class="ps-detail" id="ps-detail" hidden aria-label="Artifact detail">
+    <button class="close" onclick="psCloseDetail()" aria-label="Close">×</button>
     <h2 id="ps-detail-title"></h2>
-    <div id="ps-detail-body"></div>
+    <div class="ps-detail-body" id="ps-detail-body"></div>
   </aside>
   {{spec_data}}
   <script>
@@ -235,14 +235,9 @@
 
     function emptyMsg() { var d = document.createElement("div"); d.className = "col-empty"; d.style.color = "var(--muted)"; d.textContent = L.no_results || "No matching artifacts"; return d; }
 
-    window.psOpenDetail = function (id) {
-      var c = byId[id]; if (!c) return;
-      document.getElementById("ps-detail-title").textContent = c.id + (c.title ? " — " + c.title : "");
-      document.getElementById("ps-detail-body").innerHTML = psRenderMarkdown(c.body || "_(no body)_");
-      document.getElementById("ps-detail").hidden = false;
-    };
-    window.psCloseDetail = function () { document.getElementById("ps-detail").hidden = true; };
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") psCloseDetail(); });
+    // Detail open/close + Escape live in _viewer-head.html (shared); register
+    // this explorer's id->item map so psOpenDetail can resolve clicks.
+    psRegisterDetail(byId);
 
     function renderAll() { var vis = visibleSet(); renderTree(vis); renderTabs(vis); renderTable(vis); }
 

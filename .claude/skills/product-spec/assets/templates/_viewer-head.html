@@ -33,6 +33,13 @@ pre{background:var(--recessed);padding:1rem;border-radius:6px;overflow:auto;}
 .ps-toggle{position:fixed;top:1rem;right:1rem;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:999px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem;box-shadow:var(--shadow);z-index:50;}
 .ps-banner{background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:.6rem .9rem;margin-bottom:1rem;font-size:.85rem;}
 .ps-fallback{white-space:pre-wrap;}
+/* Slide-in detail panel — ONE definition shared by board + explorer (was
+   duplicated, and explorer had diverged: it hardcoded the geometry inline and
+   omitted the :first-child margin reset, so a body opening with a heading gained
+   an extra top-margin only in the explorer). */
+.ps-detail{position:fixed;top:0;right:0;width:min(34rem,92vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:1.2rem 1.4rem;overflow:auto;z-index:60;}
+.ps-detail .close{position:absolute;top:.6rem;right:.8rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);}
+.ps-detail-body :first-child{margin-top:0;}
 .ps-search{width:100%;padding:.5rem .7rem;font-size:.95rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);margin-bottom:.75rem;}
 .ps-facets{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
 .ps-facets button{font-size:.78rem;padding:.2rem .6rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--muted);cursor:pointer;}
@@ -40,7 +47,7 @@ pre{background:var(--recessed);padding:1rem;border-radius:6px;overflow:auto;}
 .ve-card,.ps-row{animation:ps-fade .28s ease both;}
 @keyframes ps-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media print{
-  .ps-toggle,.ps-search,.ps-facets,.controls{display:none!important;}
+  .ps-toggle,.ps-search,.ps-facets,.controls,.ps-detail{display:none!important;}
   body{padding:0;background:#fff;color:#000;} .ve-card{box-shadow:none;border-color:#ccc;break-inside:avoid;}
   details{open:true;} a{color:#000;text-decoration:underline;}
 }
@@ -67,12 +74,8 @@ function psReadSpecData(){
   if(!el){return {};}
   try{return JSON.parse(el.textContent);}catch(e){return {};}
 }
-/* Client-side href allowlist (mirrors render_html._safe_href). Even via
-   setAttribute, an <a href="javascript:..."> executes on click — so anchors and
-   http(s)/mailto only; everything else collapses to "#". */
-function psSafeHref(u){
-  u=String(u==null?"":u).trim();var low=u.toLowerCase();
-  if(u.charAt(0)==="#"||low.indexOf("http://")===0||low.indexOf("https://")===0||low.indexOf("mailto:")===0){return u;}
-  return "#";
-}
+/* The detail-panel controls (psOpenDetail/psCloseDetail + Escape) are NOT here:
+   they call the sanitize chokepoint, so they ship in the body-view-only script
+   block (render_html._BODY_RENDER_JS) to keep the 9 legacy graph views free of
+   any sanitizer reference (red-team H4 symmetric gating). */
 </script>

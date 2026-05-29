@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, load_artifacts
+from spec_graph import build_graph_with_artifacts, _now
 from assemble_digest import build_digest, compact_fields
 import render_html
 
@@ -46,20 +46,22 @@ def _heading(entry: Dict[str, Any]) -> str:
     return f"{entry['id']} — {title}" if title else str(entry["id"])
 
 
+def _body_or_struct(entry: Dict[str, Any]) -> str:
+    """The entry's narrative body, or a struct-field skeleton when it has none."""
+    return (entry.get("body") or "").strip() or _struct_lines(entry)
+
+
 def _section_body(entry: Dict[str, Any], compact_mode: str) -> str:
     """Render one entry's content per its verbosity + compact-mode."""
     if entry["verbosity"] == "full":
-        out = (entry.get("body") or "").strip()
-        if not out:
-            out = _struct_lines(entry)
+        out = _body_or_struct(entry)
         if entry["type"] == "story" and isinstance(entry.get("ac"), list) and entry["ac"]:
             out += "\n\n**Acceptance criteria:**\n" + "\n".join(f"- {a}" for a in entry["ac"])
         return out
     # struct verbosity
     if compact_mode == "llm":
         # Emit the full body but mark it for the LLM to summarize in-place.
-        body = (entry.get("body") or "").strip() or _struct_lines(entry)
-        return f"<!-- COMPACT:{entry['id']} -->\n{body}\n<!-- /COMPACT:{entry['id']} -->"
+        return f"<!-- COMPACT:{entry['id']} -->\n{_body_or_struct(entry)}\n<!-- /COMPACT:{entry['id']} -->"
     return _struct_lines(entry)
 
 
@@ -144,22 +146,32 @@ def _stem(select: str) -> str:
     return f"{joined[:40]}-{tail}"
 
 
-def _now_iso() -> str:
-    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z"
-
-
 def write_export(root: Path, select: str, layers, depth: str, compact_mode: str, fmt: str, lang: str) -> Path:
-    graph = build_graph(root)
-    artifacts = load_artifacts(root / "docs" / "product")
+    # `--compact-mode llm` is a markdown-only contract: it emits <!-- COMPACT -->
+    # markers for a step-2 LLM rewrite of the .md on disk. In html those markers
+    # are stripped by DOMPurify and no .md is written, so the combo is meaningless
+    # — reject it rather than emit a silently-degraded file (CLAUDE.md: no silent
+    # failure). The two valid pairings are md+llm and html+struct.
+    if compact_mode == "llm" and fmt == "html":
+        raise ValueError(
+            "--compact-mode llm is incompatible with --format html: DOMPurify strips "
+            "the <!-- COMPACT --> markers and no .md artifact is written for the "
+            "step-2 LLM rewrite. Use '--format md --compact-mode llm', or "
+            "'--format html --compact-mode struct'."
+        )
+
+    graph, artifacts = build_graph_with_artifacts(root)
     digest = build_digest(graph, artifacts, select=select, layers=layers, depth=depth)
-    product_name = (graph.get("product") or {}).get("name") or "(unnamed)"
+    product_name = render_html.product_name(graph)
     layers_label = ",".join(layers) if layers else "all"
 
-    # Hash over the timestamp-free body → stable filename for identical content.
-    stable = render_markdown_doc(digest, product_name, select, depth, layers_label, compact_mode, generated_at="")
-    content_hash = hashlib.sha256(stable.encode("utf-8")).hexdigest()[:8]
-    generated_at = _now_iso()
+    # Render the markdown doc ONCE with the real timestamp, then hash over the
+    # doc with the volatile generated_at line stripped → identical content yields
+    # a stable, collision-free filename regardless of when it was generated.
+    generated_at = _now()
     md_doc = render_markdown_doc(digest, product_name, select, depth, layers_label, compact_mode, generated_at)
+    stable = md_doc.replace(f"generated_at: {generated_at}\n", "", 1)
+    content_hash = hashlib.sha256(stable.encode("utf-8")).hexdigest()[:8]
 
     out_dir = root / "docs" / "product" / "exports"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -184,7 +196,13 @@ def main() -> int:
 
     layers = [s.strip() for s in args.layers.split(",") if s.strip()] if args.layers else None
     root = Path(args.root).resolve()
-    out = write_export(root, args.select, layers, args.depth, args.compact_mode, args.format, args.lang)
+    try:
+        out = write_export(root, args.select, layers, args.depth, args.compact_mode, args.format, args.lang)
+    except ValueError as exc:
+        # Unresolved/empty selection or an incompatible flag combo. Surface the
+        # message to stderr and exit non-zero instead of writing a degraded doc.
+        print(str(exc), file=sys.stderr)
+        return 2
     print(json.dumps({"written": str(out.relative_to(root)) if out.is_relative_to(root) else str(out)}, indent=2))
     return 0
 

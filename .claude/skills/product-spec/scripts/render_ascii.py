@@ -15,7 +15,6 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
-from assemble_digest import LAYER_FOR_TYPE
 
 
 def _is_deferred(node: Dict[str, Any]) -> bool:
@@ -298,13 +297,19 @@ def risk(graph: Dict[str, Any]) -> str:
 
 
 def _filter_by_layers(nodes: List[Dict[str, Any]], layers: Optional[List[str]]) -> List[Dict[str, Any]]:
-    """Keep only nodes whose type's --layers bucket is selected. `layers` None or
-    empty → keep all. Shared by the ASCII board and the html board/explorer so
-    `--layers` filters cards identically everywhere (single source of truth)."""
+    """Keep only nodes whose ARTIFACT TYPE is selected. `layers` None or empty →
+    keep all. Shared by the ASCII board and the html board/explorer so `--layers`
+    filters cards identically across the viewers (single source of truth).
+
+    The viewers filter by artifact type (`goal,prd,epic,story`) — matching the CLI
+    help and the cards' own type badge — NOT by the export doc-layer bucket where
+    goal→brd. (That bucket vocab is the EXPORT surface only; conflating the two is
+    what made `--layers goal` drop every goal card and the explorer 'goal' tab
+    empty.)"""
     if not layers:
         return list(nodes)
     want = set(layers)
-    return [n for n in nodes if LAYER_FOR_TYPE.get(n.get("type")) in want]
+    return [n for n in nodes if n.get("type") in want]
 
 
 _BOARD_GROUP_ORDER = {
@@ -355,7 +360,21 @@ def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
 def explorer(graph: Dict[str, Any], lang: str = "en",
              filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
     """ASCII fallback for `--viz explorer` — delegates to the existing tree
-    renderer (the explorer's interactive modes are an html-only affordance)."""
+    renderer (the explorer's interactive modes are an html-only affordance).
+
+    `--layers` is honored (it was previously dropped here while the ASCII board and
+    the HTML explorer both applied it): filter the nodes to the selected artifact
+    types and prune dangling edges before rendering. Because the tree is goal-
+    rooted, a layer subset that excludes goals renders sparsely — the HTML explorer
+    is the full-fidelity surface; this stays a faithful, filter-honoring fallback."""
+    if layers:
+        keep_nodes = _filter_by_layers(graph["nodes"], layers)
+        keep_ids = {n["id"] for n in keep_nodes}
+        graph = {
+            **graph,
+            "nodes": keep_nodes,
+            "edges": [e for e in graph["edges"] if e["from"] in keep_ids and e["to"] in keep_ids],
+        }
     return tree(graph, lang=lang, filter_wont=filter_wont)
 
 

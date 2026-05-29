@@ -40,6 +40,11 @@ LABELS: Dict[str, Dict[str, str]] = {
         "table": "Table",
         "no_results": "No matching artifacts",
         "ac_count": "AC",
+        # artifact-type labels — viewer Layer facet + explorer Flat-tabs tab names
+        "goal": "Goal",
+        "prd": "PRD",
+        "epic": "Epic",
+        "story": "Story",
     },
     "vi": {
         "now": "Bây giờ",
@@ -63,6 +68,10 @@ LABELS: Dict[str, Dict[str, str]] = {
         "table": "Bảng biểu",
         "no_results": "Không có hạng mục khớp",
         "ac_count": "Tiêu chí",
+        "goal": "Mục tiêu",
+        "prd": "PRD",
+        "epic": "Epic",
+        "story": "Story",
     },
 }
 

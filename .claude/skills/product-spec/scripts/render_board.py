@@ -17,30 +17,21 @@ from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
-from assemble_digest import LAYER_FOR_TYPE
+from spec_graph import index_artifacts
 from render_ascii import _BOARD_GROUP_ORDER, _BOARD_CARD_TYPES, _filter_by_layers, _is_deferred
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
 
 _UI_KEYS = ("search", "status", "moscow", "persona", "layer", "all", "unassigned",
-            "no_results", "now", "next", "later", "must", "should", "could", "wont")
-
-
-def _body_map(artifacts: List[Dict[str, Any]]) -> Dict[str, str]:
-    out: Dict[str, str] = {}
-    for a in artifacts:
-        if a.get("ok"):
-            fm = a.get("frontmatter") or {}
-            if fm.get("id"):
-                out[str(fm["id"])] = a.get("body") or ""
-    return out
+            "no_results", "now", "next", "later", "must", "should", "could", "wont",
+            "goal", "prd", "epic", "story")
 
 
 def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                   group_by: str = "status", lang: str = "en",
                   filter_wont: bool = False, layers: Optional[List[str]] = None) -> Dict[str, Any]:
-    bodies = _body_map(artifacts)
+    bodies = {aid: (a.get("body") or "") for aid, a in index_artifacts(artifacts).items()}
     cards_nodes = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
     cards_nodes = _filter_by_layers(cards_nodes, layers)
     if filter_wont:
@@ -60,7 +51,10 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "moscow": n.get("moscow") or "",
             "horizon": n.get("horizon") or "",
             "personas": n.get("personas") if isinstance(n.get("personas"), list) else [],
-            "layer": LAYER_FOR_TYPE.get(n.get("type")) or n.get("type"),
+            # Viewer Layer facet = the artifact type (goal/prd/epic/story), so the
+            # facet chip + `--layers` agree with the CLI help (not the export bucket
+            # where goal→brd, which would render a stray 'brd' chip and no 'goal').
+            "layer": n.get("type"),
             "column": col,
             "body": bodies.get(str(n["id"]), ""),
         })
@@ -85,16 +79,8 @@ def assemble_board(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                    layers: Optional[List[str]]) -> str:
     payload = build_payload(graph, artifacts, group_by, lang, filter_wont, layers)
     shell = BOARD_SHELL.read_text(encoding="utf-8")
-    product_name = (graph.get("product") or {}).get("name") or "(unnamed)"
-    generated_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z"
-    values = render_html.body_render_values(payload)
-    values.update({
-        "lang_attr": lang,
-        "title": render_html._escape(f"{label('board', lang)} — {product_name}"),
-        "product_name": render_html._escape(product_name),
-        "generated_at": generated_at,
-    })
-    return render_html.substitute(shell, values)
+    title = f"{label('board', lang)} — {render_html.product_name(graph)}"
+    return render_html.assemble_body_shell(shell, payload, graph, lang, title)
 
 
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],

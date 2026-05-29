@@ -43,9 +43,9 @@ Product-Owner-facing skill for building and maintaining a strictly-traceable spe
 | `--format <fmt>` | Visualization format: `ascii` · `mermaid` · `html`. Default `ascii` for graph views, `html` for `board`/`explorer` (which fall back to ascii on `--format mermaid`). |
 | `--group-by <field>` | `--viz board` column grouping: `status` (default) · `horizon` · `moscow`. |
 | `--export <all\|ID\|list>` | F1 read-once Export: assemble a spec slice into ONE self-contained doc under `docs/product/exports/`. Pairs with `--layers`, `--depth`, `--compact-mode`, `--format md\|html`. See `references/workflow-export.md`. |
-| `--layers <types>` | Filter which artifact types appear (comma subset of `vision,brd,prd,epic,story`). Shared by `--export` and `--viz board/explorer`. |
+| `--layers <types>` | Filter which artifact types appear. `--export` uses doc-layer buckets `vision,brd,prd,epic,story` (goals sit in the `brd` bucket); `--viz board/explorer` filter by artifact TYPE `goal,prd,epic,story`. Each subset is self-consistent with its own surface's help. |
 | `--depth <preset>` | `--export` verbosity: `context` (default) · `full` · `brief`. |
-| `--compact-mode <m>` | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). |
+| `--compact-mode <m>` | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). `llm` requires `--format md` — it is rejected with `--format html` (DOMPurify strips the markers and no `.md` is written for the rewrite step). |
 | `--lang <code>` | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; viewer UI chrome + export headings localize. |
 
 ## No-Flag Menu

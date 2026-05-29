@@ -135,6 +135,29 @@ def build_edges(nodes: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return edges
 
 
+def _assemble_graph(artifacts: List[Dict[str, Any]], product_dir: Path, root: Path) -> Dict[str, Any]:
+    """Build the graph JSON from already-parsed artifacts. Split from build_graph
+    so callers that also need the raw artifacts (export / board / explorer) can
+    parse docs/product/ exactly once via build_graph_with_artifacts()."""
+    nodes = build_nodes(artifacts, product_dir)
+    edges = build_edges(nodes)
+    parse_errors = [{"file": a["file"], "error": a["error"]} for a in artifacts if not a["ok"]]
+    return {
+        "version": "1.0",
+        "generated_at": _now(),
+        "product": _product_meta(artifacts),
+        "nodes": nodes,
+        "edges": edges,
+        "risks": _risks(artifacts, product_dir),
+        "parse_errors": parse_errors,
+        "root_path": str(root),
+    }
+
+
+def _missing_dir_graph(root: Path) -> Dict[str, Any]:
+    return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "parse_errors": [], "missing_product_dir": True, "root_path": str(root)}
+
+
 def build_graph(root: Path) -> Dict[str, Any]:
     """Top-level: parse, build, return graph JSON shape per visualization-spec.md.
 
@@ -144,25 +167,36 @@ def build_graph(root: Path) -> Dict[str, Any]:
     """
     product_dir = root / "docs" / "product"
     if not product_dir.exists():
-        return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "parse_errors": [], "missing_product_dir": True, "root_path": str(root)}
-
+        return _missing_dir_graph(root)
     artifacts = load_artifacts(product_dir)
-    nodes = build_nodes(artifacts, product_dir)
-    edges = build_edges(nodes)
-    parse_errors = [{"file": a["file"], "error": a["error"]} for a in artifacts if not a["ok"]]
-    product_meta = _product_meta(artifacts)
-    risks = _risks(artifacts, product_dir)
+    return _assemble_graph(artifacts, product_dir, root)
 
-    return {
-        "version": "1.0",
-        "generated_at": _now(),
-        "product": product_meta,
-        "nodes": nodes,
-        "edges": edges,
-        "risks": risks,
-        "parse_errors": parse_errors,
-        "root_path": str(root),
-    }
+
+def build_graph_with_artifacts(root: Path):
+    """Return (graph, artifacts) parsing docs/product/ ONCE. build_graph re-parses
+    internally and discards the artifact list, so any caller that needs both the
+    graph and the raw artifacts (export, board, explorer) MUST use this to avoid a
+    redundant second full parse of every artifact file."""
+    product_dir = root / "docs" / "product"
+    if not product_dir.exists():
+        return _missing_dir_graph(root), []
+    artifacts = load_artifacts(product_dir)
+    return _assemble_graph(artifacts, product_dir, root), artifacts
+
+
+def index_artifacts(artifacts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Map artifact id -> parsed artifact, for ok top-level files (product/vision/
+    brd/prd/epic/story). Goals live inside brd.md and are not indexed here. Shared
+    by the digest assembler and the board/explorer viewers (single id->artifact
+    loop instead of one re-implementation per renderer)."""
+    out: Dict[str, Dict[str, Any]] = {}
+    for a in artifacts:
+        if not a.get("ok"):
+            continue
+        aid = (a.get("frontmatter") or {}).get("id")
+        if aid:
+            out[str(aid)] = a
+    return out
 
 
 def _product_meta(artifacts: List[Dict[str, Any]]) -> Dict[str, Any]:

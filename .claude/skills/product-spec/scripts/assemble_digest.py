@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-assemble_digest — deterministic, script-owned core shared by F1 export and the
-F2 board/explorer viewers. Turns (selection + layer-filter + depth) into an
-ordered digest model. No HTML, no LLM, no I/O beyond the parsed artifacts.
+assemble_digest — deterministic, script-owned core for the F1 `--export` doc.
+Turns (selection + layer-filter + depth) into an ordered digest model. No HTML,
+no LLM, no I/O beyond the parsed artifacts.
+
+`build_digest` powers `--export` only. The F2 board/explorer viewers build their
+OWN payloads (render_board / render_explorer) and do not call build_digest; the
+sole thing they once shared — the `LAYER_FOR_TYPE` map — they no longer use
+either (they filter by artifact type via render_ascii._filter_by_layers). Keep
+this module export-scoped; do not re-unify the viewer payloads onto it.
 
 Digest element: {id, type, role, verbosity, title, frontmatter, body, ac} where
 role = ancestor|target|descendant|warning, verbosity = full|struct, type =
@@ -17,13 +23,17 @@ the assembler loads them from the parsed artifacts and PREPENDS them as
 """
 
 import re
-from typing import Any, Dict, List, Optional, Set
+from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from spec_graph import ancestors, downstream
+from spec_graph import index_artifacts
 
 
-# Each artifact type belongs to one --layers bucket. Goals live in the BRD, so
-# they share the `brd` layer; vision/prd/epic/story map to their own names.
+# Each artifact type belongs to one --export --layers bucket. Goals live in the
+# BRD, so they share the `brd` layer; vision/prd/epic/story map to their own
+# names. NOTE this is the EXPORT doc-layer vocabulary; the board/explorer viewers
+# filter by artifact TYPE directly (see render_ascii._filter_by_layers) so their
+# `--layers goal` matches the CLI help — the two surfaces intentionally differ.
 LAYER_FOR_TYPE = {
     "vision": "vision",
     "brd": "brd",
@@ -34,27 +44,19 @@ LAYER_FOR_TYPE = {
 }
 ALL_LAYERS = ("vision", "brd", "prd", "epic", "story")
 
+# Selection IDs that resolve to a context SINGLETON, not an edge-walk target.
+# "BRD" is not a graph node (brd.md expands to goal nodes) so it is matched by
+# the literal id; vision/product ARE nodes but are surfaced as singletons.
+_SINGLETON_TYPES = ("vision", "brd", "product")
+
 # Hierarchy rank for the canonical sort. `_warning` sorts to the very front so
-# provenance notes lead the doc; the rest follow top-down.
-TYPE_RANK = {"_warning": -1, "vision": 0, "brd": 1, "goal": 2, "prd": 3, "epic": 4, "story": 5}
+# provenance notes lead the doc; PRODUCT context (when explicitly exported) leads
+# the spec body, then top-down.
+TYPE_RANK = {"_warning": -1, "product": 0, "vision": 1, "brd": 2, "goal": 3, "prd": 4, "epic": 5, "story": 6}
 
 # Per-type verbosity at --depth context: ancestors/singletons are compacted,
 # the target and its descendants render in full.
 _CONTEXT_FULL_ROLES = ("target", "descendant")
-
-
-def _index_artifacts(artifacts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    """Map artifact id -> parsed artifact, for top-level files (vision/brd/prd/
-    epic/story). Goals are inside brd.md and are not indexed here."""
-    out: Dict[str, Dict[str, Any]] = {}
-    for a in artifacts:
-        if not a.get("ok"):
-            continue
-        fm = a.get("frontmatter") or {}
-        aid = fm.get("id")
-        if aid:
-            out[str(aid)] = a
-    return out
 
 
 def _find_by_type(artifacts: List[Dict[str, Any]], art_type: str) -> Optional[Dict[str, Any]]:
@@ -67,14 +69,63 @@ def _find_by_type(artifacts: List[Dict[str, Any]], art_type: str) -> Optional[Di
     return None
 
 
-def _resolve_targets(select: str, graph: Dict[str, Any]) -> Set[str]:
-    """Resolve `all` | single ID | comma-list into a set of graph node IDs
-    (goals/PRDs/epics/stories only — vision/BRD are singletons)."""
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+_SPEC_TYPES = ("goal", "prd", "epic", "story")
+
+
+def _resolve_selection(select: str, graph: Dict[str, Any]) -> Tuple[Set[str], Set[str], List[str]]:
+    """Classify a `--export` selection into:
+      • spec_targets   — goal/PRD/epic/story node IDs to walk (ancestors+descendants)
+      • singleton_types — vision/brd/product requested as CONTEXT (not edge-walked)
+      • unresolved     — requested IDs that match nothing (typos / wrong case)
+
+    `all` selects every spec node and no explicit singletons. Splitting context
+    artifacts (vision/brd/product) OUT of the target set is what stops `--export
+    VISION` double-rendering vision (once as target, once as the prepended
+    singleton); reporting `unresolved` is what lets the caller fail loudly instead
+    of writing a silently-empty doc (CLAUDE.md: no silent failure)."""
+    type_by_id = {n["id"]: n.get("type") for n in graph["nodes"]}
     if select == "all":
-        return {n["id"] for n in graph["nodes"] if n["type"] in ("goal", "prd", "epic", "story")}
-    wanted = [s.strip() for s in select.split(",") if s.strip()]
-    return {w for w in wanted if w in nodes_by_id}
+        return ({nid for nid, t in type_by_id.items() if t in _SPEC_TYPES}, set(), [])
+
+    spec: Set[str] = set()
+    singles: Set[str] = set()
+    unresolved: List[str] = []
+    for w in [s.strip() for s in select.split(",") if s.strip()]:
+        t = type_by_id.get(w)
+        if t in _SPEC_TYPES:
+            spec.add(w)
+        elif t in ("vision", "product"):
+            singles.add(t)
+        elif w == "BRD" or t == "brd":
+            singles.add("brd")
+        else:
+            unresolved.append(w)
+    return spec, singles, unresolved
+
+
+def _adjacency(graph: Dict[str, Any]) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    """Build the parents and children edge indices ONCE. ancestors()/downstream()
+    each rebuild this per call, so walking N targets was O(N·edges); building it
+    once here and reusing it for every target makes the digest O(N + edges)."""
+    parents: Dict[str, List[str]] = defaultdict(list)
+    children: Dict[str, List[str]] = defaultdict(list)
+    for e in graph["edges"]:
+        parents[e["from"]].append(e["to"])
+        children[e["to"]].append(e["from"])
+    return parents, children
+
+
+def _reach(adj: Dict[str, List[str]], start: str) -> Set[str]:
+    """Transitive closure of `start` over the given adjacency (parents or children)."""
+    out: Set[str] = set()
+    stack = list(adj.get(start, []))
+    while stack:
+        n = stack.pop()
+        if n in out:
+            continue
+        out.add(n)
+        stack.extend(adj.get(n, []))
+    return out
 
 
 def _verbosity(role: str, depth: str) -> str:
@@ -124,6 +175,15 @@ def _singleton_entry(artifact: Dict[str, Any], art_type: str, depth: str) -> Dic
     }
 
 
+def _in_layers(etype: str, layer_set: Set[str]) -> bool:
+    """Whether an entry of `etype` survives the --layers filter. PRODUCT context is
+    layer-agnostic: it only ever enters the digest when explicitly `--export`ed, so
+    a `--layers` subset must not silently strip it."""
+    if etype == "product":
+        return True
+    return LAYER_FOR_TYPE.get(etype) in layer_set
+
+
 def build_digest(
     graph: Dict[str, Any],
     artifacts: List[Dict[str, Any]],
@@ -131,17 +191,32 @@ def build_digest(
     layers: Optional[List[str]] = None,
     depth: str = "context",
 ) -> List[Dict[str, Any]]:
-    """Build the ordered digest model. See module docstring for the contract."""
+    """Build the ordered digest model. See module docstring for the contract.
+
+    Raises ValueError when the selection names IDs that resolve to nothing, or
+    resolves to nothing at all (except `--export all`, which is allowed to be
+    empty on a fresh spec) — so the export path fails loudly instead of writing a
+    silently-empty doc (CLAUDE.md: no silent failure)."""
     layer_set = set(layers) if layers else set(ALL_LAYERS)
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    art_by_id = _index_artifacts(artifacts)
+    art_by_id = index_artifacts(artifacts)
 
-    targets = _resolve_targets(select, graph)
+    targets, singleton_types, unresolved = _resolve_selection(select, graph)
+    if unresolved:
+        valid = sorted(set(nodes_by_id) | {"VISION", "BRD", "PRODUCT"})
+        raise ValueError(
+            f"--export: unresolved selection {sorted(unresolved)} — no such artifact. "
+            f"Available IDs: {valid}"
+        )
+    if select != "all" and not targets and not singleton_types:
+        raise ValueError("--export: selection resolved to no artifacts (empty or whitespace).")
+
+    parents, children = _adjacency(graph)
     ctx_ids: Set[str] = set()
     desc_ids: Set[str] = set()
     for t in targets:
-        ctx_ids |= ancestors(graph, t)
-        desc_ids |= downstream(graph, t)
+        ctx_ids |= _reach(parents, t)
+        desc_ids |= _reach(children, t)
     ctx_ids -= targets
     desc_ids -= targets
     desc_ids -= ctx_ids
@@ -159,36 +234,56 @@ def build_digest(
     _add(ctx_ids, "ancestor")
     _add(desc_ids, "descendant")
 
-    # Vision + BRD context = singletons. Prepend them whenever their layer is
-    # included AND the selection actually contains spec content below them
-    # (goals/PRDs/epics/stories) — i.e. there is something to contextualize.
+    # Context singletons (PRODUCT/Vision/BRD). They are NOT edge-walk targets — a
+    # singleton is prepended once when (a) it was explicitly selected, or (b) the
+    # selection holds spec content below it (so there is something to contextualize).
+    # Dedup against ids already present so `--export VISION` cannot render twice.
+    present_ids = {e["id"] for e in entries}
     has_spec_content = bool(targets | ctx_ids | desc_ids)
-    if has_spec_content:
-        vision_art = _find_by_type(artifacts, "vision")
-        if vision_art and "vision" in layer_set:
-            entries.append(_singleton_entry(vision_art, "vision", depth))
-        brd_art = _find_by_type(artifacts, "brd")
-        if brd_art and "brd" in layer_set:
-            entries.append(_singleton_entry(brd_art, "brd", depth))
 
-    # --layers precedence (owner-locked, D2): an excluded type is dropped even
-    # if it is the selected root's own type. When that happens, emit a
-    # provenance warning so the read-once doc is not silently context-less.
+    def _add_singleton(art_type: str, requested: bool) -> None:
+        if not requested:
+            return
+        art = _find_by_type(artifacts, art_type)
+        if art is None:
+            return
+        entry = _singleton_entry(art, art_type, depth)
+        if entry["id"] in present_ids:
+            return
+        # --layers gating is applied uniformly by the final `kept` filter below;
+        # no per-singleton layer guard here (it was redundant with that filter).
+        entries.append(entry)
+        present_ids.add(entry["id"])
+
+    _add_singleton("product", "product" in singleton_types)
+    _add_singleton("vision", has_spec_content or "vision" in singleton_types)
+    _add_singleton("brd", has_spec_content or "brd" in singleton_types)
+
+    # --layers precedence (owner-locked, D2): an excluded type is dropped even if
+    # it is a selected root's own type. Emit ONE provenance warning per excluded
+    # TYPE (not per node) so `--export all --layers prd` cannot flood the header
+    # with a near-identical blockquote for every goal/epic/story.
     warnings: List[Dict[str, Any]] = []
-    for tid in sorted(t for t in targets if LAYER_FOR_TYPE.get(nodes_by_id[t]["type"]) not in layer_set):
-        ntype = nodes_by_id[tid]["type"]
+    excluded: Dict[str, List[str]] = defaultdict(list)
+    for t in targets:
+        ntype = nodes_by_id[t]["type"]
+        if LAYER_FOR_TYPE.get(ntype) not in layer_set:
+            excluded[ntype].append(t)
+    for ntype in sorted(excluded):
+        ids = sorted(excluded[ntype])
         warnings.append({
-            "id": tid, "type": "_warning", "role": "warning", "verbosity": "struct",
+            "id": ntype, "type": "_warning", "role": "warning", "verbosity": "struct",
             "title": "layers-excluded-root",
             "frontmatter": {}, "body": "",
             "detail": (
-                f"--layers {sorted(layer_set)} excluded the {ntype.upper()} context "
-                f"for the selected root {tid}; the doc shows only the included layers."
+                f"--layers {sorted(layer_set)} excluded the {ntype.upper()} layer; "
+                f"{len(ids)} selected {ntype}(s) appear only via their included "
+                f"sub-layers (e.g. {ids[0]})."
             ),
             "ac": None,
         })
 
-    kept = [e for e in entries if LAYER_FOR_TYPE.get(e["type"]) in layer_set]
+    kept = [e for e in entries if _in_layers(e["type"], layer_set)]
     kept.extend(warnings)
     kept.sort(key=lambda e: (TYPE_RANK.get(e["type"], 99), str(e["id"])))
     return kept

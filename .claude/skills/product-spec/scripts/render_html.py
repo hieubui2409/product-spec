@@ -21,6 +21,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from spec_graph import _now
+
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = SKILL_ROOT / "assets" / "templates"
@@ -132,7 +134,10 @@ def _escape(s: str) -> str:
 # _viewer-head.html as psRenderMarkdown). The server NEVER injects body HTML; it
 # ships bodies as an inert JSON data island. Two enumerated sinks (red-team H3):
 #   1. the embedded-JSON body channel  → escaped via embed_spec_data()
-#   2. attribute-context values (data-*, aria-label, id, href) → _escape()/_safe_href()
+#   2. attribute-context values (data-*, aria-label, id) → built client-side via
+#      safe DOM APIs (textContent / dataset) and/or _escape() for server tokens.
+#      There is no href channel: bodies are sanitized by DOMPurify, metadata is
+#      set via textContent/dataset — no renderer ever emits a spec-derived href.
 
 
 # The sanitize chokepoint, shipped INSIDE the {{markdown_libs}} block (body views
@@ -142,6 +147,20 @@ _BODY_RENDER_JS = (
     "\nfunction psRenderMarkdown(md){"
     "if(window.marked&&window.DOMPurify){return window.DOMPurify.sanitize(window.marked.parse(String(md==null?'':md)));}"
     "return '<pre class=\"ps-fallback\">'+psEscapeHtml(md)+'</pre>';}"
+    # Shared detail-panel controls for board + explorer. Defined HERE (body-view
+    # only) — not in the shared head — because they call psRenderMarkdown, so the
+    # 9 legacy graph views stay free of any sanitizer reference (H4 gating). Each
+    # body shell registers its id->record map via psRegisterDetail(byId); inert in
+    # the linear export (it has no #ps-detail). Body is the only innerHTML sink.
+    "\nvar psDetailById={};"
+    "\nfunction psRegisterDetail(byId){psDetailById=byId||{};}"
+    "\nwindow.psOpenDetail=function(id){var c=psDetailById[id];if(!c){return;}"
+    "var t=document.getElementById('ps-detail-title'),b=document.getElementById('ps-detail-body'),d=document.getElementById('ps-detail');"
+    "if(!t||!b||!d){return;}"
+    "t.textContent=c.id+(c.title?' \\u2014 '+c.title:'');"
+    "b.innerHTML=psRenderMarkdown(c.body||'_(no body)_');d.hidden=false;};"
+    "\nwindow.psCloseDetail=function(){var d=document.getElementById('ps-detail');if(d){d.hidden=true;}};"
+    "\ndocument.addEventListener('keydown',function(e){if(e.key==='Escape'){psCloseDetail();}});"
 )
 
 
@@ -165,26 +184,47 @@ def viewer_head() -> str:
     return VIEWER_HEAD_PARTIAL.read_text(encoding="utf-8")
 
 
-_SAFE_HREF_SCHEMES = ("http://", "https://", "mailto:")
-
-
-def _safe_href(url: str) -> str:
-    """Allowlist hrefs: intra-doc `#anchor` + http(s)/mailto only. Everything
-    else (notably `javascript:` / `data:`) collapses to `#`. The result is
-    additionally _escape()'d for attribute context by the caller."""
-    u = (url or "").strip()
-    low = u.lower()
-    if u.startswith("#") or any(low.startswith(s) for s in _SAFE_HREF_SCHEMES):
-        return u
-    return "#"
-
-
 def embed_spec_data(payload: Any) -> str:
-    """Serialize `payload` into an inert JSON data island. `</` → `<\\/` keeps a
-    body value of `</script>` from breaking out of the surrounding tag; inside
-    JSON, `<\\/` is a valid escape that JSON.parse decodes straight back to `</`."""
-    blob = json.dumps(payload, ensure_ascii=False, sort_keys=True).replace("</", "<\\/")
+    """Serialize `payload` into an inert JSON data island.
+
+    Every literal `<` is rewritten to its JSON `\\u003c` escape. This neutralizes
+    ALL three script-data hazards at once — `</script>` (breakout), `<script` and
+    the `<!--` comment primer (which together drive the WHATWG script-data-double-
+    escaped state, where the island's own `</script>` no longer closes the tag and
+    the page-bootstrap script is swallowed → a blank render from valid PO prose).
+    `\\u003c` round-trips through JSON.parse straight back to `<`, so the rendered
+    body is unchanged; only the raw transport is neutered. (HTML entities like
+    `&#x3c;` would NOT work here: a <script> element's text is not entity-decoded,
+    so the body would show the literal `&#x3c;`.)"""
+    blob = json.dumps(payload, ensure_ascii=False, sort_keys=True).replace("<", "\\u003c")
     return f'<script type="application/json" id="ps-spec-data">{blob}</script>'
+
+
+def product_name(graph: Dict[str, Any]) -> str:
+    """The product display name, or `(unnamed)` — one source for every renderer."""
+    return (graph.get("product") or {}).get("name") or "(unnamed)"
+
+
+def chrome_values(graph: Dict[str, Any], lang: str, title: str) -> Dict[str, str]:
+    """The body-shell token preamble shared by export / board / explorer:
+    `lang_attr`, escaped `title`, escaped `product_name`, `generated_at`. Pairs
+    with body_render_values() (which supplies viewer_head/markdown_libs/spec_data)."""
+    return {
+        "lang_attr": lang,
+        "title": _escape(title),
+        "product_name": _escape(product_name(graph)),
+        "generated_at": _now(),
+    }
+
+
+def assemble_body_shell(shell: str, payload: Any, graph: Dict[str, Any],
+                        lang: str, title: str) -> str:
+    """Assemble one body-bearing shell: body-render substrate + chrome preamble →
+    single-pass substitute. Collapses the `read → values → update → substitute`
+    plumbing that board/explorer (and export) otherwise copy-paste verbatim."""
+    values = body_render_values(payload)
+    values.update(chrome_values(graph, lang, title))
+    return substitute(shell, values)
 
 
 def markdown_libs_banner() -> str:
@@ -220,8 +260,7 @@ def assemble(
     """Build the full HTML page string."""
     shell = SHELL_PATH.read_text(encoding="utf-8")
     title = f"{view.title()} View"
-    product_name = (graph.get("product") or {}).get("name") or "(unnamed)"
-    generated_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z"
+    generated_at = _now()
     footer = (
         "Self-contained HTML. To re-render: "
         "python3 visualize.py --view "
@@ -247,7 +286,7 @@ def assemble(
         "lang": lang,
         "title": title,
         "generated_at": generated_at,
-        "product_name": _escape(product_name),
+        "product_name": _escape(product_name(graph)),
         "view": view,
         "view_body": _render_view_body(view_format, view_text),
         "mermaid_js": mermaid_js_payload,

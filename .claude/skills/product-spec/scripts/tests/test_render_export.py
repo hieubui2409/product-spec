@@ -6,8 +6,12 @@ inert JSON island rendered through the Phase-2 sanitize chokepoint.
 """
 
 import json
+import shutil
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -98,6 +102,26 @@ def test_compact_mode_struct_has_no_llm_markers():
     assert "<!-- COMPACT:" not in doc
 
 
+# ---------- --compact-mode llm + --format html is rejected (F5) ----------
+
+def test_compact_llm_with_html_is_rejected(tmp_path):
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    with pytest.raises(ValueError):
+        render_export.write_export(proj, "PRD-AUTH", None, "context", "llm", "html", "en")
+    # md + llm remains valid (no raise).
+    out = render_export.write_export(proj, "PRD-AUTH", None, "context", "llm", "md", "en")
+    assert out.suffix == ".md"
+
+
+# ---------- --export VISION renders one section / one anchor (F8) ----------
+
+def test_export_vision_single_anchor():
+    doc = _doc(select="VISION", depth="context")
+    assert doc.count('<a id="vision">') == 1
+    assert doc.count("(#vision)") == 1  # one TOC entry too
+
+
 # ---------- html path: sanitized + self-contained ----------
 
 def test_html_doc_is_self_contained_and_embeds_inert_json():
@@ -112,9 +136,10 @@ def test_html_doc_is_self_contained_and_embeds_inert_json():
 def test_html_doc_neutralizes_body_xss_in_json_island():
     malicious = "# Title\n\n</script><script>alert(1)</script>\n"
     html = render_export.render_html_doc(malicious, "Acme Shop", _FIXED_TS)
-    # The breakout sequence must be neutralized inside the data island.
+    # The breakout sequence must be neutralized inside the data island: every
+    # `<` becomes the JSON < escape (round-trips via JSON.parse).
     assert "</script><script>alert(1)" not in html
-    assert "<\\/script>" in html
+    assert "\\u003c/script>" in html
 
 
 # ---------- file write: stem, stable hash, exports/ sandbox ----------
@@ -148,15 +173,35 @@ def test_write_export_html_opens_offline(tmp_path):
 
 # ---------- CLI ----------
 
-def test_cli_export_emits_written_json(tmp_path):
-    import shutil, subprocess
-    proj = tmp_path / "proj"
-    shutil.copytree(VALID, proj)
-    r = subprocess.run(
-        [sys.executable, str(SCRIPTS_DIR / "render_export.py"),
-         "--root", str(proj), "--export", "PRD-AUTH", "--format", "md"],
+def _run_export(proj, *extra):
+    return subprocess.run(
+        [sys.executable, str(SCRIPTS_DIR / "render_export.py"), "--root", str(proj), *extra],
         capture_output=True, text=True,
     )
+
+
+def test_cli_export_emits_written_json(tmp_path):
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    r = _run_export(proj, "--export", "PRD-AUTH", "--format", "md")
     assert r.returncode == 0, r.stderr
     payload = json.loads(r.stdout)
     assert payload["written"].startswith("docs/product/exports/")
+
+
+def test_cli_export_unresolved_id_exits_nonzero_and_writes_nothing(tmp_path):
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    r = _run_export(proj, "--export", "PRD-TYPO", "--format", "md")
+    assert r.returncode != 0
+    assert "PRD-TYPO" in r.stderr
+    exports = proj / "docs" / "product" / "exports"
+    assert not exports.exists() or not list(exports.glob("*")), "no doc on unresolved selection"
+
+
+def test_cli_export_llm_html_combo_exits_nonzero(tmp_path):
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    r = _run_export(proj, "--export", "PRD-AUTH", "--compact-mode", "llm", "--format", "html")
+    assert r.returncode != 0
+    assert "incompatible" in r.stderr.lower()

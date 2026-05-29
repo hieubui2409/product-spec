@@ -67,8 +67,7 @@ def test_viewer_head_failclose_has_no_cdn_sanitizer():
     head = render_html.viewer_head()
     # Fail-closed branch returns escaped <pre>, never a network sanitizer.
     assert "ps-fallback" in head
-    # No CDN host and no external script load. (The psSafeHref allowlist names the
-    # http(s)/mailto SCHEMES as comparison strings — that is not a network load.)
+    # No CDN host and no external script load.
     assert "cdn." not in head.lower()
     assert "<script src" not in head.lower()
 
@@ -80,9 +79,32 @@ def test_embed_spec_data_neutralizes_close_tag_breakout():
     blob = render_html.embed_spec_data(payload)
     # Must sit inside an inert application/json island.
     assert 'type="application/json"' in blob
-    # The breakout sequence must be neutralized: no raw </script> in the island.
+    # Every `<` in the payload is rewritten to the JSON < escape, so neither
+    # the breakout nor a re-opened <script> survives in the island body.
     assert "</script><script>" not in blob
-    assert "<\\/script>" in blob
+    assert "\\u003c/script>\\u003cscript>alert(1)\\u003c/script>" in blob
+
+
+def test_embed_spec_data_neutralizes_comment_primer_render_break():
+    # F10/R2: an unclosed `<!--` that mentions `<script` would, untreated, drive
+    # the WHATWG script-data-double-escaped state and swallow the page bootstrap
+    # (blank render). Escaping ALL `<` neutralizes the primer + the `<script`.
+    payload = {"PRD-X": {"body": "<!-- a stray <script tag mention, no close"}}
+    blob = render_html.embed_spec_data(payload)
+    # Inspect only the JSON body (between the wrapper's own <script ...> / </script>).
+    inner = blob[blob.index(">") + 1: blob.rindex("</script>")]
+    assert "<!--" not in inner and "<script" not in inner and "<" not in inner
+    assert "\\u003c!--" in inner and "\\u003cscript" in inner
+
+
+def test_embed_spec_data_round_trips_via_json_parse():
+    # < is a JSON escape that decodes straight back to `<`, so the rendered
+    # body is byte-unchanged — only the raw transport is neutered.
+    import json as _json
+    payload = {"PRD-X": {"body": "before </script> <!-- <script> after"}}
+    blob = render_html.embed_spec_data(payload)
+    inner = blob[blob.index(">") + 1: blob.rindex("</script>")]
+    assert _json.loads(inner) == payload
 
 
 def test_embed_spec_data_is_deterministic():
@@ -98,14 +120,6 @@ def test_escape_neutralizes_attribute_payload():
     # Quote + angle brackets escaped → cannot close the attribute or open a tag.
     assert '"' not in esc and "<" not in esc and ">" not in esc
     assert "&quot;" in esc and "&lt;script&gt;" in esc
-
-
-def test_safe_href_allows_anchor_and_https_blocks_javascript():
-    assert render_html._safe_href("#PRD-AUTH") == "#PRD-AUTH"
-    assert render_html._safe_href("https://example.com") == "https://example.com"
-    assert render_html._safe_href("javascript:alert(1)") == "#"
-    assert render_html._safe_href("JAVASCRIPT:alert(1)") == "#"
-    assert render_html._safe_href("data:text/html,<script>") == "#"
 
 
 # ---------- L12: fail closed when libs missing ----------

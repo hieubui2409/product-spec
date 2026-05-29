@@ -112,7 +112,7 @@ Scripts available:
 - `build_traceability_matrix.py` — render the story → epic → PRD → goal → metric matrix.
 - `generate_templates.py` — instantiate an artifact from `assets/templates/` with `{{token}}` substitution; allocates the next parent-scoped ID.
 - `visualize.py` — 11 views × 3 formats: the 9 graph views (ASCII/Mermaid/HTML) + the body-bearing `board` (kanban) and `explorer` (Tree/Flat-tabs/Table-tree), which default to `--format html`.
-- `assemble_digest.py` — shared deterministic assembler: (selection + `--layers` + `--depth`) → ordered digest model; Vision/BRD prepended as singletons. Powers `--export` and the body viewers.
+- `assemble_digest.py` — deterministic assembler for `--export`: (selection + `--layers` + `--depth`) → ordered digest model; Vision/BRD/PRODUCT prepended as singletons. Powers `--export` only — the `board`/`explorer` viewers build their own payloads and do not use `build_digest`.
 - `render_export.py` — F1 read-once Export (`--export`): one self-contained md or print-ready HTML doc under `docs/product/exports/`.
 - `render_board.py` / `render_explorer.py` — F2 viewer HTML writers (kanban / tri-mode explorer).
 - `install-vendor-mermaid.sh` / `install-vendor-markdown.sh` — one-time vendor of the Mermaid runtime and of marked + DOMPurify (the offline body-render sanitize chokepoint), called from `install.sh`.

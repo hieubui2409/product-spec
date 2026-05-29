@@ -18,32 +18,29 @@ from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
-from assemble_digest import LAYER_FOR_TYPE
+from spec_graph import index_artifacts
 from render_ascii import _BOARD_CARD_TYPES, _filter_by_layers, _is_deferred
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 EXPLORER_SHELL = SKILL_ROOT / "assets" / "templates" / "explorer-shell.html"
 
+# Sort rank only; the EMITTED per-item depth is recomputed from the reconciled
+# parent chain (see build_payload) so it stays correct after a --layers filter.
 _DEPTH_BY_TYPE = {"goal": 0, "prd": 1, "epic": 2, "story": 3}
 _LAYER_ORDER = ("goal", "prd", "epic", "story")
 _UI_KEYS = ("search", "status", "moscow", "persona", "layer", "all", "unassigned",
-            "no_results", "tree", "tabs", "table", "ac_count")
+            "no_results", "tree", "tabs", "table", "ac_count",
+            "goal", "prd", "epic", "story")
 
 
 def _maps(artifacts: List[Dict[str, Any]]):
     bodies: Dict[str, str] = {}
     ac_counts: Dict[str, int] = {}
-    for a in artifacts:
-        if not a.get("ok"):
-            continue
-        fm = a.get("frontmatter") or {}
-        aid = fm.get("id")
-        if not aid:
-            continue
-        bodies[str(aid)] = a.get("body") or ""
-        ac = fm.get("acceptance_criteria")
+    for aid, a in index_artifacts(artifacts).items():
+        bodies[aid] = a.get("body") or ""
+        ac = (a.get("frontmatter") or {}).get("acceptance_criteria")
         if isinstance(ac, list):
-            ac_counts[str(aid)] = len(ac)
+            ac_counts[aid] = len(ac)
     return bodies, ac_counts
 
 
@@ -74,12 +71,35 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "horizon": n.get("horizon") or "",
             "owner": n.get("owner") or "",
             "personas": n.get("personas") if isinstance(n.get("personas"), list) else [],
-            "layer": LAYER_FOR_TYPE.get(n.get("type")) or n.get("type"),
+            # Layer facet/tab key = artifact type (matches CLI help + the type
+            # badge); the Flat-tabs key comes from _LAYER_ORDER which is also type
+            # names, so a goal card now lands under the 'goal' tab (was empty when
+            # this carried the export bucket 'brd').
+            "layer": n.get("type"),
             "ac_count": ac_counts.get(nid, 0),
-            "depth": _DEPTH_BY_TYPE.get(n.get("type"), 0),
             "parent": par if par in present_ids else "",  # roots (goals) have no in-set parent
             "body": bodies.get(nid, ""),
         })
+
+    # Recompute depth from the RECONCILED parent chain (over present_ids) rather
+    # than the static per-type depth: after a --layers filter prunes intermediate
+    # ancestors, a story whose epic is gone becomes a root (parent=""), so Tree
+    # renders it at the root and Table-tree must indent it 0 too — otherwise the
+    # two modes disagree (Tree root vs Table indented under nothing).
+    parent_by_id = {it["id"]: it["parent"] for it in items}
+
+    def _depth(nid: str) -> int:
+        d = 0
+        seen: set = set()
+        p = parent_by_id.get(nid, "")
+        while p and p not in seen:
+            seen.add(p)
+            d += 1
+            p = parent_by_id.get(p, "")
+        return d
+
+    for it in items:
+        it["depth"] = _depth(it["id"])
 
     return {
         "items": items,
@@ -92,16 +112,8 @@ def assemble_explorer(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                       lang: str, filter_wont: bool, layers: Optional[List[str]]) -> str:
     payload = build_payload(graph, artifacts, lang, filter_wont, layers)
     shell = EXPLORER_SHELL.read_text(encoding="utf-8")
-    product_name = (graph.get("product") or {}).get("name") or "(unnamed)"
-    generated_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z"
-    values = render_html.body_render_values(payload)
-    values.update({
-        "lang_attr": lang,
-        "title": render_html._escape(f"Explorer — {product_name}"),
-        "product_name": render_html._escape(product_name),
-        "generated_at": generated_at,
-    })
-    return render_html.substitute(shell, values)
+    title = f"Explorer — {render_html.product_name(graph)}"
+    return render_html.assemble_body_shell(shell, payload, graph, lang, title)
 
 
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],

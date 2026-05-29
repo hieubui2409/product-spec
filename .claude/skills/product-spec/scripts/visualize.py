@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, load_artifacts
+from spec_graph import build_graph, build_graph_with_artifacts
 
 import render_ascii
 import render_mermaid
@@ -120,11 +120,12 @@ def _written_json(out: Path, root: Path) -> str:
 
 
 def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
-                        lang: str, filter_wont: bool, layers, group_by: str) -> int:
+                        artifacts, lang: str, filter_wont: bool, layers, group_by: str) -> int:
     """Render a body-bearing view (board / explorer). html → its own writer;
     ascii → its ascii renderer; mermaid → ascii fallback with a stderr note
-    (these views carry no Mermaid by design — red-team M8)."""
-    artifacts = load_artifacts(root / "docs" / "product")
+    (these views carry no Mermaid by design — red-team M8). `artifacts` is parsed
+    once by the caller alongside `graph` (build_graph_with_artifacts) — do NOT
+    re-load here (that re-parsed every file a second time)."""
     if fmt == "mermaid":
         print(f"note: '{view}' has no Mermaid form; showing ascii fallback.", file=sys.stderr)
         fmt = "ascii"
@@ -172,8 +173,9 @@ def main() -> int:
     ap.add_argument("--diff", dest="snapshot", default=None, help=argparse.SUPPRESS)
     ap.add_argument(
         "--filter-wont", action="store_true",
-        help="hide deferred items (moscow=wont or scope=out) from tree/roadmap/persona. "
-             "Default keeps them visible with a `*` marker.",
+        help="hide deferred items (moscow=wont or scope=out) from "
+             "tree/roadmap/persona/board/explorer. Default keeps them visible "
+             "(a `*` marker on graph views; a card on board/explorer).",
     )
     args = ap.parse_args()
 
@@ -182,14 +184,19 @@ def main() -> int:
     layers = [s.strip() for s in args.layers.split(",") if s.strip()] if args.layers else None
 
     root = Path(args.root).resolve()
-    graph = build_graph(root)
+    # Body views need the parsed artifacts (bodies); parse docs/product/ ONCE via
+    # build_graph_with_artifacts instead of build_graph + a second load_artifacts.
+    if args.view in BODY_VIEWS:
+        graph, artifacts = build_graph_with_artifacts(root)
+    else:
+        graph = build_graph(root)
     baseline = _load_baseline(root, args.snapshot) if args.view == "delta" else None
 
     # Body views own their html writer and have no Mermaid form — dispatch them
     # BEFORE the generic ascii/mermaid/<pre> branches so they never render as a
     # <pre> dump or AttributeError on getattr(render_mermaid, "board").
     if args.view in BODY_VIEWS:
-        return _dispatch_body_view(args.view, fmt, root, graph, args.lang, args.filter_wont, layers, args.group_by)
+        return _dispatch_body_view(args.view, fmt, root, graph, artifacts, args.lang, args.filter_wont, layers, args.group_by)
 
     if fmt == "ascii":
         body = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
