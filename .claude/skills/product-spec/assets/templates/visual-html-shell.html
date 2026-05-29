@@ -2,28 +2,33 @@
 <html lang="{{lang}}">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
+  {{viewer_head}}
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 2rem; max-width: 1100px; margin: 0 auto; color: #222; }
-    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-    .meta { color: #666; font-size: 0.85rem; margin-bottom: 1.5rem; }
-    .diagram { background: #fafafa; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px; overflow: auto; }
-    pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+    /* Legacy graph-view specifics layered on the shared design system. */
+    .diagram { overflow: auto; }
     .controls { margin-bottom: 0.75rem; }
-    .controls button { padding: 4px 10px; margin-right: 6px; cursor: pointer; }
-    .note { color: #888; font-size: 0.8rem; margin-top: 1.5rem; }
+    .controls button { padding: 4px 10px; margin-right: 6px; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+    /* Make Mermaid diagram text follow the light/dark theme (it hardcodes dark
+       ink otherwise, illegible in dark mode). */
+    .mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid span, .mermaid text { color: var(--text) !important; fill: var(--text) !important; }
+    .mermaid .edgeLabel { background: var(--surface) !important; }
   </style>
 </head>
 <body>
-  <h1>{{title}}</h1>
-  <div class="meta">Generated {{generated_at}} · Product: {{product_name}} · View: {{view}}</div>
-  <div class="controls">
-    <button onclick="zoomIn()">Zoom +</button>
-    <button onclick="zoomOut()">Zoom -</button>
-    <button onclick="resetZoom()">Reset</button>
+  <button class="ps-toggle" onclick="psToggleTheme()" aria-label="Toggle light/dark theme" title="Toggle theme">☾</button>
+  <div class="ps-wrap">
+    <h1>{{title}}</h1>
+    <div class="ps-meta">Generated {{generated_at}} · Product: {{product_name}} · View: {{view}}</div>
+    <div class="controls">
+      <button onclick="zoomIn()">Zoom +</button>
+      <button onclick="zoomOut()">Zoom -</button>
+      <button onclick="resetZoom()">Reset</button>
+    </div>
+    <div class="diagram ve-card ve-card--recessed" id="diagram">{{view_body}}</div>
+    <p class="ps-meta">{{footer_note}}</p>
   </div>
-  <div class="diagram" id="diagram">{{view_body}}</div>
-  <p class="note">{{footer_note}}</p>
   <script>
 {{mermaid_js}}
   </script>

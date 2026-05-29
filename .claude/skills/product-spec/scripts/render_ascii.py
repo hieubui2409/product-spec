@@ -12,9 +12,10 @@ PO can see at a glance which nodes are out-of-scope-but-still-tracked. The
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
+from assemble_digest import LAYER_FOR_TYPE
 
 
 def _is_deferred(node: Dict[str, Any]) -> bool:
@@ -294,6 +295,68 @@ def risk(graph: Dict[str, Any]) -> str:
     cols = ["low", "med", "high"]
     rows = [[r] + [str(counts[r].get(c, 0)) for c in cols] for r in rows_order]
     return _grid("Impact \\ Lik", cols, rows)
+
+
+def _filter_by_layers(nodes: List[Dict[str, Any]], layers: Optional[List[str]]) -> List[Dict[str, Any]]:
+    """Keep only nodes whose type's --layers bucket is selected. `layers` None or
+    empty → keep all. Shared by the ASCII board and the html board/explorer so
+    `--layers` filters cards identically everywhere (single source of truth)."""
+    if not layers:
+        return list(nodes)
+    want = set(layers)
+    return [n for n in nodes if LAYER_FOR_TYPE.get(n.get("type")) in want]
+
+
+_BOARD_GROUP_ORDER = {
+    "status": ["draft", "review", "approved"],
+    "horizon": ["now", "next", "later"],
+    "moscow": ["must", "should", "could", "wont"],
+}
+_BOARD_CARD_TYPES = ("goal", "prd", "epic", "story")
+_LOCALIZED_COLS = {"now", "next", "later", "must", "should", "could", "wont", "unassigned"}
+
+
+def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
+          filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
+    """Kanban-style grouped lists: columns = the chosen group field, cards =
+    goal/PRD/epic/story artifacts. Deterministic (canonical column order, sorted
+    IDs). `--layers` filters cards; `filter_wont` drops deferred items."""
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    cards = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
+    cards = _filter_by_layers(cards, layers)
+    if filter_wont:
+        cards = [n for n in cards if not _is_deferred(n)]
+
+    groups: Dict[str, List[str]] = defaultdict(list)
+    for n in cards:
+        v = n.get(group_by)
+        key = _hashable(v) if v not in (None, "") else "unassigned"
+        groups[key].append(n["id"])
+
+    order = _BOARD_GROUP_ORDER.get(group_by, [])
+    cols = list(order)
+    cols += sorted(k for k in groups if k not in order and k != "unassigned")
+    if "unassigned" in groups:
+        cols.append("unassigned")
+
+    lines = [f"## {label('board', lang).upper()} — {group_by}"]
+    for c in cols:
+        items = sorted(groups.get(c, []))
+        header = label(c, lang) if c in _LOCALIZED_COLS else c
+        lines.append(f"### {header} ({len(items)})")
+        if items:
+            for it in items:
+                lines.append(f"  - {_mark(nodes_by_id.get(it, {}), it)}")
+        else:
+            lines.append("  (empty)")
+    return "\n".join(lines)
+
+
+def explorer(graph: Dict[str, Any], lang: str = "en",
+             filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
+    """ASCII fallback for `--viz explorer` — delegates to the existing tree
+    renderer (the explorer's interactive modes are an html-only affordance)."""
+    return tree(graph, lang=lang, filter_wont=filter_wont)
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:

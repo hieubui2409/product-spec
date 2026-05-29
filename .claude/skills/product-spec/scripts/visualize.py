@@ -20,17 +20,23 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph
+from spec_graph import build_graph, load_artifacts
 
 import render_ascii
 import render_mermaid
 import render_html
+import render_board
+import render_explorer
 
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "delta")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "delta", "board", "explorer")
 FORMATS = ("ascii", "mermaid", "html")
+# Body-bearing views render artifact bodies + own their html writer; they default
+# to --format html (the 9 graph views default to ascii) and have NO Mermaid form
+# (a --format mermaid request falls back to their ascii renderer with a note).
+BODY_VIEWS = ("board", "explorer")
 
 
 def _render_ascii(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
@@ -108,12 +114,55 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
     return _read_snapshot(target)
 
 
+def _written_json(out: Path, root: Path) -> str:
+    rel = str(out.relative_to(root)) if out.is_relative_to(root) else str(out)
+    return json.dumps({"written": rel}, indent=2)
+
+
+def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
+                        lang: str, filter_wont: bool, layers, group_by: str) -> int:
+    """Render a body-bearing view (board / explorer). html → its own writer;
+    ascii → its ascii renderer; mermaid → ascii fallback with a stderr note
+    (these views carry no Mermaid by design — red-team M8)."""
+    artifacts = load_artifacts(root / "docs" / "product")
+    if fmt == "mermaid":
+        print(f"note: '{view}' has no Mermaid form; showing ascii fallback.", file=sys.stderr)
+        fmt = "ascii"
+
+    if view == "board":
+        if fmt == "html":
+            out = render_board.write(root, graph, artifacts, group_by=group_by, lang=lang,
+                                     filter_wont=filter_wont, layers=layers)
+            print(_written_json(out, root))
+            return 0
+        print(render_ascii.board(graph, group_by=group_by, lang=lang, filter_wont=filter_wont, layers=layers))
+        return 0
+
+    if view == "explorer":
+        if fmt == "html":
+            out = render_explorer.write(root, graph, artifacts, lang=lang,
+                                        filter_wont=filter_wont, layers=layers)
+            print(_written_json(out, root))
+            return 0
+        print(render_ascii.explorer(graph, lang=lang, filter_wont=filter_wont, layers=layers))
+        return 0
+
+    raise SystemExit(f"unknown body view: {view}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     ap.add_argument("--view", required=True, choices=VIEWS)
-    ap.add_argument("--format", default="ascii", choices=FORMATS)
+    # default None → resolved per view: body views (board/explorer) → html, the
+    # 9 graph views → ascii (preserves their long-standing default).
+    ap.add_argument("--format", default=None, choices=FORMATS)
     ap.add_argument("--lang", default="en", choices=["en", "vi"])
+    ap.add_argument("--group-by", dest="group_by", default="status",
+                    choices=["status", "horizon", "moscow"],
+                    help="board: column grouping field (default status).")
+    ap.add_argument("--layers", default=None,
+                    help="board: comma subset of goal,prd,epic,story to show as cards.")
     ap.add_argument(
         "--snapshot", default=None,
         help="path or filename of a baseline snapshot in .snapshots/ "
@@ -128,16 +177,26 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    # Resolve the per-view default format.
+    fmt = args.format or ("html" if args.view in BODY_VIEWS else "ascii")
+    layers = [s.strip() for s in args.layers.split(",") if s.strip()] if args.layers else None
+
     root = Path(args.root).resolve()
     graph = build_graph(root)
     baseline = _load_baseline(root, args.snapshot) if args.view == "delta" else None
 
-    if args.format == "ascii":
+    # Body views own their html writer and have no Mermaid form — dispatch them
+    # BEFORE the generic ascii/mermaid/<pre> branches so they never render as a
+    # <pre> dump or AttributeError on getattr(render_mermaid, "board").
+    if args.view in BODY_VIEWS:
+        return _dispatch_body_view(args.view, fmt, root, graph, args.lang, args.filter_wont, layers, args.group_by)
+
+    if fmt == "ascii":
         body = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
         print(body)
         return 0
 
-    if args.format == "mermaid":
+    if fmt == "mermaid":
         body = _render_mermaid(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
         print(body)
         return 0

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="{{lang_attr}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  {{viewer_head}}
+  <style>
+    .ps-modes{display:flex;gap:.4rem;margin-bottom:.75rem;}
+    .ps-modes button{font-size:.82rem;padding:.3rem .8rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;}
+    .ps-modes button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);}
+    .mode[hidden]{display:none;}
+    details.tnode{margin:.15rem 0;}
+    details.tnode>summary{cursor:pointer;padding:.3rem .4rem;border-radius:6px;list-style:none;}
+    details.tnode>summary:hover{background:var(--recessed);}
+    .tnode .tkids{margin-left:1.1rem;border-left:1px solid var(--border);padding-left:.6rem;}
+    .open-body{font-size:.72rem;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--accent);cursor:pointer;margin-left:.4rem;padding:0 .45rem;}
+    .tabs-bar{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;}
+    .tabs-bar button{font-size:.8rem;padding:.25rem .7rem;border:1px solid var(--border);border-radius:6px 6px 0 0;background:var(--surface);color:var(--muted);cursor:pointer;}
+    .tabs-bar button[aria-pressed="true"]{color:var(--text);border-bottom-color:var(--surface);font-weight:600;}
+    .tablist .ve-card{margin:.5rem 0;cursor:pointer;}
+    table.treegrid{width:100%;border-collapse:collapse;font-size:.85rem;}
+    table.treegrid th,table.treegrid td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;}
+    table.treegrid th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.72rem;letter-spacing:.03em;}
+    table.treegrid .rowtoggle{background:none;border:none;cursor:pointer;color:var(--accent);font-size:.9rem;}
+    .detailrow td{background:var(--recessed);}
+    @media print{.ps-modes,.tabs-bar{display:none;} .mode[hidden]{display:block!important;}}
+  </style>
+</head>
+<body>
+  <button class="ps-toggle" onclick="psToggleTheme()" aria-label="Toggle light/dark theme" title="Toggle theme">☾</button>
+  <div class="ps-wrap">
+    <h1>{{title}}</h1>
+    <div class="ps-meta">Generated {{generated_at}} · Product: {{product_name}}</div>
+    {{libs_banner}}
+    <div class="ps-modes" id="ps-modes" role="tablist"></div>
+    <input class="ps-search" id="ps-search" type="search" autocomplete="off">
+    <div class="ps-facets" id="ps-facets"></div>
+    <div id="ps-view-tree" class="mode"></div>
+    <div id="ps-view-tabs" class="mode" hidden></div>
+    <div id="ps-view-table" class="mode" hidden></div>
+  </div>
+  <aside class="ps-detail" id="ps-detail" hidden aria-label="Artifact detail" style="position:fixed;top:0;right:0;width:min(34rem,92vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:1.2rem 1.4rem;overflow:auto;z-index:60;">
+    <button class="close" onclick="psCloseDetail()" aria-label="Close" style="position:absolute;top:.6rem;right:.8rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);">×</button>
+    <h2 id="ps-detail-title"></h2>
+    <div id="ps-detail-body"></div>
+  </aside>
+  {{spec_data}}
+  <script>
+{{markdown_libs}}
+  </script>
+  <script>
+  (function () {
+    var DATA = psReadSpecData();
+    var L = DATA.labels || {};
+    var items = DATA.items || [];
+    var byId = {}; items.forEach(function (i) { byId[i.id] = i; });
+    var kids = {}; items.forEach(function (i) { (kids[i.parent] = kids[i.parent] || []).push(i); });
+    var facetGroups = ["status", "moscow", "persona", "layer"];
+    var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} }, mode: "tree" };
+    try { state.mode = localStorage.getItem("ps-explorer-mode") || "tree"; } catch (e) {}
+
+    var search = document.getElementById("ps-search");
+    search.placeholder = L.search || "Search…";
+    search.addEventListener("input", function () { state.q = this.value.toLowerCase(); renderAll(); });
+
+    // ---- mode toggle ----
+    var MODES = [["tree", L.tree || "Tree"], ["tabs", L.tabs || "Flat tabs"], ["table", L.table || "Table"]];
+    var modeBar = document.getElementById("ps-modes");
+    MODES.forEach(function (m) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = m[1];
+      b.dataset.mode = m[0];
+      b.addEventListener("click", function () { setMode(m[0]); });
+      modeBar.appendChild(b);
+    });
+    function setMode(mode) {
+      state.mode = mode;
+      try { localStorage.setItem("ps-explorer-mode", mode); } catch (e) {}
+      ["tree", "tabs", "table"].forEach(function (v) {
+        document.getElementById("ps-view-" + v).hidden = (v !== mode);
+      });
+      Array.prototype.forEach.call(modeBar.children, function (b) {
+        b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false");
+      });
+    }
+
+    // ---- filtering (search + facets, with ancestor visibility) ----
+    function facetActive(g) { return Object.keys(state.facets[g]).length > 0; }
+    function selfMatch(c) {
+      if (state.q) {
+        var hay = (c.id + " " + c.title + " " + (c.body || "")).toLowerCase();
+        if (hay.indexOf(state.q) === -1) return false;
+      }
+      for (var i = 0; i < facetGroups.length; i++) {
+        var g = facetGroups[i]; if (!facetActive(g)) continue;
+        var vals = g === "persona" ? (c.personas || []) : [c[g]];
+        if (!vals.some(function (v) { return state.facets[g][v]; })) return false;
+      }
+      return true;
+    }
+    function visibleSet() {
+      var vis = {};
+      items.forEach(function (c) {
+        if (selfMatch(c)) {
+          vis[c.id] = true;
+          var p = c.parent; while (p && byId[p]) { vis[p] = true; p = byId[p].parent; }
+        }
+      });
+      return vis;
+    }
+
+    function distinct(group) {
+      var seen = {};
+      items.forEach(function (c) {
+        var v = group === "persona" ? c.personas : [c[group]];
+        (v || []).forEach(function (x) { if (x) seen[x] = true; });
+      });
+      return Object.keys(seen).sort();
+    }
+    function buildFacets() {
+      var host = document.getElementById("ps-facets");
+      facetGroups.forEach(function (g) {
+        var vals = distinct(g); if (!vals.length) return;
+        var lab = document.createElement("span"); lab.className = "badge badge--type";
+        lab.textContent = (L[g] || g) + ":"; host.appendChild(lab);
+        vals.forEach(function (v) {
+          var b = document.createElement("button"); b.type = "button"; b.textContent = v;
+          b.setAttribute("aria-pressed", "false");
+          b.addEventListener("click", function () {
+            if (state.facets[g][v]) { delete state.facets[g][v]; b.setAttribute("aria-pressed", "false"); }
+            else { state.facets[g][v] = true; b.setAttribute("aria-pressed", "true"); }
+            renderAll();
+          });
+          host.appendChild(b);
+        });
+      });
+    }
+
+    function badge(text, cls) { var s = document.createElement("span"); s.className = "badge " + cls; s.textContent = text; return s; }
+    function metaBadges(c, el) {
+      if (c.type) el.appendChild(badge(c.type, "badge--type"));
+      if (c.status) el.appendChild(badge(c.status, "badge--status"));
+      if (c.moscow) el.appendChild(badge(c.moscow, "badge--moscow"));
+      (c.personas || []).forEach(function (p) { el.appendChild(badge(p, "badge--persona")); });
+    }
+    function openBtn(id) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "open-body";
+      b.textContent = "▸"; b.title = "Show body";
+      b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); psOpenDetail(id); });
+      return b;
+    }
+
+    // ---- Tree mode (<details> nesting) ----
+    function renderTree(vis) {
+      var host = document.getElementById("ps-view-tree"); host.textContent = "";
+      function node(c) {
+        if (!vis[c.id]) return null;
+        var d = document.createElement("details"); d.className = "tnode"; d.open = !!state.q;
+        var s = document.createElement("summary");
+        var strong = document.createElement("strong"); strong.textContent = c.id; s.appendChild(strong);
+        if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; s.appendChild(t); }
+        metaBadges(c, s); s.appendChild(openBtn(c.id));
+        d.appendChild(s);
+        var ch = (kids[c.id] || []);
+        if (ch.length) { var box = document.createElement("div"); box.className = "tkids";
+          ch.forEach(function (k) { var kn = node(k); if (kn) box.appendChild(kn); }); d.appendChild(box); }
+        return d;
+      }
+      (kids[""] || []).forEach(function (r) { var n = node(r); if (n) host.appendChild(n); });
+      if (!host.children.length) host.appendChild(emptyMsg());
+    }
+
+    // ---- Flat-tabs mode ----
+    var activeTab = (DATA.layer_order || [])[0] || "";
+    function renderTabs(vis) {
+      var host = document.getElementById("ps-view-tabs"); host.textContent = "";
+      var bar = document.createElement("div"); bar.className = "tabs-bar";
+      (DATA.layer_order || []).forEach(function (layer) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = (L[layer] || layer);
+        b.setAttribute("aria-pressed", layer === activeTab ? "true" : "false");
+        b.addEventListener("click", function () { activeTab = layer; renderTabs(visibleSet()); });
+        bar.appendChild(b);
+      });
+      host.appendChild(bar);
+      var list = document.createElement("div"); list.className = "tablist";
+      var rows = items.filter(function (c) { return c.layer === activeTab && vis[c.id]; });
+      if (!rows.length) { list.appendChild(emptyMsg()); }
+      rows.forEach(function (c) {
+        var card = document.createElement("div"); card.className = "ve-card";
+        var strong = document.createElement("strong"); strong.textContent = c.id; card.appendChild(strong);
+        if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; card.appendChild(t); }
+        metaBadges(c, card);
+        card.addEventListener("click", function () { psOpenDetail(c.id); });
+        list.appendChild(card);
+      });
+      host.appendChild(list);
+    }
+
+    // ---- Table-tree mode (treegrid; expand row → inline body) ----
+    var COLS = ["status", "moscow", "horizon", "owner", "ac_count"];
+    function renderTable(vis) {
+      var host = document.getElementById("ps-view-table"); host.textContent = "";
+      var rows = items.filter(function (c) { return vis[c.id]; });
+      if (!rows.length) { host.appendChild(emptyMsg()); return; }
+      var table = document.createElement("table"); table.className = "treegrid";
+      table.setAttribute("role", "treegrid");
+      var thead = document.createElement("thead"); var htr = document.createElement("tr");
+      ["", "id"].concat(COLS).forEach(function (col) {
+        var th = document.createElement("th"); th.textContent = col === "ac_count" ? (L.ac_count || "AC") : col; htr.appendChild(th);
+      });
+      thead.appendChild(htr); table.appendChild(thead);
+      var tbody = document.createElement("tbody");
+      rows.forEach(function (c) {
+        var tr = document.createElement("tr"); tr.setAttribute("role", "row");
+        var tgl = document.createElement("td");
+        var btn = document.createElement("button"); btn.className = "rowtoggle"; btn.type = "button";
+        btn.textContent = "▸"; btn.setAttribute("aria-expanded", "false"); tgl.appendChild(btn); tr.appendChild(tgl);
+        var idtd = document.createElement("td"); idtd.style.paddingLeft = (0.5 + c.depth * 1.1) + "rem";
+        var st = document.createElement("strong"); st.textContent = c.id; idtd.appendChild(st);
+        if (c.title) { var sm = document.createElement("span"); sm.style.color = "var(--muted)"; sm.textContent = " — " + c.title; idtd.appendChild(sm); }
+        tr.appendChild(idtd);
+        COLS.forEach(function (col) { var td = document.createElement("td"); td.textContent = (col === "ac_count" ? (c.ac_count || 0) : (c[col] || "")); tr.appendChild(td); });
+        tbody.appendChild(tr);
+        var drow = document.createElement("tr"); drow.className = "detailrow"; drow.hidden = true;
+        var dtd = document.createElement("td"); dtd.colSpan = COLS.length + 2;
+        drow.appendChild(dtd); tbody.appendChild(drow);
+        btn.addEventListener("click", function () {
+          var open = drow.hidden;
+          if (open && !dtd.dataset.loaded) { dtd.innerHTML = psRenderMarkdown(c.body || "_(no body)_"); dtd.dataset.loaded = "1"; }
+          drow.hidden = !open; btn.setAttribute("aria-expanded", open ? "true" : "false"); btn.textContent = open ? "▾" : "▸";
+        });
+      });
+      table.appendChild(tbody); host.appendChild(table);
+    }
+
+    function emptyMsg() { var d = document.createElement("div"); d.className = "col-empty"; d.style.color = "var(--muted)"; d.textContent = L.no_results || "No matching artifacts"; return d; }
+
+    window.psOpenDetail = function (id) {
+      var c = byId[id]; if (!c) return;
+      document.getElementById("ps-detail-title").textContent = c.id + (c.title ? " — " + c.title : "");
+      document.getElementById("ps-detail-body").innerHTML = psRenderMarkdown(c.body || "_(no body)_");
+      document.getElementById("ps-detail").hidden = false;
+    };
+    window.psCloseDetail = function () { document.getElementById("ps-detail").hidden = true; };
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") psCloseDetail(); });
+
+    function renderAll() { var vis = visibleSet(); renderTree(vis); renderTabs(vis); renderTable(vis); }
+
+    buildFacets(); setMode(state.mode); renderAll();
+  })();
+  </script>
+</body>
+</html>

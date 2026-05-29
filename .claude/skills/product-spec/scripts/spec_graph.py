@@ -205,6 +205,33 @@ def downstream(graph: Dict[str, Any], node_id: str) -> Set[str]:
     return out
 
 
+def ancestors(graph: Dict[str, Any], node_id: str) -> Set[str]:
+    """Return the set of node IDs reachable as ancestors (parents) of node_id.
+
+    The inverse of downstream(): walks child -> parent over the same
+    `{from, to}` edges (where `from` is the child and `to` the parent). For a
+    story it returns its epic, PRD, and the goal(s) the PRD addresses — i.e.
+    `ancestors("PRD-AUTH-E1-S1") == {"PRD-AUTH-E1", "PRD-AUTH", "BRD-G1"}`.
+
+    It returns the goals + PRD/epic chain ONLY. Vision and the BRD container
+    are NOT graph nodes (build_nodes nodifies goals, not the BRD; vision is an
+    isolated node with no edges), so they can never appear here. The assembler
+    prepends them as singletons instead — do not add phantom Vision/BRD edges.
+    """
+    parents: Dict[str, List[str]] = defaultdict(list)
+    for e in graph["edges"]:
+        parents[e["from"]].append(e["to"])
+    out: Set[str] = set()
+    stack = list(parents.get(node_id, []))
+    while stack:
+        n = stack.pop()
+        if n in out:
+            continue
+        out.add(n)
+        stack.extend(parents.get(n, []))
+    return out
+
+
 def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:
     """Persist a graph snapshot under docs/product/visuals/.snapshots/<ISO>-<hash>.json.
 

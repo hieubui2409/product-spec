@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="{{lang_attr}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  {{viewer_head}}
+  <style>
+    .board{display:flex;gap:1rem;overflow-x:auto;padding-bottom:1rem;align-items:flex-start;}
+    .board-col{flex:0 0 16rem;min-width:0;}
+    .board-col h2{font-size:.95rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin:.2rem 0 .6rem;}
+    .board-col .col-body{display:flex;flex-direction:column;gap:.6rem;}
+    .card{cursor:pointer;} .card:hover{border-color:var(--accent);}
+    .card .cid{font-weight:600;font-size:.9rem;word-break:break-word;}
+    .card .ctitle{font-size:.82rem;color:var(--muted);margin:.2rem 0 .4rem;}
+    .col-empty{color:var(--muted);font-size:.8rem;padding:.4rem;}
+    .ps-detail{position:fixed;top:0;right:0;width:min(34rem,92vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:1.2rem 1.4rem;overflow:auto;z-index:60;}
+    .ps-detail .close{position:absolute;top:.6rem;right:.8rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);}
+    .ps-detail-body :first-child{margin-top:0;}
+    @media print{.board{flex-wrap:wrap;} .ps-detail{display:none;}}
+  </style>
+</head>
+<body>
+  <button class="ps-toggle" onclick="psToggleTheme()" aria-label="Toggle light/dark theme" title="Toggle theme">☾</button>
+  <div class="ps-wrap">
+    <h1>{{title}}</h1>
+    <div class="ps-meta">Generated {{generated_at}} · Product: {{product_name}}</div>
+    {{libs_banner}}
+    <input class="ps-search" id="ps-search" type="search" autocomplete="off">
+    <div class="ps-facets" id="ps-facets"></div>
+    <div class="board" id="ps-board"></div>
+  </div>
+  <aside class="ps-detail" id="ps-detail" hidden aria-label="Artifact detail">
+    <button class="close" onclick="psCloseDetail()" aria-label="Close">×</button>
+    <h2 id="ps-detail-title"></h2>
+    <div class="ps-detail-body" id="ps-detail-body"></div>
+  </aside>
+  {{spec_data}}
+  <script>
+{{markdown_libs}}
+  </script>
+  <script>
+  (function () {
+    var DATA = psReadSpecData();
+    var L = DATA.labels || {};
+    var cards = DATA.cards || [];
+    var byId = {}; cards.forEach(function (c) { byId[c.id] = c; });
+    var facetGroups = ["status", "moscow", "persona", "layer"];
+    var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} } };
+
+    var search = document.getElementById("ps-search");
+    search.placeholder = L.search || "Search…";
+    search.addEventListener("input", function () { state.q = this.value.toLowerCase(); render(); });
+
+    function distinct(group) {
+      var seen = {};
+      cards.forEach(function (c) {
+        var v = group === "persona" ? c.personas : [c[group]];
+        (v || []).forEach(function (x) { if (x) seen[x] = true; });
+      });
+      return Object.keys(seen).sort();
+    }
+
+    function buildFacets() {
+      var host = document.getElementById("ps-facets");
+      facetGroups.forEach(function (g) {
+        var vals = distinct(g);
+        if (!vals.length) return;
+        var lab = document.createElement("span");
+        lab.className = "badge badge--type";
+        lab.textContent = (L[g] || g) + ":";
+        host.appendChild(lab);
+        vals.forEach(function (v) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = v;                    // textContent → XSS-safe label
+          b.setAttribute("aria-pressed", "false");
+          b.addEventListener("click", function () {
+            var on = state.facets[g][v];
+            if (on) { delete state.facets[g][v]; b.setAttribute("aria-pressed", "false"); }
+            else { state.facets[g][v] = true; b.setAttribute("aria-pressed", "true"); }
+            render();
+          });
+          host.appendChild(b);
+        });
+      });
+    }
+
+    function facetActive(g) { return Object.keys(state.facets[g]).length > 0; }
+
+    function matches(c) {
+      if (state.q) {
+        var hay = (c.id + " " + c.title + " " + (c.body || "")).toLowerCase();
+        if (hay.indexOf(state.q) === -1) return false;
+      }
+      for (var i = 0; i < facetGroups.length; i++) {
+        var g = facetGroups[i];
+        if (!facetActive(g)) continue;
+        var vals = g === "persona" ? (c.personas || []) : [c[g]];
+        var hit = vals.some(function (v) { return state.facets[g][v]; });
+        if (!hit) return false;
+      }
+      return true;
+    }
+
+    function badge(text, cls) {
+      var s = document.createElement("span");
+      s.className = "badge " + cls;
+      s.textContent = text;                     // textContent → XSS-safe
+      return s;
+    }
+
+    function cardEl(c) {
+      var el = document.createElement("div");
+      el.className = "ve-card ve-card--elevated card";
+      el.tabIndex = 0;
+      el.dataset.id = c.id;                      // dataset → DOM-escaped attribute
+      var cid = document.createElement("div"); cid.className = "cid"; cid.textContent = c.id; el.appendChild(cid);
+      if (c.title) { var t = document.createElement("div"); t.className = "ctitle"; t.textContent = c.title; el.appendChild(t); }
+      if (c.type) el.appendChild(badge(c.type, "badge--type"));
+      if (c.status) el.appendChild(badge(c.status, "badge--status"));
+      if (c.moscow) el.appendChild(badge(c.moscow, "badge--moscow"));
+      (c.personas || []).forEach(function (p) { el.appendChild(badge(p, "badge--persona")); });
+      function open() { psOpenDetail(c.id); }
+      el.addEventListener("click", open);
+      el.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
+      return el;
+    }
+
+    function render() {
+      var board = document.getElementById("ps-board");
+      board.textContent = "";
+      var visible = cards.filter(matches);
+      if (!visible.length) {
+        var none = document.createElement("div"); none.className = "col-empty";
+        none.textContent = L.no_results || "No matching artifacts"; board.appendChild(none); return;
+      }
+      (DATA.columns || []).forEach(function (col) {
+        var inCol = visible.filter(function (c) { return c.column === col; });
+        var colEl = document.createElement("div"); colEl.className = "board-col";
+        var h = document.createElement("h2");
+        h.textContent = ((DATA.col_labels || {})[col] || col) + " (" + inCol.length + ")";
+        colEl.appendChild(h);
+        var body = document.createElement("div"); body.className = "col-body";
+        if (!inCol.length) { var e = document.createElement("div"); e.className = "col-empty"; e.textContent = "—"; body.appendChild(e); }
+        inCol.forEach(function (c) { body.appendChild(cardEl(c)); });
+        colEl.appendChild(body); board.appendChild(colEl);
+      });
+    }
+
+    window.psOpenDetail = function (id) {
+      var c = byId[id]; if (!c) return;
+      document.getElementById("ps-detail-title").textContent = c.id + (c.title ? " — " + c.title : "");
+      // Body is the ONLY innerHTML sink, routed through the sanitize chokepoint.
+      document.getElementById("ps-detail-body").innerHTML = psRenderMarkdown(c.body || "_(no body)_");
+      document.getElementById("ps-detail").hidden = false;
+    };
+    window.psCloseDetail = function () { document.getElementById("ps-detail").hidden = true; };
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") psCloseDetail(); });
+
+    buildFacets();
+    render();
+  })();
+  </script>
+</body>
+</html>

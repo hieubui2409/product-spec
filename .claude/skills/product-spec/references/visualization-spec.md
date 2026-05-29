@@ -1,6 +1,6 @@
 # Visualization Spec
 
-The 9 views × 3 formats matrix, the graph-JSON shape consumed by every renderer, and the flag → view mapping. **SVG/PNG dropped** (validate gate decision) — no external Mermaid-CLI binary; HTML uses **Mermaid JS vendored inline** for offline self-containment.
+The views × formats matrix, the graph-JSON shape consumed by every renderer, and the flag → view mapping. **SVG/PNG dropped** (validate gate decision) — no external Mermaid-CLI binary; HTML uses **Mermaid JS vendored inline** for offline self-containment. Two body-bearing views — `board` and `explorer` — render artifact **bodies** (not graphs) and additionally vendor **marked + DOMPurify** inline for an offline sanitize chokepoint.
 
 ## Formats
 
@@ -23,24 +23,28 @@ The 9 views × 3 formats matrix, the graph-JSON shape consumed by every renderer
 | `moscow` | `--viz moscow` | MoSCoW quadrant: must/should/could/wont distribution across stories. |
 | `risk` | `--viz risk` | risk matrix: impact (rows) × likelihood (cols) from `risks` frontmatter on epics/PRDs. |
 | `delta` | `--viz delta [--snapshot <name>]` | diff between two graph snapshots from `docs/product/visuals/.snapshots/`. |
+| `board` | `--viz board [--group-by status\|horizon\|moscow] [--layers …]` | kanban: columns = the group field, cards = goal/PRD/epic/story; client-side search + facet filters (status/moscow/persona/layer); click a card → its sanitized body. Default `--format html`. |
+| `explorer` | `--viz explorer [--layers …]` | one page, in-page toggle across **Tree** (collapsible nav) / **Flat-tabs** (per layer) / **Table-tree** (treegrid w/ metadata columns); shared search + facets; last mode persisted to `localStorage`. Default `--format html`. |
 
 ## View × Format Matrix
 
-All 9 × 3 = 27 combinations are supported.
+The 9 graph views support all 3 formats. The 2 body views default to HTML and fall back to their ASCII renderer on `--format mermaid` (they carry no Mermaid by design).
 
 | View | ASCII | Mermaid | HTML |
 |------|-------|---------|------|
-| `tree` | tree characters (├ │ └) | `flowchart TB` | Mermaid + collapse/zoom JS |
+| `tree` | tree characters (├ │ └) | `flowchart BT` | Mermaid + collapse/zoom JS |
 | `heatmap` | ASCII table | `quadrantChart` or text fallback | Mermaid embed |
 | `scope` | 2D ASCII grid | `quadrantChart` | Mermaid embed |
 | `roadmap` | grouped lists (now/next/later) | `timeline` | Mermaid embed |
-| `persona` | ASCII table (persona × feature) | `flowchart LR` with persona swimlanes | Mermaid embed |
-| `gap` | ASCII bullet list of unaddressed nodes | `flowchart TB` with gap nodes highlighted | Mermaid embed |
+| `persona` | ASCII table (persona × feature) | text fallback (`pre`) | Mermaid embed |
+| `gap` | ASCII bullet list of unaddressed nodes | `flowchart LR` with gap nodes highlighted | Mermaid embed |
 | `moscow` | 2×2 ASCII grid | `quadrantChart` (must/should × could/wont) | Mermaid embed |
-| `risk` | 3×3 ASCII grid | `quadrantChart` (impact × likelihood) | Mermaid embed |
+| `risk` | 3×3 ASCII grid | text fallback (`pre`) | Mermaid embed |
 | `delta` | unified-diff-style text | `flowchart TB` with +/− tags | Mermaid embed |
+| `board` | grouped lists per `--group-by` | → ASCII board (note on stderr) | **default** — kanban + search/facets + click→sanitized body |
+| `explorer` | = `tree` render | → ASCII tree (note on stderr) | **default** — Tree/Flat-tabs/Table-tree + search/facets |
 
-If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment.
+If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment. Body views (`board`/`explorer`) have no Mermaid form at all — `--format mermaid` falls back to their ASCII renderer with a one-line note on stderr.
 
 ## Graph JSON Shape (single source of truth)
 
@@ -109,12 +113,24 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
 ## HTML Self-Containment
 
 Each HTML output is a single file with:
-- Inline `<style>` block (minimal CSS, no external fonts).
-- Inline Mermaid JS (vendored at `assets/vendor/mermaid.min.js`).
-- One `<div class="mermaid">...</div>` block with the view graph.
-- Tiny vanilla JS for collapse/zoom on `tree` and `persona` views.
+- The shared design-system head (inline `<style>` + theme + helper JS; no external fonts).
+- Graph views: inline Mermaid JS (vendored at `assets/vendor/mermaid.min.js`) + one `<div class="mermaid">…</div>` + zoom JS.
+- Body views (`board`/`explorer`/`export`): inline marked + DOMPurify (`assets/vendor/marked.min.js`, `purify.min.js`) + an inert JSON data island; the client builds metadata via safe DOM APIs and bodies via the chokepoint `DOMPurify.sanitize(marked.parse(md))`.
 
-The HTML opens with no server and no network. Vendored Mermaid is pinned at a specific version (committed to repo). Trade-off: per-file weight is ~1 MB but avoids the external-CLI/CDN failure modes.
+The HTML opens with no server and no network. Vendored libs are pinned + SHA-verified + committed. **Symmetric payload gating:** graph views inline no marked/DOMPurify; body views inline no Mermaid. If the markdown libs are missing, body views **fail closed** to escaped text + a visible banner — never a CDN sanitizer.
+
+## HTML Design System (one source for every view)
+
+All HTML outputs — the 9 `--viz` graph views + `board` + `explorer` + `--export --format html` — share **one** head partial (`assets/templates/_viewer-head.html`), included by every shell via the `{{viewer_head}}` token (single-pass substituted in `render_html`):
+
+- **Theme toggle** (sun/moon) persisted to `localStorage`; semantic + status palette (`--green/red/amber/sage/teal/plum` + `-dim`) with a light/dark `[data-theme]` switch.
+- **Typography scale** + `.ve-card` depth tiers (`--elevated/--recessed/--hero`) + stagger fade-in + `min-width:0` overflow guard.
+- **Print-CSS** (`@media print`) hides chrome (toggle/search/facets) for clean Save-as-PDF.
+- Mermaid views add theme-var overrides so diagram text follows light/dark.
+
+Change the look in one place → every output updates (DRY). The `explorer` UI is the reference the legacy shell was brought up to.
+
+**Search + facet filters** (`board`/`explorer`): client-side, instant; facets over status/moscow/persona/layer; `board` also groups columns by `--group-by`. "PDF" = browser Save-as-PDF over the print-CSS.
 
 ## Snapshot & Delta
 
@@ -141,7 +157,8 @@ ASCII and Mermaid outputs are **deterministic** (same input → same output). Th
 
 ## What This Spec Does NOT Define
 
-- Color palettes (Mermaid theme = default; ASCII = no color by default).
-- HTML interactivity beyond collapse/zoom (no dashboards, no filters in v1).
+- ASCII color (no color by default). The shared design system DOES define the HTML palette (light/dark).
 - SVG/PNG output (intentionally dropped per validate gate).
-- Live updating (visualizations are one-shot renders).
+- Live updating / live-reload / server (visualizations are one-shot, self-contained renders).
+- Edit-from-viewer (`board`/`explorer`/`export` are read surfaces; edits go through the interview flags).
+- A real PDF binary ("PDF" = the browser's Save-as-PDF over `@media print`).

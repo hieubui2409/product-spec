@@ -28,6 +28,7 @@ VENV_DIR="$SKILLS_DIR/.venv"
 REQUIREMENTS="$SCRIPT_DIR/scripts/requirements.txt"
 REQUIREMENTS_DEV="$SCRIPT_DIR/scripts/requirements-dev.txt"
 VENDOR_SHIM="$SCRIPT_DIR/scripts/install-vendor-mermaid.sh"
+VENDOR_MARKDOWN_SHIM="$SCRIPT_DIR/scripts/install-vendor-markdown.sh"
 
 DEV=0
 for arg in "$@"; do
@@ -81,6 +82,14 @@ if [ -x "$VENDOR_SHIM" ]; then
     bash "$VENDOR_SHIM"
 else
     fail "vendor shim missing at $VENDOR_SHIM"
+fi
+
+# --- Step 4b: marked + DOMPurify vendor (body-render: export / board / explorer) ---
+step "Vendoring marked + DOMPurify for offline body rendering"
+if [ -x "$VENDOR_MARKDOWN_SHIM" ]; then
+    bash "$VENDOR_MARKDOWN_SHIM"
+else
+    fail "markdown vendor shim missing at $VENDOR_MARKDOWN_SHIM"
 fi
 
 # --- Step 5: smoke test ---

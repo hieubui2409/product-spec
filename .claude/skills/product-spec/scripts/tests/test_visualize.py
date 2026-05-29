@@ -110,6 +110,60 @@ def test_ascii_delta_with_no_baseline_path_renders_empty_string_via_visualize():
     assert "(no changes)" in out
 
 
+def test_board_view_registered_in_dispatcher():
+    """Phase 4: board joins the dispatcher's VIEWS as a body-bearing view."""
+    import visualize
+    assert "board" in visualize.VIEWS
+    assert "board" in visualize.BODY_VIEWS
+
+
+def test_ascii_board_deterministic_grouped_lists():
+    """Phase 4: ASCII board groups goal/PRD/epic/story cards by the chosen field,
+    deterministically (canonical column order, sorted IDs)."""
+    g = _graph()
+    out = render_ascii.board(g, "status")
+    assert out == render_ascii.board(g, "status")
+    assert "### draft" in out and "### approved" in out
+    assert out.index("### draft") < out.index("### approved")  # canonical order
+
+
+def test_explorer_view_registered_and_ascii_is_tree():
+    """Phase 5: explorer joins VIEWS as a body view; its ASCII form == tree."""
+    import visualize
+    assert "explorer" in visualize.VIEWS and "explorer" in visualize.BODY_VIEWS
+    g = _graph()
+    assert render_ascii.explorer(g) == render_ascii.tree(g)
+
+
+def test_legacy_html_adopts_shared_design_system_and_no_sanitizer():
+    """Phase 6: the 9 legacy views adopt the shared design system (theme toggle +
+    .ve-card + palette) yet inline NO marked/DOMPurify (H4 symmetric gating)."""
+    g = _graph()
+    mermaid_text = render_mermaid.tree(g)
+    html = render_html.assemble("tree", "mermaid", mermaid_text, g)
+    # Shared design system present.
+    assert "psToggleTheme" in html and "ps-toggle" in html
+    assert "ve-card" in html and "--accent" in html
+    assert "@media print" in html
+    # Mermaid theme-var override so diagram text follows dark mode.
+    assert ".mermaid" in html
+    # H4: a legacy mermaid view inlines the Mermaid runtime (which bundles its OWN
+    # DOMPurify) but NEVER our body-render libs — keyed on the marked copyright
+    # banner + our chokepoint, neither of which Mermaid ships.
+    assert "marked v18" not in html
+    assert "psRenderMarkdown" not in html
+
+
+def test_legacy_html_token_contract_preserved():
+    """Phase 6: extend-only — the legacy token contract still renders (no stray
+    unresolved {{token}} left in the page)."""
+    g = _graph()
+    html = render_html.assemble("heatmap", "ascii", "draft 1\napproved 2", g)
+    import re as _re
+    leftover = _re.findall(r"\{\{(\w+)\}\}", html)
+    assert leftover == [], f"unresolved tokens leaked into output: {leftover}"
+
+
 # ---------- Mermaid ----------
 
 def test_mermaid_tree_emits_flowchart_block():

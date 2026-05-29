@@ -16,14 +16,20 @@ CLI usage is via visualize.py.
 """
 
 import datetime as dt
+import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
-SHELL_PATH = SKILL_ROOT / "assets" / "templates" / "visual-html-shell.html"
-VENDOR_MERMAID = SKILL_ROOT / "assets" / "vendor" / "mermaid.min.js"
+TEMPLATES = SKILL_ROOT / "assets" / "templates"
+VENDOR = SKILL_ROOT / "assets" / "vendor"
+SHELL_PATH = TEMPLATES / "visual-html-shell.html"
+VIEWER_HEAD_PARTIAL = TEMPLATES / "_viewer-head.html"
+VENDOR_MERMAID = VENDOR / "mermaid.min.js"
+VENDOR_MARKED = VENDOR / "marked.min.js"
+VENDOR_PURIFY = VENDOR / "purify.min.js"
 CDN_FALLBACK = (
     "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"
 )
@@ -119,6 +125,91 @@ def _escape(s: str) -> str:
     )
 
 
+# ── Shared body-render substrate (export / board / explorer) ────────────────
+#
+# Body-bearing HTML outputs render artifact markdown bodies CLIENT-SIDE through
+# the chokepoint  DOMPurify.sanitize(marked.parse(md))  (defined in
+# _viewer-head.html as psRenderMarkdown). The server NEVER injects body HTML; it
+# ships bodies as an inert JSON data island. Two enumerated sinks (red-team H3):
+#   1. the embedded-JSON body channel  → escaped via embed_spec_data()
+#   2. attribute-context values (data-*, aria-label, id, href) → _escape()/_safe_href()
+
+
+# The sanitize chokepoint, shipped INSIDE the {{markdown_libs}} block (body views
+# only) so legacy graph views inline no marked/DOMPurify code at all (H4). Always
+# defined — when the libs are absent it FAILS CLOSED to escaped text, never a CDN.
+_BODY_RENDER_JS = (
+    "\nfunction psRenderMarkdown(md){"
+    "if(window.marked&&window.DOMPurify){return window.DOMPurify.sanitize(window.marked.parse(String(md==null?'':md)));}"
+    "return '<pre class=\"ps-fallback\">'+psEscapeHtml(md)+'</pre>';}"
+)
+
+
+def _load_vendored_markdown_libs() -> Optional[str]:
+    """Return the inlined marked + DOMPurify payload, or None if either is
+    missing. Escapes the `</script` close-tag hazard at inline time so the
+    vendored files stay byte-identical to the CDN originals (hash-pin intact)."""
+    if not (VENDOR_MARKED.exists() and VENDOR_PURIFY.exists()):
+        return None
+    marked_js = VENDOR_MARKED.read_text(encoding="utf-8")
+    purify_js = VENDOR_PURIFY.read_text(encoding="utf-8")
+    payload = purify_js + "\n" + marked_js
+    # The only HTML hazard for inline <script> content is the literal substring
+    # `</script` (case-insensitive). A blanket `</`→`<\/` would corrupt minified
+    # comparisons like `a</b/`, so escape only the actual close-tag token.
+    return re.sub(r"</(script)", r"<\\/\1", payload, flags=re.IGNORECASE)
+
+
+def viewer_head() -> str:
+    """The shared design-system head partial (one source for every HTML output)."""
+    return VIEWER_HEAD_PARTIAL.read_text(encoding="utf-8")
+
+
+_SAFE_HREF_SCHEMES = ("http://", "https://", "mailto:")
+
+
+def _safe_href(url: str) -> str:
+    """Allowlist hrefs: intra-doc `#anchor` + http(s)/mailto only. Everything
+    else (notably `javascript:` / `data:`) collapses to `#`. The result is
+    additionally _escape()'d for attribute context by the caller."""
+    u = (url or "").strip()
+    low = u.lower()
+    if u.startswith("#") or any(low.startswith(s) for s in _SAFE_HREF_SCHEMES):
+        return u
+    return "#"
+
+
+def embed_spec_data(payload: Any) -> str:
+    """Serialize `payload` into an inert JSON data island. `</` → `<\\/` keeps a
+    body value of `</script>` from breaking out of the surrounding tag; inside
+    JSON, `<\\/` is a valid escape that JSON.parse decodes straight back to `</`."""
+    blob = json.dumps(payload, ensure_ascii=False, sort_keys=True).replace("</", "<\\/")
+    return f'<script type="application/json" id="ps-spec-data">{blob}</script>'
+
+
+def markdown_libs_banner() -> str:
+    """A visible fail-closed banner shown when the sanitizer libs are absent."""
+    return (
+        '<div class="ps-banner">Markdown libraries not vendored — bodies shown as '
+        'plain text. Run <code>install.sh</code> to enable rich rendering '
+        '(offline, no CDN).</div>'
+    )
+
+
+def body_render_values(spec_payload: Any) -> Dict[str, str]:
+    """The shared token set every body-bearing shell interpolates:
+    `viewer_head` (design system), `markdown_libs` (sanitizer or ""),
+    `libs_banner` (fail-closed notice or ""), `spec_data` (inert JSON island)."""
+    libs = _load_vendored_markdown_libs()
+    return {
+        "viewer_head": viewer_head(),
+        # libs (or "" when fail-closed) + the always-present sanitize chokepoint.
+        "markdown_libs": (libs or "") + _BODY_RENDER_JS,
+        "libs_banner": "" if libs is not None else markdown_libs_banner(),
+        "spec_data": embed_spec_data(spec_payload),
+    }
+
+
 def assemble(
     view: str,
     view_format: str,
@@ -161,10 +252,27 @@ def assemble(
         "view_body": _render_view_body(view_format, view_text),
         "mermaid_js": mermaid_js_payload,
         "footer_note": footer,
+        # Phase 6: the 9 legacy views adopt the shared design-system head too, so
+        # ALL product-spec HTML (legacy + board/explorer/export) looks identical.
+        # EXTEND-only: every prior token + the RAW-footer_note invariant are
+        # preserved; legacy views still inline NO marked/DOMPurify (no bodies).
+        "viewer_head": viewer_head(),
     }
-    for k, v in values.items():
-        shell = shell.replace("{{" + k + "}}", v)
-    return shell
+    return substitute(shell, values)
+
+
+def substitute(shell: str, values: Dict[str, str]) -> str:
+    """Single-pass `{{token}}` substitution.
+
+    A multi-pass `for k,v: shell.replace(...)` re-scans already-inserted content
+    on every later key, so a spec-derived value of `"{{mermaid_js}}"` would
+    inject the whole Mermaid payload, and a body containing `{{footer_note}}`
+    would bleed the footer. A single `re.sub` pass expands each `{{token}}`
+    exactly once and never re-scans the inserted value, closing that injection /
+    bleed sink (shared by the 9 legacy views and every body-bearing shell).
+    Unknown tokens are left verbatim so partial shells fail loudly, not silently.
+    """
+    return re.sub(r"\{\{(\w+)\}\}", lambda m: values.get(m.group(1), m.group(0)), shell)
 
 
 def write(

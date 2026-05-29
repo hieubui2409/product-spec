@@ -8,7 +8,7 @@ keywords: [product-owner, prd, brd, epic, story, requirements, traceability, vis
 argument-hint: "[--flag] [target]"
 metadata:
   author: cleanmatic
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # cleanmatic:product-spec
@@ -39,9 +39,14 @@ Product-Owner-facing skill for building and maintaining a strictly-traceable spe
 | `--summary` | Generate 1-page exec summary (markdown + optional HTML). |
 | `--approve` | Validate → warn-not-block → record owner+date → flip `status: approved`. |
 | `--update` | Delta-update: ask what changed → compute affected downstream set → flag for PO review (never auto-rewrite prose) → append change-log. |
-| `--viz <view>` | Render visualization (default ASCII). Views: `tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `risk`, `delta`. |
-| `--format <fmt>` | Visualization format: `ascii` (default) · `mermaid` · `html`. |
-| `--lang <code>` | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English. |
+| `--viz <view>` | Render visualization. Graph views (default `ascii`): `tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `risk`, `delta`. Body viewers (default `html`): `board` (kanban), `explorer` (Tree/Flat-tabs/Table-tree). |
+| `--format <fmt>` | Visualization format: `ascii` · `mermaid` · `html`. Default `ascii` for graph views, `html` for `board`/`explorer` (which fall back to ascii on `--format mermaid`). |
+| `--group-by <field>` | `--viz board` column grouping: `status` (default) · `horizon` · `moscow`. |
+| `--export <all\|ID\|list>` | F1 read-once Export: assemble a spec slice into ONE self-contained doc under `docs/product/exports/`. Pairs with `--layers`, `--depth`, `--compact-mode`, `--format md\|html`. See `references/workflow-export.md`. |
+| `--layers <types>` | Filter which artifact types appear (comma subset of `vision,brd,prd,epic,story`). Shared by `--export` and `--viz board/explorer`. |
+| `--depth <preset>` | `--export` verbosity: `context` (default) · `full` · `brief`. |
+| `--compact-mode <m>` | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). |
+| `--lang <code>` | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; viewer UI chrome + export headings localize. |
 
 ## No-Flag Menu
 
@@ -73,9 +78,12 @@ docs/product/
 ├── exec-summary.md           # generated 1-page summary
 ├── .session.md               # interview session state (committed; resumable)
 ├── change-log.md             # append-only delta log
-└── visuals/                  # rendered visualizations (ASCII / Mermaid / HTML)
+├── exports/                  # F1 read-once Export docs (<stem>-<ts>-<hash8>.md|html)
+└── visuals/                  # rendered visualizations (ASCII / Mermaid / HTML; incl. board & explorer)
     └── .snapshots/           # graph-snapshot JSONs for delta/diff
 ```
+
+All HTML outputs (the 9 `--viz` graph views + `board` + `explorer` + `--export --format html`) share **one design system** — a single head partial with theme toggle, palette, typography, and print-CSS. Bodies render through one client chokepoint (`DOMPurify.sanitize(marked.parse(md))`, both vendored + inlined) and **fail closed** to escaped text if the libs are missing.
 
 ## Workflow Map
 
@@ -106,7 +114,8 @@ The lean skeleton above stays under ~300 lines; full prose lives in `references/
 - `references/frontmatter-and-id-spec.md` — canonical YAML schema per artifact + parent-scoped ID grammar (`BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1`, `PRD-AUTH-E1-S1`).
 - `references/document-model-and-hierarchy.md` — artifact roles, DRY rule, hierarchy diagram, content-ownership table.
 - `references/validation-rules-spec.md` — check catalog (script vs LLM), severities, findings JSON schema, `--strict` gate.
-- `references/visualization-spec.md` — 9 views × 3 formats, graph-JSON shape, flag mapping.
+- `references/visualization-spec.md` — views × formats (9 graph + `board`/`explorer`), graph-JSON shape, flag mapping, the shared HTML design system.
+- `references/workflow-export.md` — F1 read-once Export: selection model (`--export` + `--layers`), depth presets, `--compact-mode llm` workflow, output naming.
 - `references/interview-vision.md`, `interview-brd.md`, `interview-prd.md`, `interview-epic-story.md`, `interview-frameworks.md` — bilingual EN/VI question banks + 5-Why / MoSCoW / story-mapping prompts.
 - `references/workflow-interview.md`, `workflow-validate.md`, `workflow-auto-and-update.md` — end-to-end workflows the LLM executes (deep prose).
 
@@ -115,8 +124,8 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 ## Resources
 
 - `scripts/` — Python (stdlib + pyyaml). Run via repo venv `./.claude/skills/.venv/bin/python3`. Each script accepts `--root <project-dir>` (default CWD) and emits JSON. All judgment lives in the LLM layer; scripts are structural-only.
-- `assets/templates/` — markdown templates with `{{token}}` substitution and `<!-- OPTIONAL: … -->` markers.
-- `assets/vendor/mermaid.min.js` — vendored Mermaid JS for self-contained offline HTML output.
+- `assets/templates/` — markdown templates with `{{token}}` substitution, the shared `_viewer-head.html` design-system partial, and the export/board/explorer HTML shells.
+- `assets/vendor/` — vendored JS for self-contained offline HTML: `mermaid.min.js` (graph views) + `marked.min.js` + `purify.min.js` (body-render sanitize chokepoint). All committed; pinned + SHA-verified by the installer.
 - `eval/evals.json` — scenario evals (init / auto / validate / delta+viz).
 - `examples/` — worked sample product spec.
 

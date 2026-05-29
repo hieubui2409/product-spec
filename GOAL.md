@@ -47,11 +47,11 @@ Cycle 3 therefore begins **only after** the new product-spec feature lands. Trea
 |-------|--------|--------|
 | 1 | ✅ DONE | 31 findings, all fixed |
 | 2 | ✅ DONE (CLOSED) | 23 findings + 3 late-found, all fixed; 2 stale notes corrected; deferred cosmetics later fixed on owner request |
-| 3 → 10 | ⏸️ PENDING | Paused for the new product-spec feature; resume per Expanded Scope |
+| 3 → 10 | ⏸️ READY | New product-spec feature **landed 2026-05-29** (export + viewers, see below). Cycle 3 now unblocked; resume per Expanded Scope |
 
 **Convergence:** NOT converged (need 2 consecutive clean cycles). Review is **paused**, not finished.
 
-**Test state (green):** `claude-pack` **77** · `product-spec` **92**.
+**Test state (green):** `claude-pack` **77** · `product-spec` **156** (was 92; +64 from the export/viewer feature).
 Run: `PYTHONPATH=.claude/skills/<skill>/scripts ./.claude/skills/.venv/bin/python3 -m pytest .claude/skills/<skill>/scripts/tests -q`
 
 **Report paths (local, gitignored — may be absent on fresh clone):**
@@ -91,4 +91,12 @@ Run: `PYTHONPATH=.claude/skills/<skill>/scripts ./.claude/skills/.venv/bin/pytho
 7. Stop when 2 consecutive cycles produce zero new findings, or at Cycle 10.
 
 ## Open questions
-None blocking. All scope decisions confirmed by owner. New product-spec feature requirements: TBD by owner before Cycle 3.
+None blocking. All scope decisions confirmed by owner.
+
+**New product-spec feature — ✅ IMPLEMENTED (2026-05-29)**: read-once **Export** (`--export`) + interactive **Viewer** (`--viz board`/`explorer`) + unified ALL `--viz` HTML under one design system (marked+DOMPurify vendored + inlined, print-CSS, theme/palette).
+- Design doc: `.claude/skills/product-spec/plans/reports/brainstorm-design-260529-1504-product-spec-export-and-viewer-report.md`
+- Plan (7 phases; red-teamed + validated; Failed:0): `.claude/skills/product-spec/plans/260529-1504-product-spec-export-and-viewer/plan.md`
+- Red-team report: `.claude/skills/product-spec/plans/reports/red-team-260529-1504-product-spec-export-and-viewer-plan-review-report.md`
+- **Landed via `/ck:cook`.** SKILL.md bumped 1.0.0 → 1.1.0. New scripts: `assemble_digest.py`, `render_export.py`, `render_board.py`, `render_explorer.py`, `install-vendor-markdown.sh`; new templates: `_viewer-head.html`, `export-shell.html`, `board-shell.html`, `explorer-shell.html`; committed vendored libs `assets/vendor/{marked,purify}.min.js` (~68 KB). Modified: `render_html.py` (single-pass `substitute()` + body-render substrate), `render_ascii.py`, `visualize.py`, `i18n_labels.py`, `visual-html-shell.html`, `install.sh`, `SKILL.md`, repo-root `CLAUDE.md`, `references/visualization-spec.md` (+ new `references/workflow-export.md`), `eval/evals.json`. Fixture: added `vision.md` to `valid-spec`. `.claude/.ckignore`: allow the vendor dir.
+- Tests (green): product-spec **92 → 156** (+64) · claude-pack **77** + golden integration **1**. Independent code-review PASS (0 CRITICAL/HIGH; XSS neutralization proven in a live DOM; 1 MED `assemble_digest.py` 220 LOC accepted-with-note, 2 LOW fixed).
+- **Next: resume Cycle 3** — treat the new-feature diff as the primary review surface + regression sweep (per Expanded Scope). Plan dir + per-cycle reports are gitignored (under `plans/`); this GOAL.md + the committed skill code are the durable record.

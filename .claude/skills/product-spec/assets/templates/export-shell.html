@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="{{lang_attr}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  {{viewer_head}}
+</head>
+<body>
+  <button class="ps-toggle" onclick="psToggleTheme()" aria-label="Toggle light/dark theme" title="Toggle theme">☾</button>
+  <div class="ps-wrap">
+    <h1>{{title}}</h1>
+    <div class="ps-meta">Generated {{generated_at}} · Product: {{product_name}} · read-once export</div>
+    {{libs_banner}}
+    <article id="ps-export-content" class="ve-card ve-card--elevated">Loading…</article>
+  </div>
+  {{spec_data}}
+  <script>
+{{markdown_libs}}
+  </script>
+  <script>
+    /* Render the embedded markdown doc through the sanitize chokepoint
+       (psRenderMarkdown = DOMPurify.sanitize(marked.parse(...)), which ships in
+       the markdown-libs block above). Linear print-friendly: no nav/search. */
+    (function () {
+      var data = psReadSpecData();
+      var el = document.getElementById("ps-export-content");
+      if (el) { el.innerHTML = psRenderMarkdown(data.doc || ""); }
+    })();
+  </script>
+</body>
+</html>

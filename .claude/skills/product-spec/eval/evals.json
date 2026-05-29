@@ -50,6 +50,53 @@
         {"id": "changelog-appended", "_gating": "structural", "text": "docs/product/change-log.md gained at least one new entry after --update."},
         {"id": "delta-viz-renders", "_gating": "structural", "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."}
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run F1 read-once Export on the valid fixture spec: render_export.py --export PRD-AUTH --format md. The doc must be deterministic, contain a TOC, ordered sections (vision/BRD context before the PRD before its stories), and include the story's acceptance criteria.",
+      "expected_output": "A single markdown doc under docs/product/exports/ with provenance frontmatter, a Contents list, sections in hierarchy order, and AC items for the story.",
+      "files": ["fixtures/valid-spec"],
+      "assertions": [
+        {"id": "export-deterministic", "_gating": "structural", "text": "render_export.render_markdown_doc(...) called twice with the same inputs returns byte-identical text."},
+        {"id": "export-has-toc-and-ac", "_gating": "structural", "text": "The md doc contains a '## Contents' TOC and the story section includes its acceptance_criteria items."},
+        {"id": "export-stable-filename", "_gating": "structural", "text": "Two exports of identical content produce the same 8-char content-hash suffix in the filename."},
+        {"id": "export-sandboxed", "_gating": "structural", "text": "Nothing is written outside docs/product/exports/."}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Render the F2 board viewer: visualize.py --view board (default --format html). Columns group by status; cards are goal/PRD/epic/story; artifact bodies render client-side through the sanitize chokepoint.",
+      "expected_output": "A self-contained board-<ts>.html under docs/product/visuals/ with an inert JSON data island, column structure, vendored marked+DOMPurify, and no <div class=\"mermaid\"> wrapper.",
+      "files": ["fixtures/valid-spec"],
+      "assertions": [
+        {"id": "board-html-self-contained", "_gating": "structural", "text": "The output contains id=\"ps-spec-data\", inlined marked+DOMPurify, and opens with no network."},
+        {"id": "board-not-pre-or-mermaid", "_gating": "structural", "text": "The board HTML is NOT a <pre> dump and contains no <div class=\"mermaid\"> wrapper."},
+        {"id": "board-body-sanitized", "_gating": "structural", "text": "A malicious body payload (</script><script>…) is neutralized: the breakout sequence does not appear; </ is escaped to <\\/ in the JSON island."},
+        {"id": "board-mermaid-fallback", "_gating": "structural", "text": "visualize.py --view board --format mermaid exits 0 (no AttributeError) and prints the ASCII board."}
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Render the F2 explorer viewer: visualize.py --view explorer (default --format html). It must offer all three modes (Tree / Flat-tabs / Table-tree) with a mode toggle persisted to localStorage, shared search + facet filters, and sanitized bodies.",
+      "expected_output": "A self-contained explorer-<ts>.html with three mode containers, a toggle bar, a search box, a treegrid, and the sanitize chokepoint; ASCII fallback equals the tree render.",
+      "files": ["fixtures/valid-spec"],
+      "assertions": [
+        {"id": "explorer-three-modes", "_gating": "structural", "text": "The HTML contains ps-view-tree, ps-view-tabs, and ps-view-table containers plus a mode toggle bar (ps-modes)."},
+        {"id": "explorer-persists-mode", "_gating": "structural", "text": "The HTML references localStorage to persist the last selected mode."},
+        {"id": "explorer-ascii-is-tree", "_gating": "structural", "text": "render_ascii.explorer(graph) == render_ascii.tree(graph)."},
+        {"id": "explorer-body-sanitized", "_gating": "structural", "text": "A malicious body payload is neutralized inside the inert JSON island (no breakout)."}
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Confirm all product-spec HTML shares one design system: render a legacy view (visualize.py --view tree --format html) and verify it adopts the shared head (theme toggle, palette, print-CSS) while inlining NO marked/DOMPurify body-render libs (H4 symmetric gating).",
+      "expected_output": "The legacy tree HTML carries the shared design-system head (psToggleTheme, .ve-card, @media print, Mermaid theme-var overrides) and the Mermaid runtime, but not the marked copyright banner or the psRenderMarkdown chokepoint.",
+      "files": ["fixtures/valid-spec"],
+      "assertions": [
+        {"id": "legacy-shares-design-system", "_gating": "structural", "text": "The tree HTML contains psToggleTheme, .ve-card, and @media print from the shared head."},
+        {"id": "legacy-no-bodyrender-libs", "_gating": "structural", "text": "The tree HTML does NOT contain the marked copyright banner ('marked v18') or psRenderMarkdown (legacy views inline no sanitizer)."},
+        {"id": "ascii-fallback-stays-small", "_gating": "structural", "text": "An ASCII-fallback HTML view (heatmap) stays well under the page-size bound and embeds no Mermaid payload."}
+      ]
     }
   ]
 }

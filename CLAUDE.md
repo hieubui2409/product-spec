@@ -79,7 +79,8 @@ For each flag, load the relevant reference from `.claude/skills/product-spec/ref
 | `--product`, `--brd`, `--prd`, `--epic`, `--story`, no-flag init | `workflow-interview.md` |
 | `--validate`, `--strict`, `--approve`, `--summary` | `workflow-validate.md` |
 | `--auto`, `--update` | `workflow-auto-and-update.md` |
-| `--viz`, `--format`, `--lang` | `visualization-spec.md` (+ `scripts/visualize.py`) |
+| `--viz` (incl. `board`/`explorer`), `--format`, `--lang`, `--group-by`, `--layers` | `visualization-spec.md` (+ `scripts/visualize.py`) |
+| `--export`, `--layers`, `--depth`, `--compact-mode` | `workflow-export.md` (+ `scripts/render_export.py`) |
 
 Load only the references relevant to the active flag. Don't pre-load everything.
 
@@ -110,8 +111,11 @@ Scripts available:
 - `check_consistency.py` — AC presence, ID grammar, duplicate IDs, enum integrity, status inconsistency.
 - `build_traceability_matrix.py` — render the story → epic → PRD → goal → metric matrix.
 - `generate_templates.py` — instantiate an artifact from `assets/templates/` with `{{token}}` substitution; allocates the next parent-scoped ID.
-- `visualize.py` — 9 views × 3 formats (ASCII, Mermaid, self-contained HTML).
-- `install-vendor-mermaid.sh` — one-time vendor of the Mermaid runtime (called from `install.sh`).
+- `visualize.py` — 11 views × 3 formats: the 9 graph views (ASCII/Mermaid/HTML) + the body-bearing `board` (kanban) and `explorer` (Tree/Flat-tabs/Table-tree), which default to `--format html`.
+- `assemble_digest.py` — shared deterministic assembler: (selection + `--layers` + `--depth`) → ordered digest model; Vision/BRD prepended as singletons. Powers `--export` and the body viewers.
+- `render_export.py` — F1 read-once Export (`--export`): one self-contained md or print-ready HTML doc under `docs/product/exports/`.
+- `render_board.py` / `render_explorer.py` — F2 viewer HTML writers (kanban / tri-mode explorer).
+- `install-vendor-mermaid.sh` / `install-vendor-markdown.sh` — one-time vendor of the Mermaid runtime and of marked + DOMPurify (the offline body-render sanitize chokepoint), called from `install.sh`.
 
 ---
 
@@ -120,8 +124,11 @@ Scripts available:
 - **No code generation.** This is a spec skill. If the PO asks "write the API", redirect: stories + AC, the engineering team writes code.
 - **No engineering-unit estimation.** Stories carry `size: S | M | L` — never story points, never hours.
 - **No prose overwrite on update.** Flag, don't rewrite.
-- **No runtime external network calls.** Everything runs from the local install (vendored Mermaid, stdlib + pyyaml). The one-time installer is the only network step.
+- **No runtime external network calls.** Everything runs from the local install (vendored Mermaid + marked + DOMPurify, stdlib + pyyaml). The one-time installer is the only network step. If the markdown libs are missing, body views **fail closed** to escaped plain text — never a CDN sanitizer.
 - **No SVG/PNG output.** Visualizations are ASCII, Mermaid (markdown-fenced), or self-contained HTML.
+- **No live-reload / server.** Every HTML output is a one-shot, self-contained file opened directly in a browser.
+- **No edit-from-viewer.** `board`/`explorer`/`export` are read/consume surfaces; artifacts are edited via the interview flags, never from the HTML.
+- **No real PDF binary.** "PDF" = the browser's Save-as-PDF over `@media print` CSS; the skill emits no `.pdf`.
 
 ---
 
@@ -160,7 +167,14 @@ Never assume:
 - **Mermaid** → a fenced markdown block. For views Mermaid can't express cleanly (`heatmap`, `persona`, `risk`, no-baseline `delta`), the renderer emits a plain ` ``` ` fence with the ASCII fallback inside (the dispatcher routes the HTML path accordingly).
 - **HTML** → a self-contained file under `docs/product/visuals/<view>-<timestamp>.html`. Mermaid runtime embedded inline for views that need it; omitted for ASCII-fallback views to keep file size small.
 
-All renders are deterministic: same input → same output. The graph JSON is the single source of truth (`scripts/spec_graph.py`).
+The two **body-bearing** views render artifact bodies, not graphs:
+
+- **`board`** — kanban grouped by `--group-by status|horizon|moscow`; cards = goal/PRD/epic/story; client-side search + facet filters; click → sanitized body. Defaults to `--format html`; `--format mermaid` falls back to the ASCII board.
+- **`explorer`** — one page, in-page toggle across **Tree / Flat-tabs / Table-tree**, shared search + facets, last mode persisted to `localStorage`. Defaults to `--format html`; `--format mermaid` falls back to the ASCII tree.
+
+**One design system for ALL product-spec HTML.** The 9 graph views + `board` + `explorer` + `export` share a single head partial (`assets/templates/_viewer-head.html`): theme toggle + palette + typography + `@media print`. Bodies render through one client chokepoint — `DOMPurify.sanitize(marked.parse(md))` (both vendored + inlined) — and **fail closed** to escaped text if the libs are absent. Symmetric payload gating: body views carry no Mermaid; the 9 graph views carry no marked/DOMPurify.
+
+All renders are deterministic: same input → same output (HTML carries only a timestamp; the sanitized body is deterministic). The graph JSON is the single source of truth (`scripts/spec_graph.py`).
 
 ---
 
@@ -177,7 +191,8 @@ docs/product/
 ├── exec-summary.md       (generated 1-page summary)
 ├── .session.md           (interview session state; committed; resumable)
 ├── change-log.md         (append-only delta log)
-└── visuals/              (rendered visualizations)
+├── exports/              (F1 read-once Export docs: <stem>-<ts>-<hash8>.md|html)
+└── visuals/              (rendered visualizations, incl. board/explorer HTML)
     └── .snapshots/       (graph-snapshot JSONs for delta/diff)
 ```
 
