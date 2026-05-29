@@ -207,6 +207,24 @@ def test_validate_rejects_ambiguous_hook(tmp_root):
     assert any("MANIFEST_E074" in e for e in errors)
 
 
+def test_path_qualified_hook_validates_and_is_bundled(tmp_root):
+    """The documented E074 remedy — pin a unique path — must pass validate AND
+    actually bundle the file. validate() and selection.resolve_selection must use
+    one matcher; a basename-only resolver would drop the path-pinned hook."""
+    from pack.selection import resolve_selection
+    hooks = tmp_root / ".claude" / "hooks"
+    (hooks / "a").mkdir(parents=True, exist_ok=True)
+    (hooks / "b").mkdir(parents=True, exist_ok=True)
+    (hooks / "a" / "shared.cjs").write_text("x", encoding="utf-8")
+    (hooks / "b" / "shared.cjs").write_text("y", encoding="utf-8")
+    manifest = {"version": "1.0.0", "hooks": ["a/shared.cjs"]}
+    errors = manifest_loader.validate(manifest, tmp_root)
+    assert not any("MANIFEST_E073" in e or "MANIFEST_E074" in e for e in errors)
+    arcs = [arc for _, arc in resolve_selection(manifest, tmp_root)]
+    assert ".claude/hooks/a/shared.cjs" in arcs   # bundled, not silently dropped
+    assert ".claude/hooks/b/shared.cjs" not in arcs
+
+
 def test_validate_rejects_non_bool_include_scripts(tmp_root):
     """include_scripts must be bool; a string '1' must fail."""
     errors = manifest_loader.validate(

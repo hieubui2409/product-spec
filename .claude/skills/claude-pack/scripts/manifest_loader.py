@@ -293,8 +293,11 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
             # Must match a FILE (a slug naming a directory would pass a bare
             # rglob existence test yet bundle nothing). >1 match is ambiguous:
             # rglob order is filesystem-dependent, so picking one silently would
-            # make the tarball non-deterministic across machines.
-            hook_matches = [p for p in (claude_dir / "hooks").rglob(slug) if p.is_file()]
+            # make the tarball non-deterministic across machines. Use the SHARED
+            # matcher so this gate and selection.resolve_selection agree on which
+            # file(s) a name resolves to (a name that validates here is the same
+            # set that gets bundled).
+            hook_matches = match_hooks(claude_dir, slug)
             if not hook_matches:
                 errors.append(f"[MANIFEST_E073] missing hook: {slug}")
             elif len(hook_matches) > 1:
@@ -304,6 +307,21 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
                 )
 
     return errors
+
+
+def match_hooks(claude_dir: Path, name: str) -> list[Path]:
+    """Resolve a manifest hook NAME to matching files — the ONE matcher shared by
+    validate() (the missing/ambiguous gate) and selection.resolve_selection (the
+    bundling step), so a name that passes validation bundles exactly the same
+    file(s). `rglob(name)` matches a bare basename, a path-relative fragment
+    (`a/foo.cjs`), or a glob (`*.sh`) identically on both call sites; the result is
+    sorted for a deterministic pick. (Replaces C5's basename-only index in
+    selection, which diverged from this rglob gate and silently dropped a
+    path-qualified/glob hook that had passed validation.)"""
+    hooks_dir = claude_dir / "hooks"
+    if not hooks_dir.is_dir():
+        return []
+    return sorted((p for p in hooks_dir.rglob(name) if p.is_file()), key=lambda p: p.as_posix())
 
 
 def _resolve_extension(slug: str, search_root: Path, category: str) -> Path:

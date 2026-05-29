@@ -37,41 +37,26 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
         _walk_dir(claude_dir / "skills" / "_shared" / slug,
                   f".claude/skills/_shared/{slug}")
 
-    for slug in manifest.get("agents", []):
-        try:
-            resolved = manifest_loader._resolve_extension(
-                slug, claude_dir / "agents", "agents")
-        except manifest_loader.ManifestError:
-            continue
-        rel = resolved.relative_to(claude_dir).as_posix()
-        entries.append((resolved, f".claude/{rel}"))
+    # agents + rules resolve identically (only the category differs) — one loop.
+    for category in ("agents", "rules"):
+        for slug in manifest.get(category, []):
+            try:
+                resolved = manifest_loader._resolve_extension(
+                    slug, claude_dir / category, category)
+            except manifest_loader.ManifestError:
+                continue
+            rel = resolved.relative_to(claude_dir).as_posix()
+            entries.append((resolved, f".claude/{rel}"))
 
-    for slug in manifest.get("rules", []):
-        try:
-            resolved = manifest_loader._resolve_extension(
-                slug, claude_dir / "rules", "rules")
-        except manifest_loader.ManifestError:
-            continue
-        rel = resolved.relative_to(claude_dir).as_posix()
-        entries.append((resolved, f".claude/{rel}"))
-
-    hook_names = manifest.get("hooks", [])
-    if hook_names:
-        # Walk hooks/ ONCE into a basename->paths index, then resolve each requested
-        # name via lookup — instead of an rglob() full-tree scan per requested name
-        # (O(hooks·tree)). Sorted pick stays deterministic across machines; validate()
-        # rejects the >1-match (ambiguous) case before we get here.
-        hooks_dir = claude_dir / "hooks"
-        by_name: dict[str, list[Path]] = {}
-        if hooks_dir.is_dir():
-            for m in hooks_dir.rglob("*"):
-                if m.is_file():
-                    by_name.setdefault(m.name, []).append(m)
-        for name in hook_names:
-            matches = sorted(by_name.get(name, []), key=lambda m: m.as_posix())
-            if matches:
-                rel = matches[0].relative_to(claude_dir).as_posix()
-                entries.append((matches[0], f".claude/{rel}"))
+    for name in manifest.get("hooks", []):
+        # Use the SHARED matcher (rglob) so a hook name that passed validate() —
+        # incl. a path-qualified `a/foo.cjs` or a glob `*.sh` — resolves to the SAME
+        # file(s) here and actually gets bundled. validate() rejects the >1-match
+        # (ambiguous) case before we get here, so the sorted pick is deterministic.
+        matches = manifest_loader.match_hooks(claude_dir, name)
+        if matches:
+            rel = matches[0].relative_to(claude_dir).as_posix()
+            entries.append((matches[0], f".claude/{rel}"))
 
     for path_entry in manifest.get("extra", []):
         src = root / path_entry
