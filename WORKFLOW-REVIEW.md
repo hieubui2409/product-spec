@@ -85,8 +85,8 @@ Cost tiers (choose per cycle):
 | C2 | whole-skill | all | per-finding | — | ✅ 26 found, fixed |
 | C3 | feature (primary) + regression | all 9 | per-candidate (42 agents) | 8 | ✅ 30 found, fixed |
 | C4 | FULL whole-skill (both skills) | all 9 (incl. cleanup) | batched per-file | NONE | ✅ 29 found (26 agents / ~2.1M tok), fixed |
-| **C5** | **FULL whole-skill** (same as C4) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** | pending — after C4 fixes land *(plan changed: C5 repeats the thorough pass, not the narrow one)* |
-| **C6/7+** | **narrow regression** (fixed files + callers) | **correctness-only** | lean batched | none | pending — starts after a cleanup-clean cycle |
+| **C5** | **FULL whole-skill** (same as C4) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** | ✅ 39 found (~31 agents incl. sweep re-run / ~2.0M tok), all fixed |
+| **C6/7+** | **narrow regression** (fixed files + callers) | **correctness-only** | lean batched | none | pending — C4+C5 (the two full passes) done + cleanup fixed → C6 = narrow correctness-only |
 | … C10 | per convergence rule | — | — | — | hard cap |
 
 ## 7. Locked decisions (carry across all cycles — never silently reverse)

@@ -124,7 +124,7 @@ Scripts available:
 - **No code generation.** This is a spec skill. If the PO asks "write the API", redirect: stories + AC, the engineering team writes code.
 - **No engineering-unit estimation.** Stories carry `size: S | M | L` — never story points, never hours.
 - **No prose overwrite on update.** Flag, don't rewrite.
-- **No runtime external network calls.** Everything runs from the local install (vendored Mermaid + marked + DOMPurify, stdlib + pyyaml). The one-time installer is the only network step. If the markdown libs are missing, body views **fail closed** to escaped plain text — never a CDN sanitizer.
+- **No runtime external network calls when assets are vendored.** Everything runs from the local install (vendored Mermaid + marked + DOMPurify, stdlib + pyyaml); the one-time installer is the only network step. Degraded-install caveat: if `mermaid.min.js` failed to vendor, the **9 graph views** fall back to a jsdelivr CDN `<script>` at browser-render time (install.sh warns about this). **Body views never reach a CDN** — if marked/DOMPurify are missing they **fail closed** to escaped plain text, never a CDN sanitizer.
 - **No SVG/PNG output.** Visualizations are ASCII, Mermaid (markdown-fenced), or self-contained HTML.
 - **No live-reload / server.** Every HTML output is a one-shot, self-contained file opened directly in a browser.
 - **No edit-from-viewer.** `board`/`explorer`/`export` are read/consume surfaces; artifacts are edited via the interview flags, never from the HTML.
