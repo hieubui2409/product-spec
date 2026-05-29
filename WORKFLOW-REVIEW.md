@@ -86,7 +86,8 @@ Cost tiers (choose per cycle):
 | C3 | feature (primary) + regression | all 9 | per-candidate (42 agents) | 8 | ✅ 30 found, fixed |
 | C4 | FULL whole-skill (both skills) | all 9 (incl. cleanup) | batched per-file | NONE | ✅ 29 found (26 agents / ~2.1M tok), fixed |
 | **C5** | **FULL whole-skill** (same as C4) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** | ✅ 39 found (~31 agents incl. sweep re-run / ~2.0M tok), all fixed |
-| **C6/7+** | **narrow regression** (fixed files + callers) | **correctness-only** | lean batched | none | pending — C4+C5 (the two full passes) done + cleanup fixed → C6 = narrow correctness-only |
+| C6 | FULL whole-skill (owner override) | all 9 | batched per-file | NONE | ✅ 28 found (~29 agents / ~2.6M tok), all fixed — caught 3 C5-fix-induced regressions (1 HIGH) |
+| **C7+** | owner's call: full again, or **narrow correctness-only** | per choice | lean/batched | none | pending — narrow per §4 once a cleanup-clean cycle lands; full still defensible (fixes keep inducing regressions) |
 | … C10 | per convergence rule | — | — | — | hard cap |
 
 ## 7. Locked decisions (carry across all cycles — never silently reverse)
