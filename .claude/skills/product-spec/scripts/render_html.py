@@ -172,10 +172,21 @@ _BODY_RENDER_JS = (
     # chip values (L[v]) so a --lang vi facet matches the Flat-tabs tab labels.
     "\nvar psFacetGroups=['status','moscow','horizon','persona','layer'];"
     "\nfunction psDistinct(records,group){var seen={};records.forEach(function(c){var v=group==='persona'?c.personas:[c[group]];(v||[]).forEach(function(x){if(x){seen[x]=true;}});});return Object.keys(seen).sort();}"
-    "\nfunction psFacetActive(state,g){return Object.keys(state.facets[g]).length>0;}"
-    "\nfunction psSelfMatch(state,c){if(state.q){var hay=(c.id+' '+c.title+' '+(c.body||'')).toLowerCase();if(hay.indexOf(state.q)===-1){return false;}}for(var i=0;i<psFacetGroups.length;i++){var g=psFacetGroups[i];if(!psFacetActive(state,g)){continue;}var vals=g==='persona'?(c.personas||[]):[c[g]];if(!vals.some(function(v){return state.facets[g][v];})){return false;}}return true;}"
+    # `state.facets[g]||{}` guards let the engine tolerate a shell that hasn't
+    # pre-declared every psFacetGroups bucket (the group LIST is the single source
+    # of truth; a missing bucket no longer throws on first paint). psBuildFacets
+    # seeds the bucket for each group it renders.
+    "\nfunction psFacetActive(state,g){return Object.keys(state.facets[g]||{}).length>0;}"
+    "\nfunction psSelfMatch(state,c){if(state.q){var hay=(c.id+' '+c.title+' '+(c.body||'')).toLowerCase();if(hay.indexOf(state.q)===-1){return false;}}for(var i=0;i<psFacetGroups.length;i++){var g=psFacetGroups[i];if(!psFacetActive(state,g)){continue;}var vals=g==='persona'?(c.personas||[]):[c[g]];if(!vals.some(function(v){return (state.facets[g]||{})[v];})){return false;}}return true;}"
     "\nfunction psBadge(text,cls){var s=document.createElement('span');s.className='badge '+cls;s.textContent=text;return s;}"
-    "\nfunction psBuildFacets(records,labels,state,onChange){var host=document.getElementById('ps-facets');if(!host){return;}var L=labels||{};psFacetGroups.forEach(function(g){var vals=psDistinct(records,g);if(!vals.length){return;}var lab=document.createElement('span');lab.className='badge badge--type';lab.textContent=(L[g]||g)+':';host.appendChild(lab);vals.forEach(function(v){var b=document.createElement('button');b.type='button';b.textContent=(g==='layer'?(L[v]||v):v);b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){if(state.facets[g][v]){delete state.facets[g][v];b.setAttribute('aria-pressed','false');}else{state.facets[g][v]=true;b.setAttribute('aria-pressed','true');}onChange();});host.appendChild(b);});});}"
+    # Shared card-badge emitter (type/status/moscow/persona, in order) — board cards
+    # and explorer nodes both call it so the badge set stays identical across viewers.
+    "\nfunction psMetaBadges(c,el){if(c.type){el.appendChild(psBadge(c.type,'badge--type'));}if(c.status){el.appendChild(psBadge(c.status,'badge--status'));}if(c.moscow){el.appendChild(psBadge(c.moscow,'badge--moscow'));}(c.personas||[]).forEach(function(p){el.appendChild(psBadge(p,'badge--persona'));});}"
+    # Shared search-input wiring (placeholder + lowercased query → onChange) so both
+    # shells wire the #ps-search box identically; pass the localized label + the
+    # shell's render callback.
+    "\nfunction psWireSearch(state,onChange,label){var s=document.getElementById('ps-search');if(!s){return;}s.placeholder=label||'Search…';s.addEventListener('input',function(){state.q=this.value.toLowerCase();onChange();});}"
+    "\nfunction psBuildFacets(records,labels,state,onChange){var host=document.getElementById('ps-facets');if(!host){return;}var L=labels||{};psFacetGroups.forEach(function(g){var vals=psDistinct(records,g);if(!vals.length){return;}state.facets[g]=state.facets[g]||{};var lab=document.createElement('span');lab.className='badge badge--type';lab.textContent=(L[g]||g)+':';host.appendChild(lab);vals.forEach(function(v){var b=document.createElement('button');b.type='button';b.textContent=(L[v]||v);b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){if(state.facets[g][v]){delete state.facets[g][v];b.setAttribute('aria-pressed','false');}else{state.facets[g][v]=true;b.setAttribute('aria-pressed','true');}onChange();});host.appendChild(b);});});}"
 )
 
 
@@ -341,6 +352,17 @@ def substitute(shell: str, values: Dict[str, str]) -> str:
     return re.sub(r"\{\{(\w+)\}\}", lambda m: values.get(m.group(1), m.group(0)), shell)
 
 
+def _write_visual(root: Path, filename: str, html: str) -> Path:
+    """Write a self-contained visual to docs/product/visuals/<filename>. One home for
+    the out_dir + mkdir + write_text + return that the 9 graph views and the board /
+    explorer writers otherwise copy verbatim."""
+    out_dir = root / "docs" / "product" / "visuals"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    target = out_dir / filename
+    target.write_text(html, encoding="utf-8")
+    return target
+
+
 def write(
     root: Path,
     view: str,
@@ -350,8 +372,5 @@ def write(
     lang: str = "en",
 ) -> Path:
     """Write the assembled HTML to docs/product/visuals/<view>-<ts>.html."""
-    out_dir = root / "docs" / "product" / "visuals"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / f"{view}-{file_timestamp()}.html"
-    target.write_text(assemble(view, view_format, view_text, graph, lang), encoding="utf-8")
-    return target
+    return _write_visual(root, f"{view}-{file_timestamp()}.html",
+                         assemble(view, view_format, view_text, graph, lang))

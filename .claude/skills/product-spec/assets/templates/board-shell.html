@@ -48,9 +48,8 @@
     // only its state shape (board has no mode) and its render callback.
     var state = { q: "", facets: { status: {}, moscow: {}, horizon: {}, persona: {}, layer: {} } };
 
-    var search = document.getElementById("ps-search");
-    search.placeholder = L.search || "Search…";
-    search.addEventListener("input", function () { state.q = this.value.toLowerCase(); render(); });
+    // Search wiring is shared via render_html._BODY_RENDER_JS (psWireSearch).
+    psWireSearch(state, render, L.search);
 
     function cardEl(c) {
       var el = document.createElement("div");
@@ -59,10 +58,7 @@
       el.dataset.id = c.id;                      // dataset → DOM-escaped attribute
       var cid = document.createElement("div"); cid.className = "cid"; cid.textContent = c.id; el.appendChild(cid);
       if (c.title) { var t = document.createElement("div"); t.className = "ctitle"; t.textContent = c.title; el.appendChild(t); }
-      if (c.type) el.appendChild(psBadge(c.type, "badge--type"));
-      if (c.status) el.appendChild(psBadge(c.status, "badge--status"));
-      if (c.moscow) el.appendChild(psBadge(c.moscow, "badge--moscow"));
-      (c.personas || []).forEach(function (p) { el.appendChild(psBadge(p, "badge--persona")); });
+      psMetaBadges(c, el);   // shared type/status/moscow/persona badge emitter
       function open() { psOpenDetail(c.id); }
       el.addEventListener("click", open);
       el.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });

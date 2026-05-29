@@ -28,7 +28,7 @@ EXPLORER_SHELL = SKILL_ROOT / "assets" / "templates" / "explorer-shell.html"
 # depth is recomputed from the reconciled multi-parent chain (see build_payload).
 _LAYER_ORDER = ("goal", "prd", "epic", "story")
 _DEPTH_BY_TYPE = {t: i for i, t in enumerate(_LAYER_ORDER)}
-_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "unassigned",
+_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "horizon", "unassigned",
             "no_results", "tree", "tabs", "table", "ac_count",
             "goal", "prd", "epic", "story")
 
@@ -89,11 +89,16 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
     _depth_cache: Dict[str, int] = {}
 
     def _depth(nid: str, stack: frozenset) -> int:
-        if nid in _depth_cache:
+        # Memoize ONLY at the top level (empty stack): a value computed under a
+        # non-empty cycle-guard stack is conditioned on that path, so caching it
+        # would make the depth of a malformed cyclic node order-dependent. On the
+        # acyclic ID-grammar DAG the top-level memo is exact and order-independent.
+        if not stack and nid in _depth_cache:
             return _depth_cache[nid]
         ps = [p for p in parents_by_id.get(nid, []) if p in parents_by_id and p not in stack]
         d = 0 if not ps else 1 + min(_depth(p, stack | {nid}) for p in ps)
-        _depth_cache[nid] = d
+        if not stack:
+            _depth_cache[nid] = d
         return d
 
     for it in items:
@@ -117,8 +122,6 @@ def assemble_explorer(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           lang: str = "en", filter_wont: bool = False,
           layers: Optional[List[str]] = None) -> Path:
-    out_dir = root / "docs" / "product" / "visuals"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / f"explorer-{render_html.file_timestamp()}.html"
-    target.write_text(assemble_explorer(graph, artifacts, lang, filter_wont, layers), encoding="utf-8")
-    return target
+    return render_html._write_visual(
+        root, f"explorer-{render_html.file_timestamp()}.html",
+        assemble_explorer(graph, artifacts, lang, filter_wont, layers))

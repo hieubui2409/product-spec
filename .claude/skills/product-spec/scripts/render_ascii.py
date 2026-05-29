@@ -19,6 +19,7 @@ from spec_graph import (
     CHILD_TYPE_FOR_PARENT,
     matching_child_counts,
     parents_of,
+    children_of,
     diff_graphs,
 )
 
@@ -26,6 +27,13 @@ from spec_graph import (
 def _is_deferred(node: Dict[str, Any]) -> bool:
     """A node is 'deferred' if either MoSCoW says won't OR scope says out."""
     return node.get("moscow") == "wont" or node.get("scope") == "out"
+
+
+def is_visible(node: Optional[Dict[str, Any]], filter_wont: bool) -> bool:
+    """Whether a (possibly missing) node survives --filter-wont. One home for the
+    deferred-visibility rule the tree renderers share (a missing node — flagged by
+    dangling_link — is kept rendered)."""
+    return node is None or not (filter_wont and _is_deferred(node))
 
 
 def _ascii_product_name(graph: Dict[str, Any]) -> str:
@@ -54,14 +62,9 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
 
     def _visible(nid: str) -> bool:
-        n = nodes_by_id.get(nid)
-        if n is None:
-            return True  # missing nodes flagged by dangling_link; keep rendered
-        return not (filter_wont and _is_deferred(n))
+        return is_visible(nodes_by_id.get(nid), filter_wont)
 
-    children = defaultdict(list)
-    for e in graph["edges"]:
-        children[e["to"]].append(e["from"])
+    children = children_of(graph)
 
     lines: List[str] = []
     lines.append(f"{label('product', lang)}: {_ascii_product_name(graph)}")
@@ -368,7 +371,7 @@ def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
     return "\n".join(lines)
 
 
-def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
+def _orphan_forest(graph: Dict[str, Any], lang: str = "en") -> str:
     """Indented forest for the explorer ASCII fallback when a `--layers` or
     `--filter-wont` filter prunes intermediate ancestors.
 
@@ -384,13 +387,11 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = 
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     present = set(nodes_by_id)
 
-    def _visible(nid: str) -> bool:
-        n = nodes_by_id.get(nid)
-        return n is None or not (filter_wont and _is_deferred(n))
-
-    children = defaultdict(list)
-    for e in graph["edges"]:
-        children[e["to"]].append(e["from"])
+    # No visibility filter here: the sole caller (explorer) builds `graph` via
+    # select_cards, which already dropped deferred nodes when filter_wont — every
+    # present node is renderable. `_mark` still flags any kept deferred node (the
+    # layers-only path keeps them with a `*`).
+    children = children_of(graph)
     # All parents per child (shared rule); a node is a root when none of its
     # parents survive in the filtered set.
     parents = parents_of(graph)
@@ -410,12 +411,12 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = 
         text = f"{nid} — {title}" if (is_root and title) else nid
         lines.append(f"{prefix}{'└── ' if last else '├── '}{_mark(n, text)}")
         kid_prefix = prefix + ("    " if last else "│   ")
-        kids = sorted(k for k in children.get(nid, []) if k in present and _visible(k) and k not in seen)
+        kids = sorted(k for k in children.get(nid, []) if k in present and k not in seen)
         for i, k in enumerate(kids):
             _render(k, kid_prefix, i == len(kids) - 1, False, seen)
 
     roots = sorted(nid for nid in nodes_by_id
-                   if _visible(nid) and not any(p in present for p in parents.get(nid, [])))
+                   if not any(p in present for p in parents.get(nid, [])))
     for i, r in enumerate(roots):
         _render(r, "", i == len(roots) - 1, True, set())
     return "\n".join(lines)
@@ -441,9 +442,9 @@ def explorer(graph: Dict[str, Any], lang: str = "en",
         "nodes": keep_nodes,
         "edges": [e for e in graph["edges"] if e["from"] in keep_ids and e["to"] in keep_ids],
     }
-    # Deferred nodes are already gone when filter_wont; pass it through so the
-    # layers-only case (filter_wont=False) still keeps deferred cards with a `*`.
-    return _orphan_forest(filtered, lang=lang, filter_wont=filter_wont)
+    # select_cards already dropped deferred nodes when filter_wont; the layers-only
+    # path keeps them and _orphan_forest's _mark flags them with a `*`.
+    return _orphan_forest(filtered, lang=lang)
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:

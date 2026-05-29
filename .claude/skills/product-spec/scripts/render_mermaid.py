@@ -18,6 +18,7 @@ from render_ascii import (
     persona as ascii_persona,
     risk as ascii_risk,
     _is_deferred,
+    is_visible,
 )
 
 
@@ -67,10 +68,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     lines.append(f'  PRODUCT["{name}"]')
 
     def _visible(nid: str) -> bool:
-        n = nodes_by_id.get(nid)
-        if n is None:
-            return True
-        return not (filter_wont and _is_deferred(n))
+        return is_visible(nodes_by_id.get(nid), filter_wont)
 
     for n in graph["nodes"]:
         # PRODUCT is emitted explicitly above; vision is a narrative doc with
@@ -225,6 +223,11 @@ def risk(graph: Dict[str, Any]) -> str:
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
+    """Mermaid delta: node ADD/REMOVE + PRODUCT drift only. A field-only edit (e.g.
+    a story's status flip with no add/remove) renders as '(no changes)' here —
+    per-field node diffs appear in the ascii/html delta, not this graph view. (Not
+    a C5 regression: the pre-C5 mermaid delta had no per-field loop either; the
+    diff_graphs refactor preserved that scope.)"""
     d = diff_graphs(current, baseline)  # shared added/removed + product-change set-math
     lines = [
         "flowchart TB",

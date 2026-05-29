@@ -22,7 +22,7 @@ from render_ascii import _BOARD_GROUP_ORDER, _hashable, select_cards
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
 
-_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "unassigned",
+_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "horizon", "unassigned",
             "no_results", "now", "next", "later", "must", "should", "could", "wont",
             "goal", "prd", "epic", "story")
 
@@ -85,8 +85,6 @@ def assemble_board(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           group_by: str = "status", lang: str = "en", filter_wont: bool = False,
           layers: Optional[List[str]] = None) -> Path:
-    out_dir = root / "docs" / "product" / "visuals"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    target = out_dir / f"board-{render_html.file_timestamp()}.html"
-    target.write_text(assemble_board(graph, artifacts, group_by, lang, filter_wont, layers), encoding="utf-8")
-    return target
+    return render_html._write_visual(
+        root, f"board-{render_html.file_timestamp()}.html",
+        assemble_board(graph, artifacts, group_by, lang, filter_wont, layers))

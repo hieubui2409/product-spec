@@ -75,9 +75,8 @@
     var lastVis = {};
     var painted = {};
 
-    var search = document.getElementById("ps-search");
-    search.placeholder = L.search || "Search…";
-    search.addEventListener("input", function () { state.q = this.value.toLowerCase(); renderAll(); });
+    // Search wiring is shared via render_html._BODY_RENDER_JS (psWireSearch).
+    psWireSearch(state, renderAll, L.search);
 
     // ---- mode toggle ----
     var MODES = [["tree", L.tree || "Tree"], ["tabs", L.tabs || "Flat tabs"], ["table", L.table || "Table"]];
@@ -119,11 +118,12 @@
       return vis;
     }
 
-    function metaBadges(c, el) {
-      if (c.type) el.appendChild(psBadge(c.type, "badge--type"));
-      if (c.status) el.appendChild(psBadge(c.status, "badge--status"));
-      if (c.moscow) el.appendChild(psBadge(c.moscow, "badge--moscow"));
-      (c.personas || []).forEach(function (p) { el.appendChild(psBadge(p, "badge--persona")); });
+    // id (strong) + " — title" + shared badges; the common node/card header used by
+    // both Tree node() and Flat-tabs fillTabList() (psMetaBadges is shared engine).
+    function appendHeader(el, c) {
+      var strong = document.createElement("strong"); strong.textContent = c.id; el.appendChild(strong);
+      if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; el.appendChild(t); }
+      psMetaBadges(c, el);
     }
     function openBtn(id) {
       var b = document.createElement("button"); b.type = "button"; b.className = "open-body";
@@ -143,9 +143,7 @@
         var np = Object.create(path); np[c.id] = true;
         var d = document.createElement("details"); d.className = "tnode"; d.open = !!state.q;
         var s = document.createElement("summary");
-        var strong = document.createElement("strong"); strong.textContent = c.id; s.appendChild(strong);
-        if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; s.appendChild(t); }
-        metaBadges(c, s); s.appendChild(openBtn(c.id));
+        appendHeader(s, c); s.appendChild(openBtn(c.id));
         d.appendChild(s);
         var ch = (kids[c.id] || []);
         if (ch.length) { var box = document.createElement("div"); box.className = "tkids";
@@ -164,9 +162,7 @@
       if (!rows.length) { listWrap.appendChild(emptyMsg()); }
       rows.forEach(function (c) {
         var card = document.createElement("div"); card.className = "ve-card";
-        var strong = document.createElement("strong"); strong.textContent = c.id; card.appendChild(strong);
-        if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; card.appendChild(t); }
-        metaBadges(c, card);
+        appendHeader(card, c);
         card.addEventListener("click", function () { psOpenDetail(c.id); });
         listWrap.appendChild(card);
       });

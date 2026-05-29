@@ -18,8 +18,10 @@ import render_export  # noqa: E402
 import render_ascii  # noqa: E402
 import render_mermaid  # noqa: E402
 import render_explorer  # noqa: E402
+import render_board  # noqa: E402
 import visualize  # noqa: E402
 import spec_graph  # noqa: E402
+from i18n_labels import label  # noqa: E402
 from spec_graph import build_graph, load_artifacts  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -207,6 +209,40 @@ def test_viewer_no_layers_empty_is_allowed(tmp_path, capsys):
 
 
 # ---------- persona --filter-wont parity (mermaid honors it) ----------
+
+def test_llm_compact_bodyless_story_renders_ac_once():
+    """A bodyless story under --compact-mode llm must show its AC exactly once — not
+    the struct-skeleton count AND the explicit list (the C5 full-branch fix had a
+    sibling gap in the llm branch)."""
+    entry = {"id": "S", "type": "story", "verbosity": "struct", "body": "", "ac": ["Alpha", "Beta"]}
+    out = render_export._section_body(entry, "llm")
+    assert out.count("**Acceptance criteria:**") == 1
+    assert "acceptance_criteria" not in out          # no struct-skeleton AC count
+    assert out.count("Alpha") == 1
+
+
+def test_export_body_h1_localized_and_newline_collapsed():
+    vi = render_export.render_markdown_doc([], "Acme", "all", "context", "all", "struct", "", lang="vi")
+    assert "# Xuất đặc tả — Acme" in vi               # body H1 localizes like the chrome title
+    multiline = render_export.render_markdown_doc([], "Line1\n---\nLine2", "all", "context", "all", "struct", "")
+    h1 = next(l for l in multiline.splitlines() if l.startswith("# "))
+    assert "Line1" in h1 and "Line2" in h1            # name collapsed onto one heading line
+
+
+def test_horizon_facet_label_localized_and_shipped():
+    assert label("horizon", "en") == "Horizon"
+    assert label("horizon", "vi") == "Mốc thời gian"
+    g = _graph([_node("PRD-X", "prd", horizon="now")], [])
+    payload = render_board.build_payload(g, [_art("PRD-X", "prd")], group_by="status", lang="vi")
+    assert payload["labels"].get("horizon") == "Mốc thời gian"  # ships so client header resolves it
+
+
+def test_children_of_mirrors_parents_and_drives_downstream():
+    g = _graph([], [{"from": "S", "to": "E"}, {"from": "E", "to": "P"}])
+    assert spec_graph.children_of(g) == {"E": ["S"], "P": ["E"]}
+    assert spec_graph.downstream(g, "P") == {"E", "S"}
+    assert spec_graph.ancestors(g, "S") == {"E", "P"}
+
 
 def test_persona_mermaid_honors_filter_wont():
     nodes = [_node("PRD-W", "prd", moscow="wont", personas=["Shopper"]),

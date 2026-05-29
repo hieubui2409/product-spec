@@ -110,7 +110,9 @@ def _node_from_goal(goal: Dict[str, Any], parent_file: str) -> Dict[str, Any]:
         "metrics": goal.get("metrics") or [],
         "owner": goal.get("owner"),
         "file": parent_file,
-        "parent": "BRD",
+        # No `parent` edge field: goals attach to PRODUCT directly in the rendered
+        # tree (build_edges emits no goal->BRD edge — see its comment). A stored
+        # `parent: BRD` here would be an inert field no consumer reads.
     }
 
 
@@ -221,20 +223,34 @@ def _risks(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict[str,
     return risks
 
 
-def downstream(graph: Dict[str, Any], node_id: str) -> Set[str]:
-    """Return the set of node IDs reachable as descendants of node_id."""
-    children: Dict[str, List[str]] = defaultdict(list)
-    for e in graph["edges"]:
-        children[e["to"]].append(e["from"])
+def _closure(adj: Dict[str, List[str]], start: str) -> Set[str]:
+    """Transitive closure of `start` over an adjacency map (the single home for the
+    iterative stack walk that downstream/ancestors and the assembler all need)."""
     out: Set[str] = set()
-    stack = list(children.get(node_id, []))
+    stack = list(adj.get(start, []))
     while stack:
         n = stack.pop()
         if n in out:
             continue
         out.add(n)
-        stack.extend(children.get(n, []))
+        stack.extend(adj.get(n, []))
     return out
+
+
+def children_of(graph: Dict[str, Any]) -> Dict[str, List[str]]:
+    """parent id -> list of child ids (the forward adjacency). Mirror of
+    parents_of; one home for the `children[e["to"]].append(e["from"])` build the
+    renderers and downstream() otherwise re-type. Edge convention: `to`=parent,
+    `from`=child (see build_edges)."""
+    out: Dict[str, List[str]] = defaultdict(list)
+    for e in graph["edges"]:
+        out[str(e["to"])].append(str(e["from"]))
+    return out
+
+
+def downstream(graph: Dict[str, Any], node_id: str) -> Set[str]:
+    """Return the set of node IDs reachable as descendants of node_id."""
+    return _closure(children_of(graph), node_id)
 
 
 def ancestors(graph: Dict[str, Any], node_id: str) -> Set[str]:
@@ -255,18 +271,7 @@ def ancestors(graph: Dict[str, Any], node_id: str) -> Set[str]:
     _adjacency()/_reach() walk for the batched O(N+edges) build, so this is not
     on the export hot path — do not "fix" the assembler to call it.
     """
-    parents: Dict[str, List[str]] = defaultdict(list)
-    for e in graph["edges"]:
-        parents[e["from"]].append(e["to"])
-    out: Set[str] = set()
-    stack = list(parents.get(node_id, []))
-    while stack:
-        n = stack.pop()
-        if n in out:
-            continue
-        out.add(n)
-        stack.extend(parents.get(n, []))
-    return out
+    return _closure(parents_of(graph), node_id)
 
 
 def matching_child_counts(graph: Dict[str, Any]) -> Dict[str, int]:

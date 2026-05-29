@@ -57,11 +57,6 @@ def _heading(entry: Dict[str, Any]) -> str:
     return f"{entry['id']} — {title}" if title else str(entry["id"])
 
 
-def _body_or_struct(entry: Dict[str, Any]) -> str:
-    """The entry's narrative body, or a struct-field skeleton when it has none."""
-    return (entry.get("body") or "").strip() or _struct_lines(entry)
-
-
 def _ac_item(a: Any) -> str:
     """Render one acceptance-criteria item as a readable bullet. AC items are
     expected to be strings, but a PO may write a YAML mapping (`- {given: …,
@@ -79,34 +74,34 @@ def _ac_block(entry: Dict[str, Any]) -> str:
     return ""
 
 
+def _content_with_ac(entry: Dict[str, Any], ac: str) -> str:
+    """The entry's raw body (or the struct skeleton when there is genuinely no body
+    AND no AC), with the explicit AC list appended once. Body-FIRST so a bodyless
+    story's struct skeleton — which already lists `acceptance_criteria: N item(s)` —
+    never doubles the explicit AC list. Shared by the full and llm branches so the
+    two cannot diverge (the llm branch previously fell back to the struct skeleton
+    AND appended the explicit list, doubling the AC for a bodyless story)."""
+    body = (entry.get("body") or "").strip()
+    out = body if body else ("" if ac else _struct_lines(entry))
+    if ac:
+        out = (out + "\n\n" + ac) if out else ac
+    return out
+
+
 def _section_body(entry: Dict[str, Any], compact_mode: str) -> str:
     """Render one entry's content per its verbosity + compact-mode."""
     ac = _ac_block(entry)
     if entry["verbosity"] == "full":
-        # Use the raw body directly (NOT _body_or_struct): for a BODYLESS story
-        # _body_or_struct falls back to the struct skeleton, which already lists
-        # `acceptance_criteria: N item(s)` — emitting that alongside the explicit
-        # AC list below rendered the AC twice. Fall back to the struct skeleton
-        # only when there is genuinely no body AND no AC.
-        body = (entry.get("body") or "").strip()
-        out = body if body else ("" if ac else _struct_lines(entry))
-        if ac:
-            out = (out + "\n\n" + ac) if out else ac
-        return out
+        return _content_with_ac(entry, ac)
     # struct verbosity
     if compact_mode == "llm":
-        # Emit the full body marked for the LLM to summarize in-place, and include
-        # the story's AC inside the region (a body-present struct story would
-        # otherwise drop its AC — the LLM never sees the artifact's primary content).
-        inner = _body_or_struct(entry)
-        if ac:
-            inner += "\n\n" + ac
-        # Defensive: a body containing '-->' would close the HTML-comment COMPACT
-        # region early for a comment-aware consumer. The documented consumer is the
-        # LLM (reads the named /COMPACT:<id> sentinel, unaffected) and --format html
-        # is hard-rejected, but neutralize the sequence with a zero-width space so
-        # the markers are robust regardless of inner content.
-        inner = inner.replace("-->", "--​>")  # U+200B breaks the comment-close token
+        # Full body (+ the story's AC inside the region so the step-2 LLM sees the
+        # artifact's primary content) marked for in-place summarization. Defensive:
+        # neutralize an inner '-->' with U+200B so it can't close the HTML-comment
+        # COMPACT region for a comment-aware consumer (the documented LLM consumer
+        # reads the named /COMPACT:<id> sentinel and is unaffected; --format html is
+        # hard-rejected).
+        inner = _content_with_ac(entry, ac).replace("-->", "--​>")
         return f"<!-- COMPACT:{entry['id']} -->\n{inner}\n<!-- /COMPACT:{entry['id']} -->"
     return _struct_lines(entry)
 
@@ -124,6 +119,7 @@ def render_markdown_doc(
     layers_label: str,
     compact_mode: str,
     generated_at: str,
+    lang: str = "en",
 ) -> str:
     warnings = [e for e in digest if e.get("role") == "warning"]
     sections = [e for e in digest if e.get("type") != "_warning"]
@@ -142,7 +138,11 @@ def render_markdown_doc(
         lines.append(f"generated_at: {generated_at}")
     lines.append("---")
     lines.append("")
-    lines.append(f"# Product Spec Export — {product_name}")
+    # Body H1 localizes via the same i18n key as the HTML chrome title (so .md and
+    # .html agree under --lang vi); CR/LF in the name collapse to a space so a
+    # multi-line PRODUCT name can't garble the heading into a setext rule.
+    heading_name = product_name.replace("\r", " ").replace("\n", " ")
+    lines.append(f"# {label('export', lang)} — {heading_name}")
     lines.append("")
     lines.append(f"> Selection: `{select}` · Depth: `{depth}` · Layers: `{layers_label}`")
     lines.append("")
@@ -231,7 +231,7 @@ def write_export(root: Path, select: str, layers, depth: str, compact_mode: str,
     # doc with the volatile generated_at line stripped → identical content yields
     # a stable, collision-free filename regardless of when it was generated.
     generated_at = _now()
-    md_doc = render_markdown_doc(digest, product_name, select, depth, layers_label, compact_mode, generated_at)
+    md_doc = render_markdown_doc(digest, product_name, select, depth, layers_label, compact_mode, generated_at, lang)
     stable = md_doc.replace(f"generated_at: {generated_at}\n", "", 1)
     content_hash = hashlib.sha256(stable.encode("utf-8")).hexdigest()[:8]
 

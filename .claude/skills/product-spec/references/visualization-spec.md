@@ -23,7 +23,7 @@ The views × formats matrix, the graph-JSON shape consumed by every renderer, an
 | `moscow` | `--viz moscow` | MoSCoW quadrant: must/should/could/wont distribution across stories. |
 | `risk` | `--viz risk` | risk matrix: impact (rows) × likelihood (cols) from `risks` frontmatter on epics/PRDs. |
 | `delta` | `--viz delta [--snapshot <name>]` | diff between two graph snapshots from `docs/product/visuals/.snapshots/`. |
-| `board` | `--viz board [--group-by status\|horizon\|moscow] [--layers …]` | kanban: columns = the group field, cards = goal/PRD/epic/story; client-side search + facet filters (status/moscow/persona/layer); click a card → its sanitized body. Default `--format html`. |
+| `board` | `--viz board [--group-by status\|horizon\|moscow] [--layers …]` | kanban: columns = the group field, cards = goal/PRD/epic/story; client-side search + facet filters (status/moscow/horizon/persona/layer); click a card → its sanitized body. Default `--format html`. |
 | `explorer` | `--viz explorer [--layers …]` | one page, in-page toggle across **Tree** (collapsible nav) / **Flat-tabs** (per layer) / **Table-tree** (treegrid w/ metadata columns); shared search + facets; last mode persisted to `localStorage`. Default `--format html`. |
 
 ## View × Format Matrix
@@ -136,7 +136,7 @@ All HTML outputs — the 9 `--viz` graph views + `board` + `explorer` + `--expor
 
 Change the look in one place → every output updates (DRY). The `explorer` UI is the reference the legacy shell was brought up to.
 
-**Search + facet filters** (`board`/`explorer`): client-side, instant; facets over status/moscow/persona/layer; `board` also groups columns by `--group-by`. "PDF" = browser Save-as-PDF over the print-CSS.
+**Search + facet filters** (`board`/`explorer`): client-side, instant; facets over status/moscow/horizon/persona/layer; `board` also groups columns by `--group-by`. "PDF" = browser Save-as-PDF over the print-CSS.
 
 ## Snapshot & Delta
 

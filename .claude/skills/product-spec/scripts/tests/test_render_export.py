@@ -50,7 +50,7 @@ def test_md_doc_has_toc_ordered_sections_and_ac():
     assert "(#prd-auth)" in doc
     assert '<a id="prd-auth-e1-s1"></a>' in doc
     # Hierarchy order: vision/brd before goal before prd before epic before story.
-    order = [doc.index(t) for t in ("# Product Spec Export", "## Contents")]
+    order = [doc.index(t) for t in ("# Spec Export", "## Contents")]
     assert order == sorted(order)
     # Compare SECTION headings (newline-prefixed), not TOC entries.
     assert doc.index("\n## BRD") < doc.index("\n## PRD-AUTH-E1-S1")
@@ -218,7 +218,7 @@ def test_html_export_strips_yaml_frontmatter_from_body():
     blob = html[html.index('id="ps-spec-data"'):]
     doc = json.loads(blob[blob.index(">") + 1: blob.index("</script>")].replace("\\u003c", "<"))["doc"]
     assert not doc.lstrip().startswith("---")
-    assert doc.lstrip().startswith("# Product Spec Export")
+    assert doc.lstrip().startswith("# Spec Export")
 
 
 def test_strip_frontmatter_is_noop_without_a_block():

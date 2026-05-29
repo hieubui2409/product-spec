@@ -27,7 +27,7 @@ import re
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from spec_graph import index_artifacts
+from spec_graph import index_artifacts, parents_of, children_of, _closure
 
 
 # Each artifact type belongs to one --export --layers bucket. Goals live in the
@@ -106,28 +106,10 @@ def _resolve_selection(select: str, graph: Dict[str, Any]) -> Tuple[Set[str], Se
 
 
 def _adjacency(graph: Dict[str, Any]) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
-    """Build the parents and children edge indices ONCE. ancestors()/downstream()
-    each rebuild this per call, so walking N targets was O(N·edges); building it
-    once here and reusing it for every target makes the digest O(N + edges)."""
-    parents: Dict[str, List[str]] = defaultdict(list)
-    children: Dict[str, List[str]] = defaultdict(list)
-    for e in graph["edges"]:
-        parents[e["from"]].append(e["to"])
-        children[e["to"]].append(e["from"])
-    return parents, children
-
-
-def _reach(adj: Dict[str, List[str]], start: str) -> Set[str]:
-    """Transitive closure of `start` over the given adjacency (parents or children)."""
-    out: Set[str] = set()
-    stack = list(adj.get(start, []))
-    while stack:
-        n = stack.pop()
-        if n in out:
-            continue
-        out.add(n)
-        stack.extend(adj.get(n, []))
-    return out
+    """Build the parents and children edge indices ONCE (via the shared spec_graph
+    builders). ancestors()/downstream() build one each per call, so walking N
+    targets was O(N·edges); building both once here keeps the digest O(N + edges)."""
+    return parents_of(graph), children_of(graph)
 
 
 def _verbosity(role: str, depth: str) -> str:
@@ -228,9 +210,14 @@ def build_digest(
     parents, children = _adjacency(graph)
     ctx_ids: Set[str] = set()
     desc_ids: Set[str] = set()
+    # Memoize each target's child-reach: the --layers warning below re-uses it to
+    # decide "surfaced via sub-layer vs absent" instead of re-walking the subtree.
+    reach_children: Dict[str, Set[str]] = {}
     for t in targets:
-        ctx_ids |= _reach(parents, t)
-        desc_ids |= _reach(children, t)
+        ctx_ids |= _closure(parents, t)
+        r = _closure(children, t)
+        reach_children[t] = r
+        desc_ids |= r
     ctx_ids -= targets
     desc_ids -= targets
     desc_ids -= ctx_ids
@@ -299,7 +286,7 @@ def build_digest(
             # rule forbids.
             surfaced = [t for t in ids if any(
                 d in nodes_by_id and _in_layers(nodes_by_id[d]["type"], layer_set)
-                for d in _reach(children, t))]
+                for d in reach_children.get(t, ()))]
             absent = [t for t in ids if t not in surfaced]
             parts: List[str] = []
             if surfaced:
