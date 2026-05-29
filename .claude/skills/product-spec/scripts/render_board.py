@@ -11,14 +11,13 @@ and the sanitize chokepoint (psRenderMarkdown) for bodies, so neither body nor
 attribute payloads can inject. No Mermaid here (board carries none by design).
 """
 
-import datetime as dt
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
 from spec_graph import index_artifacts
-from render_ascii import _BOARD_GROUP_ORDER, _BOARD_CARD_TYPES, _filter_by_layers, _is_deferred
+from render_ascii import _BOARD_GROUP_ORDER, _hashable, select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
@@ -32,16 +31,16 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                   group_by: str = "status", lang: str = "en",
                   filter_wont: bool = False, layers: Optional[List[str]] = None) -> Dict[str, Any]:
     bodies = {aid: (a.get("body") or "") for aid, a in index_artifacts(artifacts).items()}
-    cards_nodes = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
-    cards_nodes = _filter_by_layers(cards_nodes, layers)
-    if filter_wont:
-        cards_nodes = [n for n in cards_nodes if not _is_deferred(n)]
+    cards_nodes = select_cards(graph, layers, filter_wont)
 
     cards: List[Dict[str, Any]] = []
     present: Dict[str, bool] = {}
     for n in sorted(cards_nodes, key=lambda x: str(x["id"])):
         gval = n.get(group_by)
-        col = str(gval) if gval not in (None, "") else "unassigned"
+        # Coerce via _hashable (not bare str) so a malformed list/dict enum value
+        # yields the SAME column key the ASCII board uses — the two surfaces must
+        # not diverge on the same input.
+        col = _hashable(gval) if gval not in (None, "") else "unassigned"
         present[col] = True
         cards.append({
             "id": str(n["id"]),
@@ -88,7 +87,6 @@ def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           layers: Optional[List[str]] = None) -> Path:
     out_dir = root / "docs" / "product" / "visuals"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    target = out_dir / f"board-{ts}.html"
+    target = out_dir / f"board-{render_html.file_timestamp()}.html"
     target.write_text(assemble_board(graph, artifacts, group_by, lang, filter_wont, layers), encoding="utf-8")
     return target

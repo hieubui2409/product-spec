@@ -12,14 +12,13 @@ builds metadata via safe DOM APIs and bodies via the sanitize chokepoint. No
 Mermaid (a --format mermaid request falls back to the ascii tree).
 """
 
-import datetime as dt
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
 from spec_graph import index_artifacts
-from render_ascii import _BOARD_CARD_TYPES, _filter_by_layers, _is_deferred
+from render_ascii import select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 EXPLORER_SHELL = SKILL_ROOT / "assets" / "templates" / "explorer-shell.html"
@@ -52,10 +51,7 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
     for e in graph["edges"]:
         parent_of.setdefault(str(e["from"]), str(e["to"]))  # first parent wins (tree edge)
 
-    nodes = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
-    nodes = _filter_by_layers(nodes, layers)
-    if filter_wont:
-        nodes = [n for n in nodes if not _is_deferred(n)]
+    nodes = select_cards(graph, layers, filter_wont)
     present_ids = {str(n["id"]) for n in nodes}
 
     items: List[Dict[str, Any]] = []
@@ -112,7 +108,7 @@ def assemble_explorer(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                       lang: str, filter_wont: bool, layers: Optional[List[str]]) -> str:
     payload = build_payload(graph, artifacts, lang, filter_wont, layers)
     shell = EXPLORER_SHELL.read_text(encoding="utf-8")
-    title = f"Explorer — {render_html.product_name(graph)}"
+    title = f"{label('explorer', lang)} — {render_html.product_name(graph)}"
     return render_html.assemble_body_shell(shell, payload, graph, lang, title)
 
 
@@ -121,7 +117,6 @@ def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           layers: Optional[List[str]] = None) -> Path:
     out_dir = root / "docs" / "product" / "visuals"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    target = out_dir / f"explorer-{ts}.html"
+    target = out_dir / f"explorer-{render_html.file_timestamp()}.html"
     target.write_text(assemble_explorer(graph, artifacts, lang, filter_wont, layers), encoding="utf-8")
     return target

@@ -161,6 +161,19 @@ _BODY_RENDER_JS = (
     "b.innerHTML=psRenderMarkdown(c.body||'_(no body)_');d.hidden=false;};"
     "\nwindow.psCloseDetail=function(){var d=document.getElementById('ps-detail');if(d){d.hidden=true;}};"
     "\ndocument.addEventListener('keydown',function(e){if(e.key==='Escape'){psCloseDetail();}});"
+    # Shared facet/search engine for board + explorer (body views only). Pure,
+    # parameterized helpers so both shells share ONE implementation: each shell
+    # owns its records array + state shape (board has no mode; explorer adds one)
+    # + its render callback; the filter machinery below is identical. Hoisting it
+    # here (mirroring psRegisterDetail) closes the board/explorer divergence risk
+    # the detail-panel comment calls out. psBuildFacets localizes the Layer-facet
+    # chip values (L[v]) so a --lang vi facet matches the Flat-tabs tab labels.
+    "\nvar psFacetGroups=['status','moscow','persona','layer'];"
+    "\nfunction psDistinct(records,group){var seen={};records.forEach(function(c){var v=group==='persona'?c.personas:[c[group]];(v||[]).forEach(function(x){if(x){seen[x]=true;}});});return Object.keys(seen).sort();}"
+    "\nfunction psFacetActive(state,g){return Object.keys(state.facets[g]).length>0;}"
+    "\nfunction psSelfMatch(state,c){if(state.q){var hay=(c.id+' '+c.title+' '+(c.body||'')).toLowerCase();if(hay.indexOf(state.q)===-1){return false;}}for(var i=0;i<psFacetGroups.length;i++){var g=psFacetGroups[i];if(!psFacetActive(state,g)){continue;}var vals=g==='persona'?(c.personas||[]):[c[g]];if(!vals.some(function(v){return state.facets[g][v];})){return false;}}return true;}"
+    "\nfunction psBadge(text,cls){var s=document.createElement('span');s.className='badge '+cls;s.textContent=text;return s;}"
+    "\nfunction psBuildFacets(records,labels,state,onChange){var host=document.getElementById('ps-facets');if(!host){return;}var L=labels||{};psFacetGroups.forEach(function(g){var vals=psDistinct(records,g);if(!vals.length){return;}var lab=document.createElement('span');lab.className='badge badge--type';lab.textContent=(L[g]||g)+':';host.appendChild(lab);vals.forEach(function(v){var b=document.createElement('button');b.type='button';b.textContent=(g==='layer'?(L[v]||v):v);b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){if(state.facets[g][v]){delete state.facets[g][v];b.setAttribute('aria-pressed','false');}else{state.facets[g][v]=true;b.setAttribute('aria-pressed','true');}onChange();});host.appendChild(b);});});}"
 )
 
 
@@ -198,6 +211,13 @@ def embed_spec_data(payload: Any) -> str:
     so the body would show the literal `&#x3c;`.)"""
     blob = json.dumps(payload, ensure_ascii=False, sort_keys=True).replace("<", "\\u003c")
     return f'<script type="application/json" id="ps-spec-data">{blob}</script>'
+
+
+def file_timestamp() -> str:
+    """Compact UTC stamp (`%Y%m%dT%H%M%SZ`, no colons) for output filenames — one
+    source for every writer (export / board / explorer / the 9 graph views). The
+    colon-bearing ISO body stamp is `spec_graph._now`; this is its filename twin."""
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def product_name(graph: Dict[str, Any]) -> str:
@@ -294,7 +314,12 @@ def assemble(
         # Phase 6: the 9 legacy views adopt the shared design-system head too, so
         # ALL product-spec HTML (legacy + board/explorer/export) looks identical.
         # EXTEND-only: every prior token + the RAW-footer_note invariant are
-        # preserved; legacy views still inline NO marked/DOMPurify (no bodies).
+        # preserved; legacy views still inline NO SKILL sanitizer — no bodies, so
+        # no {{markdown_libs}} block and no psRenderMarkdown chokepoint (H4). NB the
+        # mermaid-format payload bundles Mermaid's OWN internal DOMPurify for SVG
+        # sanitization; that third-party copy is not a body-render sink and is
+        # exempt from H4 — the contract is "no skill body-sanitizer", not "no
+        # vendor lib named DOMPurify".
         "viewer_head": viewer_head(),
     }
     return substitute(shell, values)
@@ -325,7 +350,6 @@ def write(
     """Write the assembled HTML to docs/product/visuals/<view>-<ts>.html."""
     out_dir = root / "docs" / "product" / "visuals"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    target = out_dir / f"{view}-{ts}.html"
+    target = out_dir / f"{view}-{file_timestamp()}.html"
     target.write_text(assemble(view, view_format, view_text, graph, lang), encoding="utf-8")
     return target

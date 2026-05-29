@@ -22,7 +22,7 @@ Run via the repo venv:
 
 `--layers` is a comma subset of `vision,brd,prd,epic,story` (default: all). Goals belong to the `brd` layer. **Vision, BRD and PRODUCT are context singletons** — the assembler loads them from their files and **prepends them once** whenever their layer is included and the selection has spec content to contextualize, or when they are explicitly selected. They are never edge-walked, so `--export VISION` cannot render vision twice.
 
-**No silent-empty doc.** If a selection names an ID that resolves to nothing (typo, wrong case, deleted node), or resolves to no artifacts at all, `render_export.py` exits non-zero with the offending IDs and the list of valid IDs on stderr — it never writes a frontmatter-only doc (CLAUDE.md: no silent failure). `--export all` on a fresh spec is the one allowed-empty case.
+**No silent-empty doc.** `render_export.py` exits non-zero (writing nothing) when: a selection names an ID that resolves to nothing (typo, wrong case, deleted node); a selection resolves to no artifacts at all; `--layers` names a token outside `vision,brd,prd,epic,story` (e.g. a typo, or a viewer-vocab `goal`); or a non-`all` selection is filtered to empty by `--layers` (e.g. `--export VISION --layers prd`). The stderr message names the offending value and the valid set. It never writes a frontmatter-only doc (CLAUDE.md: no silent failure). `--export all` on a fresh spec is the one allowed-empty case.
 
 ### `--layers` precedence (owner-locked, D2) + the H5 warning
 
@@ -63,7 +63,7 @@ Precedence itself is **not** changed without owner sign-off. The warning is the 
 ## Format — `--format` (default `md`)
 
 - `md`: deterministic markdown — provenance frontmatter + TOC (anchors from IDs) + sections in hierarchy order. Stories include AC.
-- `html`: a **linear print-friendly** doc (TOC, no interactive nav/search — distinct from `explorer`'s chrome). The markdown is embedded as an inert JSON island and rendered client-side through the sanitize chokepoint `DOMPurify.sanitize(marked.parse(md))`. Save-as-PDF via the browser (`@media print`). Headings localize per `--lang`.
+- `html`: a **linear print-friendly** doc (TOC, no interactive nav/search — distinct from `explorer`'s chrome). The provenance frontmatter is **stripped** from the HTML body (it is a `.md`-only affordance; the page shows the same metadata in its `.ps-meta` header), then the markdown is embedded as an inert JSON island and rendered client-side through the sanitize chokepoint `DOMPurify.sanitize(marked.parse(md))`. Save-as-PDF via the browser (`@media print`). Headings localize per `--lang`.
 
 ## Output
 

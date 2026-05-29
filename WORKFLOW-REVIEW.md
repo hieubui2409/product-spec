@@ -57,8 +57,8 @@ orchestration JS (no agent cost).
 - **Altitude (1):** right depth, not a fragile bandaid; generalize shared mechanism over special-casing.
 
 Angle selection per cycle:
-- **Thorough pass (e.g. C4):** all 9 angles.
-- **Convergence passes (C5+):** **correctness-only** — cleanup nits never converge to zero, so re-running them every cycle would block the 2-clean-cycle stop condition. Cleanup is cataloged once in the thorough pass and fixed there.
+- **Thorough passes (C4 and C5):** all 9 angles. (Plan change 2026-05-29: C5 repeats the full thorough pass rather than narrowing — C4 surfaced 23 cleanup findings, so one more full sweep is wanted before convergence.)
+- **Convergence passes (C6/7+, after a cleanup-clean cycle):** **correctness-only** — cleanup nits never converge to zero, so re-running them every cycle would block the 2-clean-cycle stop condition. Cleanup is cataloged in the thorough passes and fixed there.
 
 ## 5. Quality vs token strategy (cost levers)
 
@@ -83,9 +83,10 @@ Cost tiers (choose per cycle):
 |---|---|---|---|---|---|
 | C1 | whole-skill | all | per-finding | — | ✅ 31 found, fixed |
 | C2 | whole-skill | all | per-finding | — | ✅ 26 found, fixed |
-| C3 | feature (primary) + regression | all 9 | per-candidate (42 agents) | 8 | 🔎 30 found · fixes in progress |
-| **C4** | **FULL whole-skill** (both skills) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** (consolidate before waves) | pending — after C3 fixes land |
-| **C5+** | **narrow regression** (fixed files + callers) | **correctness-only** | lean batched | none | pending |
+| C3 | feature (primary) + regression | all 9 | per-candidate (42 agents) | 8 | ✅ 30 found, fixed |
+| C4 | FULL whole-skill (both skills) | all 9 (incl. cleanup) | batched per-file | NONE | ✅ 29 found (26 agents / ~2.1M tok), fixed |
+| **C5** | **FULL whole-skill** (same as C4) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** | pending — after C4 fixes land *(plan changed: C5 repeats the thorough pass, not the narrow one)* |
+| **C6/7+** | **narrow regression** (fixed files + callers) | **correctness-only** | lean batched | none | pending — starts after a cleanup-clean cycle |
 | … C10 | per convergence rule | — | — | — | hard cap |
 
 ## 7. Locked decisions (carry across all cycles — never silently reverse)

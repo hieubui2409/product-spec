@@ -48,17 +48,19 @@ Cycle 3 therefore begins **only after** the new product-spec feature lands. Trea
 | 1 | ✅ DONE | 31 findings, all fixed |
 | 2 | ✅ DONE (CLOSED) | 23 findings + 3 late-found, all fixed; 2 stale notes corrected; deferred cosmetics later fixed on owner request |
 | 3 | ✅ DONE (fixes applied 2026-05-29) | **30 findings** (5 HIGH · 11 MED · 14 LOW · 0 CRITICAL) + 2 refuted, all in export+viewer (`6009c50`). **29/30 fully fixed + verified; F15 partial** (detail-panel hoisted; facet/search engine deferred — no DOM-test harness). Owner decisions locked: A=viewer artifact-type vocab · B=emit-once+dedup+guard · C=reject llm+html · F10=escape-all-`<`. claude-pack: 0 findings. |
-| 4 → 10 | ⏸️ PENDING (unblocked) | Cycle-3 fixes landed → Cycle 4 may start. Workflow **re-scaled** to cut the ~42-agent / ~3M-token Cycle-3 cost (config locked in `WORKFLOW-REVIEW.md`). |
+| 4 | ✅ DONE (fixes applied 2026-05-29) | **29 findings** (2 HIGH · 4 MED · 23 LOW; 0 CRITICAL) — 26 CONFIRMED + 3 PLAUSIBLE, ~all in product-spec (claude-pack regression-clean). Dedup → **22 distinct fixes, ALL applied + verified** (owner: "fix all, no defer"). Workflow re-scaled worked: **26 agents / ~2.1M tok** (vs C3's 42/~3M). Owner decisions: Q1=fail-loud `--layers` (validate token + empty-result guard) · Q2=ASCII explorer orphan-root · Q3=hoist facet/search engine into `_BODY_RENDER_JS` (incl. the deferred F15). |
+| 5 → 10 | ⏸️ PENDING (unblocked) | Cycle-4 fixes landed → Cycle 5 may start. **Plan changed (owner, 2026-05-29): Cycle 5 re-runs FULL thorough (same as C4, all 9 angles), NOT the narrow convergence pass** — the narrow/correctness-only pass moves to Cycle 6/7, to start only after a cleanup-clean cycle. |
 
-**Convergence:** NOT converged. Cycle 3 was not clean (30 findings) → counter at 0. Fixes now applied; next = Cycle 4 (the single thorough full-skill pass). Stop after 2 consecutive zero-finding cycles; hard cap 10.
+**Convergence:** NOT converged. Cycle 4 was not clean (29 findings) → counter at 0. Fixes now applied; next = Cycle 5 (re-run full thorough, watch for regressions from the C4 fixes). Stop after 2 consecutive zero-finding cycles; hard cap 10.
 
-**Test state (green):** `claude-pack` **77** · `product-spec` **173** (was 156 at Cycle-3 review start; +17 from the fix regression tests).
+**Test state (green):** `claude-pack` **77** · `product-spec` **189** (was 173 at Cycle-4 start; +16 from the C4 fix regression tests).
 Run: `PYTHONPATH=.claude/skills/<skill>/scripts ./.claude/skills/.venv/bin/python3 -m pytest .claude/skills/<skill>/scripts/tests -q`
 
 **Report paths (local, gitignored — may be absent on fresh clone):**
 - Cycle 1: `.claude/skills/claude-pack/plans/reports/cycle-01-dual-skill-review-260529-0940-findings-and-fixes-report.md`
 - Cycle 2: `plans/reports/cycle-02-dual-skill-review-260529-findings-fixes-and-pending-report.md`
 - Cycle 3: `plans/reports/cycle-03-dual-skill-review-260529-1816-export-viewer-findings-report.md` (ALL 30 + 2 refuted; review-only, no fixes)
+- Cycle 4: condensed into this file (§"Cycle 4" below). Raw 29-finding workflow output was ephemeral (`/tmp`); the durable record is the condensed block here.
 
 ### Cycle 4/5 workflow config (LOCKED 2026-05-29)
 
@@ -66,8 +68,9 @@ Full protocol in **`WORKFLOW-REVIEW.md`** (repo root, committed). Each cycle = o
 
 - **Order:** fix **all** Cycle-3 findings → commit + push → run Cycle 4. Never start a cycle with unfixed findings from the prior one.
 - **Finders: NO cap.** Each finder surfaces every real defect (no padding, no ceiling); **consolidate/distinct happens in orchestration before** the verify (wave 2) and sweep (wave 3) waves, so cost is controlled by batching, not by truncating finders.
-- **Cycle 4** (the single thorough pass, after Cycle-3 fixes land): scope = **full whole-skill** (both skills); **all 9 angles incl. cleanup** (so the cleanup fixes get verified too); per-file batched verify; sweep included. Est ~16–20 agents / ~1.5–2M tok.
-- **Cycle 5+** (convergence checks): scope = **narrow regression** (files touched by fixes + immediate callers); **correctness-only** (cleanup dropped — already cataloged, and cleanup nits never converge to zero so they'd block the stop condition); lean single/few batched verifier; sweep only if a finding lands. Est ~8 agents / ~0.6M tok.
+- **Cycle 4** (the single thorough pass, after Cycle-3 fixes land): scope = **full whole-skill** (both skills); **all 9 angles incl. cleanup**; per-file batched verify; sweep included. ✅ DONE — actual cost **26 agents / ~2.1M tok** (within estimate).
+- **PLAN CHANGE (owner, 2026-05-29):** **Cycle 5 re-runs the FULL thorough pass (same config as C4 — all 9 angles, full whole-skill, batched per-file verify, sweep).** The narrow/correctness-only convergence pass is **deferred to Cycle 6/7**, and starts only once a cleanup-clean cycle has landed. Rationale: C4 surfaced 23 cleanup findings; one more full pass is wanted before narrowing.
+- **Cycle 6/7+** (convergence checks, after cleanup goes clean): scope = **narrow regression** (files touched by fixes + immediate callers); **correctness-only**; lean batched verify; sweep only if a finding lands. Est ~8 agents / ~0.6M tok.
 - **Convergence unchanged:** stop after 2 consecutive cycles with **zero new findings**; hard cap Cycle 10.
 
 ---
@@ -102,7 +105,20 @@ All in product-spec, export+viewer feature (`6009c50`). 0 CRITICAL. Fix report: 
 - **F (F14) ✅** help lists board/explorer.
 - **G (F16,F17,F27,F28) ✅** `build_graph_with_artifacts` (parse once); adjacency built once; markdown rendered once (timestamp-stripped hash).
 - **H (F20,F21,F22,F24,F29,F30) ✅** shared `spec_graph._now`/`index_artifacts` + `render_html.product_name/chrome_values/assemble_body_shell`.
-- **I:** F18 ✅ panel CSS → `_viewer-head.html` (explorer divergence fixed); F19 ✅ docstring/CLAUDE.md/workflow-export narrowed; F23 ✅ dead `_safe_href`/`psSafeHref` removed; F25 ✅ singleton double-gate dropped; F26 ✅ `_body_or_struct`. **F15 ◐ PARTIAL** — detail-panel trio hoisted to `_BODY_RENDER_JS` (body-view-only, preserves H4 gating); facet/search engine left per-shell (no DOM-test harness to verify a parameterized refactor — deferred to a DOM-tested pass, as the review report itself flagged).
+- **I:** F18 ✅ panel CSS → `_viewer-head.html` (explorer divergence fixed); F19 ✅ docstring/CLAUDE.md/workflow-export narrowed; F23 ✅ dead `_safe_href`/`psSafeHref` removed; F25 ✅ singleton double-gate dropped; F26 ✅ `_body_or_struct`. **F15 ◐ PARTIAL** — detail-panel trio hoisted to `_BODY_RENDER_JS` (body-view-only, preserves H4 gating); facet/search engine left per-shell (no DOM-test harness to verify a parameterized refactor — deferred to a DOM-tested pass; **completed in Cycle 4 — see Q3 below**).
+
+### Cycle 4 (29 findings — FIXED 2026-05-29; 22 distinct fixes, all applied)
+
+Owner: **"fix all, no defer."** All in product-spec; claude-pack regression-clean. By cluster:
+
+- **Q1 fail-loud `--layers` (2 findings, HIGH) ✅** `build_digest` now raises on (a) an unknown `--layers` token (validated vs `ALL_LAYERS`) and (b) a non-`all` selection filtered to empty (e.g. `--export VISION --layers prd` — the asymmetry where PRODUCT was protected but VISION/BRD silently dropped). `visualize.py` validates viewer tokens vs `goal,prd,epic,story` → exit 2. Closes the silent-empty-doc class the C3 fix only half-closed.
+- **Q2 ASCII explorer orphan-root (1, MED) ✅** new `render_ascii._orphan_forest` reparents nodes whose parent was filtered out as roots (cyclic-edge guard included); `explorer()` delegates to `tree()` when no `--layers` (preserves `explorer==tree`), else forest. Was: empty `PRODUCT:` header for any goal-excluding subset.
+- **HTML export frontmatter leak (1, MED ×3 angles) ✅** `_strip_frontmatter` drops the `.md` YAML block from the HTML body island (was rendering as a stray `<hr>`+setext `<h2>`); `render_html_doc(graph,…)` now reuses `chrome_values`.
+- **Q3 facet/search hoist (1, LOW altitude — the C3-deferred F15) ✅** engine (`psFacetGroups/psDistinct/psSelfMatch/psBadge/psBuildFacets`) hoisted into `render_html._BODY_RENDER_JS`; both shells call it. Verified by **executing** the assembled JS under a DOM stub (node) — facets build, render emits nodes, click/search re-render without throwing — plus `node --check`. `psBuildFacets` also **localizes the Layer facet** (`L[v]`) — fixes the vi-facet-not-localized finding.
+- **DRY ✅** `render_ascii.select_cards` (board/explorer/ascii-board); `render_html.file_timestamp` (4 writers); `spec_graph._now` imported into the 3 analytical scripts (`dt` removed); board column key uses `_hashable` (parity with ASCII board on malformed enums).
+- **Cleanup ✅** dead `_SINGLETON_TYPES` removed; stale detail-panel comments (both shells); stale `assemble_digest` module docstring ("vision NOT a node"); `install.sh` header (marked+DOMPurify step); leaf-type (story) `--layers` warning wording; `<missing-id>` sentinel filtered from the unresolved-ID error; `visualize.py` reuses `_written_json` + `_unfence` (no double ASCII render on html mermaid-fallback); i18n `explorer` label.
+- **H4 (1, PLAUSIBLE/LOW) ✅** the mermaid graph-view bundles Mermaid's OWN DOMPurify (third-party SVG sanitizer) — the H4 contract is "no SKILL body-sanitizer (`psRenderMarkdown`)", which holds. Test made precise (asserts `psRenderMarkdown` absent on ascii AND mermaid paths) + wording clarified (Mermaid bundle exempt).
+- **Verification:** 189 product-spec (173→189, +16 new regression tests) + 77 claude-pack green; e2e on a temp fixture (all Q1 exit-2 cases, Q2 orphan-root, frontmatter-strip, valid exports); DOM-stub execution of both viewers' hoisted JS.
 
 ---
 
@@ -111,15 +127,17 @@ All in product-spec, export+viewer feature (`6009c50`). 0 CRITICAL. Fix report: 
 1. Confirm the new product-spec feature has landed; get its diff (`git diff` of the feature commits).
 2. Re-read this file + (if present) the Cycle-1/2 reports for carried context.
 3. Run the review (finders → verify → sweep) over the cycle's surface. **Cycle 4+ uses a re-scaled, leaner workflow** (Cycle 3's ~42-agent/~3M-token full pipeline was too costly for the owner's plan — config decided by interview, recorded in the Cycle-3 chat / report).
-4. Fix all findings this cycle before starting the next (auto-fix safe; interview on risky/locked-decision items). **Cycle 3 fixes are DONE** (2026-05-29) — Cycle 4 may start.
+4. Fix all findings this cycle before starting the next (auto-fix safe; interview on risky/locked-decision items). **Cycle 3 + Cycle 4 fixes are DONE** (2026-05-29) — Cycle 5 may start.
 5. Keep both test suites green; add tests for new behavior.
 6. Write a cycle report to `plans/reports/` and update **this file's** Progress + Convergence.
 7. Stop when 2 consecutive cycles produce zero new findings, or at Cycle 10.
 
 ## Open questions
-**Cycle 3 owner decisions — LOCKED & applied (2026-05-29):** A=viewer uses artifact-type vocab · B=`--export VISION`/`PRODUCT` emit-once+dedup, unresolved→error · C=`llm`+`html` hard-reject · F10=escape-all-`<` (+ structural-invariant test, no browser harness needed). Cleanup H done; **I done except F15 facet/search hoist (deferred — needs a DOM test harness)**.
+**Cycle 3 owner decisions — LOCKED & applied (2026-05-29):** A=viewer artifact-type vocab · B=emit-once+dedup, unresolved→error · C=`llm`+`html` hard-reject · F10=escape-all-`<`.
 
-**Next:** Cycle 4 — the single thorough full-skill pass (both skills, all 9 angles incl. cleanup so the fixes get verified; per-file batched verify; sweep). Watch for regressions from the Cycle-3 fixes (esp. viewer vocab change, `build_digest` selection guards, `embed_spec_data` escape change, the `build_graph_with_artifacts`/`index_artifacts`/`assemble_body_shell` refactors). Config in `WORKFLOW-REVIEW.md`.
+**Cycle 4 owner decisions — LOCKED & applied (2026-05-29):** Q1=fail-loud `--layers` (validate token vs the surface vocab + raise on empty-after-filter) · Q2=ASCII explorer orphan-root (reparent filtered orphans, parity with HTML) · Q3=hoist the facet/search engine into `_BODY_RENDER_JS` (closes the C3-deferred F15). Owner directive: **"fix all, no defer"** — all 22 distinct fixes applied. H4 contract clarified: "no SKILL body-sanitizer (`psRenderMarkdown`)" — Mermaid's bundled DOMPurify is third-party/exempt.
+
+**Next:** Cycle 5 — **re-run the FULL thorough pass** (same config as C4: both skills, all 9 angles incl. cleanup, per-file batched verify, sweep). The narrow/correctness-only convergence pass is deferred to Cycle 6/7 (starts after a cleanup-clean cycle). Watch for regressions from the Cycle-4 fixes: `--layers` token validation (both surfaces) + empty-result guard; `render_html_doc(graph,…)` signature + frontmatter strip; `render_ascii._orphan_forest`/`explorer` rewrite; the Q3 shared facet/search engine in `_BODY_RENDER_JS` + the slimmed shells; `select_cards`/`file_timestamp` DRY; board `_hashable` column key. Config in `WORKFLOW-REVIEW.md`.
 
 **New product-spec feature — ✅ IMPLEMENTED (2026-05-29)**: read-once **Export** (`--export`) + interactive **Viewer** (`--viz board`/`explorer`) + unified ALL `--viz` HTML under one design system (marked+DOMPurify vendored + inlined, print-CSS, theme/palette).
 - Design doc: `.claude/skills/product-spec/plans/reports/brainstorm-design-260529-1504-product-spec-export-and-viewer-report.md`

@@ -230,3 +230,54 @@ def test_layers_warning_is_one_per_excluded_type():
     assert {w["id"] for w in warnings} == {"goal", "epic", "story"}
     # Two goals exist (BRD-G1/G2) but only ONE 'goal' warning (no per-node flood).
     assert len([w for w in warnings if w["id"] == "goal"]) == 1
+
+
+# ---------- --layers fail-loud: token validation + empty-result guard ----------
+
+def test_unknown_layer_token_raises():
+    graph, artifacts = _graph_and_artifacts()
+    with pytest.raises(ValueError) as exc:
+        assemble_digest.build_digest(graph, artifacts, select="all", layers=["prds"], depth="context")
+    assert "prds" in str(exc.value)  # names the bad token
+
+
+def test_cross_vocab_layer_token_raises():
+    # 'goal' is the VIEWER vocab; the export vocab maps goals to 'brd'. Passing it
+    # to --export must fail loud, not silently drop everything.
+    graph, artifacts = _graph_and_artifacts()
+    with pytest.raises(ValueError):
+        assemble_digest.build_digest(graph, artifacts, select="PRD-AUTH-E1-S1", layers=["goal"], depth="context")
+
+
+def test_vision_with_excluding_layers_raises_not_silent_empty():
+    # `--export VISION --layers prd` filters the only entry out → previously wrote
+    # a silently-empty doc; must now fail loud. (The silent-empty-doc BUG for VISION
+    # is gone; PRODUCT stays layer-agnostic context by design — see _in_layers.)
+    graph, artifacts = _graph_and_artifacts()
+    with pytest.raises(ValueError):
+        assemble_digest.build_digest(graph, artifacts, select="VISION", layers=["prd"], depth="context")
+
+
+def test_excluded_story_leaf_warning_says_absent_not_via_sublayers():
+    graph, artifacts = _graph_and_artifacts()
+    digest = assemble_digest.build_digest(graph, artifacts, select="PRD-AUTH-E1-S1", layers=["prd"], depth="context")
+    warn = next(e for e in digest if e["type"] == "_warning" and e["id"] == "story")
+    # A story is a leaf — the wording must NOT claim it surfaces via sub-layers.
+    assert "are absent" in warn["detail"]
+    assert "via their included sub-layers" not in warn["detail"]
+
+
+def test_unresolved_error_excludes_missing_id_sentinel():
+    # An artifact with no id: surfaces as the internal '<missing-id>' node; it must
+    # not be offered as a selectable ID in the typo-help error.
+    graph = {
+        "product": {"name": "X"},
+        "nodes": [
+            {"id": "PRD-AUTH", "type": "prd"},
+            {"id": "<missing-id>", "type": "story"},
+        ],
+        "edges": [], "risks": [],
+    }
+    with pytest.raises(ValueError) as exc:
+        assemble_digest.build_digest(graph, [], select="NOPE", depth="context")
+    assert "<missing-id>" not in str(exc.value)

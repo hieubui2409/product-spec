@@ -149,8 +149,21 @@ def test_body_render_values_present_path():
 
 # ---------- H4: symmetric gating — legacy views carry NO markdown libs ----------
 
-def test_legacy_assemble_does_not_embed_markdown_libs():
-    graph = {"product": {"name": "Acme"}, "nodes": [], "edges": [], "risks": []}
-    html = render_html.assemble("heatmap", "ascii", "draft 1", graph)
-    # Legacy graph views render no bodies → must not inline marked/DOMPurify.
-    assert "DOMPurify" not in html
+def test_legacy_assemble_does_not_embed_skill_sanitizer():
+    """H4: legacy graph views render NO bodies, so they ship neither the skill's
+    body-sanitizer chokepoint (psRenderMarkdown) nor the vendored {{markdown_libs}}
+    block — for BOTH the ascii and mermaid formats.
+
+    The contract is "no SKILL body-sanitizer", not "no vendor lib named DOMPurify":
+    the mermaid-format payload bundles Mermaid's OWN internal DOMPurify for SVG
+    sanitization, which is unrelated to body rendering and therefore exempt."""
+    graph = {"product": {"name": "Acme"},
+             "nodes": [{"id": "BRD-G1", "type": "goal", "title": "G"}], "edges": [], "risks": []}
+    for fmt, text in (("ascii", "draft 1"), ("mermaid", "```mermaid\ngraph TD\nA-->B\n```")):
+        html = render_html.assemble("tree", fmt, text, graph)
+        # psRenderMarkdown is the skill body-render chokepoint — it must be absent
+        # from graph views. (The .ps-fallback *CSS class* lives in the shared head
+        # for all views; only the chokepoint that emits it is body-view-only.)
+        assert "psRenderMarkdown" not in html, f"skill body-sanitizer leaked into {fmt} graph view"
+    # The ascii path additionally carries no DOMPurify at all (no mermaid bundle).
+    assert "DOMPurify" not in render_html.assemble("heatmap", "ascii", "draft 1", graph)

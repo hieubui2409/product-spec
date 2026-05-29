@@ -6,12 +6,14 @@
 #   2. Installs runtime dependencies (pyyaml).
 #   3. Optionally installs dev dependencies (pytest + pytest-cov) via --dev.
 #   4. Vendors the Mermaid JS runtime locally for offline HTML visualizations.
+#   4b. Vendors marked + DOMPurify locally for offline body rendering
+#       (board/explorer/export HTML).
 #
 # Re-running is safe (idempotent): each step skips if already done.
 #
 # Prerequisites:
 #   - Python 3.11+ on PATH (`python3 --version`).
-#   - curl OR wget (one-time download of Mermaid JS).
+#   - curl OR wget (one-time download of Mermaid JS + marked + DOMPurify).
 #
 # Usage:
 #   ./install.sh             # runtime only (pyyaml)

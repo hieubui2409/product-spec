@@ -15,14 +15,13 @@ CLI:
 """
 
 import argparse
-import datetime as dt
 import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph
+from spec_graph import build_graph, _now
 
 configure_utf8_console()
 
@@ -119,7 +118,7 @@ def main() -> int:
     output = {
         "schema_version": "1.0",
         "root": str(root),
-        "checked_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat() + "Z",
+        "checked_at": _now(),
         "findings": findings,
         "graph": graph,
     }

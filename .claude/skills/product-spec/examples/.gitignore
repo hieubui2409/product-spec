@@ -4,3 +4,7 @@
 # The committed `visuals/tree.md` is the canonical lightweight reference.
 */docs/product/visuals/*.html
 */docs/product/visuals/.snapshots/
+
+# Generated read-once Export docs (timestamped + content-hashed). Export is a
+# read-once consume surface — no curated example export is committed.
+*/docs/product/exports/

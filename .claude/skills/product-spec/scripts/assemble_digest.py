@@ -16,10 +16,11 @@ vision|brd|goal|prd|epic|story|_warning. Emitted as a canonical SORTED list
 (hierarchy rank, then ID) — downstream()/ancestors() return sets, so we sort
 before emit for determinism (independent of nodes[]/set iteration order).
 
-Vision and the BRD container are NOT graph nodes (build_nodes nodifies goals,
-not the BRD; vision is isolated). ancestors()/downstream() can't reach them, so
-the assembler loads them from the parsed artifacts and PREPENDS them as
-`role=ancestor` singletons — a documented step, separate from the edge walk.
+Vision and PRODUCT ARE graph nodes, but they carry NO edges (build_nodes wires
+goal→prd→epic→story; the BRD container itself is not a node — brd.md expands to
+goal nodes). So ancestors()/downstream() can't reach vision/product/BRD via the
+edge walk; the assembler loads them from the parsed artifacts and PREPENDS them
+as `role=ancestor` singletons — a documented step, separate from the edge walk.
 """
 
 import re
@@ -43,11 +44,6 @@ LAYER_FOR_TYPE = {
     "story": "story",
 }
 ALL_LAYERS = ("vision", "brd", "prd", "epic", "story")
-
-# Selection IDs that resolve to a context SINGLETON, not an edge-walk target.
-# "BRD" is not a graph node (brd.md expands to goal nodes) so it is matched by
-# the literal id; vision/product ARE nodes but are surfaced as singletons.
-_SINGLETON_TYPES = ("vision", "brd", "product")
 
 # Hierarchy rank for the canonical sort. `_warning` sorts to the very front so
 # provenance notes lead the doc; PRODUCT context (when explicitly exported) leads
@@ -193,17 +189,28 @@ def build_digest(
 ) -> List[Dict[str, Any]]:
     """Build the ordered digest model. See module docstring for the contract.
 
-    Raises ValueError when the selection names IDs that resolve to nothing, or
-    resolves to nothing at all (except `--export all`, which is allowed to be
-    empty on a fresh spec) — so the export path fails loudly instead of writing a
+    Raises ValueError when the selection names IDs that resolve to nothing,
+    resolves to nothing at all (except `--export all`, allowed empty on a fresh
+    spec), names an unknown `--layers` token, or a non-`all` selection is filtered
+    to empty by `--layers` — so the export path fails loudly instead of writing a
     silently-empty doc (CLAUDE.md: no silent failure)."""
+    if layers:
+        bad = [l for l in layers if l not in ALL_LAYERS]
+        if bad:
+            raise ValueError(
+                f"--export: unknown --layers value(s) {sorted(bad)}. "
+                f"Valid export layers: {list(ALL_LAYERS)}. (The board/explorer "
+                f"viewers use artifact-type layers goal/prd/epic/story instead.)"
+            )
     layer_set = set(layers) if layers else set(ALL_LAYERS)
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     art_by_id = index_artifacts(artifacts)
 
     targets, singleton_types, unresolved = _resolve_selection(select, graph)
     if unresolved:
-        valid = sorted(set(nodes_by_id) | {"VISION", "BRD", "PRODUCT"})
+        # Drop the internal `<missing-id>` sentinel (an artifact with no id:) so
+        # the PO-facing typo-help never suggests it as a selectable target.
+        valid = sorted((set(nodes_by_id) | {"VISION", "BRD", "PRODUCT"}) - {"<missing-id>"})
         raise ValueError(
             f"--export: unresolved selection {sorted(unresolved)} — no such artifact. "
             f"Available IDs: {valid}"
@@ -271,19 +278,32 @@ def build_digest(
             excluded[ntype].append(t)
     for ntype in sorted(excluded):
         ids = sorted(excluded[ntype])
+        if ntype == "story":
+            # A story is a leaf — it has no descendant layers, so an excluded
+            # story is simply absent, NOT "surfaced via sub-layers".
+            tail = (f"{len(ids)} selected {ntype}(s) (e.g. {ids[0]}) are absent — "
+                    f"a story is a leaf with no sub-layers to surface it.")
+        else:
+            tail = (f"{len(ids)} selected {ntype}(s) appear only via their included "
+                    f"sub-layers (e.g. {ids[0]}).")
         warnings.append({
             "id": ntype, "type": "_warning", "role": "warning", "verbosity": "struct",
             "title": "layers-excluded-root",
             "frontmatter": {}, "body": "",
-            "detail": (
-                f"--layers {sorted(layer_set)} excluded the {ntype.upper()} layer; "
-                f"{len(ids)} selected {ntype}(s) appear only via their included "
-                f"sub-layers (e.g. {ids[0]})."
-            ),
+            "detail": f"--layers {sorted(layer_set)} excluded the {ntype.upper()} layer; " + tail,
             "ac": None,
         })
 
     kept = [e for e in entries if _in_layers(e["type"], layer_set)]
+    # Fail loud when a non-`all` selection filters to nothing (e.g. `--export
+    # VISION --layers prd`, or a leaf goal under `--layers story`): writing the
+    # empty doc would be the exact silent-failure the unresolved-ID guard closes.
+    if select != "all" and not kept:
+        raise ValueError(
+            f"--export: selection {select!r} with --layers {sorted(layer_set)} "
+            f"resolved to no content — every selected artifact's layer was excluded. "
+            f"Drop --layers, or include the selected artifact's layer."
+        )
     kept.extend(warnings)
     kept.sort(key=lambda e: (TYPE_RANK.get(e["type"], 99), str(e["id"])))
     return kept

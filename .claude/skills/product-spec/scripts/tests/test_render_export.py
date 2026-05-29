@@ -126,7 +126,7 @@ def test_export_vision_single_anchor():
 
 def test_html_doc_is_self_contained_and_embeds_inert_json():
     md = _doc(select="PRD-AUTH")
-    html = render_export.render_html_doc(md, "Acme Shop", _FIXED_TS)
+    html = render_export.render_html_doc(md, build_graph(VALID), _FIXED_TS)
     assert "<!DOCTYPE html>" in html
     assert 'id="ps-spec-data"' in html          # inert JSON island
     assert "DOMPurify" in html and "marked" in html.lower()  # vendored libs inlined
@@ -135,7 +135,7 @@ def test_html_doc_is_self_contained_and_embeds_inert_json():
 
 def test_html_doc_neutralizes_body_xss_in_json_island():
     malicious = "# Title\n\n</script><script>alert(1)</script>\n"
-    html = render_export.render_html_doc(malicious, "Acme Shop", _FIXED_TS)
+    html = render_export.render_html_doc(malicious, build_graph(VALID), _FIXED_TS)
     # The breakout sequence must be neutralized inside the data island: every
     # `<` becomes the JSON < escape (round-trips via JSON.parse).
     assert "</script><script>alert(1)" not in html
@@ -205,3 +205,53 @@ def test_cli_export_llm_html_combo_exits_nonzero(tmp_path):
     r = _run_export(proj, "--export", "PRD-AUTH", "--compact-mode", "llm", "--format", "html")
     assert r.returncode != 0
     assert "incompatible" in r.stderr.lower()
+
+
+# ---------- HTML export strips the .md provenance frontmatter (no setext H2) ----------
+
+def test_html_export_strips_yaml_frontmatter_from_body():
+    md = _doc(select="PRD-AUTH")        # md_doc carries a leading --- … --- block
+    assert md.lstrip().startswith("---")
+    html = render_export.render_html_doc(md, build_graph(VALID), _FIXED_TS)
+    # The body island feeds marked; it must NOT begin with the YAML block (which
+    # marked renders as a stray <hr> + garbled setext <h2>).
+    blob = html[html.index('id="ps-spec-data"'):]
+    doc = json.loads(blob[blob.index(">") + 1: blob.index("</script>")].replace("\\u003c", "<"))["doc"]
+    assert not doc.lstrip().startswith("---")
+    assert doc.lstrip().startswith("# Product Spec Export")
+
+
+def test_strip_frontmatter_is_noop_without_a_block():
+    body = "# Title\n\nno frontmatter here\n"
+    assert render_export._strip_frontmatter(body) == body
+
+
+# ---------- structured (dict) AC items render readable, not Python repr ----------
+
+def test_ac_dict_item_renders_key_value_not_repr():
+    assert render_export._ac_item({"given": "A", "then": "B"}) == "given: A · then: B"
+    assert render_export._ac_item("plain string") == "plain string"
+
+
+# ---------- CLI: --layers validation + empty-result fail loud ----------
+
+def test_cli_export_unknown_layer_exits_nonzero(tmp_path):
+    proj = tmp_path / "proj"; shutil.copytree(VALID, proj)
+    r = _run_export(proj, "--export", "all", "--layers", "prds", "--format", "md")
+    assert r.returncode != 0
+    assert "prds" in r.stderr
+
+
+def test_cli_export_cross_vocab_layer_exits_nonzero(tmp_path):
+    proj = tmp_path / "proj"; shutil.copytree(VALID, proj)
+    # 'goal' is the viewer vocab, not an export layer.
+    r = _run_export(proj, "--export", "PRD-AUTH-E1-S1", "--layers", "goal", "--format", "md")
+    assert r.returncode != 0
+
+
+def test_cli_export_vision_excluding_layer_exits_nonzero_and_writes_nothing(tmp_path):
+    proj = tmp_path / "proj"; shutil.copytree(VALID, proj)
+    r = _run_export(proj, "--export", "VISION", "--layers", "prd", "--format", "md")
+    assert r.returncode != 0
+    exports = proj / "docs" / "product" / "exports"
+    assert not exports.exists() or not list(exports.glob("*")), "no silently-empty doc on contradictory flags"

@@ -56,7 +56,9 @@
     var items = DATA.items || [];
     var byId = {}; items.forEach(function (i) { byId[i.id] = i; });
     var kids = {}; items.forEach(function (i) { (kids[i.parent] = kids[i.parent] || []).push(i); });
-    var facetGroups = ["status", "moscow", "persona", "layer"];
+    // The facet/search engine (psFacetGroups, psDistinct, psSelfMatch, psBadge,
+    // psBuildFacets) is shared via render_html._BODY_RENDER_JS; this shell adds
+    // only the explorer's `mode` to the shared state shape + its renderAll cb.
     var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} }, mode: "tree" };
     try { state.mode = localStorage.getItem("ps-explorer-mode") || "tree"; } catch (e) {}
 
@@ -85,23 +87,10 @@
     }
 
     // ---- filtering (search + facets, with ancestor visibility) ----
-    function facetActive(g) { return Object.keys(state.facets[g]).length > 0; }
-    function selfMatch(c) {
-      if (state.q) {
-        var hay = (c.id + " " + c.title + " " + (c.body || "")).toLowerCase();
-        if (hay.indexOf(state.q) === -1) return false;
-      }
-      for (var i = 0; i < facetGroups.length; i++) {
-        var g = facetGroups[i]; if (!facetActive(g)) continue;
-        var vals = g === "persona" ? (c.personas || []) : [c[g]];
-        if (!vals.some(function (v) { return state.facets[g][v]; })) return false;
-      }
-      return true;
-    }
     function visibleSet() {
       var vis = {};
       items.forEach(function (c) {
-        if (selfMatch(c)) {
+        if (psSelfMatch(state, c)) {
           vis[c.id] = true;
           var p = c.parent; while (p && byId[p]) { vis[p] = true; p = byId[p].parent; }
         }
@@ -109,39 +98,11 @@
       return vis;
     }
 
-    function distinct(group) {
-      var seen = {};
-      items.forEach(function (c) {
-        var v = group === "persona" ? c.personas : [c[group]];
-        (v || []).forEach(function (x) { if (x) seen[x] = true; });
-      });
-      return Object.keys(seen).sort();
-    }
-    function buildFacets() {
-      var host = document.getElementById("ps-facets");
-      facetGroups.forEach(function (g) {
-        var vals = distinct(g); if (!vals.length) return;
-        var lab = document.createElement("span"); lab.className = "badge badge--type";
-        lab.textContent = (L[g] || g) + ":"; host.appendChild(lab);
-        vals.forEach(function (v) {
-          var b = document.createElement("button"); b.type = "button"; b.textContent = v;
-          b.setAttribute("aria-pressed", "false");
-          b.addEventListener("click", function () {
-            if (state.facets[g][v]) { delete state.facets[g][v]; b.setAttribute("aria-pressed", "false"); }
-            else { state.facets[g][v] = true; b.setAttribute("aria-pressed", "true"); }
-            renderAll();
-          });
-          host.appendChild(b);
-        });
-      });
-    }
-
-    function badge(text, cls) { var s = document.createElement("span"); s.className = "badge " + cls; s.textContent = text; return s; }
     function metaBadges(c, el) {
-      if (c.type) el.appendChild(badge(c.type, "badge--type"));
-      if (c.status) el.appendChild(badge(c.status, "badge--status"));
-      if (c.moscow) el.appendChild(badge(c.moscow, "badge--moscow"));
-      (c.personas || []).forEach(function (p) { el.appendChild(badge(p, "badge--persona")); });
+      if (c.type) el.appendChild(psBadge(c.type, "badge--type"));
+      if (c.status) el.appendChild(psBadge(c.status, "badge--status"));
+      if (c.moscow) el.appendChild(psBadge(c.moscow, "badge--moscow"));
+      (c.personas || []).forEach(function (p) { el.appendChild(psBadge(p, "badge--persona")); });
     }
     function openBtn(id) {
       var b = document.createElement("button"); b.type = "button"; b.className = "open-body";
@@ -235,13 +196,14 @@
 
     function emptyMsg() { var d = document.createElement("div"); d.className = "col-empty"; d.style.color = "var(--muted)"; d.textContent = L.no_results || "No matching artifacts"; return d; }
 
-    // Detail open/close + Escape live in _viewer-head.html (shared); register
-    // this explorer's id->item map so psOpenDetail can resolve clicks.
+    // Detail-panel controls (psOpenDetail/psCloseDetail + Escape) ship in
+    // render_html._BODY_RENDER_JS (body-view-only); register this explorer's
+    // id->item map so psOpenDetail can resolve clicks.
     psRegisterDetail(byId);
 
     function renderAll() { var vis = visibleSet(); renderTree(vis); renderTabs(vis); renderTable(vis); }
 
-    buildFacets(); setMode(state.mode); renderAll();
+    psBuildFacets(items, L, state, renderAll); setMode(state.mode); renderAll();
   })();
   </script>
 </body>

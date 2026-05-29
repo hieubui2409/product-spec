@@ -43,70 +43,14 @@
     var L = DATA.labels || {};
     var cards = DATA.cards || [];
     var byId = {}; cards.forEach(function (c) { byId[c.id] = c; });
-    var facetGroups = ["status", "moscow", "persona", "layer"];
+    // The facet/search engine (psFacetGroups, psDistinct, psSelfMatch, psBadge,
+    // psBuildFacets) is shared via render_html._BODY_RENDER_JS; this shell owns
+    // only its state shape (board has no mode) and its render callback.
     var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} } };
 
     var search = document.getElementById("ps-search");
     search.placeholder = L.search || "Search…";
     search.addEventListener("input", function () { state.q = this.value.toLowerCase(); render(); });
-
-    function distinct(group) {
-      var seen = {};
-      cards.forEach(function (c) {
-        var v = group === "persona" ? c.personas : [c[group]];
-        (v || []).forEach(function (x) { if (x) seen[x] = true; });
-      });
-      return Object.keys(seen).sort();
-    }
-
-    function buildFacets() {
-      var host = document.getElementById("ps-facets");
-      facetGroups.forEach(function (g) {
-        var vals = distinct(g);
-        if (!vals.length) return;
-        var lab = document.createElement("span");
-        lab.className = "badge badge--type";
-        lab.textContent = (L[g] || g) + ":";
-        host.appendChild(lab);
-        vals.forEach(function (v) {
-          var b = document.createElement("button");
-          b.type = "button";
-          b.textContent = v;                    // textContent → XSS-safe label
-          b.setAttribute("aria-pressed", "false");
-          b.addEventListener("click", function () {
-            var on = state.facets[g][v];
-            if (on) { delete state.facets[g][v]; b.setAttribute("aria-pressed", "false"); }
-            else { state.facets[g][v] = true; b.setAttribute("aria-pressed", "true"); }
-            render();
-          });
-          host.appendChild(b);
-        });
-      });
-    }
-
-    function facetActive(g) { return Object.keys(state.facets[g]).length > 0; }
-
-    function matches(c) {
-      if (state.q) {
-        var hay = (c.id + " " + c.title + " " + (c.body || "")).toLowerCase();
-        if (hay.indexOf(state.q) === -1) return false;
-      }
-      for (var i = 0; i < facetGroups.length; i++) {
-        var g = facetGroups[i];
-        if (!facetActive(g)) continue;
-        var vals = g === "persona" ? (c.personas || []) : [c[g]];
-        var hit = vals.some(function (v) { return state.facets[g][v]; });
-        if (!hit) return false;
-      }
-      return true;
-    }
-
-    function badge(text, cls) {
-      var s = document.createElement("span");
-      s.className = "badge " + cls;
-      s.textContent = text;                     // textContent → XSS-safe
-      return s;
-    }
 
     function cardEl(c) {
       var el = document.createElement("div");
@@ -115,10 +59,10 @@
       el.dataset.id = c.id;                      // dataset → DOM-escaped attribute
       var cid = document.createElement("div"); cid.className = "cid"; cid.textContent = c.id; el.appendChild(cid);
       if (c.title) { var t = document.createElement("div"); t.className = "ctitle"; t.textContent = c.title; el.appendChild(t); }
-      if (c.type) el.appendChild(badge(c.type, "badge--type"));
-      if (c.status) el.appendChild(badge(c.status, "badge--status"));
-      if (c.moscow) el.appendChild(badge(c.moscow, "badge--moscow"));
-      (c.personas || []).forEach(function (p) { el.appendChild(badge(p, "badge--persona")); });
+      if (c.type) el.appendChild(psBadge(c.type, "badge--type"));
+      if (c.status) el.appendChild(psBadge(c.status, "badge--status"));
+      if (c.moscow) el.appendChild(psBadge(c.moscow, "badge--moscow"));
+      (c.personas || []).forEach(function (p) { el.appendChild(psBadge(p, "badge--persona")); });
       function open() { psOpenDetail(c.id); }
       el.addEventListener("click", open);
       el.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
@@ -128,7 +72,7 @@
     function render() {
       var board = document.getElementById("ps-board");
       board.textContent = "";
-      var visible = cards.filter(matches);
+      var visible = cards.filter(function (c) { return psSelfMatch(state, c); });
       if (!visible.length) {
         var none = document.createElement("div"); none.className = "col-empty";
         none.textContent = L.no_results || "No matching artifacts"; board.appendChild(none); return;
@@ -146,11 +90,12 @@
       });
     }
 
-    // Detail open/close + Escape live in _viewer-head.html (shared); register
-    // this board's id->card map so psOpenDetail can resolve clicks.
+    // Detail-panel controls (psOpenDetail/psCloseDetail + Escape) ship in
+    // render_html._BODY_RENDER_JS (body-view-only); register this board's
+    // id->card map so psOpenDetail can resolve clicks.
     psRegisterDetail(byId);
 
-    buildFacets();
+    psBuildFacets(cards, L, state, render);
     render();
   })();
   </script>

@@ -33,6 +33,9 @@ configure_utf8_console()
 
 VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "delta", "board", "explorer")
 FORMATS = ("ascii", "mermaid", "html")
+# Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
+# help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
+VIEWER_LAYERS = ("goal", "prd", "epic", "story")
 # Body-bearing views render artifact bodies + own their html writer; they default
 # to --format html (the 9 graph views default to ascii) and have NO Mermaid form
 # (a --format mermaid request falls back to their ascii renderer with a note).
@@ -119,6 +122,19 @@ def _written_json(out: Path, root: Path) -> str:
     return json.dumps({"written": rel}, indent=2)
 
 
+def _unfence(fenced: str) -> str:
+    """Strip a leading/trailing plain ``` fence, returning the inner text. The
+    Mermaid-can't-express views (heatmap/persona/risk/no-baseline delta) return
+    their ASCII grid already wrapped in a plain ``` fence — unwrap and reuse it
+    for the <pre> body instead of running the ASCII renderer a second time."""
+    s = fenced.strip()
+    if s.startswith("```"):
+        s = s[3:]
+    if s.endswith("```"):
+        s = s[:-3]
+    return s.strip("\n")
+
+
 def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
                         artifacts, lang: str, filter_wont: bool, layers, group_by: str) -> int:
     """Render a body-bearing view (board / explorer). html → its own writer;
@@ -163,7 +179,7 @@ def main() -> int:
                     choices=["status", "horizon", "moscow"],
                     help="board: column grouping field (default status).")
     ap.add_argument("--layers", default=None,
-                    help="board: comma subset of goal,prd,epic,story to show as cards.")
+                    help="board/explorer: comma subset of goal,prd,epic,story to filter cards.")
     ap.add_argument(
         "--snapshot", default=None,
         help="path or filename of a baseline snapshot in .snapshots/ "
@@ -182,6 +198,12 @@ def main() -> int:
     # Resolve the per-view default format.
     fmt = args.format or ("html" if args.view in BODY_VIEWS else "ascii")
     layers = [s.strip() for s in args.layers.split(",") if s.strip()] if args.layers else None
+    if layers:
+        bad = [l for l in layers if l not in VIEWER_LAYERS]
+        if bad:
+            print(f"--layers: unknown value(s) {sorted(bad)}. Valid viewer layers: "
+                  f"{list(VIEWER_LAYERS)}.", file=sys.stderr)
+            return 2
 
     root = Path(args.root).resolve()
     # Body views need the parsed artifacts (bodies); parse docs/product/ ONCE via
@@ -220,10 +242,13 @@ def main() -> int:
         body_text = mermaid_text
         view_format = "mermaid"
     else:
-        body_text = _render_ascii(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
+        # Fallback views already embed the ASCII grid inside a plain ``` fence
+        # (render_mermaid wraps the same render_ascii output); unwrap and reuse it
+        # rather than re-running the ASCII renderer.
+        body_text = _unfence(mermaid_text)
         view_format = "pre"
     out = render_html.write(root, args.view, view_format, body_text, graph, lang=args.lang)
-    print(json.dumps({"written": str(out.relative_to(root)) if out.is_relative_to(root) else str(out)}, indent=2))
+    print(_written_json(out, root))
     return 0
 
 

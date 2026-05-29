@@ -18,7 +18,6 @@ summarizes.
 """
 
 import argparse
-import datetime as dt
 import hashlib
 import json
 import re
@@ -51,12 +50,22 @@ def _body_or_struct(entry: Dict[str, Any]) -> str:
     return (entry.get("body") or "").strip() or _struct_lines(entry)
 
 
+def _ac_item(a: Any) -> str:
+    """Render one acceptance-criteria item as a readable bullet. AC items are
+    expected to be strings, but a PO may write a YAML mapping (`- {given: …,
+    then: …}`); stringify that as `key: value` pairs rather than leaking a raw
+    Python dict repr (`{'given': 'A'}`) into the doc."""
+    if isinstance(a, dict):
+        return " · ".join(f"{k}: {v}" for k, v in a.items())
+    return str(a)
+
+
 def _section_body(entry: Dict[str, Any], compact_mode: str) -> str:
     """Render one entry's content per its verbosity + compact-mode."""
     if entry["verbosity"] == "full":
         out = _body_or_struct(entry)
         if entry["type"] == "story" and isinstance(entry.get("ac"), list) and entry["ac"]:
-            out += "\n\n**Acceptance criteria:**\n" + "\n".join(f"- {a}" for a in entry["ac"])
+            out += "\n\n**Acceptance criteria:**\n" + "\n".join(f"- {_ac_item(a)}" for a in entry["ac"])
         return out
     # struct verbosity
     if compact_mode == "llm":
@@ -117,15 +126,27 @@ def render_markdown_doc(
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_html_doc(markdown_doc: str, product_name: str, generated_at: str, lang: str = "en") -> str:
+def _strip_frontmatter(md: str) -> str:
+    """Drop a leading `---\\n … \\n---` YAML block. The provenance frontmatter is a
+    .md affordance (the HTML shell already shows the same metadata in `.ps-meta`);
+    `marked` does not strip it, so leaving it in renders a stray `<hr>` + a garbled
+    setext `<h2>` at the top of every HTML export."""
+    if md.startswith("---\n"):
+        end = md.find("\n---\n", 4)
+        if end != -1:
+            return md[end + len("\n---\n"):].lstrip("\n")
+    return md
+
+
+def render_html_doc(markdown_doc: str, graph: Dict[str, Any], generated_at: str, lang: str = "en") -> str:
     shell = EXPORT_SHELL.read_text(encoding="utf-8")
-    values = render_html.body_render_values({"doc": markdown_doc})
-    values.update({
-        "lang_attr": lang,
-        "title": render_html._escape(f"Spec Export — {product_name}"),
-        "product_name": render_html._escape(product_name),
-        "generated_at": generated_at,
-    })
+    pname = render_html.product_name(graph)
+    # Body channel: strip the .md frontmatter (HTML shows it in .ps-meta instead).
+    values = render_html.body_render_values({"doc": _strip_frontmatter(markdown_doc)})
+    # Reuse the shared chrome preamble; override only generated_at with the
+    # hash-stable stamp (chrome_values would call a fresh _now()).
+    values.update(render_html.chrome_values(graph, lang, f"Spec Export — {pname}"))
+    values["generated_at"] = generated_at
     return render_html.substitute(shell, values)
 
 
@@ -175,10 +196,9 @@ def write_export(root: Path, select: str, layers, depth: str, compact_mode: str,
 
     out_dir = root / "docs" / "product" / "exports"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     ext = "html" if fmt == "html" else "md"
-    target = out_dir / f"{_stem(select)}-{ts}-{content_hash}.{ext}"
-    payload = render_html_doc(md_doc, product_name, generated_at, lang) if fmt == "html" else md_doc
+    target = out_dir / f"{_stem(select)}-{render_html.file_timestamp()}-{content_hash}.{ext}"
+    payload = render_html_doc(md_doc, graph, generated_at, lang) if fmt == "html" else md_doc
     target.write_text(payload, encoding="utf-8")
     return target
 

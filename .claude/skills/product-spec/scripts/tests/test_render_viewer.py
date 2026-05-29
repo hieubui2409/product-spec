@@ -275,3 +275,87 @@ def test_ascii_explorer_honors_layers():
     assert goal_only != full, "--layers must no longer be silently ignored"
     assert "BRD-G1" in goal_only
     assert "PRD-AUTH-E1-S1" not in goal_only  # non-goal layers pruned
+
+
+# ---------- ASCII explorer reparents orphans when goals are filtered out (Q2) ----------
+
+def test_ascii_explorer_layers_excluding_goal_shows_orphans():
+    # The goal-rooted tree() would render an empty PRODUCT header here; the
+    # orphan-rooted forest must surface the surviving prd/epic/story instead
+    # (matching the HTML explorer + ASCII board, which also reparent orphans).
+    g, _ = _ga()
+    out = render_ascii.explorer(g, layers=["prd", "epic", "story"])
+    assert "PRD-AUTH" in out
+    assert "PRD-AUTH-E1-S1" in out          # the surviving leaf is shown, not dropped
+    assert "BRD-G1" not in out              # the goal layer was excluded
+
+
+def test_ascii_explorer_broken_chain_reparents_story_as_root():
+    # layers=goal,story prunes prd+epic → the story loses its in-set parent and is
+    # rendered as a top-level root (depth 0), parity with the HTML explorer.
+    g, _ = _ga()
+    out = render_ascii.explorer(g, layers=["goal", "story"])
+    lines = out.splitlines()
+    story_line = next(l for l in lines if "PRD-AUTH-E1-S1" in l)
+    # A root sits directly under PRODUCT (├──/└── with no leading indent pipes).
+    assert story_line.lstrip().startswith(("├──", "└──"))
+    assert not story_line.startswith(("│", " "))
+
+
+def test_ascii_explorer_no_layers_still_equals_tree():
+    g, _ = _ga()
+    assert render_ascii.explorer(g) == render_ascii.tree(g)
+
+
+def test_ascii_explorer_orphan_forest_survives_cyclic_edge():
+    # The orphan-forest recursion descends arbitrary edges; a malformed cycle
+    # (epic ← story AND story ← epic) must NOT loop forever — the `seen` guard
+    # bounds it. Test completing at all is the assertion (an unguarded recursion
+    # would hang); also assert each node renders exactly once.
+    g = {
+        "product": {"name": "X"},
+        "nodes": [
+            {"id": "PRD-A", "type": "prd", "title": "A"},
+            {"id": "PRD-A-E1", "type": "epic", "title": "E"},
+            {"id": "PRD-A-E1-S1", "type": "story", "title": "S"},
+        ],
+        "edges": [
+            {"from": "PRD-A-E1", "to": "PRD-A"},          # epic child of prd
+            {"from": "PRD-A-E1-S1", "to": "PRD-A-E1"},    # story child of epic
+            {"from": "PRD-A-E1", "to": "PRD-A-E1-S1"},    # MALFORMED back-edge → cycle
+        ],
+        "risks": [],
+    }
+    out = render_ascii.explorer(g, layers=["prd", "epic", "story"])
+    lines = out.splitlines()
+    # Each node renders exactly once (the cycle's back-edge re-render is blocked).
+    # endswith avoids the PRD-A-E1 vs PRD-A-E1-S1 prefix collision; the root prd
+    # carries a title ("PRD-A — A") so match its line by the "PRD-A — " prefix.
+    assert len([l for l in lines if l.endswith("PRD-A-E1")]) == 1       # epic, once
+    assert len([l for l in lines if l.endswith("PRD-A-E1-S1")]) == 1    # story, once
+    assert len([l for l in lines if "PRD-A — A" in l]) == 1             # root prd, once
+
+
+# ---------- board HTML column key matches ASCII board on malformed enum ----------
+
+def test_board_html_column_key_uses_hashable_like_ascii():
+    # A PO who writes `status: [draft]` (a list) must get the SAME column key on
+    # both board surfaces — bare str() and _hashable() diverged before.
+    graph = {
+        "product": {"name": "Acme"},
+        "nodes": [{"id": "PRD-X", "type": "prd", "title": "X", "status": ["draft"]}],
+        "edges": [], "risks": [],
+    }
+    payload = render_board.build_payload(graph, [], group_by="status")
+    html_key = payload["cards"][0]["column"]
+    ascii_key = render_ascii._hashable(["draft"])
+    assert html_key == ascii_key, f"html {html_key!r} != ascii {ascii_key!r}"
+
+
+# ---------- viewer --layers token validation (CLI exit 2) ----------
+
+def test_cli_viewer_unknown_layer_exits_nonzero(tmp_path):
+    proj = tmp_path / "p"; shutil.copytree(VALID, proj)
+    r = _run_viz(proj, "--view", "board", "--format", "ascii", "--layers", "stories")
+    assert r.returncode != 0
+    assert "stories" in r.stderr

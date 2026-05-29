@@ -321,16 +321,25 @@ _BOARD_CARD_TYPES = ("goal", "prd", "epic", "story")
 _LOCALIZED_COLS = {"now", "next", "later", "must", "should", "could", "wont", "unassigned"}
 
 
+def select_cards(graph: Dict[str, Any], layers: Optional[List[str]] = None,
+                 filter_wont: bool = False) -> List[Dict[str, Any]]:
+    """The shared card/node selection for board + explorer (ASCII and HTML): keep
+    the board card types → apply the `--layers` artifact-type filter → optionally
+    drop deferred items. One entry point so a future selection rule changes once."""
+    nodes = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
+    nodes = _filter_by_layers(nodes, layers)
+    if filter_wont:
+        nodes = [n for n in nodes if not _is_deferred(n)]
+    return nodes
+
+
 def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
           filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
     """Kanban-style grouped lists: columns = the chosen group field, cards =
     goal/PRD/epic/story artifacts. Deterministic (canonical column order, sorted
     IDs). `--layers` filters cards; `filter_wont` drops deferred items."""
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    cards = [n for n in graph["nodes"] if n.get("type") in _BOARD_CARD_TYPES]
-    cards = _filter_by_layers(cards, layers)
-    if filter_wont:
-        cards = [n for n in cards if not _is_deferred(n)]
+    cards = select_cards(graph, layers, filter_wont)
 
     groups: Dict[str, List[str]] = defaultdict(list)
     for n in cards:
@@ -357,25 +366,73 @@ def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
     return "\n".join(lines)
 
 
+def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
+    """Indented forest for the explorer ASCII fallback under a `--layers` filter.
+
+    Roots = every visible node whose parent is absent from the (filtered) node set,
+    so pruning the goal layer reparents the surviving prd/epic/story as roots —
+    matching the HTML explorer and the ASCII board, which also reparent orphans
+    (rather than rendering an empty `PRODUCT:` header). For the full, unfiltered
+    graph the roots are exactly the goals, so this reproduces `tree()`'s shape."""
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    present = set(nodes_by_id)
+
+    def _visible(nid: str) -> bool:
+        n = nodes_by_id.get(nid)
+        return n is None or not (filter_wont and _is_deferred(n))
+
+    children = defaultdict(list)
+    parent_of: Dict[str, str] = {}
+    for e in graph["edges"]:
+        children[e["to"]].append(e["from"])
+        parent_of.setdefault(e["from"], e["to"])  # first parent wins (tree edge)
+
+    lines: List[str] = []
+    name = (graph.get("product") or {}).get("name") or "(no PRODUCT.md)"
+    lines.append(f"{label('product', lang)}: {name}")
+
+    # `seen` guards against a malformed cyclic edge (A→B→A) — without it the
+    # edge-driven recursion would loop forever (tree() is safe only because its
+    # nesting is fixed by type; this forest descends by arbitrary edges).
+    def _render(nid: str, prefix: str, last: bool, is_root: bool, seen: set) -> None:
+        if nid in seen:
+            return
+        seen = seen | {nid}
+        n = nodes_by_id.get(nid, {})
+        title = n.get("title") or ""
+        text = f"{nid} — {title}" if (is_root and title) else nid
+        lines.append(f"{prefix}{'└── ' if last else '├── '}{_mark(n, text)}")
+        kid_prefix = prefix + ("    " if last else "│   ")
+        kids = sorted(k for k in children.get(nid, []) if k in present and _visible(k) and k not in seen)
+        for i, k in enumerate(kids):
+            _render(k, kid_prefix, i == len(kids) - 1, False, seen)
+
+    roots = sorted(nid for nid in nodes_by_id
+                   if _visible(nid) and parent_of.get(nid) not in present)
+    for i, r in enumerate(roots):
+        _render(r, "", i == len(roots) - 1, True, set())
+    return "\n".join(lines)
+
+
 def explorer(graph: Dict[str, Any], lang: str = "en",
              filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
-    """ASCII fallback for `--viz explorer` — delegates to the existing tree
-    renderer (the explorer's interactive modes are an html-only affordance).
+    """ASCII fallback for `--viz explorer` (the interactive modes are html-only).
 
-    `--layers` is honored (it was previously dropped here while the ASCII board and
-    the HTML explorer both applied it): filter the nodes to the selected artifact
-    types and prune dangling edges before rendering. Because the tree is goal-
-    rooted, a layer subset that excludes goals renders sparsely — the HTML explorer
-    is the full-fidelity surface; this stays a faithful, filter-honoring fallback."""
-    if layers:
-        keep_nodes = _filter_by_layers(graph["nodes"], layers)
-        keep_ids = {n["id"] for n in keep_nodes}
-        graph = {
-            **graph,
-            "nodes": keep_nodes,
-            "edges": [e for e in graph["edges"] if e["from"] in keep_ids and e["to"] in keep_ids],
-        }
-    return tree(graph, lang=lang, filter_wont=filter_wont)
+    With no `--layers`, delegate to the goal-rooted `tree()` (canonical shape). With
+    a `--layers` filter, render an orphan-rooted forest so a subset that prunes the
+    goal roots still shows the surviving prd/epic/story (reparented as roots) — the
+    same reparenting the HTML explorer and ASCII board do — instead of collapsing
+    to an empty `PRODUCT:` header."""
+    if not layers:
+        return tree(graph, lang=lang, filter_wont=filter_wont)
+    keep_nodes = _filter_by_layers(graph["nodes"], layers)
+    keep_ids = {n["id"] for n in keep_nodes}
+    filtered = {
+        **graph,
+        "nodes": keep_nodes,
+        "edges": [e for e in graph["edges"] if e["from"] in keep_ids and e["to"] in keep_ids],
+    }
+    return _orphan_forest(filtered, lang=lang, filter_wont=filter_wont)
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
