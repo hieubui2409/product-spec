@@ -1,0 +1,56 @@
+name: claude-pack CI
+
+on:
+  pull_request:
+    paths:
+      - '.claude/skills/claude-pack/**'
+      - '.claude/pack.manifest.yaml'
+      - '.github/workflows/claude-pack-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.11', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install (POSIX)
+        if: runner.os != 'Windows'
+        run: bash .claude/skills/claude-pack/install.sh --dev
+
+      - name: Install (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\.claude\skills\claude-pack\install.ps1 -Dev
+
+      - name: Run pytest (POSIX)
+        if: runner.os != 'Windows'
+        working-directory: .claude/skills/claude-pack
+        run: "$GITHUB_WORKSPACE/.claude/skills/.venv/bin/python -m pytest scripts/tests -m 'not integration' -v"
+
+      - name: Run pytest (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: .claude/skills/claude-pack
+        run: "& \"$env:GITHUB_WORKSPACE\\.claude\\skills\\.venv\\Scripts\\python.exe\" -m pytest scripts/tests -m 'not integration' -v"
+
+      - name: Smoke dry-run pack (POSIX)
+        if: runner.os != 'Windows'
+        run: .claude/skills/.venv/bin/python -m pack --manifest .claude/pack.manifest.yaml --version 0.1.0 --dry-run --compute-sha --json
+
+      - name: Smoke dry-run pack (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\.claude\skills\.venv\Scripts\python.exe -m pack --manifest .claude/pack.manifest.yaml --version 0.1.0 --dry-run --compute-sha --json

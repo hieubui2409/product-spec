@@ -182,3 +182,70 @@ docs/product/
 ```
 
 The skill never writes outside `docs/product/`.
+
+<!-- BEGIN: cleanmatic:claude-pack operating guide -->
+
+# Claude Pack — LLM Operating Guide
+
+Auto-loaded by Claude Code. Tells you (the LLM) how to operate the `cleanmatic:claude-pack` skill on behalf of the developer who installed it.
+
+This skill is **developer-facing** (technical), unlike `cleanmatic:product-spec` which is PO-facing. Use code/CLI vocabulary freely.
+
+## Five Operating Principles
+
+### 1. Manifest is the source-of-truth
+`.claude/pack.manifest.yaml` declares build inputs. CLI flags override per-build; interactive mode regenerates the manifest. Three input surfaces, one resolver (`manifest_loader.merge_cli`).
+
+### 2. Safety filter is non-negotiable
+`safety_check.is_dropped` enforces the always-drop catalog: `.env`/`.envrc`/secrets/keys, `.git/`, runtime caches, session state. NOT removable via any flag. `settings.json` + `.ck.json` are opt-in only (`--include-settings`, `--include-ck-config`).
+
+### 3. Determinism is a contract
+Same source + manifest → byte-identical tar.gz. Knobs: PAX, sorted walk (file-granular), mtime=0 default, uid/gid=0, gzip mtime=0. `--source-date-epoch` opt-in honors env var.
+
+### 4. Script vs LLM split (non-negotiable)
+| Layer | Owns |
+|-------|------|
+| Scripts | manifest parse, dep grep, safety check, deterministic tarball write |
+| LLM | AskUserQuestion interactive flow, summary, confirmation gating |
+
+Scripts NEVER call AskUserQuestion. LLM NEVER edits the tarball directly.
+
+### 5. No auto-install on recipient
+v1 ships tarball + bundled installer + `INSTALL.md`. Recipient runs installer manually. Merge-resolver is out of scope. Installer skip-existing default with optional `FORCE_OVERWRITE=1` backup; version-aware (STALE/NEWER/OK SAME).
+
+## Script CLI Contract
+
+All scripts under `.claude/skills/claude-pack/scripts/`. Run via shared venv:
+
+```
+./.claude/skills/.venv/bin/python3 -m pack [flags]
+```
+
+| Script | Purpose |
+|--------|---------|
+| `pack/` (subpackage) | Build the tarball |
+| `safety_check.py` | Walk subtree, emit warn/info findings |
+| `manifest_loader.py` | Parse + validate + resolve manifest |
+| `build_manifest.py` | Discover + emit questions + write manifest |
+
+Exit codes: 0 success · 1 validation · 2 strict-gate · 3 collision · 4 write error · 5 empty/oversize · 130 SIGINT.
+
+## Output Layout
+
+```
+dist/
+├── claude-pack-{version}.tar.gz
+└── claude-pack-{version}.tar.gz.sha256
+```
+
+Tarball internal (versioned root dir): `MANIFEST.json` + `INSTALL.md` + `install.sh` + `install.ps1` + `.claude/...`. `dist/` is gitignored. Recipient verifies SHA256, extracts, runs installer.
+
+## Failure Handling
+
+- Manifest parse error → `ManifestError` finding; surface to user.
+- Missing skill → `MANIFEST_E070`; abort.
+- Safety drop in explicit `extra` listing → `WARN`, drop, continue.
+- Mid-build crash → atomic `os.replace` guarantees no partial `.tar.gz`; `tmp` files cleaned on next startup.
+- See `.claude/skills/claude-pack/references/error-catalog.md` for full error → remediation map.
+
+<!-- END: cleanmatic:claude-pack operating guide -->

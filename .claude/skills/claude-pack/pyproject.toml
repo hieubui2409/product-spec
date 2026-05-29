@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["scripts/tests"]
+python_files = "test_*.py"
+addopts = "-q --strict-markers"
+markers = [
+  "integration: live product-spec dogfood test, non-blocking on CI",
+]

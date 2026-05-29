@@ -1,0 +1,54 @@
+name: claude-pack Release
+
+on:
+  push:
+    tags:
+      - 'claude-pack-v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need commit history for SOURCE_DATE_EPOCH
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compute reproducible epoch
+        id: epoch
+        run: echo "value=$(git log -1 --pretty=%ct ${{ github.sha }})" >> "$GITHUB_OUTPUT"
+
+      - name: Derive version from tag
+        id: version
+        run: echo "value=${GITHUB_REF#refs/tags/claude-pack-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install
+        run: bash .claude/skills/claude-pack/install.sh --dev
+
+      - name: Build deterministic tarball
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.epoch.outputs.value }}
+        run: |
+          .claude/skills/.venv/bin/python -m pack \
+            --manifest .claude/pack.manifest.yaml \
+            --version "${{ steps.version.outputs.value }}" \
+            --source-date-epoch env \
+            --out dist
+
+      - name: Verify SHA256 sidecar
+        working-directory: dist
+        run: sha256sum -c claude-pack-*.tar.gz.sha256
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/claude-pack-*.tar.gz
+            dist/claude-pack-*.tar.gz.sha256
+          generate_release_notes: true
