@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-visualize — dispatcher for the 9 visualization views in 3 formats
-(ASCII / Mermaid / inline-vendored HTML).
+visualize — dispatcher for the 11 visualization views in 3 formats
+(ASCII / Mermaid / inline-vendored HTML). The 9 graph views default to --format
+ascii; the 2 body-bearing viewers (board, explorer) default to --format html and
+have no Mermaid form (a --format mermaid request falls back to their ASCII renderer).
 
 Reads the graph JSON from spec_graph and routes the chosen view through the
 matching renderer.
 
 CLI:
     visualize.py --view <name> --format <ascii|mermaid|html> --root <dir>
-                 [--lang en|vi] [--diff <snapshot.json>]
+                 [--lang en|vi] [--group-by status|horizon|moscow]
+                 [--layers goal,prd,epic,story] [--filter-wont]
+                 [--snapshot <snapshot.json>]   # --diff is the legacy alias
 
-Views: tree | heatmap | scope | roadmap | persona | gap | moscow | risk | delta
+Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | delta
+Body viewers: board | explorer
 """
 
 import argparse
@@ -42,34 +47,38 @@ VIEWER_LAYERS = ("goal", "prd", "epic", "story")
 BODY_VIEWS = ("board", "explorer")
 
 
-def _render_ascii(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
+# Which kwargs each graph view's renderer accepts. ONE map drives both the ascii
+# and mermaid dispatch so the "which view takes lang/filter_wont" knowledge lives
+# in a single place instead of two lockstep if-ladders (delta is handled
+# separately — it takes the baseline, not these graph-only kwargs). persona takes
+# filter_wont on BOTH formats now, so the ascii/mermaid persona honor --filter-wont
+# identically (previously mermaid/html silently ignored it).
+_VIEW_KWARGS = {
+    "tree": ("lang", "filter_wont"),
+    "roadmap": ("lang", "filter_wont"),
+    "persona": ("filter_wont",),
+    "moscow": ("lang",),
+}
+_NO_BASELINE = "(no baseline yet — run --validate to create one)"
+
+
+def _dispatch_view(module, view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]],
+                   lang: str, filter_wont: bool, no_baseline_msg: str) -> str:
     if view == "delta":
         if not baseline:
-            return "(no baseline yet — run --validate to create one)"
-        return render_ascii.delta(graph, baseline)
-    fn = getattr(render_ascii, view)
-    # tree/roadmap accept (lang, filter_wont); persona accepts (filter_wont);
-    # moscow accepts (lang) only (counts are inherent — filter doesn't apply).
-    if view in ("tree", "roadmap"):
-        return fn(graph, lang=lang, filter_wont=filter_wont)
-    if view == "moscow":
-        return fn(graph, lang=lang)
-    if view == "persona":
-        return fn(graph, filter_wont=filter_wont)
-    return fn(graph)
+            return no_baseline_msg
+        return module.delta(graph, baseline)
+    fn = getattr(module, view)
+    kwargs = {k: (lang if k == "lang" else filter_wont) for k in _VIEW_KWARGS.get(view, ())}
+    return fn(graph, **kwargs)
+
+
+def _render_ascii(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
+    return _dispatch_view(render_ascii, view, graph, baseline, lang, filter_wont, _NO_BASELINE)
 
 
 def _render_mermaid(view: str, graph: Dict[str, Any], baseline: Optional[Dict[str, Any]], lang: str = "en", filter_wont: bool = False) -> str:
-    if view == "delta":
-        if not baseline:
-            return "```\n(no baseline yet — run --validate to create one)\n```"
-        return render_mermaid.delta(graph, baseline)
-    fn = getattr(render_mermaid, view)
-    if view in ("tree", "roadmap"):
-        return fn(graph, lang=lang, filter_wont=filter_wont)
-    if view == "moscow":
-        return fn(graph, lang=lang)
-    return fn(graph)
+    return _dispatch_view(render_mermaid, view, graph, baseline, lang, filter_wont, f"```\n{_NO_BASELINE}\n```")
 
 
 def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -145,6 +154,17 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
     if fmt == "mermaid":
         print(f"note: '{view}' has no Mermaid form; showing ascii fallback.", file=sys.stderr)
         fmt = "ascii"
+
+    # Fail loud (Q1, parity with --export) when a non-empty --layers subset filters
+    # every card out: a silently-empty board/explorer is the same silent failure the
+    # export empty-after-filter guard closes. No --layers = nothing to fail on (the
+    # allowed-empty case, mirroring `--export all` on a fresh spec).
+    if layers and not render_ascii.select_cards(graph, layers, filter_wont):
+        present = sorted({str(n.get("type")) for n in graph["nodes"] if n.get("type") in VIEWER_LAYERS})
+        print(f"--layers {sorted(set(layers))} matched no cards for '{view}'"
+              f"{' after --filter-wont' if filter_wont else ''}. "
+              f"Card types present: {present or '(none)'}.", file=sys.stderr)
+        return 2
 
     if view == "board":
         if fmt == "html":

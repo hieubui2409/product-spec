@@ -11,6 +11,7 @@ from collections import defaultdict
 from typing import Any, Dict, List
 
 from i18n_labels import label
+from spec_graph import CHILD_TYPE_FOR_PARENT, matching_child_counts, diff_graphs
 from render_ascii import (
     tree as ascii_tree,
     heatmap as ascii_heatmap,
@@ -167,32 +168,27 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
     return _fence("\n".join(lines))
 
 
-def persona(graph: Dict[str, Any]) -> str:
+def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
     # Mermaid swimlane support for persona x feature is limited; fall back to
-    # a plain markdown fence (same convention as heatmap/risk).
-    return f"```\n{ascii_persona(graph)}\n```"
+    # a plain markdown fence (same convention as heatmap/risk). Thread
+    # filter_wont so the mermaid/html persona honors --filter-wont like the
+    # ascii persona (the dispatcher passes it through).
+    return f"```\n{ascii_persona(graph, filter_wont=filter_wont)}\n```"
 
 
 def gap(graph: Dict[str, Any]) -> str:
-    """Match check_traceability.unaddressed_parent semantics by counting only
-    inbound edges of the EXPECTED child type. Earlier this counted any
-    inbound edge, which diverged on malformed graphs."""
-    expected = {"goal": "prd", "prd": "epic", "epic": "story"}
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    matching_children = defaultdict(int)
-    for e in graph["edges"]:
-        src = nodes_by_id.get(e["from"], {}).get("type")
-        target_type = nodes_by_id.get(e["to"], {}).get("type")
-        if target_type in expected and expected[target_type] == src:
-            matching_children[e["to"]] += 1
+    """Match check_traceability.unaddressed_parent semantics via the shared
+    spec_graph.matching_child_counts (counts only EXPECTED-child-type inbound
+    edges, so a wrong-type edge on a malformed graph cannot mask a gap)."""
+    counts = matching_child_counts(graph)
     lines = ["flowchart LR", "  classDef gap fill:#fce4e4,stroke:#cc0000"]
     for n in graph["nodes"]:
-        if n["type"] in expected and matching_children[n["id"]] == 0:
+        if n["type"] in CHILD_TYPE_FOR_PARENT and counts.get(n["id"], 0) == 0:
             sid = _safe_id(n["id"])
             # Route both the node id and the static missing-child text through
             # _safe_label so PO-controlled ids with markup chars cannot inject
             # live HTML when the Mermaid DSL is embedded in the HTML page.
-            node_label = _safe_label(f"{n['id']}\\n(missing {expected[n['type']].upper()})")
+            node_label = _safe_label(f"{n['id']}\\n(missing {CHILD_TYPE_FOR_PARENT[n['type']].upper()})")
             lines.append(f'  {sid}["{node_label}"]:::gap')
     if len(lines) == 2:
         lines.append('  OK["(no structural gaps)"]')
@@ -229,34 +225,23 @@ def risk(graph: Dict[str, Any]) -> str:
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
-    cur_ids = {n["id"]: n for n in current.get("nodes", [])}
-    base_ids = {n["id"]: n for n in baseline.get("nodes", [])}
-    added = sorted(set(cur_ids) - set(base_ids))
-    removed = sorted(set(base_ids) - set(cur_ids))
+    d = diff_graphs(current, baseline)  # shared added/removed + product-change set-math
     lines = [
         "flowchart TB",
         "  classDef added fill:#dcedc1",
         "  classDef removed fill:#ffd1d1",
         "  classDef changed fill:#fff3a3",
     ]
-    for a in added:
+    for a in d["added"]:
         # Route node ids through _safe_label: PO-controlled ids may contain
         # markup characters that would inject live HTML in the rendered page.
         lines.append(f'  {_safe_id(a)}["+ {_safe_label(a)}"]:::added')
-    for r in removed:
+    for r in d["removed"]:
         lines.append(f'  {_safe_id(r)}["- {_safe_label(r)}"]:::removed')
 
     # Product-level changes — emit a single annotated node when name/core_value/personas drifted.
-    cur_p = current.get("product") or {}
-    base_p = baseline.get("product") or {}
-    product_changes: List[str] = []
-    for field in ("name", "core_value"):
-        if cur_p.get(field) != base_p.get(field):
-            product_changes.append(field)
-    if sorted(cur_p.get("personas") or []) != sorted(base_p.get("personas") or []):
-        product_changes.append("personas")
-    if product_changes:
-        fields_label = _safe_label(", ".join(product_changes))
+    if d["product_changes"]:
+        fields_label = _safe_label(", ".join(d["product_changes"]))
         lines.append(f'  PRODUCT["~ PRODUCT ({fields_label})"]:::changed')
 
     if len(lines) == 4:

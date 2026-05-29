@@ -22,7 +22,7 @@ from render_ascii import _BOARD_GROUP_ORDER, _hashable, select_cards
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
 
-_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "all", "unassigned",
+_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "unassigned",
             "no_results", "now", "next", "later", "must", "should", "could", "wont",
             "goal", "prd", "epic", "story")
 

@@ -36,16 +36,14 @@ ARTIFACT_GLOBS = {
     "story": ["stories/*.md"],
 }
 
-# Reference table for the parent-link field per artifact type. Kept as
-# documentation; build_edges() inlines the same routing because story/epic
-# carry a scalar parent and PRD carries a list (brd_goals), which is hard
-# to express uniformly. The `goal` row used to claim a `parent: BRD` link;
-# the spec dropped that field — BRD is a singleton container, goals attach
-# to PRODUCT directly in the rendered tree.
-PARENT_FIELD_BY_TYPE = {
-    "story": ("epic", "epic"),
-    "epic": ("prd", "prd"),
-    "prd": ("brd_goals", "brd_goal"),  # list field
+# The single authoritative expected-child-type map for the hierarchy. The gap
+# views (render_ascii/render_mermaid) and the unaddressed-parent check
+# (check_traceability) all key off this; importing it here keeps the rule in one
+# home so adding a hierarchy level edits one place, not three.
+CHILD_TYPE_FOR_PARENT = {
+    "goal": "prd",
+    "prd": "epic",
+    "epic": "story",
 }
 
 
@@ -251,6 +249,11 @@ def ancestors(graph: Dict[str, Any], node_id: str) -> Set[str]:
     are NOT graph nodes (build_nodes nodifies goals, not the BRD; vision is an
     isolated node with no edges), so they can never appear here. The assembler
     prepends them as singletons instead — do not add phantom Vision/BRD edges.
+
+    Public graph API kept as the symmetric mirror of downstream() and exercised
+    by the assembler's tests; the production digest assembler inlines its own
+    _adjacency()/_reach() walk for the batched O(N+edges) build, so this is not
+    on the export hot path — do not "fix" the assembler to call it.
     """
     parents: Dict[str, List[str]] = defaultdict(list)
     for e in graph["edges"]:
@@ -264,6 +267,61 @@ def ancestors(graph: Dict[str, Any], node_id: str) -> Set[str]:
         out.add(n)
         stack.extend(parents.get(n, []))
     return out
+
+
+def matching_child_counts(graph: Dict[str, Any]) -> Dict[str, int]:
+    """For each parent-type node id, count inbound edges whose SOURCE node is of
+    the EXPECTED child type (goal←prd, prd←epic, epic←story). The single home for
+    the 'unaddressed parent' rule shared by the gap views and check_traceability —
+    counting only expected-type children means a stray wrong-type edge (e.g. a goal
+    with a story pointing at it on a malformed graph) does not mask the gap."""
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    counts: Dict[str, int] = defaultdict(int)
+    for e in graph["edges"]:
+        src_type = nodes_by_id.get(e["from"], {}).get("type")
+        tgt_type = nodes_by_id.get(e["to"], {}).get("type")
+        if tgt_type in CHILD_TYPE_FOR_PARENT and CHILD_TYPE_FOR_PARENT[tgt_type] == src_type:
+            counts[e["to"]] += 1
+    return dict(counts)
+
+
+def parents_of(graph: Dict[str, Any]) -> Dict[str, List[str]]:
+    """child id -> list of ALL parent ids, in edge order, distinct, str-coerced.
+
+    The single home for the tree-parent rule the explorer payload and the ASCII
+    orphan-forest both need. A PRD with `brd_goals: [G1, G2]` has two parents, so
+    multi-goal coverage renders under EACH goal (matching the ASCII tree) instead
+    of only the first; root determination tests against ANY parent being present.
+    Self-edges (id == id) are dropped — a node is never its own tree parent — which
+    also neutralizes the self/cyclic-parent hang in the downstream client walk."""
+    out: Dict[str, List[str]] = defaultdict(list)
+    for e in graph["edges"]:
+        child, par = str(e["from"]), str(e["to"])
+        if par != child and par not in out[child]:
+            out[child].append(par)
+    return dict(out)
+
+
+def diff_graphs(current: Dict[str, Any], baseline: Dict[str, Any]) -> Dict[str, Any]:
+    """Structural diff between two graph snapshots: added/removed node ids plus the
+    PRODUCT-level fields (name/core_value/personas) that changed. The single home
+    for the set-math + product-change rule the ASCII and Mermaid delta views share;
+    each view keeps only its own formatting (and ASCII its per-field node diff)."""
+    cur_ids = {n["id"] for n in current.get("nodes", [])}
+    base_ids = {n["id"] for n in baseline.get("nodes", [])}
+    cur_p = current.get("product") or {}
+    base_p = baseline.get("product") or {}
+    product_changes: List[str] = []
+    for field in ("name", "core_value"):
+        if cur_p.get(field) != base_p.get(field):
+            product_changes.append(field)
+    if sorted(cur_p.get("personas") or []) != sorted(base_p.get("personas") or []):
+        product_changes.append("personas")
+    return {
+        "added": sorted(cur_ids - base_ids),
+        "removed": sorted(base_ids - cur_ids),
+        "product_changes": product_changes,
+    }
 
 
 def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:

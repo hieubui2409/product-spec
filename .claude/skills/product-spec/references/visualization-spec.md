@@ -91,9 +91,9 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
 
 ## Renderer Inputs / Outputs
 
-- **Input:** graph JSON (from stdin OR via `--root <dir>` triggering `spec_graph.py` internally).
+- **Input:** built from `--root <dir>` (triggers `spec_graph.py` internally); the delta view also reads a baseline via `--snapshot`. No stdin path.
 - **Output:**
-  - ASCII → stdout (terminal-safe; no ANSI colors by default; `--color` flag opt-in).
+  - ASCII → stdout (terminal-safe; always uncolored — no ANSI).
   - Mermaid → stdout (a fenced ```mermaid block ready to paste into docs).
   - HTML → file in `docs/product/visuals/<view>-<timestamp>.html`.
 
@@ -106,9 +106,15 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
 
 --viz delta             # uses two most-recent snapshots
 --viz delta --snapshot <name>     # explicit baseline
+
+--viz <view> --filter-wont        # hide deferred (moscow=wont / scope=out) items
+--viz board --group-by status|horizon|moscow
+--viz board|explorer --layers goal,prd,epic,story   # filter cards by artifact type
 ```
 
 `--lang en|vi` localizes labels in the rendered output (e.g., "now/next/later" → "bây giờ/tiếp/sau"). IDs, edges, and frontmatter values stay English.
+
+`--filter-wont` hides deferred items (frontmatter `moscow: wont` or `scope: out`) from `tree`/`roadmap`/`persona`/`board`/`explorer` (ascii, mermaid, and html alike). **Default keeps them visible** — a trailing `*` marker on the graph views, a card on board/explorer — so nothing is silently dropped; `--filter-wont` is the opt-in to declutter.
 
 ## HTML Self-Containment
 
@@ -157,7 +163,7 @@ ASCII and Mermaid outputs are **deterministic** (same input → same output). Th
 
 ## What This Spec Does NOT Define
 
-- ASCII color (no color by default). The shared design system DOES define the HTML palette (light/dark).
+- ASCII color: ASCII output is always uncolored (no ANSI; no `--color` flag). The shared design system DOES define the HTML palette (light/dark).
 - SVG/PNG output (intentionally dropped per validate gate).
 - Live updating / live-reload / server (visualizations are one-shot, self-contained renders).
 - Edit-from-viewer (`board`/`explorer`/`export` are read surfaces; edits go through the interview flags).

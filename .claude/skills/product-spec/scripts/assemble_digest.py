@@ -90,8 +90,14 @@ def _resolve_selection(select: str, graph: Dict[str, Any]) -> Tuple[Set[str], Se
         t = type_by_id.get(w)
         if t in _SPEC_TYPES:
             spec.add(w)
-        elif t in ("vision", "product"):
-            singles.add(t)
+        # Match the singleton context artifacts by their LITERAL token too, mirroring
+        # BRD — vision.md/PRODUCT.md may omit an `id:` (node id then '<missing-id>'),
+        # so a token-equals-id match alone would reject `--export VISION` with a
+        # self-contradictory 'unresolved' error that still lists VISION as available.
+        elif w == "VISION" or t == "vision":
+            singles.add("vision")
+        elif w == "PRODUCT" or t == "product":
+            singles.add("product")
         elif w == "BRD" or t == "brd":
             singles.add("brd")
         else:
@@ -190,10 +196,11 @@ def build_digest(
     """Build the ordered digest model. See module docstring for the contract.
 
     Raises ValueError when the selection names IDs that resolve to nothing,
-    resolves to nothing at all (except `--export all`, allowed empty on a fresh
-    spec), names an unknown `--layers` token, or a non-`all` selection is filtered
-    to empty by `--layers` — so the export path fails loudly instead of writing a
-    silently-empty doc (CLAUDE.md: no silent failure)."""
+    resolves to nothing at all, names an unknown `--layers` token, or is filtered
+    to empty by `--layers`. `--export all` stays allowed-empty ONLY on a genuinely
+    empty/fresh spec (nothing to filter); if `--layers` strips all PRE-EXISTING
+    content it fails loud too — so the export path never writes a silently-empty
+    doc (CLAUDE.md: no silent failure)."""
     if layers:
         bad = [l for l in layers if l not in ALL_LAYERS]
         if bad:
@@ -284,8 +291,24 @@ def build_digest(
             tail = (f"{len(ids)} selected {ntype}(s) (e.g. {ids[0]}) are absent — "
                     f"a story is a leaf with no sub-layers to surface it.")
         else:
-            tail = (f"{len(ids)} selected {ntype}(s) appear only via their included "
-                    f"sub-layers (e.g. {ids[0]}).")
+            # Partition excluded goal/prd/epic ids: those with at least one
+            # INCLUDED descendant truly surface via a sub-layer; those whose whole
+            # subtree is also excluded are absent with no trace (a childless goal,
+            # or a node every descendant of which is filtered out). Claiming the
+            # latter "appears via sub-layers" is the silent-failure the no-silent
+            # rule forbids.
+            surfaced = [t for t in ids if any(
+                d in nodes_by_id and _in_layers(nodes_by_id[d]["type"], layer_set)
+                for d in _reach(children, t))]
+            absent = [t for t in ids if t not in surfaced]
+            parts: List[str] = []
+            if surfaced:
+                parts.append(f"{len(surfaced)} appear only via their included "
+                             f"sub-layers (e.g. {surfaced[0]})")
+            if absent:
+                parts.append(f"{len(absent)} are absent entirely — no included "
+                             f"sub-layer surfaces them (e.g. {absent[0]})")
+            tail = f"{len(ids)} selected {ntype}(s): " + "; ".join(parts) + "."
         warnings.append({
             "id": ntype, "type": "_warning", "role": "warning", "verbosity": "struct",
             "title": "layers-excluded-root",
@@ -295,10 +318,14 @@ def build_digest(
         })
 
     kept = [e for e in entries if _in_layers(e["type"], layer_set)]
-    # Fail loud when a non-`all` selection filters to nothing (e.g. `--export
-    # VISION --layers prd`, or a leaf goal under `--layers story`): writing the
-    # empty doc would be the exact silent-failure the unresolved-ID guard closes.
-    if select != "all" and not kept:
+    # Fail loud when the selection filters to nothing. For a NAMED selection that
+    # is any empty (e.g. `--export VISION --layers prd`, or a leaf goal under
+    # `--layers story`). For `--export all`, only when `--layers` actively stripped
+    # PRE-EXISTING content (entries non-empty → kept empty): `--export all` on a
+    # genuinely empty/fresh spec (no entries to filter) stays the one allowed-empty
+    # case. Writing the silently-empty doc is the exact failure the unresolved-ID
+    # guard closes (CLAUDE.md: no silent failure).
+    if not kept and (select != "all" or (layers and entries)):
         raise ValueError(
             f"--export: selection {select!r} with --layers {sorted(layer_set)} "
             f"resolved to no content — every selected artifact's layer was excluded. "

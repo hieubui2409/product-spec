@@ -180,11 +180,11 @@ def test_explorer_payload_carries_hierarchy():
     g, a = _ga()
     payload = render_explorer.build_payload(g, a)
     by_id = {i["id"]: i for i in payload["items"]}
-    # story → epic → prd → goal chain encoded as parent + depth.
-    assert by_id["PRD-AUTH-E1-S1"]["parent"] == "PRD-AUTH-E1"
-    assert by_id["PRD-AUTH-E1"]["parent"] == "PRD-AUTH"
+    # story → epic → prd → goal chain encoded as parents (list) + depth.
+    assert by_id["PRD-AUTH-E1-S1"]["parents"] == ["PRD-AUTH-E1"]
+    assert by_id["PRD-AUTH-E1"]["parents"] == ["PRD-AUTH"]
     assert by_id["PRD-AUTH-E1-S1"]["depth"] == 3
-    assert by_id["BRD-G1"]["parent"] == ""  # goals are tree roots (under PRODUCT)
+    assert by_id["BRD-G1"]["parents"] == []  # goals are tree roots (under PRODUCT)
     assert "story" in payload["layer_order"]
 
 
@@ -261,7 +261,7 @@ def test_explorer_depth_recomputed_after_layer_filter():
     payload = render_explorer.build_payload(g, a, layers=["goal", "story"])
     by_id = {i["id"]: i for i in payload["items"]}
     s = by_id["PRD-AUTH-E1-S1"]
-    assert s["parent"] == "", "story's epic is filtered out → no in-set parent"
+    assert s["parents"] == [], "story's epic is filtered out → no in-set parent"
     assert s["depth"] == 0, "Table indent must match the Tree root placement"
     assert by_id["BRD-G1"]["depth"] == 0
 
@@ -282,7 +282,8 @@ def test_ascii_explorer_honors_layers():
 def test_ascii_explorer_layers_excluding_goal_shows_orphans():
     # The goal-rooted tree() would render an empty PRODUCT header here; the
     # orphan-rooted forest must surface the surviving prd/epic/story instead
-    # (matching the HTML explorer + ASCII board, which also reparent orphans).
+    # (matching the HTML explorer, which reparents orphans; the ASCII board is
+    # flat — no hierarchy — so it is not a parallel).
     g, _ = _ga()
     out = render_ascii.explorer(g, layers=["prd", "epic", "story"])
     assert "PRD-AUTH" in out

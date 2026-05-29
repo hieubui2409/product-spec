@@ -55,12 +55,25 @@
     var L = DATA.labels || {};
     var items = DATA.items || [];
     var byId = {}; items.forEach(function (i) { byId[i.id] = i; });
-    var kids = {}; items.forEach(function (i) { (kids[i.parent] = kids[i.parent] || []).push(i); });
+    // kids index from the MULTI-parent `parents` list: a node with no in-set
+    // parent roots under "" ; a multi-goal PRD appears under EACH of its goals
+    // (matches the ASCII tree). Self/cyclic parents were dropped server-side.
+    var kids = {};
+    items.forEach(function (i) {
+      var ps = (i.parents && i.parents.length) ? i.parents : [""];
+      ps.forEach(function (p) { (kids[p] = kids[p] || []).push(i); });
+    });
     // The facet/search engine (psFacetGroups, psDistinct, psSelfMatch, psBadge,
     // psBuildFacets) is shared via render_html._BODY_RENDER_JS; this shell adds
     // only the explorer's `mode` to the shared state shape + its renderAll cb.
-    var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} }, mode: "tree" };
+    var state = { q: "", facets: { status: {}, moscow: {}, horizon: {}, persona: {}, layer: {} }, mode: "tree" };
     try { state.mode = localStorage.getItem("ps-explorer-mode") || "tree"; } catch (e) {}
+
+    // Cache the last visible set + which panes were (re)rendered for it, so a mode
+    // switch or tab click reuses it instead of recomputing visibleSet and rebuilding
+    // hidden panes (only the active mode is rendered on a filter change).
+    var lastVis = {};
+    var painted = {};
 
     var search = document.getElementById("ps-search");
     search.placeholder = L.search || "Search…";
@@ -84,15 +97,23 @@
       Array.prototype.forEach.call(modeBar.children, function (b) {
         b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false");
       });
+      if (!painted[mode]) renderMode(mode, lastVis);  // lazily paint a newly-shown pane
     }
 
     // ---- filtering (search + facets, with ancestor visibility) ----
+    // `seen` guards a malformed self/cyclic parent chain so the walk terminates.
     function visibleSet() {
       var vis = {};
       items.forEach(function (c) {
         if (psSelfMatch(state, c)) {
           vis[c.id] = true;
-          var p = c.parent; while (p && byId[p]) { vis[p] = true; p = byId[p].parent; }
+          var stack = (c.parents || []).slice(), seen = {};
+          while (stack.length) {
+            var p = stack.pop();
+            if (!p || seen[p] || !byId[p]) continue;
+            seen[p] = true; vis[p] = true;
+            (byId[p].parents || []).forEach(function (pp) { stack.push(pp); });
+          }
         }
       });
       return vis;
@@ -112,10 +133,14 @@
     }
 
     // ---- Tree mode (<details> nesting) ----
+    // `path` is the prototype-chained set of ancestor ids on the CURRENT branch:
+    // it lets a multi-parent node render once under each parent while a self/cyclic
+    // edge (id already on the branch) stops the recursion instead of hanging.
     function renderTree(vis) {
       var host = document.getElementById("ps-view-tree"); host.textContent = "";
-      function node(c) {
-        if (!vis[c.id]) return null;
+      function node(c, path) {
+        if (!vis[c.id] || path[c.id]) return null;
+        var np = Object.create(path); np[c.id] = true;
         var d = document.createElement("details"); d.className = "tnode"; d.open = !!state.q;
         var s = document.createElement("summary");
         var strong = document.createElement("strong"); strong.textContent = c.id; s.appendChild(strong);
@@ -124,37 +149,50 @@
         d.appendChild(s);
         var ch = (kids[c.id] || []);
         if (ch.length) { var box = document.createElement("div"); box.className = "tkids";
-          ch.forEach(function (k) { var kn = node(k); if (kn) box.appendChild(kn); }); d.appendChild(box); }
+          ch.forEach(function (k) { var kn = node(k, np); if (kn) box.appendChild(kn); }); d.appendChild(box); }
         return d;
       }
-      (kids[""] || []).forEach(function (r) { var n = node(r); if (n) host.appendChild(n); });
+      (kids[""] || []).forEach(function (r) { var n = node(r, Object.create(null)); if (n) host.appendChild(n); });
       if (!host.children.length) host.appendChild(emptyMsg());
     }
 
     // ---- Flat-tabs mode ----
     var activeTab = (DATA.layer_order || [])[0] || "";
-    function renderTabs(vis) {
-      var host = document.getElementById("ps-view-tabs"); host.textContent = "";
-      var bar = document.createElement("div"); bar.className = "tabs-bar";
-      (DATA.layer_order || []).forEach(function (layer) {
-        var b = document.createElement("button"); b.type = "button"; b.textContent = (L[layer] || layer);
-        b.setAttribute("aria-pressed", layer === activeTab ? "true" : "false");
-        b.addEventListener("click", function () { activeTab = layer; renderTabs(visibleSet()); });
-        bar.appendChild(b);
-      });
-      host.appendChild(bar);
-      var list = document.createElement("div"); list.className = "tablist";
+    function fillTabList(listWrap, vis) {
+      listWrap.textContent = "";
       var rows = items.filter(function (c) { return c.layer === activeTab && vis[c.id]; });
-      if (!rows.length) { list.appendChild(emptyMsg()); }
+      if (!rows.length) { listWrap.appendChild(emptyMsg()); }
       rows.forEach(function (c) {
         var card = document.createElement("div"); card.className = "ve-card";
         var strong = document.createElement("strong"); strong.textContent = c.id; card.appendChild(strong);
         if (c.title) { var t = document.createElement("span"); t.textContent = " — " + c.title; card.appendChild(t); }
         metaBadges(c, card);
         card.addEventListener("click", function () { psOpenDetail(c.id); });
-        list.appendChild(card);
+        listWrap.appendChild(card);
       });
-      host.appendChild(list);
+    }
+    function renderTabs(vis) {
+      var host = document.getElementById("ps-view-tabs"); host.textContent = "";
+      var bar = document.createElement("div"); bar.className = "tabs-bar";
+      var listWrap = document.createElement("div"); listWrap.className = "tablist";
+      (DATA.layer_order || []).forEach(function (layer) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = (L[layer] || layer);
+        b.setAttribute("aria-pressed", layer === activeTab ? "true" : "false");
+        // A tab switch changes no filter state: reuse the cached vis and swap only
+        // the list pane + aria-pressed, instead of recomputing visibleSet and
+        // tearing down/rebuilding the whole tab bar.
+        b.addEventListener("click", function () {
+          activeTab = layer;
+          Array.prototype.forEach.call(bar.children, function (btn) {
+            btn.setAttribute("aria-pressed", btn === b ? "true" : "false");
+          });
+          fillTabList(listWrap, lastVis);
+        });
+        bar.appendChild(b);
+      });
+      host.appendChild(bar);
+      host.appendChild(listWrap);
+      fillTabList(listWrap, vis);
     }
 
     // ---- Table-tree mode (treegrid; expand row → inline body) ----
@@ -201,9 +239,20 @@
     // id->item map so psOpenDetail can resolve clicks.
     psRegisterDetail(byId);
 
-    function renderAll() { var vis = visibleSet(); renderTree(vis); renderTabs(vis); renderTable(vis); }
+    function renderMode(mode, vis) {
+      if (mode === "tabs") renderTabs(vis);
+      else if (mode === "table") renderTable(vis);
+      else renderTree(vis);
+      painted[mode] = true;
+    }
+    // A filter change invalidates every pane; recompute vis once and paint ONLY
+    // the active mode (hidden panes repaint lazily on setMode).
+    function renderAll() { lastVis = visibleSet(); painted = {}; renderMode(state.mode, lastVis); }
 
-    psBuildFacets(items, L, state, renderAll); setMode(state.mode); renderAll();
+    // renderAll first (paints state.mode into its pane + fills lastVis), then
+    // setMode toggles visibility (the painted pane is already current, so setMode
+    // skips a redundant repaint).
+    psBuildFacets(items, L, state, renderAll); renderAll(); setMode(state.mode);
   })();
   </script>
 </body>

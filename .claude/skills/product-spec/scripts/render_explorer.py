@@ -17,17 +17,18 @@ from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
-from spec_graph import index_artifacts
+from spec_graph import index_artifacts, parents_of
 from render_ascii import select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 EXPLORER_SHELL = SKILL_ROOT / "assets" / "templates" / "explorer-shell.html"
 
-# Sort rank only; the EMITTED per-item depth is recomputed from the reconciled
-# parent chain (see build_payload) so it stays correct after a --layers filter.
-_DEPTH_BY_TYPE = {"goal": 0, "prd": 1, "epic": 2, "story": 3}
+# The layer hierarchy order, single source. _DEPTH_BY_TYPE (initial sort rank) is
+# derived from it so reordering the hierarchy edits one place; the EMITTED per-item
+# depth is recomputed from the reconciled multi-parent chain (see build_payload).
 _LAYER_ORDER = ("goal", "prd", "epic", "story")
-_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "all", "unassigned",
+_DEPTH_BY_TYPE = {t: i for i, t in enumerate(_LAYER_ORDER)}
+_UI_KEYS = ("search", "status", "moscow", "persona", "layer", "unassigned",
             "no_results", "tree", "tabs", "table", "ac_count",
             "goal", "prd", "epic", "story")
 
@@ -47,9 +48,10 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                   lang: str = "en", filter_wont: bool = False,
                   layers: Optional[List[str]] = None) -> Dict[str, Any]:
     bodies, ac_counts = _maps(artifacts)
-    parent_of: Dict[str, str] = {}
-    for e in graph["edges"]:
-        parent_of.setdefault(str(e["from"]), str(e["to"]))  # first parent wins (tree edge)
+    # ALL parents per child (shared rule, self-edges already dropped → no cyclic
+    # self-parent reaches the client). A multi-goal PRD keeps both goals so the
+    # Tree renders it under EACH (matching the ASCII tree), not just the first.
+    all_parents = parents_of(graph)
 
     nodes = select_cards(graph, layers, filter_wont)
     present_ids = {str(n["id"]) for n in nodes}
@@ -57,7 +59,9 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
     items: List[Dict[str, Any]] = []
     for n in sorted(nodes, key=lambda x: (_DEPTH_BY_TYPE.get(x.get("type"), 9), str(x["id"]))):
         nid = str(n["id"])
-        par = parent_of.get(nid, "")
+        # Keep every in-set parent; an empty list = a root (parent pruned, or a goal
+        # whose only "parent" is the non-node BRD/PRODUCT container).
+        parents = [p for p in all_parents.get(nid, []) if p in present_ids]
         items.append({
             "id": nid,
             "type": n.get("type"),
@@ -73,29 +77,27 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             # this carried the export bucket 'brd').
             "layer": n.get("type"),
             "ac_count": ac_counts.get(nid, 0),
-            "parent": par if par in present_ids else "",  # roots (goals) have no in-set parent
+            "parents": parents,  # multi-parent; roots have []
             "body": bodies.get(nid, ""),
         })
 
-    # Recompute depth from the RECONCILED parent chain (over present_ids) rather
-    # than the static per-type depth: after a --layers filter prunes intermediate
-    # ancestors, a story whose epic is gone becomes a root (parent=""), so Tree
-    # renders it at the root and Table-tree must indent it 0 too — otherwise the
-    # two modes disagree (Tree root vs Table indented under nothing).
-    parent_by_id = {it["id"]: it["parent"] for it in items}
+    # Recompute depth from the RECONCILED multi-parent chain (over present_ids):
+    # depth = shortest distance to a root, so after a --layers filter prunes an
+    # intermediate ancestor the Tree (renders under each surviving parent) and the
+    # Table-tree (indents by this depth) agree. Cycle-guarded via the path `stack`.
+    parents_by_id = {it["id"]: it["parents"] for it in items}
+    _depth_cache: Dict[str, int] = {}
 
-    def _depth(nid: str) -> int:
-        d = 0
-        seen: set = set()
-        p = parent_by_id.get(nid, "")
-        while p and p not in seen:
-            seen.add(p)
-            d += 1
-            p = parent_by_id.get(p, "")
+    def _depth(nid: str, stack: frozenset) -> int:
+        if nid in _depth_cache:
+            return _depth_cache[nid]
+        ps = [p for p in parents_by_id.get(nid, []) if p in parents_by_id and p not in stack]
+        d = 0 if not ps else 1 + min(_depth(p, stack | {nid}) for p in ps)
+        _depth_cache[nid] = d
         return d
 
     for it in items:
-        it["depth"] = _depth(it["id"])
+        it["depth"] = _depth(it["id"], frozenset())
 
     return {
         "items": items,

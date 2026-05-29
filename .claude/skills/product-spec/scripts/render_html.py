@@ -19,7 +19,7 @@ import datetime as dt
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from spec_graph import _now
 
@@ -152,13 +152,15 @@ _BODY_RENDER_JS = (
     # 9 legacy graph views stay free of any sanitizer reference (H4 gating). Each
     # body shell registers its id->record map via psRegisterDetail(byId); inert in
     # the linear export (it has no #ps-detail). Body is the only innerHTML sink.
-    "\nvar psDetailById={};"
+    "\nvar psDetailById={},psDetailCache={};"
     "\nfunction psRegisterDetail(byId){psDetailById=byId||{};}"
     "\nwindow.psOpenDetail=function(id){var c=psDetailById[id];if(!c){return;}"
     "var t=document.getElementById('ps-detail-title'),b=document.getElementById('ps-detail-body'),d=document.getElementById('ps-detail');"
     "if(!t||!b||!d){return;}"
     "t.textContent=c.id+(c.title?' \\u2014 '+c.title:'');"
-    "b.innerHTML=psRenderMarkdown(c.body||'_(no body)_');d.hidden=false;};"
+    # Memoize the sanitized body per id (immutable) so re-opening the same card
+    # does not re-tokenize + re-sanitize — matches the table-tree dataset.loaded guard.
+    "b.innerHTML=(psDetailCache[id]||(psDetailCache[id]=psRenderMarkdown(c.body||'_(no body)_')));d.hidden=false;};"
     "\nwindow.psCloseDetail=function(){var d=document.getElementById('ps-detail');if(d){d.hidden=true;}};"
     "\ndocument.addEventListener('keydown',function(e){if(e.key==='Escape'){psCloseDetail();}});"
     # Shared facet/search engine for board + explorer (body views only). Pure,
@@ -168,7 +170,7 @@ _BODY_RENDER_JS = (
     # here (mirroring psRegisterDetail) closes the board/explorer divergence risk
     # the detail-panel comment calls out. psBuildFacets localizes the Layer-facet
     # chip values (L[v]) so a --lang vi facet matches the Flat-tabs tab labels.
-    "\nvar psFacetGroups=['status','moscow','persona','layer'];"
+    "\nvar psFacetGroups=['status','moscow','horizon','persona','layer'];"
     "\nfunction psDistinct(records,group){var seen={};records.forEach(function(c){var v=group==='persona'?c.personas:[c[group]];(v||[]).forEach(function(x){if(x){seen[x]=true;}});});return Object.keys(seen).sort();}"
     "\nfunction psFacetActive(state,g){return Object.keys(state.facets[g]).length>0;}"
     "\nfunction psSelfMatch(state,c){if(state.q){var hay=(c.id+' '+c.title+' '+(c.body||'')).toLowerCase();if(hay.indexOf(state.q)===-1){return false;}}for(var i=0;i<psFacetGroups.length;i++){var g=psFacetGroups[i];if(!psFacetActive(state,g)){continue;}var vals=g==='persona'?(c.personas||[]):[c[g]];if(!vals.some(function(v){return state.facets[g][v];})){return false;}}return true;}"

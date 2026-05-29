@@ -15,11 +15,24 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
+from spec_graph import (
+    CHILD_TYPE_FOR_PARENT,
+    matching_child_counts,
+    parents_of,
+    diff_graphs,
+)
 
 
 def _is_deferred(node: Dict[str, Any]) -> bool:
     """A node is 'deferred' if either MoSCoW says won't OR scope says out."""
     return node.get("moscow") == "wont" or node.get("scope") == "out"
+
+
+def _ascii_product_name(graph: Dict[str, Any]) -> str:
+    """The PRODUCT header name for the ASCII tree/forest, or `(no PRODUCT.md)`.
+    One home for the ASCII fallback string (render_html.product_name uses a
+    different `(unnamed)` fallback for the HTML chrome — intentionally distinct)."""
+    return (graph.get("product") or {}).get("name") or "(no PRODUCT.md)"
 
 
 def _mark(node: Dict[str, Any], text: str) -> str:
@@ -51,8 +64,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         children[e["to"]].append(e["from"])
 
     lines: List[str] = []
-    name = (graph.get("product") or {}).get("name") or "(no PRODUCT.md)"
-    lines.append(f"{label('product', lang)}: {name}")
+    lines.append(f"{label('product', lang)}: {_ascii_product_name(graph)}")
 
     goal_ids = sorted([nid for nid, n in nodes_by_id.items() if n["type"] == "goal" and _visible(nid)])
     for i, gid in enumerate(goal_ids):
@@ -246,27 +258,17 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
 def gap(graph: Dict[str, Any]) -> str:
     """Bullet list of unaddressed nodes (gap-analysis input — structural only).
 
-    Counts inbound edges by EXPECTED CHILD TYPE so it matches
-    check_traceability.unaddressed_parent semantics exactly. Earlier this
-    counted any inbound edge, which diverged on malformed graphs where a
-    parent had wrong-type inbound edges (e.g., a goal with a stray story
-    pointing at it). Single source of truth = the check_traceability rule.
+    Counts inbound edges by EXPECTED CHILD TYPE via the shared
+    spec_graph.matching_child_counts, so the gap view and
+    check_traceability.unaddressed_parent can never disagree (single home for
+    the rule; on a malformed graph a wrong-type inbound edge does not mask a gap).
     """
-    expected = {"goal": "prd", "prd": "epic", "epic": "story"}
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    matching_children = defaultdict(int)
-    for e in graph["edges"]:
-        src = nodes_by_id.get(e["from"], {}).get("type")
-        target_node = nodes_by_id.get(e["to"], {})
-        target_type = target_node.get("type")
-        if target_type in expected and expected[target_type] == src:
-            matching_children[e["to"]] += 1
-
+    counts = matching_child_counts(graph)
     out: List[str] = []
     for n in graph["nodes"]:
         kind = n["type"]
-        if kind in expected and matching_children[n["id"]] == 0:
-            out.append(f"  - {n['id']} ({kind}) has no {expected[kind].upper()} addressing it")
+        if kind in CHILD_TYPE_FOR_PARENT and counts.get(n["id"], 0) == 0:
+            out.append(f"  - {n['id']} ({kind}) has no {CHILD_TYPE_FOR_PARENT[kind].upper()} addressing it")
     return "\n".join(out) or "(no structural gaps)"
 
 
@@ -367,13 +369,18 @@ def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
 
 
 def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
-    """Indented forest for the explorer ASCII fallback under a `--layers` filter.
+    """Indented forest for the explorer ASCII fallback when a `--layers` or
+    `--filter-wont` filter prunes intermediate ancestors.
 
-    Roots = every visible node whose parent is absent from the (filtered) node set,
-    so pruning the goal layer reparents the surviving prd/epic/story as roots —
-    matching the HTML explorer and the ASCII board, which also reparent orphans
-    (rather than rendering an empty `PRODUCT:` header). For the full, unfiltered
-    graph the roots are exactly the goals, so this reproduces `tree()`'s shape."""
+    Roots = every visible node with NO parent present in the (filtered) node set,
+    so pruning the goal layer (or a deferred intermediate) reparents the surviving
+    prd/epic/story as roots — matching the HTML explorer, which reparents the same
+    way (`parent=''` for out-of-set parents). Root determination tests ANY parent
+    (via spec_graph.parents_of), so a multi-goal PRD whose first goal is pruned but
+    a later goal survives still attaches to the surviving goal instead of floating
+    up as a root. (The ASCII board is flat — no hierarchy, no reparenting — so it is
+    NOT a parallel here.) For the full, unfiltered graph the roots are exactly the
+    goals, so this reproduces `tree()`'s shape."""
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     present = set(nodes_by_id)
 
@@ -382,14 +389,14 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = 
         return n is None or not (filter_wont and _is_deferred(n))
 
     children = defaultdict(list)
-    parent_of: Dict[str, str] = {}
     for e in graph["edges"]:
         children[e["to"]].append(e["from"])
-        parent_of.setdefault(e["from"], e["to"])  # first parent wins (tree edge)
+    # All parents per child (shared rule); a node is a root when none of its
+    # parents survive in the filtered set.
+    parents = parents_of(graph)
 
     lines: List[str] = []
-    name = (graph.get("product") or {}).get("name") or "(no PRODUCT.md)"
-    lines.append(f"{label('product', lang)}: {name}")
+    lines.append(f"{label('product', lang)}: {_ascii_product_name(graph)}")
 
     # `seen` guards against a malformed cyclic edge (A→B→A) — without it the
     # edge-driven recursion would loop forever (tree() is safe only because its
@@ -408,7 +415,7 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = 
             _render(k, kid_prefix, i == len(kids) - 1, False, seen)
 
     roots = sorted(nid for nid in nodes_by_id
-                   if _visible(nid) and parent_of.get(nid) not in present)
+                   if _visible(nid) and not any(p in present for p in parents.get(nid, [])))
     for i, r in enumerate(roots):
         _render(r, "", i == len(roots) - 1, True, set())
     return "\n".join(lines)
@@ -418,20 +425,24 @@ def explorer(graph: Dict[str, Any], lang: str = "en",
              filter_wont: bool = False, layers: Optional[List[str]] = None) -> str:
     """ASCII fallback for `--viz explorer` (the interactive modes are html-only).
 
-    With no `--layers`, delegate to the goal-rooted `tree()` (canonical shape). With
-    a `--layers` filter, render an orphan-rooted forest so a subset that prunes the
-    goal roots still shows the surviving prd/epic/story (reparented as roots) — the
-    same reparenting the HTML explorer and ASCII board do — instead of collapsing
-    to an empty `PRODUCT:` header."""
-    if not layers:
+    With neither `--layers` nor `--filter-wont`, delegate to the goal-rooted
+    `tree()` (canonical shape; preserves `explorer == tree`). When EITHER filter is
+    active, render an orphan-rooted forest over the SAME node set the HTML explorer
+    uses (select_cards: board card types → --layers → drop deferred when
+    filter_wont), so a kept child of a pruned/deferred parent is reparented as a
+    root exactly as the HTML explorer does — instead of being silently dropped (the
+    fixed-depth `tree()` descent skips a deferred intermediate's whole subtree)."""
+    if not layers and not filter_wont:
         return tree(graph, lang=lang, filter_wont=filter_wont)
-    keep_nodes = _filter_by_layers(graph["nodes"], layers)
+    keep_nodes = select_cards(graph, layers, filter_wont)
     keep_ids = {n["id"] for n in keep_nodes}
     filtered = {
         **graph,
         "nodes": keep_nodes,
         "edges": [e for e in graph["edges"] if e["from"] in keep_ids and e["to"] in keep_ids],
     }
+    # Deferred nodes are already gone when filter_wont; pass it through so the
+    # layers-only case (filter_wont=False) still keeps deferred cards with a `*`.
     return _orphan_forest(filtered, lang=lang, filter_wont=filter_wont)
 
 
@@ -442,29 +453,28 @@ def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     so a PRODUCT.md edit (which lives in graph.product meta, not in nodes[])
     shows up in the delta view instead of silently rendering "(no changes)".
     """
+    d = diff_graphs(current, baseline)  # shared added/removed + product-change set-math
     cur_ids = {n["id"]: n for n in current.get("nodes", [])}
     base_ids = {n["id"]: n for n in baseline.get("nodes", [])}
-    added = sorted(set(cur_ids) - set(base_ids))
-    removed = sorted(set(base_ids) - set(cur_ids))
     changed: List[str] = []
     for nid in sorted(set(cur_ids) & set(base_ids)):
         for field in ("status", "scope", "moscow", "horizon", "size"):
             if cur_ids[nid].get(field) != base_ids[nid].get(field):
                 changed.append(f"  ~ {nid}.{field}: {base_ids[nid].get(field)} -> {cur_ids[nid].get(field)}")
 
-    # Product-level diff (name / core_value / personas list).
+    # Product-level diff: format the fields diff_graphs flagged as changed.
     cur_p = current.get("product") or {}
     base_p = baseline.get("product") or {}
-    for field in ("name", "core_value"):
-        if cur_p.get(field) != base_p.get(field):
+    for field in d["product_changes"]:
+        if field == "personas":
+            changed.append(f"  ~ PRODUCT.personas: {base_p.get('personas')} -> {cur_p.get('personas')}")
+        else:
             changed.append(f"  ~ PRODUCT.{field}: {base_p.get(field)!r} -> {cur_p.get(field)!r}")
-    if sorted(cur_p.get("personas") or []) != sorted(base_p.get("personas") or []):
-        changed.append(f"  ~ PRODUCT.personas: {base_p.get('personas')} -> {cur_p.get('personas')}")
 
     lines: List[str] = []
-    for a in added:
+    for a in d["added"]:
         lines.append(f"  + {a}")
-    for r in removed:
+    for r in d["removed"]:
         lines.append(f"  - {r}")
     lines.extend(changed)
     return "\n".join(lines) or "(no changes)"

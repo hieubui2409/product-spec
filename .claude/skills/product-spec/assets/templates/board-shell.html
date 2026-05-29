@@ -46,7 +46,7 @@
     // The facet/search engine (psFacetGroups, psDistinct, psSelfMatch, psBadge,
     // psBuildFacets) is shared via render_html._BODY_RENDER_JS; this shell owns
     // only its state shape (board has no mode) and its render callback.
-    var state = { q: "", facets: { status: {}, moscow: {}, persona: {}, layer: {} } };
+    var state = { q: "", facets: { status: {}, moscow: {}, horizon: {}, persona: {}, layer: {} } };
 
     var search = document.getElementById("ps-search");
     search.placeholder = L.search || "Search…";
@@ -77,8 +77,12 @@
         var none = document.createElement("div"); none.className = "col-empty";
         none.textContent = L.no_results || "No matching artifacts"; board.appendChild(none); return;
       }
+      // Bucket the visible cards by column ONCE (O(N)) rather than re-walking the
+      // full visible list per column (O(columns·N)); forEach keeps source order.
+      var byCol = {};
+      visible.forEach(function (c) { (byCol[c.column] = byCol[c.column] || []).push(c); });
       (DATA.columns || []).forEach(function (col) {
-        var inCol = visible.filter(function (c) { return c.column === col; });
+        var inCol = byCol[col] || [];
         var colEl = document.createElement("div"); colEl.className = "board-col";
         var h = document.createElement("h2");
         h.textContent = ((DATA.col_labels || {})[col] || col) + " (" + inCol.length + ")";

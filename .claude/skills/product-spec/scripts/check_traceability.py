@@ -21,24 +21,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, _now
+from spec_graph import build_graph, _now, CHILD_TYPE_FOR_PARENT, matching_child_counts
 
 configure_utf8_console()
-
-
-CHILD_TYPE_FOR_PARENT = {
-    "goal": "prd",
-    "prd": "epic",
-    "epic": "story",
-}
 
 
 def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
     node_ids: Set[str] = {n["id"] for n in graph["nodes"]}
-    inbound_by_target: Dict[str, List[Dict[str, str]]] = {}
-    for e in graph["edges"]:
-        inbound_by_target.setdefault(e["to"], []).append(e)
+    # Shared expected-child counts (one pass over the edges); the gap views key
+    # off the same helper so views and validator never disagree on a gap.
+    child_counts = matching_child_counts(graph)
 
     for n in graph["nodes"]:
         ntype = n["type"]
@@ -72,9 +65,7 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 
         if ntype in CHILD_TYPE_FOR_PARENT:
             expected_child = CHILD_TYPE_FOR_PARENT[ntype]
-            edges_in = inbound_by_target.get(n["id"], [])
-            child_count = sum(1 for e in edges_in if _from_node_type(graph, e["from"]) == expected_child)
-            if child_count == 0:
+            if child_counts.get(n["id"], 0) == 0:
                 check_id = "orphan_brd_goal" if ntype == "goal" else "unaddressed_parent"
                 findings.append(_f(check_id, "warn", n, f"{n['id']} has no {expected_child} addressing it (gap-analysis input).", expected_child=expected_child))
 
@@ -87,13 +78,6 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             "detail": parse_err["error"],
         })
     return findings
-
-
-def _from_node_type(graph: Dict[str, Any], node_id: str) -> str:
-    for n in graph["nodes"]:
-        if n["id"] == node_id:
-            return n["type"] or ""
-    return ""
 
 
 def _f(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:

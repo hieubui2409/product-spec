@@ -10,11 +10,12 @@ CLI:
         [--compact-mode struct|llm] [--format md|html] [--lang en|vi]
 
 Output: docs/product/exports/<stem>-<ts>-<hash8>.<md|html>. The doc body is
-deterministic; the content hash is computed over the timestamp-free body so
-identical content yields a stable filename (collision-free snapshot pattern).
-Script-vs-LLM split: `--compact-mode llm` emits the full body wrapped in
-`<!-- COMPACT:<id> -->` markers for the LLM to summarize — the script NEVER
-summarizes.
+deterministic and the content HASH is stable (computed over the timestamp-free
+body); the `<ts>` segment is the wall-clock stamp, so each invocation writes a
+fresh file — re-exporting unchanged content accumulates one timestamped file per
+run (the hash is the dedup key, not the filename). Script-vs-LLM split:
+`--compact-mode llm` emits the full body wrapped in `<!-- COMPACT:<id> -->`
+markers for the LLM to summarize — the script NEVER summarizes.
 """
 
 import argparse
@@ -28,6 +29,7 @@ from typing import Any, Dict, List
 from encoding_utils import configure_utf8_console
 from spec_graph import build_graph_with_artifacts, _now
 from assemble_digest import build_digest, compact_fields
+from i18n_labels import label
 import render_html
 
 configure_utf8_console()
@@ -38,6 +40,16 @@ EXPORT_SHELL = SKILL_ROOT / "assets" / "templates" / "export-shell.html"
 
 def _anchor(node_id: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", str(node_id).lower()).strip("-")
+
+
+def _yaml_scalar(s: Any) -> str:
+    """Emit a free-text value as a YAML double-quoted scalar. A raw `product: Acme:
+    The Shop` is invalid YAML; `product: Acme #1` silently truncates at the `#`; a
+    newline in the value injects a literal `\\n---\\n` that makes _strip_frontmatter
+    cut early and eat real frontmatter into the HTML body. Quoting + escaping `\\` `"`
+    and newlines neutralizes all three (double-quoted YAML supports the escapes)."""
+    out = str(s).replace("\\", "\\\\").replace('"', '\\"').replace("\r", "").replace("\n", "\\n")
+    return f'"{out}"'
 
 
 def _heading(entry: Dict[str, Any]) -> str:
@@ -60,17 +72,42 @@ def _ac_item(a: Any) -> str:
     return str(a)
 
 
+def _ac_block(entry: Dict[str, Any]) -> str:
+    """The explicit acceptance-criteria bullet list for a story, or "" when none."""
+    if entry["type"] == "story" and isinstance(entry.get("ac"), list) and entry["ac"]:
+        return "**Acceptance criteria:**\n" + "\n".join(f"- {_ac_item(a)}" for a in entry["ac"])
+    return ""
+
+
 def _section_body(entry: Dict[str, Any], compact_mode: str) -> str:
     """Render one entry's content per its verbosity + compact-mode."""
+    ac = _ac_block(entry)
     if entry["verbosity"] == "full":
-        out = _body_or_struct(entry)
-        if entry["type"] == "story" and isinstance(entry.get("ac"), list) and entry["ac"]:
-            out += "\n\n**Acceptance criteria:**\n" + "\n".join(f"- {_ac_item(a)}" for a in entry["ac"])
+        # Use the raw body directly (NOT _body_or_struct): for a BODYLESS story
+        # _body_or_struct falls back to the struct skeleton, which already lists
+        # `acceptance_criteria: N item(s)` — emitting that alongside the explicit
+        # AC list below rendered the AC twice. Fall back to the struct skeleton
+        # only when there is genuinely no body AND no AC.
+        body = (entry.get("body") or "").strip()
+        out = body if body else ("" if ac else _struct_lines(entry))
+        if ac:
+            out = (out + "\n\n" + ac) if out else ac
         return out
     # struct verbosity
     if compact_mode == "llm":
-        # Emit the full body but mark it for the LLM to summarize in-place.
-        return f"<!-- COMPACT:{entry['id']} -->\n{_body_or_struct(entry)}\n<!-- /COMPACT:{entry['id']} -->"
+        # Emit the full body marked for the LLM to summarize in-place, and include
+        # the story's AC inside the region (a body-present struct story would
+        # otherwise drop its AC — the LLM never sees the artifact's primary content).
+        inner = _body_or_struct(entry)
+        if ac:
+            inner += "\n\n" + ac
+        # Defensive: a body containing '-->' would close the HTML-comment COMPACT
+        # region early for a comment-aware consumer. The documented consumer is the
+        # LLM (reads the named /COMPACT:<id> sentinel, unaffected) and --format html
+        # is hard-rejected, but neutralize the sequence with a zero-width space so
+        # the markers are robust regardless of inner content.
+        inner = inner.replace("-->", "--​>")  # U+200B breaks the comment-close token
+        return f"<!-- COMPACT:{entry['id']} -->\n{inner}\n<!-- /COMPACT:{entry['id']} -->"
     return _struct_lines(entry)
 
 
@@ -93,10 +130,13 @@ def render_markdown_doc(
 
     lines: List[str] = []
     lines.append("---")
-    lines.append(f"product: {product_name}")
-    lines.append(f"export: {select}")
+    # Free-text / user-controlled values are YAML-quoted so a ':' '#' or newline
+    # cannot break or truncate the frontmatter (depth/compact_mode are enum choices
+    # and generated_at is an ISO stamp, so they need no quoting).
+    lines.append(f"product: {_yaml_scalar(product_name)}")
+    lines.append(f"export: {_yaml_scalar(select)}")
     lines.append(f"depth: {depth}")
-    lines.append(f"layers: {layers_label}")
+    lines.append(f"layers: {_yaml_scalar(layers_label)}")
     lines.append(f"compact_mode: {compact_mode}")
     if generated_at:
         lines.append(f"generated_at: {generated_at}")
@@ -144,8 +184,9 @@ def render_html_doc(markdown_doc: str, graph: Dict[str, Any], generated_at: str,
     # Body channel: strip the .md frontmatter (HTML shows it in .ps-meta instead).
     values = render_html.body_render_values({"doc": _strip_frontmatter(markdown_doc)})
     # Reuse the shared chrome preamble; override only generated_at with the
-    # hash-stable stamp (chrome_values would call a fresh _now()).
-    values.update(render_html.chrome_values(graph, lang, f"Spec Export — {pname}"))
+    # hash-stable stamp (chrome_values would call a fresh _now()). Localize the
+    # chrome heading via i18n (board/explorer localize their view-name too).
+    values.update(render_html.chrome_values(graph, lang, f"{label('export', lang)} — {pname}"))
     values["generated_at"] = generated_at
     return render_html.substitute(shell, values)
 
