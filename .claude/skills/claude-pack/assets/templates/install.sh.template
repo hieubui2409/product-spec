@@ -1,0 +1,304 @@
+#!/usr/bin/env bash
+# install.sh — recipient installer for claude-pack v{{VERSION}}.
+#
+# Run from the extracted bundle directory. Copies selected .claude/ artifacts
+# into the target repo (default: pwd). Version-aware: detects stale/newer/same
+# versions per skill and reports an action plan.
+#
+# Usage:
+#   bash install.sh                       # install into current repo
+#   TARGET_DIR=/path/to/repo bash install.sh
+#   FORCE_OVERWRITE=1 bash install.sh     # overwrite existing (with timestamped backup)
+#   RUN_HOOKS=1 bash install.sh           # also run per-skill install.sh hooks (opt-in)
+#
+# Per-skill hooks (e.g. .claude/skills/*/install.sh) are NOT run by default because
+# they execute arbitrary code. Review them first, then re-run with RUN_HOOKS=1.
+
+set -euo pipefail
+
+BUNDLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TARGET_DIR="${TARGET_DIR:-$PWD}"
+FORCE_OVERWRITE="${FORCE_OVERWRITE:-0}"
+RUN_HOOKS="${RUN_HOOKS:-0}"
+BACKUP_TS="$(date -u +%Y%m%dT%H%M%SZ)"
+
+MANIFEST_JSON="$BUNDLE_DIR/MANIFEST.json"
+[ -f "$MANIFEST_JSON" ] || { echo "MANIFEST.json missing — corrupt bundle?" >&2; exit 1; }
+
+# --- Helpers ---
+log()  { echo "[claude-pack] $*"; }
+note() { echo "  $*"; }
+
+# Extract metadata.version from a SKILL.md frontmatter block.
+# Returns empty string if absent or unparseable.
+read_skill_version() {
+    local skill_md="$1"
+    [ -f "$skill_md" ] || { echo ""; return; }
+    # Frontmatter block delimited by --- ... ---
+    awk '
+        /^---[[:space:]]*$/ { fm++; next }
+        fm == 1 && /^[[:space:]]+version:[[:space:]]*"?([0-9]+\.[0-9]+\.[0-9]+[A-Za-z0-9.+-]*)"?/ {
+            match($0, /[0-9]+\.[0-9]+\.[0-9]+[A-Za-z0-9.+-]*/);
+            print substr($0, RSTART, RLENGTH);
+            exit
+        }
+        fm >= 2 { exit }
+    ' "$skill_md"
+}
+
+# semver_compare A B — full SemVer 2.0.0 precedence.
+# Prints: -1 if A < B, 0 if A == B, 1 if A > B.
+#
+# Rules implemented:
+#   1. Numeric major.minor.patch compared numerically left-to-right.
+#   2. Pre-release is LOWER than the associated release (1.0.0-rc1 < 1.0.0).
+#   3. Pre-release identifiers separated by "." compared left-to-right:
+#      numeric identifiers compare numerically; alphanumeric compare ASCII-lexically;
+#      numeric < alphanumeric (per spec §11.4.1.4).
+#      Longer pre-release is higher when all prior identifiers are equal.
+#   4. Build metadata ("+...") is IGNORED for precedence (§10).
+semver_compare() {
+    local a="$1" b="$2"
+    # Force bytewise ordering for alphanumeric pre-release identifier comparisons.
+    # SemVer §11.4.1.3 mandates ASCII-ordinal collation; under some locales the
+    # shell's [[ < ]] operator uses LC_COLLATE instead, flipping case comparisons
+    # (e.g. "RC" vs "rc").  Setting LC_ALL=C here is scoped to this function.
+    local LC_ALL=C
+
+    # Strip build metadata (everything after first "+")
+    a="${a%%+*}"
+    b="${b%%+*}"
+
+    if [ "$a" = "$b" ]; then echo 0; return; fi
+
+    # Split off pre-release suffix ("-...")
+    local a_core="${a%%-*}" a_pre=""
+    local b_core="${b%%-*}" b_pre=""
+    [[ "$a" == *-* ]] && a_pre="${a#*-}"
+    [[ "$b" == *-* ]] && b_pre="${b#*-}"
+
+    # Compare numeric core (major.minor.patch) field by field
+    local IFS_SAVE="$IFS"
+    IFS='.'
+    # shellcheck disable=SC2206
+    local -a av=($a_core) bv=($b_core)
+    IFS="$IFS_SAVE"
+
+    local i
+    for i in 0 1 2; do
+        local ai="${av[$i]:-0}" bi="${bv[$i]:-0}"
+        if (( ai < bi )); then echo -1; return; fi
+        if (( ai > bi )); then echo  1; return; fi
+    done
+
+    # Cores are equal — compare pre-release.
+    # No pre-release > has pre-release (release > pre-release).
+    if [ -z "$a_pre" ] && [ -z "$b_pre" ]; then echo 0; return; fi
+    if [ -z "$a_pre" ] && [ -n "$b_pre" ]; then echo  1; return; fi  # A is release, B is pre
+    if [ -n "$a_pre" ] && [ -z "$b_pre" ]; then echo -1; return; fi  # A is pre, B is release
+
+    # Both have pre-release — compare identifier by identifier.
+    IFS='.'
+    # shellcheck disable=SC2206
+    local -a ap=($a_pre) bp=($b_pre)
+    IFS="$IFS_SAVE"
+
+    local max_i=$(( ${#ap[@]} > ${#bp[@]} ? ${#ap[@]} : ${#bp[@]} ))
+    for (( i=0; i<max_i; i++ )); do
+        local ai="${ap[$i]:-}" bi="${bp[$i]:-}"
+        # Shorter pre-release is lower when all prior identifiers equal
+        if [ -z "$ai" ] && [ -n "$bi" ]; then echo -1; return; fi
+        if [ -n "$ai" ] && [ -z "$bi" ]; then echo  1; return; fi
+        # Both numeric?
+        if [[ "$ai" =~ ^[0-9]+$ ]] && [[ "$bi" =~ ^[0-9]+$ ]]; then
+            if (( ai < bi )); then echo -1; return; fi
+            if (( ai > bi )); then echo  1; return; fi
+        elif [[ "$ai" =~ ^[0-9]+$ ]]; then
+            # Numeric identifier < alphanumeric identifier
+            echo -1; return
+        elif [[ "$bi" =~ ^[0-9]+$ ]]; then
+            echo 1; return
+        else
+            # Both alphanumeric — ASCII lexical compare
+            if [[ "$ai" < "$bi" ]]; then echo -1; return; fi
+            if [[ "$ai" > "$bi" ]]; then echo  1; return; fi
+        fi
+    done
+
+    echo 0
+}
+
+# --- Counters ---
+ADDED=0
+SKIPPED=0
+OVERWROTE=0
+STALE_KEPT=0   # stale skills kept because FORCE_OVERWRITE was not set
+STALE_WROTE=0  # stale skills overwritten under FORCE_OVERWRITE
+NEWER=0
+
+# --- Per-skill version verdicts ---
+# Computed once per skill slug from its SKILL.md, then applied to ALL files in
+# that skill's directory. This prevents the split-brain scenario where SKILL.md
+# is kept at NEWER but other files under the same skill are silently overwritten.
+declare -A SKILL_VERDICT  # slug -> "SKIP" | "OVERWRITE" | "ADD"
+
+compute_skill_verdicts() {
+    local bundle_skills="$BUNDLE_DIR/.claude/skills"
+    [ -d "$bundle_skills" ] || return 0
+    for skill_dir in "$bundle_skills"/*/; do
+        [ -d "$skill_dir" ] || continue
+        local slug="${skill_dir%/}"
+        slug="${slug##*/}"
+        local src_md="$skill_dir/SKILL.md"
+        local dst_md="$TARGET_DIR/.claude/skills/$slug/SKILL.md"
+        if [ -f "$dst_md" ] && [ -f "$src_md" ]; then
+            local exist_v bundle_v cmp
+            exist_v=$(read_skill_version "$dst_md")
+            bundle_v=$(read_skill_version "$src_md")
+            if [ -n "$exist_v" ] && [ -n "$bundle_v" ]; then
+                cmp=$(semver_compare "$exist_v" "$bundle_v")
+                case "$cmp" in
+                    -1)
+                        if [ "$FORCE_OVERWRITE" = "1" ]; then
+                            note "[STALE] skill '$slug' ($exist_v → $bundle_v; overwriting)"
+                            STALE_WROTE=$((STALE_WROTE+1))
+                            SKILL_VERDICT["$slug"]="OVERWRITE"
+                        else
+                            note "[STALE] skill '$slug' ($exist_v → $bundle_v; set FORCE_OVERWRITE=1 to update)"
+                            STALE_KEPT=$((STALE_KEPT+1))
+                            SKILL_VERDICT["$slug"]="SKIP"
+                        fi
+                        ;;
+                    0)
+                        note "[OK SAME] skill '$slug' ($exist_v)"
+                        SKILL_VERDICT["$slug"]="SKIP"
+                        ;;
+                    1)
+                        note "[NEWER] skill '$slug' ($exist_v > $bundle_v; refusing downgrade)"
+                        NEWER=$((NEWER+1))
+                        SKILL_VERDICT["$slug"]="SKIP"
+                        ;;
+                esac
+                continue
+            elif [ -n "$exist_v" ] && [ -z "$bundle_v" ]; then
+                # Existing install has a version but the bundle does not — ambiguous;
+                # skip to avoid overwriting a potentially newer installed version.
+                note "[UNKNOWN VERSION] skill '$slug' (installed: $exist_v; bundle version unreadable — skipping)"
+                SKILL_VERDICT["$slug"]="SKIP"
+                continue
+            elif [ -z "$exist_v" ] && [ -n "$bundle_v" ]; then
+                # Installed copy has no parseable version but bundle does — ambiguous;
+                # skip to avoid accidentally downgrading an untagged manual install.
+                note "[UNKNOWN VERSION] skill '$slug' (installed: unversioned; bundle: $bundle_v — skipping)"
+                SKILL_VERDICT["$slug"]="SKIP"
+                continue
+            fi
+            # Neither side has a parseable version — fall through to ADD (existing behavior).
+        fi
+        SKILL_VERDICT["$slug"]="ADD"
+    done
+}
+
+# --- Walk .claude/ in bundle, mirror to target ---
+log "Bundle: $BUNDLE_DIR"
+log "Target: $TARGET_DIR"
+log "Force overwrite: $FORCE_OVERWRITE"
+echo ""
+
+compute_skill_verdicts
+echo ""
+
+cd "$BUNDLE_DIR"
+# Process substitution (not `find | while`) so counter increments survive —
+# a piped `while` runs in a subshell and its variable updates are lost.
+# LC_ALL=C ensures locale-stable bytewise sort, matching the builder's sort order.
+while IFS= read -r REL; do
+    SRC="$BUNDLE_DIR/$REL"
+    DST="$TARGET_DIR/$REL"
+    DST_DIR="$(dirname "$DST")"
+
+    # Determine if this path belongs to a known skill slug.
+    # Path form: .claude/skills/<slug>/...
+    local_slug=""
+    if [[ "$REL" =~ ^\.claude/skills/([^/]+)/ ]]; then
+        local_slug="${BASH_REMATCH[1]}"
+    fi
+
+    # Apply the per-skill verdict when we have one.
+    if [ -n "$local_slug" ] && [ "${SKILL_VERDICT[$local_slug]+_}" ]; then
+        verdict="${SKILL_VERDICT[$local_slug]}"
+        case "$verdict" in
+            SKIP)
+                # Skill version is OK SAME or NEWER — skip all files unconditionally.
+                # (STALE + no FORCE_OVERWRITE also lands here.)
+                SKIPPED=$((SKIPPED+1))
+                continue
+                ;;
+            OVERWRITE)
+                # STALE + FORCE_OVERWRITE — overwrite every file in the skill.
+                if [ -f "$DST" ]; then
+                    mkdir -p "$DST_DIR"
+                    cp -f "$DST" "$DST.bak.$BACKUP_TS"
+                    cp -f "$SRC" "$DST"
+                    note "[OVERWRITE] $REL (backup: $DST.bak.$BACKUP_TS)"
+                    OVERWROTE=$((OVERWROTE+1))
+                else
+                    mkdir -p "$DST_DIR"
+                    cp "$SRC" "$DST"
+                    note "[+] $REL"
+                    ADDED=$((ADDED+1))
+                fi
+                continue
+                ;;
+            ADD)
+                # Skill is new — fall through to the generic file logic below.
+                ;;
+        esac
+    fi
+
+    # Generic file logic (non-skill files, or new skill files with verdict=ADD).
+    if [ -f "$DST" ]; then
+        if [ "$FORCE_OVERWRITE" = "1" ]; then
+            mkdir -p "$DST_DIR"
+            cp -f "$DST" "$DST.bak.$BACKUP_TS"
+            cp -f "$SRC" "$DST"
+            note "[OVERWRITE] $REL (backup: $DST.bak.$BACKUP_TS)"
+            OVERWROTE=$((OVERWROTE+1))
+        else
+            note "[SKIP] $REL (exists; FORCE_OVERWRITE=1 to replace)"
+            SKIPPED=$((SKIPPED+1))
+        fi
+    else
+        mkdir -p "$DST_DIR"
+        cp "$SRC" "$DST"
+        note "[+] $REL"
+        ADDED=$((ADDED+1))
+    fi
+done < <(LC_ALL=C find .claude -type f -print | LC_ALL=C sort)
+
+# --- Run per-skill install hooks (opt-in) ---
+# These hooks execute arbitrary code on the recipient's machine.
+# Default: skip. Pass RUN_HOOKS=1 to enable after reviewing the scripts.
+echo ""
+if [ "$RUN_HOOKS" = "1" ]; then
+    log "Running per-skill install hooks (RUN_HOOKS=1)"
+    LC_ALL=C find "$TARGET_DIR/.claude/skills" -maxdepth 2 -name install.sh -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r HOOK; do
+        note "-> $HOOK"
+        bash "$HOOK" || note "   ! exited non-zero (continuing)"
+    done
+else
+    log "Skipping per-skill install hooks (set RUN_HOOKS=1 to enable)"
+    log "Review .claude/skills/*/install.sh before enabling."
+fi
+
+# --- Summary ---
+echo ""
+log "Summary"
+note "Added:           $ADDED"
+note "Skipped:         $SKIPPED"
+note "Overwrote:       $OVERWROTE"
+note "Stale kept:      $STALE_KEPT"
+note "Stale overwrote: $STALE_WROTE"
+note "Newer kept:      $NEWER"
+echo ""
+log "Done. Invoke skills from Claude Code, e.g. /cleanmatic:claude-pack"

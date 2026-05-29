@@ -96,7 +96,9 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
         return _read_snapshot(p)
     if not snap_dir.exists():
         return None
-    snaps = sorted(snap_dir.glob("*.json"))
+    # Order by mtime, not filename: snapshot names are <ts-to-second>-<hash>,
+    # so same-second snapshots would otherwise sort by content hash (not time).
+    snaps = sorted(snap_dir.glob("*.json"), key=lambda p: p.stat().st_mtime)
     if not snaps:
         return None
     # With 1 snapshot, compare against the live graph (current). With 2+, use

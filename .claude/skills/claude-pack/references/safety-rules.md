@@ -6,6 +6,8 @@ Three layers + opt-in catalog + a warn-only `_shared/` policy.
 
 ## Layer 1 — `ALWAYS_DROP_EXACT` (basename match)
 
+Match is **case-insensitive**: `.ENV`, `.Env`, and `.env` are all dropped. This broadens the fail-safe net on case-insensitive filesystems (macOS HFS+, Windows NTFS) and catches all-caps variants committed on those platforms.
+
 | Pattern | Why |
 |---------|-----|
 | `.env` | Environment vars; almost always secret. |
@@ -20,17 +22,22 @@ Three layers + opt-in catalog + a warn-only `_shared/` policy.
 
 ## Layer 2 — `ALWAYS_DROP_DIRS` (any path component match)
 
+Match is **case-insensitive**: `.GIT`, `.Git`, and `.git` are all dropped. Same rationale as Layer 1 — fail-safe breadth beats narrow precision for security-critical names.
+
 | Pattern | Why |
 |---------|-----|
 | `.git`, `.gitlab`, `.hg`, `.svn`, `.bzr` | VCS metadata — leak history + secrets. **CRITICAL**. |
 | `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.tox` | Python build/lint caches. |
 | `.venv`, `venv`, `node_modules`, `.npm`, `.yarn` | Vendored deps — huge + reproducible. |
 | `.logs`, `session-state`, `agent-memory` | Claude Code runtime state — leaks transcripts. |
+| `plans` | Internal planning / review reports — never ship to recipients. |
 | `dist`, `build`, `target`, `.next`, `.turbo` | Build artifacts. |
 
 Match rule: each component of the candidate path is checked against `ALWAYS_DROP_DIRS`. Substring matching is NOT used — `foo/legitimate-dir/bar` does not trigger `dir:dir`.
 
 ## Layer 3 — `ALWAYS_DROP_PATTERNS` (fnmatch glob)
+
+Match is **case-insensitive**: `*.PEM`, `*.Pem`, and `*.pem` are all dropped. The existing fail-safe-breadth rationale (prefer false-positive drops over false-negative leaks) applies equally to case variants.
 
 | Pattern | Why |
 |---------|-----|

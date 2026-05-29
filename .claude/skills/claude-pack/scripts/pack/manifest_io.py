@@ -51,7 +51,9 @@ def build_manifest_json(
     files = []
     total_bytes = 0
     for src, arcname in selection:
-        if not src.is_file():
+        # Skip symlinks and non-regular files so MANIFEST.json file list and
+        # counts match the tarball, which already drops symlinks in tarball.py.
+        if src.is_symlink() or not src.is_file():
             continue
         size = src.stat().st_size
         total_bytes += size
@@ -99,18 +101,32 @@ def atomic_replace(tmp: Path, final: Path, *, force: bool) -> None:
     - ``final`` exists, ``force=False`` -> ``CollisionError`` (caller maps to exit 3).
     - ``final`` exists, ``force=True`` -> rename existing to ``{final}.bak.{epoch}`` first.
     """
-    if final.exists() and not force:
-        raise CollisionError(f"output exists: {final} (use --force to overwrite)")
-    if final.exists() and force:
+    if final.is_symlink() or final.exists():
+        if not force:
+            raise CollisionError(f"output exists: {final} (use --force to overwrite)")
         backup = final.with_suffix(final.suffix + f".bak.{int(time.time())}")
         final.rename(backup)
+    else:
+        backup = None
     try:
         os.replace(str(tmp), str(final))
     except OSError as e:
         if "cross-device" in str(e).lower() or "EXDEV" in str(e):
             shutil.move(str(tmp), str(final))
         else:
+            # Restore backup before re-raising so the user's existing output
+            # is not left only as a .bak.{epoch} file with the final path absent.
             tmp.unlink(missing_ok=True)
+            if backup is not None and backup.exists():
+                try:
+                    backup.rename(final)
+                except OSError as restore_err:
+                    # Both the replace and the restore failed: tell the user
+                    # where their previous output survives so it is recoverable.
+                    raise OSError(
+                        f"{e}; restore failed ({restore_err}); "
+                        f"previous output preserved at {backup}"
+                    ) from e
             raise
 
 
@@ -131,11 +147,15 @@ def cleanup_stale_tmp(out_dir: Path, max_age: float = 3600.0) -> int:
 
 
 def filter_findings(selection: Iterable[tuple[Path, str]]) -> tuple[int, int]:
-    """Return (file_count, total_bytes) for a selection (existing files only)."""
+    """Return (file_count, total_bytes) for a selection (regular files only).
+
+    Symlinks are excluded so counts match the tarball (tarball.py skips them).
+    """
     count = 0
     total = 0
     for src, _ in selection:
-        if src.is_file():
-            count += 1
-            total += src.stat().st_size
+        if src.is_symlink() or not src.is_file():
+            continue
+        count += 1
+        total += src.stat().st_size
     return count, total

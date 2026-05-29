@@ -27,6 +27,7 @@ flowchart TD
 | `pack/selection.py` | manifest → `(src, arcname)` tuples (file-granular sorted walk) + template render. |
 | `pack/tarball.py` | deterministic gzip+tar writer, normalize filter, gzip-mtime verify. |
 | `pack/manifest_io.py` | MANIFEST.json, SHA256 sidecar, atomic replace, tmp cleanup. |
+| `pack/pipeline.py` | Build-stage helpers: `prepare_build` (selection + safety), `write_tarball` (tarball + sidecar + atomic replace). Owns exit codes 3 (collision), 4 (write error), 5 (empty/oversize). |
 | `pack/templates.py` | `{{TOKEN}}` substitution with `TemplateError` on unknown. |
 | `safety_check.py` | always-drop catalog, opt-in catalog, `_shared/` ref detection. |
 | `manifest_loader.py` | YAML load, CLI merge, hardened validation, defaults. |

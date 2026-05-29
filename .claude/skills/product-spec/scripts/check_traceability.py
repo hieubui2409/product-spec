@@ -54,10 +54,20 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             elif n["prd"] not in node_ids:
                 findings.append(_f("dangling_link", "error", n, f"Epic references unknown PRD {n['prd']}.", ref=n["prd"]))
         elif ntype == "prd":
-            if not n.get("brd_goals"):
+            brd_goals = n.get("brd_goals")
+            if not brd_goals:
                 findings.append(_f("orphan_prd", "error", n, "PRD has no BRD goals declared."))
+            elif not isinstance(brd_goals, list):
+                # A bare string (hand-edit regression) would iterate per character,
+                # producing phantom "unknown BRD goal B/R/D/-/G/1" findings.
+                # Emit one invalid_type finding and skip iteration.
+                findings.append(_f(
+                    "invalid_type", "error", n,
+                    f"Field brd_goals={brd_goals!r} must be a YAML list; got {type(brd_goals).__name__}.",
+                    field="brd_goals", value=brd_goals,
+                ))
             else:
-                for g in n["brd_goals"]:
+                for g in brd_goals:
                     if g not in node_ids:
                         findings.append(_f("dangling_link", "error", n, f"PRD references unknown BRD goal {g}.", ref=g))
 

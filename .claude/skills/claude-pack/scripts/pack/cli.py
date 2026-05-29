@@ -83,6 +83,16 @@ def main(argv: list[str] | None = None) -> int:
     if rc != EXIT_OK:
         return rc
 
+    # When follow_shared is set, discover _shared/ refs from packed skill dirs
+    # and union them into _include_shared so resolve_selection bundles them and
+    # _warn_shared_refs treats them as covered (no --strict failure).
+    if manifest.get("follow_shared"):
+        skill_dirs = [root / ".claude/skills" / s for s in manifest.get("skills", [])
+                      if (root / ".claude/skills" / s).is_dir()]
+        found_refs = {ref for ref, _ in safety_check.find_shared_refs(skill_dirs)}
+        existing = set(manifest.get("_include_shared") or [])
+        manifest["_include_shared"] = sorted(existing | found_refs)
+
     selection = resolve_selection(manifest, root)
     if not selection:
         _emit(args, {"error": "nothing to pack (empty selection)"}, fp=sys.stderr)

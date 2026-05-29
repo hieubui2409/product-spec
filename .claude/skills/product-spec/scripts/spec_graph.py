@@ -14,6 +14,7 @@ CLI:
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import sys
 from collections import defaultdict
@@ -205,20 +206,25 @@ def downstream(graph: Dict[str, Any], node_id: str) -> Set[str]:
 
 
 def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:
-    """Persist a graph snapshot under docs/product/visuals/.snapshots/<ISO>.json.
+    """Persist a graph snapshot under docs/product/visuals/.snapshots/<ISO>-<hash>.json.
 
-    Filename timestamp is derived from `graph["generated_at"]` so the file
-    name and the in-body `snapshot_at` agree to the second (earlier they
-    came from two separate `datetime.now()` calls and could drift by ms).
+    Filename is derived from `graph["generated_at"]` (so name and in-body
+    `snapshot_at` agree to the second) plus the first 8 hex digits of the
+    SHA-256 of the JSON body. The hash suffix prevents two snapshots taken
+    in the same second from silently overwriting each other while keeping
+    the filename deterministic (same content → same hash → same path).
     """
     snap_dir = root / "docs" / "product" / "visuals" / ".snapshots"
     snap_dir.mkdir(parents=True, exist_ok=True)
     generated_at = graph.get("generated_at") or _now()
-    # generated_at is ISO 8601 with trailing "Z"; strip non-alnum to get the
-    # compact filename form (20260528T230000Z).
+    body = json.dumps({"snapshot_at": generated_at, **graph}, indent=2, ensure_ascii=False)
+    # First 8 hex chars of SHA-256 of the serialized body; content-derived so
+    # identical graph states produce the same filename (idempotent writes).
+    content_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()[:8]
+    # generated_at is ISO 8601 with trailing "Z"; strip non-alnum for compact form.
     ts = generated_at.replace("-", "").replace(":", "")
-    path = snap_dir / f"{ts}.json"
-    path.write_text(json.dumps({"snapshot_at": generated_at, **graph}, indent=2, ensure_ascii=False), encoding="utf-8")
+    path = snap_dir / f"{ts}-{content_hash}.json"
+    path.write_text(body, encoding="utf-8")
     return path
 
 

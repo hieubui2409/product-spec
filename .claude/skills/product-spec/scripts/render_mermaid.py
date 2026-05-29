@@ -35,8 +35,14 @@ def _safe_label(s: str) -> str:
     like `<script>alert(1)</script>` cannot reach the browser as a live tag
     in the self-contained HTML output: the HTML parser tokenises raw `<...>`
     sequences before Mermaid's `securityLevel: strict` ever runs.
+
+    `&` is replaced first so that entity-encoded payloads (e.g. `&#60;img`)
+    cannot bypass the angle-bracket substitution that follows.
     """
-    out = (s or "").replace('"', "'").replace("\n", " ")
+    # & first — prevents entity-encoded payloads from surviving the subsequent
+    # angle-bracket substitution (e.g. &#60;img src=x onerror=...&#62;).
+    out = (s or "").replace("&", "&amp;")
+    out = out.replace('"', "'").replace("\n", " ")
     for ch, repl in (
         ("[", "("), ("]", ")"),
         ("{", "("), ("}", ")"),
@@ -97,7 +103,14 @@ def _safe_id(s: str) -> str:
     # distinct sequences so that, for example, `BRD-G:1` and `BRD_G_1` cannot
     # collide on the same generated id and merge two unrelated nodes in the
     # rendered graph.
-    return s.replace("-", "__").replace(":", "_C_")
+    #
+    # After the named mappings, whitelist-sanitize: any character outside
+    # [A-Za-z0-9_] is replaced with `_` so that PO-controlled id values
+    # containing `<`, `>`, `"`, `]`, spaces, or other markup characters cannot
+    # reach the Mermaid node-identifier position and inject HTML.
+    import re as _re
+    out = s.replace("-", "__").replace(":", "_C_")
+    return _re.sub(r"[^A-Za-z0-9_]", "_", out)
 
 
 def heatmap(graph: Dict[str, Any]) -> str:
@@ -147,7 +160,10 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
         lines.append(f"  section {section}")
         for it in items[:8]:
             marker = " *" if _is_deferred(nodes_by_id.get(it, {})) else ""
-            lines.append(f"    {it}{marker} : {section}")
+            # Route item id through _safe_label: PO-controlled ids may contain
+            # markup characters that would inject live HTML in the rendered page.
+            safe_it = _safe_label(it)
+            lines.append(f"    {safe_it}{marker} : {_safe_label(section)}")
     return _fence("\n".join(lines))
 
 
@@ -173,7 +189,11 @@ def gap(graph: Dict[str, Any]) -> str:
     for n in graph["nodes"]:
         if n["type"] in expected and matching_children[n["id"]] == 0:
             sid = _safe_id(n["id"])
-            lines.append(f'  {sid}["{n["id"]}\\n(missing {expected[n["type"]].upper()})"]:::gap')
+            # Route both the node id and the static missing-child text through
+            # _safe_label so PO-controlled ids with markup chars cannot inject
+            # live HTML when the Mermaid DSL is embedded in the HTML page.
+            node_label = _safe_label(f"{n['id']}\\n(missing {expected[n['type']].upper()})")
+            lines.append(f'  {sid}["{node_label}"]:::gap')
     if len(lines) == 2:
         lines.append('  OK["(no structural gaps)"]')
     return _fence("\n".join(lines))
@@ -220,9 +240,11 @@ def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
         "  classDef changed fill:#fff3a3",
     ]
     for a in added:
-        lines.append(f'  {_safe_id(a)}["+ {a}"]:::added')
+        # Route node ids through _safe_label: PO-controlled ids may contain
+        # markup characters that would inject live HTML in the rendered page.
+        lines.append(f'  {_safe_id(a)}["+ {_safe_label(a)}"]:::added')
     for r in removed:
-        lines.append(f'  {_safe_id(r)}["- {r}"]:::removed')
+        lines.append(f'  {_safe_id(r)}["- {_safe_label(r)}"]:::removed')
 
     # Product-level changes — emit a single annotated node when name/core_value/personas drifted.
     cur_p = current.get("product") or {}

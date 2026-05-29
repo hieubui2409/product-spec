@@ -398,3 +398,111 @@ def test_w3_m8_strict_gate_exits_non_zero_on_broken_spec(tmp_path):
     )
     assert r.returncode != 0
     assert "BLOCKED" in r.stderr
+
+
+# ---------- New regression tests for graph/validation/template fixes ----------
+
+
+def test_brd_goals_bare_string_produces_single_invalid_type_not_per_char_findings(tmp_path):
+    """A PRD with brd_goals as a bare string (e.g. brd_goals: BRD-G1) must produce
+    exactly one invalid_type finding, NOT one dangling_link per character of the string."""
+    proj = tmp_path / "proj"
+    (proj / "docs" / "product" / "prds").mkdir(parents=True)
+    (proj / "docs" / "product" / "PRODUCT.md").write_text("""---
+id: PRODUCT
+type: product
+status: draft
+lang: en
+name: "X"
+core_value: "y"
+personas: [s]
+---
+""")
+    (proj / "docs" / "product" / "brd.md").write_text("""---
+id: BRD
+type: brd
+status: draft
+lang: en
+goals:
+  - id: BRD-G1
+    title: g
+    status: draft
+    metrics: [m]
+---
+""")
+    # brd_goals written as a bare scalar string — simulates a hand-edit regression.
+    (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---
+id: PRD-AUTH
+type: prd
+brd_goals: BRD-G1
+status: draft
+lang: en
+---
+""")
+    g = build_graph(proj)
+    findings = check_trace(g)
+
+    # Must NOT produce per-character dangling_link entries (B, R, D, -, G, 1, …).
+    char_dangling = [
+        f for f in findings
+        if f["check"] == "dangling_link" and len(f.get("context", {}).get("ref", "")) == 1
+    ]
+    assert char_dangling == [], (
+        f"per-character dangling_link findings detected: {char_dangling}"
+    )
+
+    # Must produce exactly one invalid_type finding for brd_goals.
+    invalid_type = [f for f in findings if f["check"] == "invalid_type"]
+    assert len(invalid_type) == 1, (
+        f"expected exactly one invalid_type finding, got: {invalid_type}"
+    )
+    assert invalid_type[0]["artifact_id"] == "PRD-AUTH"
+
+
+def test_allocate_id_prd_slug_resembling_epic_is_rejected():
+    """A PRD slug whose normalised form ends in -E<n> or -E<n>-S<n> would mint
+    an ID that collides with the epic/story grammar. allocate_id must raise."""
+    import pytest
+    g = build_graph(VALID)
+    with pytest.raises(ValueError, match=r"collides"):
+        allocate_id(g, "prd", slug="AUTH-E1", parent=None, session_used=[])
+
+
+def test_render_raises_on_unresolved_hyphenated_token():
+    """Tokens with hyphens are not matched by TOKEN_RE ([a-zA-Z0-9_]+),
+    so {{bad-key}} would silently pass through into the artifact. render()
+    must raise ValueError instead."""
+    import pytest
+    template = "hello {{bad-key}} world"
+    with pytest.raises(ValueError, match=r"unresolved template token"):
+        render(template, values={}, keep_optional=[])
+
+
+def test_write_snapshot_same_second_does_not_overwrite(tmp_path):
+    """Two write_snapshot calls with the same timestamp but different graph content
+    must produce distinct files (content-hash suffix differentiates them)."""
+    from spec_graph import write_snapshot
+
+    snap_dir = tmp_path / "docs" / "product" / "visuals" / ".snapshots"
+
+    graph_a = {
+        "version": "1.0",
+        "generated_at": "20260529T120000Z",
+        "nodes": [{"id": "PRD-A"}],
+        "edges": [],
+        "risks": [],
+        "parse_errors": [],
+        "product": {},
+        "root_path": str(tmp_path),
+    }
+    graph_b = {
+        **graph_a,
+        "nodes": [{"id": "PRD-B"}],  # different content → different hash
+    }
+
+    path_a = write_snapshot(graph_a, tmp_path)
+    path_b = write_snapshot(graph_b, tmp_path)
+
+    assert path_a != path_b, "distinct graph contents must produce distinct snapshot paths"
+    assert path_a.exists(), "snapshot A must exist"
+    assert path_b.exists(), "snapshot B must exist"

@@ -84,12 +84,21 @@ ck.md
 !/.claude/skills/claude-pack/**
 # Seed manifest for claude-pack (committed source-of-truth)
 !/.claude/pack.manifest.yaml
+# CK-framework artifacts committed so the repo self-packs reproducibly
+!/.claude/agents/
+!/.claude/agents/**
+!/.claude/scripts/
+!/.claude/scripts/**
+!/.claude/schemas/
+!/.claude/schemas/**
 # Re-ignore Python cache + build artifacts inside tracked skills
 /.claude/skills/product-spec/**/__pycache__/
 /.claude/skills/product-spec/**/*.pyc
 /.claude/skills/claude-pack/**/__pycache__/
 /.claude/skills/claude-pack/**/*.pyc
 /.claude/skills/claude-pack/dist/
+/.claude/scripts/**/__pycache__/
+/.claude/scripts/**/*.pyc
 
 # Local-only state inside tracked claude source
 claude/agent-memory/
@@ -109,6 +118,9 @@ assets/
 # Exception: product-spec ships templates + vendored Mermaid JS in assets/
 !.claude/skills/product-spec/assets/
 !.claude/skills/product-spec/assets/**
+# Exception: claude-pack ships installer templates + manifest example in assets/
+!.claude/skills/claude-pack/assets/
+!.claude/skills/claude-pack/assets/**
 
 # External repos for study/reference
 external/

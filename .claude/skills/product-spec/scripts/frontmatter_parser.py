@@ -106,7 +106,7 @@ def parse_text(text: str, file_label: str = "<text>") -> Dict[str, Any]:
 
 
 def extract_sections(body: str) -> Dict[str, str]:
-    """Map heading-text -> section content (until next heading at same/higher level)."""
+    """Map heading-text -> section content (until the next heading of any level)."""
     sections: Dict[str, str] = {}
     matches = list(SECTION_RE.finditer(body))
     for i, m in enumerate(matches):

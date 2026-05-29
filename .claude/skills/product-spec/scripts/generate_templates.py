@@ -116,6 +116,15 @@ def allocate_id(graph: Dict[str, Any], target_type: str, slug: Optional[str], pa
                 f"a letter, and be ≤16 chars (matches {SLUG_PATTERN_FOR_PRD.pattern}); "
                 f"got {slug!r}"
             )
+        # A slug like AUTH-E1 mints PRD-AUTH-E1, which collides with the epic-1 ID
+        # grammar under PRD-AUTH. Reject any slug whose resulting ID tail looks like
+        # an epic (-E<n>) or story (-E<n>-S<n>) suffix.
+        if PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY.search(normalised):
+            raise ValueError(
+                f"--slug {slug!r} produces an ID (PRD-{normalised}) that collides "
+                f"with the epic/story ID grammar (suffix -{normalised.split('-E', 1)[-1]!r} "
+                f"matches -E<n> or -E<n>-S<n>). Use a slug without a trailing -E<n> sequence."
+            )
         return f"PRD-{normalised}"
     if target_type == "epic":
         # Parent must be a PRD ID exactly (PRD-<SLUG>, slug ≤16 chars). Reject
@@ -172,6 +181,10 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
         return body if name in keep_set else ""
 
     rendered = OPTIONAL_RE.sub(opt_replace, template_text)
+    # A non-greedy match cannot consume a nested OPTIONAL block in one pass.
+    # Any leftover <!-- OPTIONAL: ... --> or <!-- /OPTIONAL --> sentinels are
+    # structural noise; strip them so they don't leak into the artifact.
+    rendered = re.sub(r"<!--\s*/?OPTIONAL(?:\s*:.*?)?\s*-->", "", rendered)
 
     def tok(m: re.Match) -> str:
         k = m.group("key")
@@ -194,6 +207,18 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
         return s
 
     rendered = TOKEN_RE.sub(tok, rendered)
+
+    # TOKEN_RE only matches [a-zA-Z0-9_]+ tokens, so keys containing hyphens,
+    # spaces, or dots (e.g. {{bad-key}}, {{ spaced }}) are left literally in
+    # the output. Detect and reject them so a malformed template fails loudly
+    # instead of writing literal {{...}} into the artifact.
+    RESIDUAL_TOKEN_RE = re.compile(r"\{\{.*?\}\}")
+    residual = RESIDUAL_TOKEN_RE.search(rendered)
+    if residual:
+        raise ValueError(
+            f"unresolved template token {residual.group()!r} found after substitution; "
+            f"token keys must match [a-zA-Z0-9_]+ — hyphens, spaces, and dots are not allowed"
+        )
 
     # Strip the leading template comment (everything between first '<!--' and '-->\n')
     rendered = re.sub(r"\A\s*<!--.*?-->\s*\n", "", rendered, count=1, flags=re.DOTALL)

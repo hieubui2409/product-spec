@@ -19,12 +19,15 @@ Every error code, message template, and remediation surfaced by `cleanmatic:clau
 | `MANIFEST_E032` | `top_level.<key> must be bool` | `validate` | Use `true` or `false`. |
 | `MANIFEST_E040` | `defaults must be a mapping` | `validate` | Use a YAML mapping under `defaults:`. |
 | `MANIFEST_E041` | `unknown defaults key: <key>` | `validate` | Use only `include_scripts`, `include_schemas`, `max_size_bytes`. |
+| `MANIFEST_E042` | `defaults.max_size_bytes must be int>=0; got <value>` | `validate` | Use a non-negative integer (bytes). Rejects bool/string/negative — e.g. `false` would silently become 0 and reject every bundle. |
+| `MANIFEST_E043` | `defaults.<key> must be bool; got <value>` | `validate` | `include_scripts`/`include_schemas` take `true`/`false` only. |
 | `MANIFEST_E050` | `follow_shared must be bool` | `validate` | Use `true` or `false`. |
 | `MANIFEST_E060` | `unknown top-level key: <key>` | `validate` | Remove or check spelling against schema. |
 | `MANIFEST_E070` | `missing skill: <slug>` | `validate` | Verify the skill dir exists under `.claude/skills/`. Case-sensitive. |
 | `MANIFEST_E071` | `missing/ambiguous agents: <slug>` | `validate` | Pin by basename or full path; rename to disambiguate. |
 | `MANIFEST_E072` | `missing/ambiguous rules: <slug>` | `validate` | Same as above. |
 | `MANIFEST_E073` | `missing hook: <name>` | `validate` | Provide full filename including extension. |
+| `MANIFEST_E074` | `ambiguous hook: <name> matches <N> files; use a unique name or path` | `validate` | Two+ hook files share the basename; rename one or pin a unique path. Guards against a non-deterministic `rglob` pick. |
 | `MANIFEST_E101` | `unsupported schema_version: <value>` | `validate` | Update claude-pack or migrate the manifest. |
 | (raw parse) | `<path>:<line>:<col>: <yaml-problem>` | `load` | Fix YAML syntax at the indicated position. |
 
@@ -49,7 +52,7 @@ No hard errors raised at scan time. All "drops" are emitted as warn-level findin
 | Code | Condition |
 |------|-----------|
 | 0 | Success. |
-| 1 | Manifest load/validate error (any `MANIFEST_E###` above). |
+| 1 | Manifest load/validate error (any `MANIFEST_E###` above); also returned for `--all` (unimplemented in v0.1) and `TemplateError` (unknown `{{TOKEN}}` in an installer template). |
 | 2 | `--strict` gate hit a `severity=error` finding. |
 | 3 | Output exists, no `--force`. |
 | 4 | Write error (disk full, permission denied, cross-fs replace failure). |

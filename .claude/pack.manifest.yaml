@@ -7,9 +7,7 @@ bundle_name: claude-pack
 skills:
 - product-spec
 - claude-pack
-agents:
-- planner
-- researcher
+agents: []
 hooks: []
 rules:
 - primary-workflow.md

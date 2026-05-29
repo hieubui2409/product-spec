@@ -37,7 +37,10 @@ def build_matrix(graph: Dict[str, Any]) -> str:
     for s in stories:
         epic = nodes_by_id.get(s.get("epic") or "")
         prd = nodes_by_id.get(epic.get("prd") if epic else "") if epic else None
-        brd_goals = prd.get("brd_goals", []) if prd else []
+        raw_brd_goals = prd.get("brd_goals", []) if prd else []
+        # Guard against bare-string regressions: a hand-edited `brd_goals: BRD-G1`
+        # iterates per character without this check, producing garbled cells.
+        brd_goals = raw_brd_goals if isinstance(raw_brd_goals, list) else []
         metric_cell = ", ".join(s.get("metrics") or []) or "—"
         rows.append([
             _cell(s.get("id")),

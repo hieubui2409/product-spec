@@ -18,6 +18,13 @@ def _add_bool(parser: argparse.ArgumentParser, name: str, help_text: str) -> Non
                         default=None, help=help_text)
 
 
+def _nonneg_int(s: str) -> int:
+    v = int(s)
+    if v < 0:
+        raise argparse.ArgumentTypeError("--max-size must be >= 0")
+    return v
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="pack",
@@ -46,6 +53,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_bool(p, "include_claudemd", "include repo-root CLAUDE.md")
     _add_bool(p, "include_settings", "include .claude/settings.json")
     _add_bool(p, "include_ck_config", "include .claude/.ck.json")
+    _add_bool(p, "include_scripts", "include .claude/scripts (CK-framework; opt-in)")
+    _add_bool(p, "include_schemas", "include .claude/schemas (CK-framework; opt-in)")
     _add_bool(p, "follow_shared",
               "warn-only _shared/ refs (false = warn, true = include)")
     _add_bool(p, "force", "overwrite existing output (backup as .bak.{epoch})")
@@ -55,7 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source-date-epoch", dest="source_date_epoch", default=None,
                    help="mtime root: integer epoch, 'env' to honor "
                         "SOURCE_DATE_EPOCH, default 0 (deterministic)")
-    p.add_argument("--max-size", dest="max_size", type=int, default=None,
+    p.add_argument("--max-size", dest="max_size", type=_nonneg_int, default=None,
                    help="reject if compressed > bytes (default 100MB)")
     p.add_argument("--strict", action="store_true",
                    help="treat warnings as errors")

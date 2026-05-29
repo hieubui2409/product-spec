@@ -20,9 +20,20 @@
     },
     {
       "id": "safety-scan-dirty-claude",
-      "description": "safety_check on a repo containing .env + .git emits warn-level findings without exposing content.",
+      "description": "safety_check on a synthetic repo containing .env + .git emits warn-level findings without exposing content. Root is generated at runtime because .env* paths are gitignored (root .gitignore line 44) and cannot be committed.",
+      "note": "eval/fixtures/dirty-claude/ cannot be a committed fixture: .env would be excluded by .gitignore (.env* pattern), making the scenario fail on a fresh checkout. The runner must create a temp directory, write the files listed in 'setup', and substitute the temp path for {{RUNTIME_ROOT}} in args before invoking the script.",
+      "setup": {
+        "root_placeholder": "{{RUNTIME_ROOT}}",
+        "files": {
+          ".claude/.env": "SECRET=x\n",
+          ".claude/settings.json": "{}\n",
+          ".claude/skills/demo/SKILL.md": "# demo\n",
+          ".git/HEAD": "ref: refs/heads/main\n",
+          ".claude/skills/demo/__pycache__/x.pyc": ""
+        }
+      },
       "input": {
-        "args": ["--root", "eval/fixtures/dirty-claude", "--scan", "."]
+        "args": ["--root", "{{RUNTIME_ROOT}}", "--scan", "."]
       },
       "assertions": [
         "exit code 0",

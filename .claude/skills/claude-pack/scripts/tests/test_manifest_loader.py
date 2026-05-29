@@ -123,13 +123,32 @@ def test_merge_cli_boolean_false_overrides():
     assert merged["top_level"]["include_readme"] is False
 
 
-def test_apply_defaults_auto_adds_scripts_schemas(tmp_root):
-    """scripts/ + schemas/ auto-prepended to extra when present."""
+def test_scripts_schemas_are_opt_in_not_auto_added(tmp_root):
+    """Top-level .claude/scripts + .claude/schemas are CK-framework internals:
+    NOT shipped by default; only when opted in via defaults.include_scripts/_schemas."""
     (tmp_root / ".claude" / "scripts").mkdir(parents=True, exist_ok=True)
     (tmp_root / ".claude" / "schemas").mkdir(parents=True, exist_ok=True)
+    # Default: excluded.
     out = manifest_loader.apply_defaults({"version": "1.0.0"}, tmp_root)
+    assert ".claude/scripts" not in out["extra"]
+    assert ".claude/schemas" not in out["extra"]
+    # Opt-in: included.
+    out2 = manifest_loader.apply_defaults(
+        {"version": "1.0.0",
+         "defaults": {"include_scripts": True, "include_schemas": True}},
+        tmp_root,
+    )
+    assert ".claude/scripts" in out2["extra"]
+    assert ".claude/schemas" in out2["extra"]
+
+
+def test_include_scripts_cli_flag_opts_in(tmp_root):
+    """--include-scripts / --include-schemas promote the defaults to True."""
+    (tmp_root / ".claude" / "scripts").mkdir(parents=True, exist_ok=True)
+    merged = manifest_loader.merge_cli(
+        {"version": "1.0.0"}, _ns(include_scripts=True))
+    out = manifest_loader.apply_defaults(merged, tmp_root)
     assert ".claude/scripts" in out["extra"]
-    assert ".claude/schemas" in out["extra"]
 
 
 def test_load_returns_empty_for_empty_file(tmp_path):
@@ -147,3 +166,67 @@ def test_load_raises_for_invalid_yaml(tmp_path):
         assert str(e)
         return
     raise AssertionError("expected ManifestError for invalid YAML")
+
+
+def test_validate_rejects_string_max_size_bytes(tmp_root):
+    """A string max_size_bytes like '100MB' must fail at validate time, not crash at runtime."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "defaults": {"max_size_bytes": "100MB"}}, tmp_root,
+    )
+    assert any("MANIFEST_E042" in e for e in errors)
+
+
+def test_validate_rejects_negative_max_size_bytes(tmp_root):
+    """Negative max_size_bytes must be rejected."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "defaults": {"max_size_bytes": -1}}, tmp_root,
+    )
+    assert any("MANIFEST_E042" in e for e in errors)
+
+
+def test_validate_rejects_bool_max_size_bytes(tmp_root):
+    """bool is a subclass of int: max_size_bytes: false must be rejected, else it
+    silently becomes 0 and rejects every non-empty bundle."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "defaults": {"max_size_bytes": False}}, tmp_root,
+    )
+    assert any("MANIFEST_E042" in e for e in errors)
+
+
+def test_validate_rejects_ambiguous_hook(tmp_root):
+    """Two hook files with the same basename must error (rglob order is
+    filesystem-dependent → non-deterministic pick otherwise)."""
+    hooks = tmp_root / ".claude" / "hooks"
+    (hooks / "a").mkdir(parents=True, exist_ok=True)
+    (hooks / "b").mkdir(parents=True, exist_ok=True)
+    (hooks / "a" / "dup.cjs").write_text("x", encoding="utf-8")
+    (hooks / "b" / "dup.cjs").write_text("y", encoding="utf-8")
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "hooks": ["dup.cjs"]}, tmp_root,
+    )
+    assert any("MANIFEST_E074" in e for e in errors)
+
+
+def test_validate_rejects_non_bool_include_scripts(tmp_root):
+    """include_scripts must be bool; a string '1' must fail."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "defaults": {"include_scripts": "yes"}}, tmp_root,
+    )
+    assert any("MANIFEST_E043" in e for e in errors)
+
+
+def test_validate_rejects_non_bool_include_schemas(tmp_root):
+    """include_schemas must be bool; an int 1 must fail."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "defaults": {"include_schemas": 1}}, tmp_root,
+    )
+    assert any("MANIFEST_E043" in e for e in errors)
+
+
+def test_is_absolute_or_drive_posix_colon_not_rejected(tmp_root):
+    """POSIX path 'a:b' (colon at index 1, no separator at index 2) must NOT be
+    treated as a Windows drive letter absolute path."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "extra": ["a:b"]}, tmp_root,
+    )
+    assert not any("MANIFEST_E020" in e for e in errors)

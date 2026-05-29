@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import secrets
 from pathlib import Path
 
 from .manifest_io import (
@@ -60,17 +62,29 @@ def write_tarball(args: argparse.Namespace, manifest: dict, out_dir: Path,
                   ) -> tuple[int, dict]:
     """Atomic deterministic write + sidecar. Returns (exit_code, payload)."""
     final_path = out_dir / f"{bundle_root}.tar.gz"
-    tmp_path = out_dir / f".{bundle_root}.tar.gz.tmp"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    # PID + random hex suffix prevents concurrent same-bundle builds from
+    # clobbering each other's in-progress tmp files.
+    tmp_path = out_dir / f".{bundle_root}.{os.getpid()}.{secrets.token_hex(4)}.tar.gz.tmp"
     try:
         with tmp_path.open("wb") as f:
             tar_sha = build_tarball(versioned, embedded, f, source_date_epoch=epoch)
-        max_size = args.max_size or (manifest.get("defaults") or {}).get(
-            "max_size_bytes", 100 * 1024 * 1024
-        )
-        if tmp_path.stat().st_size > max_size:
+        # Use explicit None checks so that 0 (reject-all) is honored for both
+        # the CLI flag and the manifest field. A falsy `or` chain would silently
+        # skip 0 and fall through to the default, which is incorrect.
+        cli_max = getattr(args, "max_size", None)
+        manifest_max = (manifest.get("defaults") or {}).get("max_size_bytes", None)
+        if cli_max is not None:
+            max_size = cli_max
+        elif manifest_max is not None:
+            max_size = manifest_max
+        else:
+            max_size = 100 * 1024 * 1024
+        actual_size = tmp_path.stat().st_size
+        if actual_size > max_size:
             tmp_path.unlink(missing_ok=True)
             return EXIT_EMPTY_OR_OVER_SIZE, {
-                "error": f"over max size: {tmp_path.stat().st_size} > {max_size}"
+                "error": f"over max size: {actual_size} > {max_size}"
             }
         atomic_replace(tmp_path, final_path, force=bool(args.force))
     except CollisionError as e:

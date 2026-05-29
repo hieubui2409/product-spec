@@ -96,22 +96,64 @@ def _hashable(v: Any) -> str:
     return str(v)
 
 
+def _grid(corner: str, cols: List[str], rows: List[List[str]]) -> str:
+    """Render an aligned ASCII table whose column widths derive from the widest
+    value in each column (header or any row), so an overlong row label can never
+    outgrow the separator line.
+
+    `corner` is the top-left header cell; `cols` are the data-column headers.
+    Each row is `[row_label, cell_0, cell_1, ...]` with one pre-stringified cell
+    per `cols` entry. The label column is left-aligned; data cells are
+    right-aligned (counts read better flush-right).
+    """
+    label_w = max([len(corner)] + [len(r[0]) for r in rows])
+    col_w = [
+        max([len(c)] + [len(r[i + 1]) for r in rows])
+        for i, c in enumerate(cols)
+    ]
+
+    def _row(lbl: str, cells: List[str], right: bool) -> str:
+        body = " | ".join(
+            f"{v:>{w}}" if right else f"{v:<{w}}"
+            for v, w in zip(cells, col_w)
+        )
+        return f"| {lbl:<{label_w}} | {body} |"
+
+    header = _row(corner, list(cols), right=False)
+    sep = "|" + "-" * (len(header) - 2) + "|"
+    lines = [header, sep]
+    for r in rows:
+        lines.append(_row(r[0], r[1:], right=True))
+    return "\n".join(lines)
+
+
 def heatmap(graph: Dict[str, Any]) -> str:
-    """status grid: rows=type, cols=status."""
+    """status grid: rows=type, cols=canonical status (+ 'other').
+
+    Non-canonical statuses — anything outside draft/review/approved, already
+    flagged as an enum error by check_consistency — are summed into an 'other'
+    column so a node in a bad state is never silently dropped from the grid.
+    The 'other' column appears only when at least one such node exists.
+    """
+    canon = ["draft", "review", "approved"]
     counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    other: Dict[str, int] = defaultdict(int)
     for n in graph["nodes"]:
         t = _hashable(n.get("type"))
         s = _hashable(n.get("status"))
-        counts[t][s] += 1
-    types = sorted(counts.keys())
-    statuses = ["draft", "review", "approved"]
-    header = "| Type    | " + " | ".join(f"{s:8}" for s in statuses) + " |"
-    sep = "|" + "-" * (len(header) - 2) + "|"
-    lines = [header, sep]
-    for t in types:
-        row = f"| {t:7} | " + " | ".join(f"{counts[t].get(s, 0):>8}" for s in statuses) + " |"
-        lines.append(row)
-    return "\n".join(lines)
+        if s in canon:
+            counts[t][s] += 1
+        else:
+            other[t] += 1
+    types = sorted(set(counts) | set(other))
+    cols = list(canon) + (["other"] if any(other.values()) else [])
+    rows = [
+        [t]
+        + [str(counts[t].get(s, 0)) for s in canon]
+        + ([str(other.get(t, 0))] if "other" in cols else [])
+        for t in types
+    ]
+    return _grid("Type", cols, rows)
 
 
 def scope(graph: Dict[str, Any]) -> str:
@@ -121,13 +163,10 @@ def scope(graph: Dict[str, Any]) -> str:
         sc = _hashable(n.get("scope"))
         ms = _hashable(n.get("moscow"))
         cells[sc][ms] += 1
-    rows = ["in", "core-value", "out"]
+    rows_order = ["in", "core-value", "out"]
     cols = ["must", "should", "could", "wont"]
-    header = "| Scope        | " + " | ".join(f"{c:7}" for c in cols) + " |"
-    lines = [header, "|" + "-" * (len(header) - 2) + "|"]
-    for r in rows:
-        lines.append(f"| {r:12} | " + " | ".join(f"{cells[r].get(c, 0):>7}" for c in cols) + " |")
-    return "\n".join(lines)
+    rows = [[r] + [str(cells[r].get(c, 0)) for c in cols] for r in rows_order]
+    return _grid("Scope", cols, rows)
 
 
 def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
@@ -200,11 +239,8 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
                 cells[p][prd_id] += 1
     if not personas:
         return "(no personas yet)"
-    header = "| Persona      | " + " | ".join(f"{p:10}" for p in prds) + " |"
-    lines = [header, "|" + "-" * (len(header) - 2) + "|"]
-    for p in personas:
-        lines.append(f"| {p:12} | " + " | ".join(f"{cells[p].get(prd, 0):>10}" for prd in prds) + " |")
-    return "\n".join(lines)
+    rows = [[p] + [str(cells[p].get(prd, 0)) for prd in prds] for p in personas]
+    return _grid("Persona", prds, rows)
 
 
 def gap(graph: Dict[str, Any]) -> str:
@@ -254,13 +290,10 @@ def risk(graph: Dict[str, Any]) -> str:
     counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for r in graph.get("risks", []):
         counts[r.get("impact", "?")][r.get("likelihood", "?")] += 1
-    rows = ["high", "med", "low"]
+    rows_order = ["high", "med", "low"]
     cols = ["low", "med", "high"]
-    header = "| Impact \\ Lik | " + " | ".join(f"{c:4}" for c in cols) + " |"
-    lines = [header, "|" + "-" * (len(header) - 2) + "|"]
-    for r in rows:
-        lines.append(f"| {r:12} | " + " | ".join(f"{counts[r].get(c, 0):>4}" for c in cols) + " |")
-    return "\n".join(lines)
+    rows = [[r] + [str(counts[r].get(c, 0)) for c in cols] for r in rows_order]
+    return _grid("Impact \\ Lik", cols, rows)
 
 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:

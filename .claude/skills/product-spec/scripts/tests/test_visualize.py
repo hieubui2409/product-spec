@@ -41,6 +41,35 @@ def test_ascii_heatmap_is_a_grid():
     assert "|" in out
 
 
+def test_ascii_heatmap_surfaces_noncanonical_status_in_other_column():
+    """A node in a non-canonical status must not vanish from the grid — it is
+    summed into an 'other' column instead of being silently dropped."""
+    g = {"nodes": [
+        {"id": "X", "type": "story", "status": "blocked"},
+        {"id": "Y", "type": "story", "status": "draft"},
+    ], "edges": []}
+    out = render_ascii.heatmap(g)
+    assert "other" in out
+    story_row = next(l for l in out.splitlines() if l.startswith("| story"))
+    assert story_row.rstrip().endswith("1 |")  # the 'blocked' node counted in 'other'
+
+
+def test_ascii_heatmap_hides_other_column_when_all_canonical():
+    """No 'other' column when every status is canonical (keep the common grid clean)."""
+    g = {"nodes": [{"id": "Y", "type": "story", "status": "draft"}], "edges": []}
+    assert "other" not in render_ascii.heatmap(g)
+
+
+def test_ascii_grid_separator_aligns_with_overlong_label():
+    """An overlong row label must not break alignment: header, separator, and
+    every data row are exactly the same width."""
+    g = {"nodes": [
+        {"id": "X", "type": "an-unusually-long-type-name", "status": "draft"},
+    ], "edges": []}
+    widths = {len(l) for l in render_ascii.heatmap(g).splitlines()}
+    assert len(widths) == 1, f"misaligned grid: line widths {widths}"
+
+
 def test_ascii_scope_grid_has_moscow_columns():
     out = render_ascii.scope(_graph())
     for col in ("must", "should", "could", "wont"):
@@ -714,6 +743,215 @@ def test_w3_l5_snapshot_filename_derived_from_generated_at(tmp_path):
     # of snapshot_at (strip non-alphanumeric).
     fname_stem = snaps[0].stem
     compact_iso = body["snapshot_at"].replace("-", "").replace(":", "")
-    assert fname_stem == compact_iso, (
-        f"filename {fname_stem!r} doesn't match snapshot_at {compact_iso!r}"
+    # Filename is <compact-iso>-<8-hex-hash>; verify the timestamp prefix matches.
+    assert fname_stem.startswith(compact_iso), (
+        f"filename {fname_stem!r} timestamp prefix doesn't match snapshot_at {compact_iso!r}"
     )
+
+
+# ---------- Stored-markup injection regression tests ----------
+# Payloads that must NEVER appear as live HTML in rendered output.
+
+_PAYLOADS = [
+    "<script>alert(1)</script>",
+    "</script>",
+    "<img src=x onerror=alert(1)>",
+    "&#60;img src=x onerror=alert(1)&#62;",
+]
+
+# Patterns that indicate live HTML injection (as opposed to inert escaped text).
+# `onerror=` only constitutes injection when it appears as an HTML attribute
+# inside a live tag — i.e. preceded by `<img` or similar.  Checking for `<img `
+# (with trailing space, indicating a tag open) covers the concrete threat; a
+# bare `onerror=` inside escaped Mermaid label text is not executable.
+_LIVE_PATTERNS = [
+    "<script>",
+    "<img ",
+]
+
+
+def _injected_graph(payload: str) -> dict:
+    """Synthetic graph with a single story whose id and title contain payload."""
+    safe_id = "PRD-X-E1-S1"  # id stays structurally valid; payload goes in title only
+    return {
+        "product": {"name": "Acme", "core_value": "v", "personas": ["p"]},
+        "nodes": [
+            {"id": "BRD-G1", "type": "goal", "title": payload,
+             "status": "draft", "personas": []},
+            {"id": "PRD-X", "type": "prd", "title": payload, "status": "draft",
+             "personas": [], "scope": "in", "moscow": "must", "horizon": "now",
+             "brd_goals": ["BRD-G1"]},
+            {"id": "PRD-X-E1", "type": "epic", "title": payload,
+             "status": "draft", "personas": [], "scope": "in",
+             "moscow": "must", "horizon": "now", "prd": "PRD-X"},
+            {"id": safe_id, "type": "story", "title": payload,
+             "status": "draft", "personas": ["p"], "scope": "in",
+             "moscow": "must", "horizon": "now", "epic": "PRD-X-E1"},
+        ],
+        "edges": [
+            {"from": safe_id, "to": "PRD-X-E1", "kind": "epic"},
+            {"from": "PRD-X-E1", "to": "PRD-X", "kind": "prd"},
+            {"from": "PRD-X", "to": "BRD-G1", "kind": "brd_goal"},
+        ],
+        "risks": [],
+    }
+
+
+def _injected_id_graph(payload: str) -> dict:
+    """Graph where the node *id* itself contains the payload string."""
+    return {
+        "product": {"name": "Acme", "core_value": "v", "personas": ["p"]},
+        "nodes": [
+            {"id": payload, "type": "goal", "title": "g",
+             "status": "draft", "personas": []},
+        ],
+        "edges": [],
+        "risks": [],
+    }
+
+
+def _assert_no_live_injection(html: str, context: str) -> None:
+    """Check the mermaid div body only — the vendored Mermaid JS legitimately
+    contains `<script>` tags which would produce false positives if we scanned
+    the full page.  Only the DSL payload in the div is user-controlled."""
+    import re as _re
+    mermaid_div = _re.search(r'<div class="mermaid">(.*?)</div>', html, _re.DOTALL)
+    scope = mermaid_div.group(1) if mermaid_div else html
+    for pat in _LIVE_PATTERNS:
+        assert pat not in scope, (
+            f"{context}: live pattern {pat!r} found in mermaid div — injection not neutralised"
+        )
+
+
+def _assert_mermaid_keyword_present(mermaid_text: str, view: str) -> None:
+    assert "graph" in mermaid_text or "flowchart" in mermaid_text or "timeline" in mermaid_text, (
+        f"{view}: mermaid DSL keyword missing — rendering likely broken"
+    )
+
+
+def test_html_escapes_injected_story_title_in_tree_view():
+    """HTML render of tree view must neutralise markup in node titles."""
+    for payload in _PAYLOADS:
+        g = _injected_graph(payload)
+        mermaid_text = render_mermaid.tree(g)
+        html = render_html.assemble("tree", "mermaid", mermaid_text, g)
+        _assert_no_live_injection(html, f"tree/title payload={payload!r}")
+        _assert_mermaid_keyword_present(html, "tree")
+
+
+def test_html_escapes_injected_story_title_in_gap_view():
+    """HTML render of gap view must neutralise markup in node ids used as labels."""
+    for payload in _PAYLOADS:
+        g = _injected_graph(payload)
+        mermaid_text = render_mermaid.gap(g)
+        html = render_html.assemble("gap", "mermaid", mermaid_text, g)
+        _assert_no_live_injection(html, f"gap/title payload={payload!r}")
+        _assert_mermaid_keyword_present(html, "gap")
+
+
+def test_html_escapes_injected_story_title_in_roadmap_view():
+    """HTML render of roadmap view must neutralise markup in item ids."""
+    for payload in _PAYLOADS:
+        g = _injected_graph(payload)
+        mermaid_text = render_mermaid.roadmap(g)
+        html = render_html.assemble("roadmap", "mermaid", mermaid_text, g)
+        _assert_no_live_injection(html, f"roadmap/title payload={payload!r}")
+        _assert_mermaid_keyword_present(html, "roadmap")
+
+
+def test_html_escapes_injected_node_id_in_delta_view():
+    """HTML render of delta view must neutralise markup in added/removed node ids."""
+    for payload in _PAYLOADS:
+        baseline = {"product": {"name": "A"}, "nodes": [], "edges": []}
+        current = {
+            "product": {"name": "A"},
+            "nodes": [{"id": payload, "type": "story", "title": "t"}],
+            "edges": [],
+        }
+        mermaid_text = render_mermaid.delta(current, baseline)
+        html = render_html.assemble("delta", "mermaid", mermaid_text, current)
+        _assert_no_live_injection(html, f"delta/id payload={payload!r}")
+        _assert_mermaid_keyword_present(html, "delta")
+
+
+def test_safe_id_whitelist_blocks_markup_chars():
+    """_safe_id must produce identifiers containing only [A-Za-z0-9_].
+    Chars like `<`, `>`, `"`, `]` must be replaced, not passed through."""
+    import re as _re
+    from render_mermaid import _safe_id
+    payloads = [
+        'PRD-Y</div><svg onload=alert(1)>',
+        'ID<script>',
+        'A"B',
+        'X]Y',
+    ]
+    for p in payloads:
+        result = _safe_id(p)
+        assert _re.fullmatch(r"[A-Za-z0-9_]+", result), (
+            f"_safe_id({p!r}) = {result!r} — contains non-whitelisted chars"
+        )
+
+
+def test_safe_label_encodes_ampersand_before_angle_brackets():
+    """_safe_label must encode `&` before processing angle brackets so that
+    entity-encoded payloads like `&#60;img` cannot reconstruct live markup
+    when the Mermaid DSL is later HTML-escaped and decoded by the browser."""
+    from render_mermaid import _safe_label
+    # Entity-encoded form of <img src=x onerror=alert(1)>
+    payload = "&#60;img src=x onerror=alert(1)&#62;"
+    result = _safe_label(payload)
+    # & must be encoded to &amp; — this breaks the entity sequence so it cannot
+    # decode back to `<img …>` in browser .textContent.
+    assert "&amp;" in result
+    # The reconstructed angle-bracket form must not survive intact.
+    assert "<img" not in result
+    # The &#60; token must be neutralised (& → &amp; renders it inert).
+    assert "&#60;" not in result
+
+
+def test_mermaid_dsl_still_valid_after_html_escaping_tree():
+    """Verify that HTML-escaping the Mermaid DSL in the mermaid div does not
+    break Mermaid syntax: the escaped source must still contain recognisable
+    DSL structure when inspected as text (Mermaid reads .textContent, which
+    the browser decodes back to the original DSL)."""
+    g = _graph()
+    mermaid_text = render_mermaid.tree(g)
+    html = render_html.assemble("tree", "mermaid", mermaid_text, g)
+    # The escaped `-->` edge syntax must appear (as --&gt; in source).
+    assert "--&gt;" in html, "escaped edge arrow not found — escaping may be absent or broken"
+    # Standard flowchart keyword must appear (it contains no special chars, survives unchanged).
+    assert "flowchart" in html
+    # No raw `<` or `>` inside the mermaid div body (they must be escaped).
+    import re as _re
+    mermaid_div = _re.search(r'<div class="mermaid">(.*?)</div>', html, _re.DOTALL)
+    assert mermaid_div is not None, "mermaid div not found in output"
+    div_body = mermaid_div.group(1)
+    # Raw < and > must not appear in the div body (only &lt; / &gt; allowed).
+    assert "<" not in div_body, f"raw `<` found inside mermaid div: {div_body[:200]}"
+    assert ">" not in div_body, f"raw `>` found inside mermaid div: {div_body[:200]}"
+
+
+def test_mermaid_dsl_still_valid_after_html_escaping_gap():
+    """Same textContent round-trip check for the gap view (uses flowchart LR)."""
+    g = _graph()
+    mermaid_text = render_mermaid.gap(g)
+    html = render_html.assemble("gap", "mermaid", mermaid_text, g)
+    assert "flowchart" in html
+    import re as _re
+    mermaid_div = _re.search(r'<div class="mermaid">(.*?)</div>', html, _re.DOTALL)
+    assert mermaid_div is not None
+    div_body = mermaid_div.group(1)
+    assert "<" not in div_body, f"raw `<` inside gap mermaid div: {div_body[:200]}"
+    assert ">" not in div_body, f"raw `>` inside gap mermaid div: {div_body[:200]}"
+
+
+def test_mermaid_html_single_encodes_ampersand():
+    """A label with `&` must render single-encoded (R&amp;D), not double
+    (R&amp;amp;D). `_safe_label` already encodes `&`, so the HTML layer must
+    escape only `<`/`>`, never `&` again."""
+    g = _graph()
+    safe = render_mermaid._safe_label("R&D")  # label chokepoint -> "R&amp;D"
+    view_text = f'```mermaid\nflowchart TD\n  N["{safe}"]\n```'
+    html = render_html.assemble("tree", "mermaid", view_text, g)
+    assert "R&amp;D" in html
+    assert "R&amp;amp;D" not in html

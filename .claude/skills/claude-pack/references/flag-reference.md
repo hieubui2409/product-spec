@@ -26,12 +26,14 @@ All boolean flags use `argparse.BooleanOptionalAction` (default `None`). `None` 
 | `--include-claudemd` / `--no-include-claudemd` | bool | (manifest) | `top_level.include_claudemd` | Include repo-root `CLAUDE.md`. |
 | `--include-settings` / `--no-include-settings` | bool | (manifest) | `top_level.include_settings` | Include `.claude/settings.json` (opt-in only). |
 | `--include-ck-config` / `--no-include-ck-config` | bool | (manifest) | `top_level.include_ck_config` | Include `.claude/.ck.json` (opt-in only). |
+| `--include-scripts` / `--no-include-scripts` | bool | (manifest) | `defaults.include_scripts` | Include `.claude/scripts/` (CK-framework internals; opt-in, off by default). |
+| `--include-schemas` / `--no-include-schemas` | bool | (manifest) | `defaults.include_schemas` | Include `.claude/schemas/` (CK-framework internals; opt-in, off by default). |
 | `--follow-shared` / `--no-follow-shared` | bool | (manifest) | `follow_shared` | If true, auto-include all `_shared/` refs. Default false = warn-only. |
 | `--force` / `--no-force` | bool | off | (none) | Overwrite existing tarball. Backs up as `.bak.{epoch}`. |
 | `--dry-run` / `--no-dry-run` | bool | off | (none) | List files + total size; no tarball. |
 | `--compute-sha` / `--no-compute-sha` | bool | off | (none) | With `--dry-run`: include would-be tarball SHA256 (uses BytesIO). |
 | `--json` / `--no-json` | bool | off | (none) | Emit JSON status to stdout (machine-parseable). |
-| `--source-date-epoch <val>` | int\|`env` | (none) → 0 | `defaults.source_date_epoch` | Mtime root. `env` honors `SOURCE_DATE_EPOCH` env var. |
+| `--source-date-epoch <val>` | int\|`env` | (none) → 0 | (none — CLI only) | Mtime root. `env` honors `SOURCE_DATE_EPOCH` env var. |
 | `--max-size <bytes>` | int | 100MB | `defaults.max_size_bytes` | Reject if compressed bigger than this. |
 | `--strict` | flag | off | (none) | Treat un-included `_shared/` references as errors (exit 2) instead of warnings. |
 | `--allow-dev-version` | flag | off | (none) | Allow `version: "0.0.0-dev"` placeholder. |

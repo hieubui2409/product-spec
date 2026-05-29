@@ -40,6 +40,7 @@ Developer-facing skill that bundles a curated subset of this repo's `.claude/` t
 | `--dry-run --compute-sha` | Add would-be SHA256 (opt-in; avoids double-pass). |
 | `--include-settings` | Include `.claude/settings.json` (opt-in). |
 | `--include-ck-config` | Include `.claude/.ck.json` (opt-in). |
+| `--include-scripts` / `--include-schemas` | Include `.claude/scripts/` or `schemas/` (CK-framework internals; opt-in, off by default). |
 | `--include-shared <list>` | Opt-in `skills/_shared/<name>` (warn-only otherwise). |
 | `--max-size <bytes>` | Reject if compressed tar.gz > limit (default 100MB). |
 | `--source-date-epoch <int\|env>` | Override mtime root (default 0 = fully deterministic). |
@@ -50,7 +51,7 @@ Full descriptions: `references/flag-reference.md`.
 
 ## No-Flag Menu
 
-When invoked without a flag, the skill runs `python -m pack --discover`, presents an AskUserQuestion-driven walk through skills/agents/rules/extra/top_level/follow_shared, then writes `.claude/pack.manifest.yaml` and previews the build. Full interactive flow + question bank: `references/workflow-pack.md`.
+When invoked without a flag, the skill runs `python -m build_manifest --discover`, presents an AskUserQuestion-driven walk through skills/agents/rules/extra/top_level/follow_shared, then writes `.claude/pack.manifest.yaml` and previews the build. Full interactive flow + question bank: `references/workflow-pack.md`.
 
 ## Output Contract
 

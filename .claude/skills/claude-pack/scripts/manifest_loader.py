@@ -41,6 +41,12 @@ ALLOWED_NESTED_TOP_LEVEL_KEYS = frozenset({
     "include_settings", "include_ck_config",
 })
 
+# Opt-in flags that set defaults.include_scripts / defaults.include_schemas to True
+# when passed on the CLI. Absent from manifest ⇒ False (top-level .claude/scripts and
+# .claude/schemas are CK-framework internals, not skill content; skill scripts live
+# under skills/<x>/scripts/).
+OPT_IN_DEFAULTS_FLAGS = frozenset({"include_scripts", "include_schemas"})
+
 ALLOWED_DEFAULTS_KEYS = frozenset({
     "include_scripts", "include_schemas", "max_size_bytes",
 })
@@ -132,6 +138,16 @@ def merge_cli(manifest: dict, cli: argparse.Namespace) -> dict:
     if include_shared:
         merged["_include_shared"] = _split_list(include_shared)
 
+    # --include-scripts / --include-schemas: opt-in flags for CK-framework internals.
+    # When passed, set defaults.include_scripts/include_schemas = True.
+    # The manifest field still wins if already set; CLI flags only promote to True.
+    for opt_flag in OPT_IN_DEFAULTS_FLAGS:
+        cli_val = getattr(cli, opt_flag, None)
+        if cli_val is not None:  # --include-scripts True / --no-include-scripts False
+            defaults = dict(merged.get("defaults") or {})
+            defaults[opt_flag] = bool(cli_val)
+            merged["defaults"] = defaults
+
     return merged
 
 
@@ -145,8 +161,11 @@ def _is_absolute_or_drive(p: str) -> bool:
     # POSIX absolute, or Windows UNC / backslash-rooted path.
     if p.startswith("/") or p.startswith("\\"):
         return True
-    # Windows drive letter: ``C:\foo`` or ``C:/foo``
-    if len(p) >= 2 and p[1] == ":":
+    # Windows drive letter: ``C:\foo``, ``C:/foo``, or bare ``C:``
+    # Require: letter at index 0, colon at index 1, then either end-of-string
+    # or a slash/backslash separator. This excludes POSIX paths like ``a:b``
+    # (colon at index 1 but followed by a non-separator character).
+    if len(p) >= 2 and p[0].isalpha() and p[1] == ":" and (len(p) == 2 or p[2] in "/\\"):
         return True
     return False
 
@@ -227,6 +246,22 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         for key in defaults:
             if key not in ALLOWED_DEFAULTS_KEYS:
                 errors.append(f"[MANIFEST_E041] unknown defaults key: {key!r}")
+        # Type-check values so a string like "100MB" fails early rather than
+        # crashing at runtime with a TypeError during size comparison. bool is
+        # a subclass of int, so reject it explicitly: max_size_bytes: false
+        # would otherwise pass and then reject every non-empty bundle (> 0).
+        if "max_size_bytes" in defaults:
+            msb = defaults["max_size_bytes"]
+            if isinstance(msb, bool) or not isinstance(msb, int) or msb < 0:
+                errors.append(
+                    f"[MANIFEST_E042] defaults.max_size_bytes must be int>=0; got {msb!r}"
+                )
+        for bool_key in ("include_scripts", "include_schemas"):
+            if bool_key in defaults and not isinstance(defaults[bool_key], bool):
+                errors.append(
+                    f"[MANIFEST_E043] defaults.{bool_key} must be bool; "
+                    f"got {defaults[bool_key]!r}"
+                )
 
     follow_shared = manifest.get("follow_shared", False)
     if not isinstance(follow_shared, bool):
@@ -254,8 +289,19 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
             except ManifestError as e:
                 errors.append(f"[MANIFEST_E072] {e}")
     for slug in manifest.get("hooks", []) or []:
-        if isinstance(slug, str) and not any((claude_dir / "hooks").rglob(slug)):
-            errors.append(f"[MANIFEST_E073] missing hook: {slug}")
+        if isinstance(slug, str):
+            # Must match a FILE (a slug naming a directory would pass a bare
+            # rglob existence test yet bundle nothing). >1 match is ambiguous:
+            # rglob order is filesystem-dependent, so picking one silently would
+            # make the tarball non-deterministic across machines.
+            hook_matches = [p for p in (claude_dir / "hooks").rglob(slug) if p.is_file()]
+            if not hook_matches:
+                errors.append(f"[MANIFEST_E073] missing hook: {slug}")
+            elif len(hook_matches) > 1:
+                errors.append(
+                    f"[MANIFEST_E074] ambiguous hook: {slug} matches "
+                    f"{len(hook_matches)} files; use a unique name or path"
+                )
 
     return errors
 
@@ -295,12 +341,16 @@ def apply_defaults(manifest: dict, root: Path) -> dict:
     defaults = out["defaults"] or {}
     extra = list(out.get("extra") or [])
 
-    if defaults.get("include_scripts", True):
+    # Opt-in only: top-level .claude/scripts + .claude/schemas are CK-framework
+    # internals (a skill's own scripts live under skills/<slug>/scripts/), so
+    # they are NOT auto-shipped. Enable via defaults.include_scripts/_schemas
+    # or the --include-scripts/--include-schemas flags.
+    if defaults.get("include_scripts", False):
         scripts_rel = ".claude/scripts"
         if (root / scripts_rel).is_dir() and scripts_rel not in extra:
             extra.insert(0, scripts_rel)
 
-    if defaults.get("include_schemas", True):
+    if defaults.get("include_schemas", False):
         schemas_rel = ".claude/schemas"
         if (root / schemas_rel).is_dir() and schemas_rel not in extra:
             extra.insert(0, schemas_rel)

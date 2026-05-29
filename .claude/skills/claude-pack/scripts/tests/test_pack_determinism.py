@@ -245,6 +245,98 @@ def test_strict_gates_on_uncovered_shared_ref(tmp_root, tmp_path):
     assert rc2 == 0
 
 
+def test_follow_shared_auto_includes_subtree(tmp_root, tmp_path):
+    """follow_shared: true causes the _shared subtree to be bundled AND passes --strict."""
+    from pack.cli import main
+
+    skill = tmp_root / ".claude" / "skills" / "needs-shared"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        "---\nname: cleanmatic:needs-shared\n"
+        "metadata:\n  version: \"0.1.0\"\n---\n\n"
+        "# needs-shared\n\nUses _shared/utils helpers.\n",
+        encoding="utf-8",
+    )
+    shared_dir = tmp_root / ".claude" / "skills" / "_shared" / "utils"
+    shared_dir.mkdir(parents=True)
+    (shared_dir / "helper.py").write_text("def hi(): pass\n", encoding="utf-8")
+
+    manifest_path = tmp_root / ".claude" / "pack.manifest.yaml"
+    manifest_path.write_text(
+        "schema_version: '1.0'\nversion: '0.1.0'\nbundle_name: fs\n"
+        "skills:\n  - needs-shared\n"
+        "agents: []\nhooks: []\nrules: []\nextra: []\n"
+        "top_level: {}\n"
+        "defaults:\n  include_scripts: false\n  include_schemas: false\n"
+        "follow_shared: true\n",
+        encoding="utf-8",
+    )
+    out_dir = tmp_path / "out"
+    rc = main(["--strict", "--root", str(tmp_root),
+               "--manifest", str(manifest_path), "--out", str(out_dir)])
+    assert rc == 0, "follow_shared should pass --strict by auto-including refs"
+
+    result_tar = out_dir / "fs-0.1.0.tar.gz"
+    assert result_tar.is_file()
+    with tarfile.open(result_tar, "r:gz") as tar:
+        names = tar.getnames()
+    assert any(".claude/skills/_shared/utils/helper.py" in n for n in names), (
+        "_shared/utils subtree not bundled"
+    )
+
+
+def test_build_manifest_json_skips_symlink(tmp_root):
+    """build_manifest_json must not include symlinks in the files list."""
+    skill = tmp_root / ".claude" / "skills" / "sample-skill"
+    link = skill / "linked.py"
+    try:
+        link.symlink_to(skill / "scripts" / "helper.py")
+    except OSError:
+        pytest.skip("symlinks not supported on this filesystem")
+
+    manifest = manifest_loader.apply_defaults(
+        {"version": "0.1.0", "bundle_name": "t", "skills": ["sample-skill"]}, tmp_root,
+    )
+    selection = resolve_selection(manifest, tmp_root)
+    mj = build_manifest_json(selection, manifest, source_date_epoch=0, repo_root=tmp_root)
+    files_in_manifest = {e["path"] for e in json.loads(mj)["files"]}
+    assert not any("linked.py" in p for p in files_in_manifest), (
+        "symlink must not appear in MANIFEST.json files list"
+    )
+
+
+def test_max_size_zero_rejects_non_empty(tmp_root, tmp_path):
+    """--max-size 0 must reject any non-empty tarball (0 means reject-all)."""
+    from pack.cli import main
+    manifest_path = tmp_root / ".claude" / "pack.manifest.yaml"
+    manifest_path.write_text(
+        "schema_version: '1.0'\nversion: '0.1.0'\nbundle_name: sz\n"
+        "skills:\n  - sample-skill\n"
+        "agents: []\nhooks: []\nrules: []\nextra: []\n"
+        "top_level: {}\n"
+        "defaults:\n  include_scripts: false\n  include_schemas: false\n"
+        "follow_shared: false\n",
+        encoding="utf-8",
+    )
+    out_dir = tmp_path / "out"
+    rc = main(["--root", str(tmp_root), "--manifest", str(manifest_path),
+               "--out", str(out_dir), "--max-size", "0"])
+    assert rc == 5  # EXIT_EMPTY_OR_OVER_SIZE
+
+
+def test_atomic_replace_symlink_counts_as_collision(tmp_path):
+    """A dangling symlink at the output path must count as a collision."""
+    src = tmp_path / ".tmp"
+    src.write_bytes(b"new")
+    dst = tmp_path / "out.tar.gz"
+    try:
+        dst.symlink_to(tmp_path / "nonexistent.tar.gz")
+    except OSError:
+        pytest.skip("symlinks not supported on this filesystem")
+    with pytest.raises(CollisionError):
+        atomic_replace(src, dst, force=False)
+
+
 def test_pack_cli_full_run(tmp_root, tmp_path):
     """End-to-end: invoke python -m pack and verify output structure."""
     venv_py = SKILL_ROOT.parent / ".venv" / "bin" / "python3"

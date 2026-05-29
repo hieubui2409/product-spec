@@ -1,0 +1,75 @@
+# Claude Pack v{{VERSION}}
+
+Built: {{BUILT_AT}}
+Source commit: {{SOURCE_COMMIT}}
+
+## Verify
+
+Verify the bundle's integrity before running any installer.
+
+**Linux:**
+```bash
+sha256sum -c {{BUNDLE_NAME}}-{{VERSION}}.tar.gz.sha256
+```
+
+**macOS** (`shasum` ships with Xcode Command Line Tools; `sha256sum` is absent by default):
+```bash
+shasum -a 256 -c {{BUNDLE_NAME}}-{{VERSION}}.tar.gz.sha256
+```
+
+Both commands print `{{BUNDLE_NAME}}-{{VERSION}}.tar.gz: OK` on success and exit non-zero on mismatch.
+
+## Extract
+
+```bash
+tar -xzf {{BUNDLE_NAME}}-{{VERSION}}.tar.gz
+```
+
+## Install (macOS/Linux)
+
+> **Security notice:** `install.sh` copies files into your repo's `.claude/` directory.
+> Each skill in the bundle may also ship its own `install.sh` hook (sets up a venv, etc.).
+> These per-skill hooks execute on your machine and run only when you pass `RUN_HOOKS=1`.
+> **Review `install.sh` and each `.claude/skills/*/install.sh` before running.**
+
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && bash install.sh
+```
+
+To also run per-skill setup hooks (e.g. venv creation):
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && RUN_HOOKS=1 bash install.sh
+```
+
+## Install (Windows)
+
+> **Security notice:** Same as above — review `install.ps1` and each `.claude/skills/*/install.ps1`
+> before running. Per-skill hooks run only when you pass `-RunHooks`.
+
+```powershell
+cd {{BUNDLE_NAME}}-{{VERSION}}\
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+To also run per-skill setup hooks:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -RunHooks
+```
+
+## What gets installed
+
+{{FILE_COUNT}} files, {{TOTAL_SIZE}} into your repo's `.claude/` directory.
+See `MANIFEST.json` for the full list with per-file SHA256.
+
+## Troubleshooting
+
+After install, see `.claude/skills/claude-pack/references/troubleshooting.md` for common failures and fixes.
+
+## Uninstall
+
+```bash
+# Remove an installed skill
+rm -rf .claude/skills/<installed-skill>/
+
+# Or restore from your backup taken at install time (FORCE_OVERWRITE creates timestamped backups)
+```

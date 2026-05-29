@@ -40,6 +40,8 @@ ALWAYS_DROP_DIRS: frozenset[str] = frozenset({
     ".venv", "venv", "node_modules", ".npm", ".yarn",
     # Claude Code runtime state
     ".logs", "session-state", "agent-memory",
+    # Internal planning / review reports — never ship to recipients
+    "plans",
     # Build artifacts
     "dist", "build", "target", ".next", ".turbo",
 })
@@ -62,6 +64,8 @@ OPT_IN_PATHS: dict[str, str] = {
 }
 
 # Lowercase enforced; uppercase _shared/Foo silently skipped (documented).
+# Captures the first path segment after _shared/, so inclusion is dir-granular:
+# a reference to _shared/references/x.md pulls the whole _shared/references/ dir.
 SHARED_REF_RE = re.compile(r"_shared/([a-z0-9_-]+)")
 
 _FENCED_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
@@ -78,28 +82,36 @@ class SafetyError(Exception):
 def is_dropped(path: str) -> tuple[bool, str | None]:
     """Return (drop?, rule-id) for a candidate arcname.
 
+    All three match layers are case-insensitive so that ``deploy.PEM``,
+    ``.ENV``, ``ID_RSA``, and ``.GIT/config`` are caught on case-insensitive
+    and case-preserving filesystems alike.
+
     rule-id format: ``always-drop:exact:<name>`` | ``always-drop:dir:<name>``
-    | ``always-drop:pattern:<glob>``.
+    | ``always-drop:pattern:<glob>`` (canonical lowercase rule label).
     """
     p = PurePosixPath(path)
     basename = p.name
+    basename_lower = basename.lower()
 
-    if basename in ALWAYS_DROP_EXACT:
-        return True, f"always-drop:exact:{basename}"
+    if basename_lower in ALWAYS_DROP_EXACT:
+        return True, f"always-drop:exact:{basename_lower}"
 
     for part in p.parts:
-        if part in ALWAYS_DROP_DIRS:
-            return True, f"always-drop:dir:{part}"
+        if part.lower() in ALWAYS_DROP_DIRS:
+            return True, f"always-drop:dir:{part.lower()}"
 
+    path_lower = path.lower()
     for glob in ALWAYS_DROP_PATTERNS:
         # Match the full arcname AND the basename. fnmatch treats the leading
         # ``**/`` literally (it needs a real ``/``), so a top-level file with no
         # slash in its arcname (e.g. ``deploy.pem`` added via ``extra``) would
         # otherwise slip past every ``**/``-prefixed secret pattern. Stripping
         # the ``**/`` and matching the basename closes that hole.
-        bare = glob[3:] if glob.startswith("**/") else glob
-        if fnmatch.fnmatchcase(path, glob) or fnmatch.fnmatchcase(basename, bare):
-            return True, f"always-drop:pattern:{glob}"
+        # Both operands are pre-lowered so matching is case-insensitive.
+        glob_lower = glob.lower()
+        bare_lower = glob_lower[3:] if glob_lower.startswith("**/") else glob_lower
+        if fnmatch.fnmatchcase(path_lower, glob_lower) or fnmatch.fnmatchcase(basename_lower, bare_lower):
+            return True, f"always-drop:pattern:{glob_lower}"
 
     return False, None
 

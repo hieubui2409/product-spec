@@ -30,7 +30,10 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
 
     for slug in manifest.get("skills", []):
         _walk_dir(claude_dir / "skills" / slug, f".claude/skills/{slug}")
-    for slug in manifest.get("_include_shared", []) or []:
+    shared = manifest.get("_include_shared") or []
+    if isinstance(shared, str):  # tolerate a hand-edited scalar instead of a list
+        shared = [s.strip() for s in shared.split(",") if s.strip()]
+    for slug in shared:
         _walk_dir(claude_dir / "skills" / "_shared" / slug,
                   f".claude/skills/_shared/{slug}")
 
@@ -53,11 +56,15 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
         entries.append((resolved, f".claude/{rel}"))
 
     for name in manifest.get("hooks", []):
-        for match in (claude_dir / "hooks").rglob(name):
-            if match.is_file():
-                rel = match.relative_to(claude_dir).as_posix()
-                entries.append((match, f".claude/{rel}"))
-                break
+        # Sorted so the pick is deterministic across machines; validate()
+        # rejects the >1-match (ambiguous) case before we get here.
+        matches = sorted(
+            (m for m in (claude_dir / "hooks").rglob(name) if m.is_file()),
+            key=lambda m: m.as_posix(),
+        )
+        if matches:
+            rel = matches[0].relative_to(claude_dir).as_posix()
+            entries.append((matches[0], f".claude/{rel}"))
 
     for path_entry in manifest.get("extra", []):
         src = root / path_entry

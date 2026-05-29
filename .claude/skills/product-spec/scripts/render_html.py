@@ -87,7 +87,22 @@ def _render_view_body(view_format: str, view_text: str) -> str:
     if view_format == "mermaid":
         m = re.search(r"```mermaid\n(.*?)\n```", view_text, re.DOTALL)
         body = m.group(1) if m else view_text
-        return f'<div class="mermaid">\n{body}\n</div>'
+        # Escape only `<` and `>` in the Mermaid DSL body — NOT `&`.
+        #
+        # Defense-in-depth layer: the HTML parser runs before Mermaid's
+        # auto-renderer, so raw `<script>` or `<img onerror=…>` in the DSL
+        # body would execute during parsing before securityLevel:strict can
+        # intercept.  Escaping `<`/`>` neutralises that class of injection
+        # while keeping `-->` as a safe textContent round-trip (`--&gt;` in
+        # source decodes back to `-->` when Mermaid reads .textContent).
+        #
+        # `&` is intentionally NOT escaped here. `_safe_label` (in
+        # render_mermaid) already encodes `&` → `&amp;` at the label
+        # chokepoint.  Escaping `&` again here would double-encode to
+        # `&amp;amp;`, so a node titled "R&D" would render as literal
+        # "R&amp;D" in the browser instead of "R&D".
+        body_escaped = body.replace("<", "&lt;").replace(">", "&gt;")
+        return f'<div class="mermaid">\n{body_escaped}\n</div>'
     return f"<pre>{_escape(view_text)}</pre>"
 
 
@@ -127,6 +142,10 @@ def assemble(
             "missing; CDN fallback in use. Run install.sh to vendor it.<br>"
             + footer
         )
+    # INVARIANT: footer_note is injected into the HTML template WITHOUT further
+    # escaping (it may contain renderer-literal markup such as <strong>).
+    # Any spec-derived value added to footer_note in the future MUST be passed
+    # through _escape() before interpolation — never interpolated raw.
 
     # ASCII-fallback views (view_format != "mermaid") render as plain <pre>;
     # the Mermaid runtime is never used, so skipping it saves ~2.5 MB and the

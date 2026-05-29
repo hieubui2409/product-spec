@@ -1,0 +1,56 @@
+# cleanmatic:claude-pack manifest — source-of-truth for what gets packed.
+# See references/manifest-spec.md for full schema.
+# Copy this file to .claude/pack.manifest.yaml and customize.
+
+# Schema version of THIS manifest file. claude-pack refuses to load
+# unsupported major versions (see references/maintainers-guide.md → schema migration).
+schema_version: "1.0"
+
+# Bundle version (semver). Used in tarball filename + INSTALL.md.
+# CLI --version overrides for ad-hoc builds.
+version: "0.1.0"
+
+# Output filename stem. Final tarball: claude-pack-{version}.tar.gz
+bundle_name: "claude-pack"
+
+# Skills to include. Each entry is a directory slug under .claude/skills/.
+# (Trailing slash or .md extension auto-stripped.)
+skills:
+  - product-spec
+
+# Agents to include. Each entry is a filename stem under .claude/agents/.
+# (.md auto-appended if missing.)
+agents:
+  - planner
+  - researcher
+
+# Hooks to include. Each entry is a filename under .claude/hooks/.
+# Hooks ship verbatim; the recipient wires them into settings.json manually
+# (no automatic hook merge in v1).
+hooks: []
+
+# Rules files to include. Each entry is a filename under .claude/rules/.
+rules:
+  - primary-workflow.md
+  - development-rules.md
+
+# Extra paths (repo-relative). Must NOT be absolute. Must NOT contain `..`.
+# Useful for hand-picked files outside the standard categories.
+extra: []
+  # - .claude/scripts/my-helper.cjs
+  # - docs/onboarding.md
+
+# Top-level repo files (opt-in flags map to --include-*).
+top_level:
+  include_readme: false       # include repo-root README.md
+  include_claudemd: false     # include repo-root CLAUDE.md
+  include_settings: false     # opt-in via --include-settings
+  include_ck_config: false    # opt-in via --include-ck-config
+
+# Defaults block (applied via manifest_loader.apply_defaults).
+defaults:
+  max_size_bytes: 104857600   # 100 MB (compressed tar.gz) — override with --max-size
+
+# Follow skills/_shared/<x> references in selected skills?
+# false (default) = warn-only. Set to true (or pass --include-shared) to opt in.
+follow_shared: false

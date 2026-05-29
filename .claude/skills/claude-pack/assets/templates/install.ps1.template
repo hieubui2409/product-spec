@@ -1,0 +1,277 @@
+# install.ps1 — recipient installer for claude-pack v{{VERSION}}.
+#
+# Run from the extracted bundle directory. Copies selected .claude/ artifacts
+# into the target repo (default: $PWD). Version-aware per skill.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -TargetDir C:\repos\my-app
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -ForceOverwrite
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -RunHooks
+#
+# Per-skill hooks (e.g. .claude\skills\*\install.ps1) are NOT run by default because
+# they execute arbitrary code. Review them first, then re-run with -RunHooks.
+
+[CmdletBinding()]
+param(
+    [string]$TargetDir = (Get-Location).Path,
+    [switch]$ForceOverwrite,
+    [switch]$RunHooks
+)
+
+$ErrorActionPreference = "Stop"
+
+$BundleDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ManifestJson = Join-Path $BundleDir "MANIFEST.json"
+if (-not (Test-Path $ManifestJson)) {
+    Write-Error "MANIFEST.json missing — corrupt bundle?"
+}
+
+$BackupTs = (Get-Date -Format "yyyyMMddTHHmmssZ")
+
+function Log($msg)  { Write-Host "[claude-pack] $msg" }
+function Note($msg) { Write-Host "  $msg" }
+
+# Read metadata.version from a SKILL.md frontmatter block (returns "" if absent).
+function Read-SkillVersion($SkillMd) {
+    if (-not (Test-Path $SkillMd)) { return "" }
+    $content = Get-Content $SkillMd -Raw
+    if ($content -match "(?s)^---\s*\r?\n(.*?)\r?\n---\s*\r?\n") {
+        $fm = $matches[1]
+        # Require leading indentation so `version:` is the metadata key, not a
+        # sibling like `min_version:`/`apiversion:` or a top-level `version:`.
+        # Mirrors install.sh's `^[[:space:]]+version:` anchor for sh/ps1 parity.
+        if ($fm -match '(?m)^\s+version:\s*"?([\d]+\.[\d]+\.[\d]+[A-Za-z0-9\.\+\-]*)"?') {
+            return $matches[1]
+        }
+    }
+    return ""
+}
+
+# Compare-Semver A B — full SemVer 2.0.0 precedence. Returns -1/0/1.
+#
+# Rules:
+#   1. Numeric major.minor.patch compared numerically left-to-right.
+#   2. Pre-release is LOWER than the associated release (1.0.0-rc1 < 1.0.0).
+#   3. Pre-release identifiers separated by "." compared left-to-right:
+#      numeric identifiers compare numerically; alphanumeric compare lexically;
+#      numeric < alphanumeric (per spec SS11.4.1.4).
+#      Longer pre-release is higher when all prior identifiers are equal.
+#   4. Build metadata ("+...") is IGNORED for precedence (SS10).
+function Compare-Semver($a, $b) {
+    # Strip build metadata
+    $a = ($a -split '\+')[0]
+    $b = ($b -split '\+')[0]
+
+    if ($a -eq $b) { return 0 }
+
+    # Split off pre-release
+    $aCore = $a; $aPre = ""
+    $bCore = $b; $bPre = ""
+    if ($a -match '^([^-]+)-(.+)$') { $aCore = $matches[1]; $aPre = $matches[2] }
+    if ($b -match '^([^-]+)-(.+)$') { $bCore = $matches[1]; $bPre = $matches[2] }
+
+    # Compare numeric cores field by field
+    $aCoreArr = $aCore -split '\.'
+    $bCoreArr = $bCore -split '\.'
+    for ($i = 0; $i -lt 3; $i++) {
+        $ai = [int]($aCoreArr[$i] -as [int])
+        $bi = [int]($bCoreArr[$i] -as [int])
+        if ($ai -lt $bi) { return -1 }
+        if ($ai -gt $bi) { return  1 }
+    }
+
+    # Cores equal — compare pre-release
+    if ($aPre -eq "" -and $bPre -eq "") { return 0 }
+    if ($aPre -eq "" -and $bPre -ne "") { return  1 }  # release > pre-release
+    if ($aPre -ne "" -and $bPre -eq "") { return -1 }  # pre-release < release
+
+    # Both have pre-release
+    $aIds = $aPre -split '\.'
+    $bIds = $bPre -split '\.'
+    $maxLen = [Math]::Max($aIds.Count, $bIds.Count)
+    for ($i = 0; $i -lt $maxLen; $i++) {
+        if ($i -ge $aIds.Count) { return -1 }  # shorter is lower
+        if ($i -ge $bIds.Count) { return  1 }
+        $ai = $aIds[$i]; $bi = $bIds[$i]
+        $aiNum = $null; $biNum = $null
+        $aIsNum = [int]::TryParse($ai, [ref]$aiNum)
+        $bIsNum = [int]::TryParse($bi, [ref]$biNum)
+        if ($aIsNum -and $bIsNum) {
+            if ($aiNum -lt $biNum) { return -1 }
+            if ($aiNum -gt $biNum) { return  1 }
+        } elseif ($aIsNum) {
+            return -1  # numeric < alphanumeric
+        } elseif ($bIsNum) {
+            return  1
+        } else {
+            $cmp = [string]::CompareOrdinal($ai, $bi)
+            if ($cmp -lt 0) { return -1 }
+            if ($cmp -gt 0) { return  1 }
+        }
+    }
+    return 0
+}
+
+# --- Counters ---
+$Added = 0; $Skipped = 0; $Overwrote = 0; $StaleKept = 0; $StaleWrote = 0; $Newer = 0
+
+Log "Bundle: $BundleDir"
+Log "Target: $TargetDir"
+Log ("Force overwrite: " + $ForceOverwrite.IsPresent)
+Write-Host ""
+
+# --- Per-skill version verdicts ---
+# Computed once per skill slug from its SKILL.md, then applied to ALL files in
+# that skill's directory. Prevents split-brain where SKILL.md is kept at NEWER
+# but other files in the same skill are overwritten with the older bundle.
+$SkillVerdict = @{}  # slug -> "SKIP" | "OVERWRITE" | "ADD"
+
+$bundleSkills = Join-Path $BundleDir ".claude\skills"
+if (Test-Path $bundleSkills) {
+    Get-ChildItem -Path $bundleSkills -Directory | ForEach-Object {
+        $slug = $_.Name
+        $srcMd = Join-Path $_.FullName "SKILL.md"
+        $dstMd = Join-Path $TargetDir ".claude\skills\$slug\SKILL.md"
+        if ((Test-Path $srcMd) -and (Test-Path $dstMd)) {
+            $existV = Read-SkillVersion $dstMd
+            $bundleV = Read-SkillVersion $srcMd
+            if ($existV -and $bundleV) {
+                $cmp = Compare-Semver $existV $bundleV
+                switch ($cmp) {
+                    -1 {
+                        if ($ForceOverwrite) {
+                            Note "[STALE] skill '$slug' ($existV -> $bundleV; overwriting)"
+                            $StaleWrote++
+                            $SkillVerdict[$slug] = "OVERWRITE"
+                        } else {
+                            Note "[STALE] skill '$slug' ($existV -> $bundleV; pass -ForceOverwrite to update)"
+                            $StaleKept++
+                            $SkillVerdict[$slug] = "SKIP"
+                        }
+                    }
+                    0 {
+                        Note "[OK SAME] skill '$slug' ($existV)"
+                        $SkillVerdict[$slug] = "SKIP"
+                    }
+                    1 {
+                        Note "[NEWER] skill '$slug' ($existV > $bundleV; refusing downgrade)"
+                        $Newer++
+                        $SkillVerdict[$slug] = "SKIP"
+                    }
+                }
+                return
+            }
+            elseif ($existV -and -not $bundleV) {
+                # Existing install has a version but the bundle does not (ambiguous);
+                # skip to avoid overwriting a potentially newer installed version.
+                Note "[UNKNOWN VERSION] skill '$slug' (installed: $existV; bundle version unreadable - skipping)"
+                $SkillVerdict[$slug] = "SKIP"
+                return
+            }
+            elseif (-not $existV -and $bundleV) {
+                # Installed copy has no parseable version but bundle does (ambiguous);
+                # skip to avoid accidentally downgrading an untagged manual install.
+                Note "[UNKNOWN VERSION] skill '$slug' (installed: unversioned; bundle: $bundleV - skipping)"
+                $SkillVerdict[$slug] = "SKIP"
+                return
+            }
+        }
+        $SkillVerdict[$slug] = "ADD"
+    }
+}
+Write-Host ""
+
+$bundleClaude = Join-Path $BundleDir ".claude"
+Get-ChildItem -Recurse -File -Path $bundleClaude | Sort-Object FullName | ForEach-Object {
+    $src = $_.FullName
+    $rel = $src.Substring($BundleDir.Length + 1) -replace '\\', '/'
+    $dst = Join-Path $TargetDir $rel
+    $dstDir = Split-Path -Parent $dst
+
+    # Determine skill slug from path (.claude/skills/<slug>/...)
+    $localSlug = $null
+    if ($rel -match '^\.claude/skills/([^/]+)/') {
+        $localSlug = $matches[1]
+    }
+
+    # Apply per-skill verdict when available
+    if ($localSlug -and $SkillVerdict.ContainsKey($localSlug)) {
+        $verdict = $SkillVerdict[$localSlug]
+        switch ($verdict) {
+            "SKIP" {
+                $Skipped++
+                return
+            }
+            "OVERWRITE" {
+                if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+                if (Test-Path $dst) {
+                    Copy-Item -Path $dst -Destination "$dst.bak.$BackupTs" -Force
+                    Copy-Item -Path $src -Destination $dst -Force
+                    Note "[OVERWRITE] $rel (backup: $dst.bak.$BackupTs)"
+                    $Overwrote++
+                } else {
+                    Copy-Item -Path $src -Destination $dst -Force
+                    Note "[+] $rel"
+                    $Added++
+                }
+                return
+            }
+            "ADD" {
+                # Fall through to generic logic
+            }
+        }
+    }
+
+    # Generic file logic (non-skill files, or new skill files with verdict=ADD)
+    if (Test-Path $dst) {
+        if ($ForceOverwrite) {
+            if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+            Copy-Item -Path $dst -Destination "$dst.bak.$BackupTs" -Force
+            Copy-Item -Path $src -Destination $dst -Force
+            Note "[OVERWRITE] $rel (backup: $dst.bak.$BackupTs)"
+            $Overwrote++
+        } else {
+            Note "[SKIP] $rel (exists; -ForceOverwrite to replace)"
+            $Skipped++
+        }
+    } else {
+        if (-not (Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+        Copy-Item -Path $src -Destination $dst -Force
+        Note "[+] $rel"
+        $Added++
+    }
+}
+
+# --- Per-skill install hooks (opt-in) ---
+# These hooks execute arbitrary code on the recipient's machine.
+# Default: skip. Pass -RunHooks after reviewing the scripts.
+Write-Host ""
+if ($RunHooks) {
+    Log "Running per-skill install hooks (-RunHooks)"
+    $skillsDir = Join-Path $TargetDir ".claude\skills"
+    if (Test-Path $skillsDir) {
+        Get-ChildItem -Path $skillsDir -Directory | Sort-Object Name | ForEach-Object {
+            $hookPs1 = Join-Path $_.FullName "install.ps1"
+            if (Test-Path $hookPs1) {
+                Note "-> $hookPs1"
+                try { & powershell -ExecutionPolicy Bypass -File $hookPs1 } catch { Note "   ! exited non-zero (continuing)" }
+            }
+        }
+    }
+} else {
+    Log "Skipping per-skill install hooks (pass -RunHooks to enable)"
+    Log "Review .claude\skills\*\install.ps1 before enabling."
+}
+
+# --- Summary ---
+Write-Host ""
+Log "Summary"
+Note "Added:           $Added"
+Note "Skipped:         $Skipped"
+Note "Overwrote:       $Overwrote"
+Note "Stale kept:      $StaleKept"
+Note "Stale overwrote: $StaleWrote"
+Note "Newer kept:      $Newer"
+Write-Host ""
+Log "Done. Invoke skills from Claude Code, e.g. /cleanmatic:claude-pack"

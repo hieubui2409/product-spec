@@ -29,6 +29,13 @@ def test_no_substring_false_positive():
     assert not safety_check.is_dropped("legitimate/.envfoo")[0]
 
 
+def test_drops_plans_dir():
+    """Internal planning/reports must never ship to recipients."""
+    dropped, rule = safety_check.is_dropped(".claude/skills/x/plans/reports/note.md")
+    assert dropped
+    assert "plans" in rule
+
+
 def test_expanded_secrets_dropped():
     """expanded secrets list: keys, credentials, certs, tokens."""
     for path in (".envrc", "id_rsa", "id_ed25519", "id_ecdsa",
@@ -83,6 +90,32 @@ def test_optional_paths():
     assert opt and label == "ck-config"
     opt, label = safety_check.is_optional("random/file.json")
     assert not opt
+
+
+def test_case_insensitive_exact_drops():
+    """Uppercase / mixed-case exact basenames must drop (.ENV, ID_RSA, etc.)."""
+    for path in (".ENV", ".Env", "some/.ENV", "ID_RSA", "ID_Ed25519", ".NETRC", ".Pgpass"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"case-insensitive exact drop missed: {path}"
+        assert rule is not None and "always-drop:exact:" in rule
+
+
+def test_case_insensitive_dir_drops():
+    """Uppercase / mixed-case directory components must drop (.GIT, __PYCACHE__, .Venv)."""
+    for path in (".GIT/config", "foo/.GIT/objects/HEAD", "__PYCACHE__/foo.pyc",
+                 ".VENV/bin/python", "NODE_MODULES/pkg/index.js"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"case-insensitive dir drop missed: {path}"
+        assert rule is not None and "always-drop:dir:" in rule
+
+
+def test_case_insensitive_pattern_drops():
+    """Uppercase / mixed-case extension patterns must drop (deploy.PEM, .ENV, ID_RSA path)."""
+    for path in ("deploy.PEM", "path/to/DEPLOY.PEM", "server.KEY", "bundle.P12",
+                 "SECRETS.json", "CREDENTIALS.yaml", ".ENV.PRODUCTION",
+                 "infra/id_rsa.PUB"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"case-insensitive pattern drop missed: {path}"
 
 
 def test_find_shared_refs_strips_code_blocks(tmp_path):

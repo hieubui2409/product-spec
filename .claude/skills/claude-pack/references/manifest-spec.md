@@ -15,7 +15,7 @@ The schema reference for `.claude/pack.manifest.yaml`. Implementation: `scripts/
 | `rules` | list[string] | no | `[]` | Rule filenames under `.claude/rules/` (`.md` auto-appended). |
 | `extra` | list[string] | no | `[]` | Repo-relative paths. NO absolute. NO `..`. |
 | `top_level` | mapping | no | `{}` | Top-level repo flags. See below. |
-| `defaults` | mapping | no | `{}` | Default-ship behavior. See below. |
+| `defaults` | mapping | no | `{}` | Opt-in subtree + size behavior. See below. |
 | `follow_shared` | bool | no | `false` | If true, auto-include `_shared/` refs. Default warn-only. |
 
 Unknown top-level keys emit a `MANIFEST_E060` error.
@@ -35,8 +35,8 @@ Strict known-keys check. Unknown keys → `MANIFEST_E031`. Non-bool values → `
 
 | Key | Type | Default | Effect |
 |-----|------|---------|--------|
-| `include_scripts` | bool | `true` | Auto-prepend `.claude/scripts/` to `extra`. |
-| `include_schemas` | bool | `true` | Auto-prepend `.claude/schemas/` to `extra`. |
+| `include_scripts` | bool | `false` | **Opt-in.** Auto-prepend `.claude/scripts/` to `extra`. CK-framework internals — NOT shipped by default. Enable with `--include-scripts`. |
+| `include_schemas` | bool | `false` | **Opt-in.** Auto-prepend `.claude/schemas/` to `extra`. CK-framework internals — NOT shipped by default. Enable with `--include-schemas`. |
 | `max_size_bytes` | int | 100MB | Reject if compressed tarball exceeds. CLI `--max-size` overrides. |
 
 ## CLI Merge Precedence
@@ -46,7 +46,7 @@ Strict known-keys check. Unknown keys → `MANIFEST_E031`. Non-bool values → `
  - For list keys: CLI value (csv-split, deduped) replaces manifest if not `None`.
  - For boolean flags using `BooleanOptionalAction(default=None)`: `None` = no override, `True`/`False` overrides.
 3. `manifest_loader.validate(manifest, root)` returns list of error strings (each prefixed with stable code).
-4. `manifest_loader.apply_defaults(manifest, root)` fills missing keys + auto-prepends default-ship subtrees.
+4. `manifest_loader.apply_defaults(manifest, root)` fills missing keys + prepends the `scripts`/`schemas` subtrees **only when their `defaults` flag is true** (both default false → opt-in).
 
 ## Validation Rules
 
@@ -55,7 +55,7 @@ Strict known-keys check. Unknown keys → `MANIFEST_E031`. Non-bool values → `
 - Each list category: non-empty strings; no duplicates.
 - `extra` paths: no absolute (`/etc/foo` or `C:\bar`); no traversal (`..`).
 - On-disk existence checked case-sensitively (`MANIFEST_E070`+).
-- Ambiguous basename match (multiple files under search root) → `MANIFEST_E071`.
+- Ambiguous basename match (multiple files under search root) → `MANIFEST_E071` (agents), `E072` (rules), `E074` (hooks). Rename or pin a unique path; this guards against a non-deterministic `rglob` pick.
 
 ## Extension Auto-Append
 
