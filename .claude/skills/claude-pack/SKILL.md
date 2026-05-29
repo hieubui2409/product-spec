@@ -31,6 +31,7 @@ Developer-facing skill that bundles a curated subset of this repo's `.claude/` t
 | `--all` | (v0.5+) Pack everything under `.claude/` not on the always-drop list. Not implemented in v0.1 — errors. |
 | `--skills <list>` | Comma-separated skill slugs (override manifest). |
 | `--agents <list>` | Comma-separated agent slugs (override manifest). |
+| `--hooks <list>` | Comma-separated hook filenames (override manifest). |
 | `--rules <list>` | Comma-separated rule filenames (override manifest). |
 | `--extra <paths>` | Extra repo-relative paths (no `..`, no absolute). |
 | `--version <semver>` | Override `manifest.version` for ad-hoc builds. |

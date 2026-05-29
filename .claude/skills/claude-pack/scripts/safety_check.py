@@ -58,6 +58,15 @@ ALWAYS_DROP_PATTERNS: tuple[str, ...] = (
     "**/*.pyc", "**/*.pyo",
 )
 
+# Pre-lowered (full-glob, bare-glob) twins, computed ONCE at import. is_dropped is
+# called per entry/file across three walk loops, so the patterns are invariant —
+# re-lowering + re-slicing them on every call was redundant. The `bare` form drops
+# the leading "**/" so a top-level basename (no slash) still matches.
+_PATTERNS_LOWER: tuple[tuple[str, str], ...] = tuple(
+    (g.lower(), g.lower()[3:] if g.lower().startswith("**/") else g.lower())
+    for g in ALWAYS_DROP_PATTERNS
+)
+
 OPT_IN_PATHS: dict[str, str] = {
     ".claude/settings.json": "settings",
     ".claude/.ck.json": "ck-config",
@@ -101,15 +110,13 @@ def is_dropped(path: str) -> tuple[bool, str | None]:
             return True, f"always-drop:dir:{part.lower()}"
 
     path_lower = path.lower()
-    for glob in ALWAYS_DROP_PATTERNS:
-        # Match the full arcname AND the basename. fnmatch treats the leading
-        # ``**/`` literally (it needs a real ``/``), so a top-level file with no
-        # slash in its arcname (e.g. ``deploy.pem`` added via ``extra``) would
-        # otherwise slip past every ``**/``-prefixed secret pattern. Stripping
-        # the ``**/`` and matching the basename closes that hole.
-        # Both operands are pre-lowered so matching is case-insensitive.
-        glob_lower = glob.lower()
-        bare_lower = glob_lower[3:] if glob_lower.startswith("**/") else glob_lower
+    # Match the full arcname AND the basename. fnmatch treats the leading ``**/``
+    # literally (it needs a real ``/``), so a top-level file with no slash in its
+    # arcname (e.g. ``deploy.pem`` added via ``extra``) would otherwise slip past
+    # every ``**/``-prefixed secret pattern; matching the bare basename closes
+    # that hole. Both operands are pre-lowered (case-insensitive); the pattern
+    # twins are precomputed at import (see _PATTERNS_LOWER).
+    for glob_lower, bare_lower in _PATTERNS_LOWER:
         if fnmatch.fnmatchcase(path_lower, glob_lower) or fnmatch.fnmatchcase(basename_lower, bare_lower):
             return True, f"always-drop:pattern:{glob_lower}"
 

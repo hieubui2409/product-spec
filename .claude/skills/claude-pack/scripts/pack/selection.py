@@ -55,16 +55,23 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
         rel = resolved.relative_to(claude_dir).as_posix()
         entries.append((resolved, f".claude/{rel}"))
 
-    for name in manifest.get("hooks", []):
-        # Sorted so the pick is deterministic across machines; validate()
+    hook_names = manifest.get("hooks", [])
+    if hook_names:
+        # Walk hooks/ ONCE into a basename->paths index, then resolve each requested
+        # name via lookup — instead of an rglob() full-tree scan per requested name
+        # (O(hooks·tree)). Sorted pick stays deterministic across machines; validate()
         # rejects the >1-match (ambiguous) case before we get here.
-        matches = sorted(
-            (m for m in (claude_dir / "hooks").rglob(name) if m.is_file()),
-            key=lambda m: m.as_posix(),
-        )
-        if matches:
-            rel = matches[0].relative_to(claude_dir).as_posix()
-            entries.append((matches[0], f".claude/{rel}"))
+        hooks_dir = claude_dir / "hooks"
+        by_name: dict[str, list[Path]] = {}
+        if hooks_dir.is_dir():
+            for m in hooks_dir.rglob("*"):
+                if m.is_file():
+                    by_name.setdefault(m.name, []).append(m)
+        for name in hook_names:
+            matches = sorted(by_name.get(name, []), key=lambda m: m.as_posix())
+            if matches:
+                rel = matches[0].relative_to(claude_dir).as_posix()
+                entries.append((matches[0], f".claude/{rel}"))
 
     for path_entry in manifest.get("extra", []):
         src = root / path_entry
