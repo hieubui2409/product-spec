@@ -7,6 +7,7 @@ File-granular sorted walk: never call ``tar.add(dir)``, always per-file
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import manifest_loader  # type: ignore[import-not-found]
@@ -33,6 +34,8 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
     shared = manifest.get("_include_shared") or []
     if isinstance(shared, str):  # tolerate a hand-edited scalar instead of a list
         shared = [s.strip() for s in shared.split(",") if s.strip()]
+    elif not isinstance(shared, list):  # a malformed scalar (int/dict) is not iterable
+        shared = []
     for slug in shared:
         _walk_dir(claude_dir / "skills" / "_shared" / slug,
                   f".claude/skills/_shared/{slug}")
@@ -81,12 +84,21 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
         if not dropped:
             safe.append((src, arc))
 
-    seen: set[str] = set()
+    seen: dict[str, Path] = {}
     unique: list[tuple[Path, str]] = []
     for src, arc in safe:
         if arc in seen:
+            # Two DIFFERENT sources resolving to one arcname (e.g. overlapping
+            # `extra` paths): keep the first, but never drop SILENTLY — the
+            # recipient would be missing content with no signal. Same src twice
+            # is a harmless true-duplicate (no warn).
+            if seen[arc] != src:
+                sys.stderr.write(
+                    f"WARN: arcname collision {arc!r}: keeping {seen[arc]}, "
+                    f"dropping {src}\n"
+                )
             continue
-        seen.add(arc)
+        seen[arc] = src
         unique.append((src, arc))
     unique.sort(key=lambda x: x[1].encode("utf-8"))
     return unique

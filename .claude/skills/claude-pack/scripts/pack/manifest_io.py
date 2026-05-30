@@ -112,7 +112,22 @@ def atomic_replace(tmp: Path, final: Path, *, force: bool) -> None:
         os.replace(str(tmp), str(final))
     except OSError as e:
         if "cross-device" in str(e).lower() or "EXDEV" in str(e):
-            shutil.move(str(tmp), str(final))
+            # Cross-fs fallback. If the move ALSO fails, restore the backup and
+            # drop the tmp before re-raising — mirror the non-EXDEV path so the
+            # user's output is never left only as a .bak.{epoch} with final absent.
+            try:
+                shutil.move(str(tmp), str(final))
+            except OSError as move_err:
+                tmp.unlink(missing_ok=True)
+                if backup is not None and backup.exists():
+                    try:
+                        backup.rename(final)
+                    except OSError as restore_err:
+                        raise OSError(
+                            f"{move_err}; restore failed ({restore_err}); "
+                            f"previous output preserved at {backup}"
+                        ) from move_err
+                raise
         else:
             # Restore backup before re-raising so the user's existing output
             # is not left only as a .bak.{epoch} file with the final path absent.

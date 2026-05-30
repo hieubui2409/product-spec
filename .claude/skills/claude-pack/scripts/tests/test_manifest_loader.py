@@ -248,3 +248,35 @@ def test_is_absolute_or_drive_posix_colon_not_rejected(tmp_root):
         {"version": "1.0.0", "extra": ["a:b"]}, tmp_root,
     )
     assert not any("MANIFEST_E020" in e for e in errors)
+
+
+def _raise_oserror(msg):
+    def _f(*a, **k):
+        raise OSError(msg)
+    return _f
+
+
+def test_atomic_replace_restores_backup_when_exdev_move_fails(tmp_path, monkeypatch):
+    """If the EXDEV cross-fs fallback (shutil.move) ALSO fails, the pre-existing
+    output is restored from backup, not left orphaned as a .bak.* file."""
+    import pytest
+    from pack.manifest_io import atomic_replace
+    final = tmp_path / "out.tar.gz"
+    final.write_text("ORIGINAL")
+    tmp = tmp_path / ".out.tmp"
+    tmp.write_text("NEW")
+    monkeypatch.setattr("pack.manifest_io.os.replace",
+                        _raise_oserror("EXDEV cross-device link not permitted"))
+    monkeypatch.setattr("pack.manifest_io.shutil.move", _raise_oserror("move denied"))
+    with pytest.raises(OSError):
+        atomic_replace(tmp, final, force=True)
+    assert final.exists() and final.read_text() == "ORIGINAL", \
+        "pre-existing output must be restored when the EXDEV move fails"
+
+
+def test_resolve_selection_tolerates_non_list_include_shared(tmp_path):
+    """A malformed scalar _include_shared (int/dict) must not crash the walk."""
+    from pack.selection import resolve_selection
+    (tmp_path / ".claude").mkdir()
+    sel = resolve_selection({"_include_shared": 123, "skills": []}, tmp_path)
+    assert isinstance(sel, list)  # coerced to no-op, not a TypeError
