@@ -85,13 +85,23 @@ def _load_mermaid_js() -> str:
 def _render_view_body(view_format: str, view_text: str) -> str:
     """Wrap the per-view body so the page renders Mermaid OR pre text.
 
-    view_format == "mermaid"  -> extract inner Mermaid DSL from fenced block,
-                                 wrap in <div class="mermaid">.
-    view_format == "pre" / *  -> escape view_text and wrap in <pre> so the
-                                 browser renders raw ASCII (used for the
-                                 heatmap / persona / risk views where Mermaid
-                                 has no clean expression).
+    view_format == "mermaid"   -> extract inner Mermaid DSL from fenced block,
+                                  wrap in <div class="mermaid">.
+    view_format == "html"/"risk-grid" -> view_text is an ALREADY-SAFE HTML
+                                  fragment (e.g. the risk() grid, whose spec
+                                  text was escaped at build time). Inject as-is
+                                  — do NOT re-escape (that would render the
+                                  <table> markup as literal text).
+    view_format == "pre" / *   -> escape view_text and wrap in <pre> so the
+                                  browser renders raw ASCII (used for the
+                                  heatmap / persona views where Mermaid has no
+                                  clean expression).
     """
+    if view_format in ("html", "risk-grid"):
+        # Pre-rendered HTML-native fragment. The ONLY safe-HTML view_format:
+        # the producer (render_html.risk) is responsible for escaping every
+        # spec-derived value through _escape() before assembling the fragment.
+        return view_text
     if view_format == "mermaid":
         m = re.search(r"```mermaid\n(.*?)\n```", view_text, re.DOTALL)
         body = m.group(1) if m else view_text
@@ -125,6 +135,138 @@ def _escape(s: str) -> str:
          .replace('"', "&quot;")
          .replace("'", "&#39;")
     )
+
+
+# ── HTML-native risk grid (impact × likelihood) ─────────────────────────────
+#
+# The risk view is the one graph view Mermaid can't express cleanly (design
+# report Q44: matrix/heatmap/risk-grid = HTML-native table). It is NOT a body
+# view: risk fields are short structured scalars + free-text, rendered as a
+# server-escaped <table> through _escape() — the SAME chokepoint discipline as
+# the heatmap/persona <pre> path. It therefore inlines NO marked/DOMPurify and
+# NO Mermaid runtime (symmetric payload gating: the grid is plain HTML/CSS).
+
+_RISK_IMPACT_ROWS = ("high", "med", "low")        # top-to-bottom (matches ASCII grid)
+_RISK_LIKELIHOOD_COLS = ("low", "med", "high")    # left-to-right
+_RISK_RANK = {"low": 1, "med": 2, "high": 3}
+# Heat tier by impact×likelihood product (1..9): low (green) / mid (amber) / high (red).
+# Uses the shared design-system *-dim background tokens so the grid follows the
+# light/dark theme like every other product-spec surface.
+_RISK_STATUS_BADGE = {"open": "amber", "mitigated": "green", "accepted": "teal"}
+
+
+def _risk_heat_class(impact: str, likelihood: str) -> str:
+    score = _RISK_RANK.get(impact, 0) * _RISK_RANK.get(likelihood, 0)
+    if score >= 6:
+        return "rg-cell--high"
+    if score >= 3:
+        return "rg-cell--mid"
+    return "rg-cell--low"
+
+
+def _risk_cell_detail(cell_risks: list) -> str:
+    """The drill-down body for one grid cell: a <details> listing each risk's
+    description + mitigation + status badge. All spec text escaped server-side.
+    Sorted by description so the cell body is deterministic."""
+    items = []
+    for r in sorted(cell_risks, key=lambda r: str(r.get("description") or "")):
+        desc = _escape(str(r.get("description") or "(no description)"))
+        status = str(r.get("status") or "")
+        badge = ""
+        if status:
+            # Known statuses get a semantic tint; an off-enum status (separately
+            # flagged unknown_enum) falls back to the shared neutral badge--type
+            # so it still renders as a recognizable pill, never an undefined class.
+            tone = _RISK_STATUS_BADGE.get(status)
+            cls = f"rg-badge--{tone}" if tone else "badge--type"
+            badge = f' <span class="badge {cls}">{_escape(status)}</span>'
+        mit = r.get("mitigation")
+        mit_html = (
+            f'<div class="rg-mit"><span class="rg-mit-label">Mitigation:</span> {_escape(str(mit))}</div>'
+            if mit else '<div class="rg-mit rg-mit--none">No mitigation recorded</div>'
+        )
+        node = _escape(str(r.get("node") or ""))
+        src = f'<div class="rg-src">{node}</div>' if node else ""
+        items.append(f'<li><div class="rg-desc">{desc}{badge}</div>{mit_html}{src}</li>')
+    inner = "".join(items)
+    return f'<details class="rg-detail"><summary>{len(cell_risks)}</summary><ul class="rg-list">{inner}</ul></details>'
+
+
+def risk(graph: Dict[str, Any]) -> str:
+    """HTML-native 3×3 risk grid (impact rows × likelihood cols).
+
+    Each cell shows its risk count; a non-empty cell expands (<details>) to the
+    description + mitigation + status of every risk it holds — the rendered
+    surface for G-C3's mitigation/status (dead data until shown). Risks whose
+    impact/likelihood are absent/typo'd land in an `(unrated)` overflow row so
+    they are never silently dropped (the enum typo is separately flagged by
+    check_consistency). Returns a self-contained fragment (scoped <style> + the
+    table); deterministic — no timestamp inside the fragment."""
+    risks = graph.get("risks") or []
+    # Bucket risks into the 3×3 matrix; collect anything off-enum into `unrated`.
+    cells: Dict[str, Dict[str, list]] = {i: {l: [] for l in _RISK_LIKELIHOOD_COLS} for i in _RISK_IMPACT_ROWS}
+    unrated: list = []
+    for r in risks:
+        if not isinstance(r, dict):
+            continue
+        imp, lik = r.get("impact"), r.get("likelihood")
+        if imp in _RISK_IMPACT_ROWS and lik in _RISK_LIKELIHOOD_COLS:
+            cells[imp][lik].append(r)
+        else:
+            unrated.append(r)
+
+    head_cols = "".join(f"<th scope='col'>{_escape(l)}</th>" for l in _RISK_LIKELIHOOD_COLS)
+    body_rows = []
+    for imp in _RISK_IMPACT_ROWS:
+        tds = []
+        for lik in _RISK_LIKELIHOOD_COLS:
+            cell = cells[imp][lik]
+            heat = _risk_heat_class(imp, lik)
+            inner = _risk_cell_detail(cell) if cell else '<span class="rg-empty">0</span>'
+            tds.append(f'<td class="rg-cell {heat}">{inner}</td>')
+        body_rows.append(f"<tr><th scope='row'>{_escape(imp)}</th>{''.join(tds)}</tr>")
+
+    unrated_row = ""
+    if unrated:
+        span = len(_RISK_LIKELIHOOD_COLS)
+        unrated_row = (
+            f"<tr><th scope='row'>(unrated)</th>"
+            f'<td class="rg-cell rg-cell--unrated" colspan="{span}">{_risk_cell_detail(unrated)}</td></tr>'
+        )
+
+    empty_note = "" if risks else '<p class="ps-meta">No risks recorded on any PRD or Epic yet.</p>'
+    return (
+        _RISK_GRID_CSS
+        + '<table class="risk-grid"><caption class="rg-caption">Risk: impact (rows) × likelihood (columns). '
+        'Click a count to see description, mitigation, and status.</caption>'
+        f"<thead><tr><th scope='col'>impact \\ likelihood</th>{head_cols}</tr></thead>"
+        f"<tbody>{''.join(body_rows)}{unrated_row}</tbody></table>"
+        + empty_note
+    )
+
+
+# Scoped grid CSS — reuses the shared palette vars (theme-aware) so the grid
+# matches every other product-spec HTML surface; injected with the fragment so
+# the shared head partial stays untouched.
+_RISK_GRID_CSS = (
+    "<style>"
+    ".risk-grid{border-collapse:collapse;width:100%;max-width:48rem;}"
+    ".risk-grid th,.risk-grid td{border:1px solid var(--border);padding:.5rem .6rem;vertical-align:top;text-align:left;}"
+    ".risk-grid thead th,.risk-grid tbody th{background:var(--recessed);color:var(--muted);font-weight:600;font-size:.85rem;}"
+    ".rg-caption{caption-side:top;text-align:left;color:var(--muted);font-size:.85rem;margin-bottom:.5rem;}"
+    ".rg-cell--low{background:var(--green-dim);}.rg-cell--mid{background:var(--amber-dim);}.rg-cell--high{background:var(--red-dim);}"
+    ".rg-cell--unrated{background:var(--surface);}"
+    ".rg-empty{color:var(--muted);}"
+    ".rg-detail summary{cursor:pointer;font-weight:600;}"
+    ".rg-list{margin:.4rem 0 0;padding-left:1.1rem;}.rg-list li{margin:.3rem 0;}"
+    ".rg-desc{font-weight:600;}.rg-mit{font-size:.85rem;color:var(--text);}"
+    ".rg-mit--none{color:var(--muted);font-style:italic;}.rg-mit-label{color:var(--muted);}"
+    ".rg-src{font-size:.75rem;color:var(--muted);font-family:ui-monospace,monospace;}"
+    ".rg-badge--green{background:var(--green-dim);color:var(--green);}"
+    ".rg-badge--amber{background:var(--amber-dim);color:var(--amber);}"
+    ".rg-badge--teal{background:var(--teal-dim);color:var(--teal);}"
+    "</style>"
+)
 
 
 # ── Shared body-render substrate (export / board / explorer) ────────────────

@@ -39,12 +39,12 @@ The 9 graph views support all 3 formats. The 2 body views default to HTML and fa
 | `persona` | ASCII table (persona × feature) | text fallback (`pre`) | Mermaid embed |
 | `gap` | ASCII bullet list of unaddressed nodes | `flowchart LR` with gap nodes highlighted | Mermaid embed |
 | `moscow` | 2×2 ASCII grid | `quadrantChart` (must/should × could/wont) | Mermaid embed |
-| `risk` | 3×3 ASCII grid | text fallback (`pre`) | Mermaid embed |
+| `risk` | 3×3 ASCII grid | text fallback (`pre`) | **HTML-native `<table>`** (impact × likelihood; cells drill down to description + mitigation + status). Not Mermaid — Q44. |
 | `delta` | unified-diff-style text | `flowchart TB` with +/− tags | Mermaid embed |
 | `board` | grouped lists per `--group-by` | → ASCII board (note on stderr) | **default** — kanban + search/facets + click→sanitized body |
 | `explorer` | = `tree`; with `--layers` an orphan-rooted forest (surviving nodes whose parent was filtered out become roots, like the HTML explorer) | → ASCII tree (note on stderr) | **default** — Tree/Flat-tabs/Table-tree + search/facets |
 
-If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment. Body views (`board`/`explorer`) have no Mermaid form at all — `--format mermaid` falls back to their ASCII renderer with a one-line note on stderr.
+If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment. The `risk` view is the exception that goes the other way: Mermaid still falls back to text, but its **HTML** form is an HTML-native `<table>` (`render_html.risk()`), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native per Q44. Body views (`board`/`explorer`) have no Mermaid form at all — `--format mermaid` falls back to their ASCII renderer with a one-line note on stderr.
 
 ## Graph JSON Shape (single source of truth)
 
@@ -82,7 +82,7 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
     {"from": "PRD-AUTH-E1-S1", "to": "PRD-AUTH-E1", "kind": "epic"}
   ],
   "risks": [
-    {"node": "PRD-AUTH-E1", "description": "OAuth dependency", "impact": "high", "likelihood": "med"}
+    {"node": "PRD-AUTH-E1", "description": "OAuth dependency", "impact": "high", "likelihood": "med", "mitigation": "Fallback provider on standby", "status": "open"}
   ]
 }
 ```

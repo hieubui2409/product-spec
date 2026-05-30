@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, _now
+from spec_graph import build_graph, matching_child_counts, _now
 
 configure_utf8_console()
 
@@ -43,6 +43,12 @@ ENUMS = {
     "horizon": {"now", "next", "later"},
     "size": {"S", "M", "L"},
     "lang": {"en", "vi"},
+    # Risk-entry sub-field enums. Distinct keys from the artifact-level `status`
+    # above: a risk's `status` is open|mitigated|accepted, NOT the artifact's
+    # draft|review|approved lifecycle. Validated per-entry in _check_risks().
+    "risk_impact": {"low", "med", "high"},
+    "risk_likelihood": {"low", "med", "high"},
+    "risk_status": {"open", "mitigated", "accepted"},
 }
 
 # List-typed frontmatter fields. If a generate-templates regression (or a
@@ -64,6 +70,18 @@ LIST_FIELDS = (
 # PO sees an explicit signal at validate time instead of trusting the LLM
 # to remember to push back during interview.
 PERSONA_SOFT_CAP = 4
+
+# When more than this fraction of an artifact's risks sit at `impact: high`,
+# `risk_high_ratio` warns (the risk register is top-heavy — the PO is either
+# over-rating or genuinely exposed). A strict majority: 3/5 (60%) trips, 2/5
+# (40%) does not. Tunable module constant (mirrors PERSONA_SOFT_CAP).
+RISK_HIGH_RATIO = 0.5
+
+# An epic with at least this many child stories but zero declared risks trips
+# `risk_blindspot` — a sizeable feature with no risk register is a blind spot.
+# The child-story count is a deterministic graph traversal (NOT an LLM
+# judgment), keeping this in the script layer per the Script-vs-LLM split.
+RISK_BLINDSPOT_MIN_STORIES = 5
 
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
 
@@ -115,6 +133,8 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                     value=v,
                 ))
 
+        findings.extend(_check_risks(n))
+
         # Soft cap on personas — surface as a warn (not blocking). Lives
         # alongside enum checks because the cap shape is closed (count) even
         # though the list contents are free text.
@@ -141,6 +161,8 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings.extend(_version_inconsistency(graph))
     findings.extend(_self_reference(graph))
     findings.extend(_session_md_gitignore(graph))
+    findings.extend(_risk_high_ratio(graph))
+    findings.extend(_risk_blindspot(graph))
     return findings
 
 
@@ -264,6 +286,112 @@ def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "context": {"pattern": p},
             })
             break
+    return findings
+
+
+def _check_risks(node: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Validate each entry of a node's `risks:` list.
+
+    Two structural checks, both deterministic:
+      - a non-dict entry (e.g. `risks: ["just a string"]`) reuses the EXISTING
+        `invalid_type` finding rather than inventing a new `invalid_shape` —
+        keeps the catalog small; the whole-list shape error (`risks: "TBD"`)
+        is already caught by the LIST_FIELDS loop in check().
+      - `impact` / `likelihood` / `status` validated against their closed enums
+        → `unknown_enum` (mirrors the artifact-level enum check above). A risk's
+        `status` is open|mitigated|accepted, distinct from the artifact status.
+    """
+    raw = node.get("risks")
+    if not isinstance(raw, list):
+        # None (no risks:) or a bad whole-list shape (handled by LIST_FIELDS).
+        return []
+    findings: List[Dict[str, Any]] = []
+    risk_field_to_enum = {
+        "impact": "risk_impact",
+        "likelihood": "risk_likelihood",
+        "status": "risk_status",
+    }
+    for entry in raw:
+        if not isinstance(entry, dict):
+            findings.append(_f(
+                "invalid_type",
+                "error",
+                node,
+                f"risks[] entry {entry!r} must be a YAML mapping with a "
+                f"`description`; got {type(entry).__name__}.",
+                field="risks",
+                value=entry,
+            ))
+            continue
+        for risk_field, enum_key in risk_field_to_enum.items():
+            val = entry.get(risk_field)
+            if val is None:
+                continue
+            if val not in ENUMS[enum_key]:
+                findings.append(_f(
+                    "unknown_enum",
+                    "error",
+                    node,
+                    f"risk {risk_field}={val!r} not in {sorted(ENUMS[enum_key])}.",
+                    field=f"risks[].{risk_field}",
+                    value=val,
+                ))
+    return findings
+
+
+def _risk_high_ratio(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Warn when more than RISK_HIGH_RATIO of an artifact's risks are `high`
+    impact. Per-node, deterministic count; only artifacts with at least one
+    risk are considered."""
+    findings: List[Dict[str, Any]] = []
+    for n in graph["nodes"]:
+        risks = n.get("risks")
+        if not isinstance(risks, list):
+            continue
+        dict_risks = [r for r in risks if isinstance(r, dict)]
+        total = len(dict_risks)
+        if total == 0:
+            continue
+        high = sum(1 for r in dict_risks if r.get("impact") == "high")
+        if high / total > RISK_HIGH_RATIO:
+            pct = round(high / total * 100)
+            findings.append(_f(
+                "risk_high_ratio",
+                "warn",
+                n,
+                f"{n['id']} has {high}/{total} risks ({pct}%) at impact=high; "
+                f"more than {round(RISK_HIGH_RATIO * 100)}% — review whether the "
+                f"register is over-rated or the feature is genuinely high-exposure.",
+                high=high,
+                total=total,
+            ))
+    return findings
+
+
+def _risk_blindspot(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Warn for an epic with >= RISK_BLINDSPOT_MIN_STORIES child stories and zero
+    declared risks. The child-story count is a deterministic graph traversal —
+    NOT an LLM judgment — keeping the check in the script layer per the
+    Script-vs-LLM split."""
+    findings: List[Dict[str, Any]] = []
+    child_counts = matching_child_counts(graph)
+    for n in graph["nodes"]:
+        if n.get("type") != "epic":
+            continue
+        risks = n.get("risks")
+        has_risk = isinstance(risks, list) and any(isinstance(r, dict) for r in risks)
+        if has_risk:
+            continue
+        story_count = child_counts.get(n["id"], 0)
+        if story_count >= RISK_BLINDSPOT_MIN_STORIES:
+            findings.append(_f(
+                "risk_blindspot",
+                "warn",
+                n,
+                f"{n['id']} has {story_count} child stories but no declared risks. "
+                f"A feature of this size with an empty risk register is a blind spot.",
+                story_count=story_count,
+            ))
     return findings
 
 

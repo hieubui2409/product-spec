@@ -1,6 +1,12 @@
 <!--
 TEMPLATE: epic.md — rich. Goal + business-context links + scope + risks.
 Epic ID = PRD-<SLUG>-E<n>. References parent PRD via `prd` and addresses ≥1 BRD goal.
+`risks:` is a YAML list of dicts; each entry:
+  - description: "Third-party OAuth dependency"   # required free text
+    impact: high          # enum: low | med | high
+    likelihood: med       # enum: low | med | high
+    mitigation: "Fallback provider on standby"     # optional free text
+    status: open          # enum: open | mitigated | accepted
 -->
 ---
 id: {{id}}

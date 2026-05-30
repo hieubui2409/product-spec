@@ -2,6 +2,12 @@
 TEMPLATE: prd.md (Product Requirements Document) — one per feature-area.
 Multi-PRD per BRD. Carries narrative, scope, NFRs, success metrics.
 Does NOT enumerate stories (that lives in epic/story files).
+`risks:` is a YAML list of dicts; each entry:
+  - description: "Third-party OAuth dependency"   # required free text
+    impact: high          # enum: low | med | high
+    likelihood: med       # enum: low | med | high
+    mitigation: "Fallback provider on standby"     # optional free text
+    status: open          # enum: open | mitigated | accepted
 -->
 ---
 id: {{id}}
@@ -18,6 +24,7 @@ scope: {{scope}}
 moscow: {{moscow}}
 horizon: {{horizon}}
 metrics: {{metrics}}
+risks: {{risks}}
 ---
 
 # {{title}} — PRD {{id}}

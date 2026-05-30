@@ -98,6 +98,12 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         "brd_goals": fm.get("brd_goals") or [],
         "epic": fm.get("epic"),
         "prd": fm.get("prd"),
+        # Raw `risks:` list preserved on the node (not just aggregated into
+        # graph["risks"]) so check_consistency can enum-validate each entry's
+        # impact/likelihood/status and flag a non-dict entry via invalid_type.
+        # Kept as `None` when absent so a v1 artifact without risks: stays
+        # back-compatible (no empty-list churn in snapshots/diffs).
+        "risks": fm.get("risks"),
     }
 
 
@@ -212,6 +218,15 @@ def _product_meta(artifacts: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def _risks(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict[str, Any]]:
+    """Aggregate every artifact's `risks:` list into flat risk objects.
+
+    Each emitted object carries its source `node` id plus the risk fields,
+    including `mitigation` (free text) and `status` (open|mitigated|accepted)
+    so the HTML risk grid can show them in the cell drill-down. Non-dict
+    entries (e.g. `risks: ["just a string"]`) are skipped here — the bad shape
+    is surfaced as an `invalid_type` finding by check_consistency, not by
+    silently materializing a malformed graph risk.
+    """
     risks: List[Dict[str, Any]] = []
     for a in artifacts:
         if not a["ok"]:

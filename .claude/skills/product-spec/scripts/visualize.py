@@ -251,6 +251,16 @@ def main() -> int:
         return 0
 
     # html
+    # The risk view has no clean Mermaid form (design report Q44); instead of the
+    # ASCII-in-<pre> fallback the other Mermaid-can't-express views use, it has a
+    # dedicated HTML-native 3×3 grid whose cells drill down to description +
+    # mitigation + status (G-C3 / G-G3). Route it BEFORE the generic Mermaid path.
+    if args.view == "risk":
+        grid = render_html.risk(graph)
+        out = render_html.write(root, "risk", "risk-grid", grid, graph, lang=args.lang)
+        print(_written_json(out, root))
+        return 0
+
     mermaid_text = _render_mermaid(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
     # Mermaid renderers return either a ```mermaid fenced block (true Mermaid
     # DSL) or a plain ``` fenced block (ASCII fallback for views Mermaid can't

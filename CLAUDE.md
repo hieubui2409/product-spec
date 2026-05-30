@@ -164,8 +164,8 @@ Never assume:
 `visualize.py --view <name> --format <ascii|mermaid|html>` returns one of:
 
 - **ASCII** → plain text on stdout. Default; zero deps.
-- **Mermaid** → a fenced markdown block. For views Mermaid can't express cleanly (`heatmap`, `persona`, `risk`, no-baseline `delta`), the renderer emits a plain ` ``` ` fence with the ASCII fallback inside (the dispatcher routes the HTML path accordingly).
-- **HTML** → a self-contained file under `docs/product/visuals/<view>-<timestamp>.html`. Mermaid runtime embedded inline for views that need it; omitted for ASCII-fallback views to keep file size small.
+- **Mermaid** → a fenced markdown block. For views Mermaid can't express cleanly (`heatmap`, `persona`, `risk`, no-baseline `delta`), the renderer emits a plain ` ``` ` fence with the ASCII fallback inside (the dispatcher routes the HTML path accordingly). **Exception — `risk`:** its Mermaid form still falls back to the plain fence, but its **HTML** form is an HTML-native `<table>` grid (`render_html.risk()`, impact × likelihood, cells drill down to description + mitigation + status), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native (Q44).
+- **HTML** → a self-contained file under `docs/product/visuals/<view>-<timestamp>.html`. Mermaid runtime embedded inline for views that need it; omitted for ASCII-fallback views and the HTML-native `risk` grid to keep file size small.
 
 The two **body-bearing** views render artifact bodies, not graphs:
 
