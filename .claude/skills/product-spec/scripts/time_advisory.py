@@ -13,8 +13,10 @@ Pure date comparison — no LLM, no judgment (Script-vs-LLM split / G-B1).
 
 CLI:
     time_advisory.py --root <project-dir> [--today YYYY-MM-DD]
-        Prints {schema_version, root, today, findings:[overdue...]} to stdout.
-        Always exits 0.
+        Prints {schema_version, root, today, checked_at, findings:[overdue...]}
+        to stdout. Always exits 0. (`checked_at` is wall-clock provenance, same
+        envelope as the validate findings schema; reproducibility is over the
+        pinned `--today`, which determines the `findings` payload.)
 """
 
 import argparse

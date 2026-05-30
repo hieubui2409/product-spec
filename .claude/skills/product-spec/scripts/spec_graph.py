@@ -106,7 +106,7 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         # in check_consistency flags a non-empty list on any other type). Sorted +
         # uniform empty default on ALL node types: harmless on a story/goal (the
         # list is empty there) and makes the dep adjacency build branch-free.
-        "depends_on": sorted(fm.get("depends_on") or []),
+        "depends_on": _as_id_list(fm.get("depends_on")),
         # Raw `risks:` list preserved on the node (not just aggregated into
         # graph["risks"]) so check_consistency can enum-validate each entry's
         # impact/likelihood/status and flag a non-dict entry via invalid_type.
@@ -321,7 +321,9 @@ def _closure(adj: Dict[str, List[str]], start: str) -> Set[str]:
             continue
         out.add(n)
         stack.extend(adj.get(n, []))
-    return out
+    # Exclude the start itself: a self-edge (start->start) or a cycle that loops
+    # back to start must not report a node as its own descendant.
+    return out - {start}
 
 
 def children_of(graph: Dict[str, Any]) -> Dict[str, List[str]]:
@@ -442,6 +444,18 @@ def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:
     path = snap_dir / f"{ts}-{content_hash}.json"
     path.write_text(body, encoding="utf-8")
     return path
+
+
+def _as_id_list(v: Any) -> List[str]:
+    """Coerce a frontmatter `depends_on` into a sorted list of ID strings.
+
+    A non-list (a bare scalar / None / mapping from malformed YAML) yields [] —
+    so build_graph never raises on a mixed-type `sorted()` and never silently
+    splits a bare string into characters (`sorted("PRD-2") == ['-','2','D','P','R']`).
+    The wrong-artifact-type placement is surfaced separately by check_consistency."""
+    if not isinstance(v, list):
+        return []
+    return sorted(x for x in v if isinstance(x, str))
 
 
 def _now() -> str:

@@ -228,3 +228,37 @@ def test_renderer_terminates_on_cycle(tmp_path):
     assert out.exists(), "time-view HTML must be written even on a cyclic graph"
     html = out.read_text(encoding="utf-8")
     assert "PRD-A" in html and "PRD-B" in html, "cyclic nodes must still render"
+
+
+# ---------------------------------------------------------------------------
+# Cycle 8 — build_graph robustness on a malformed depends_on + closure self-edge.
+# ---------------------------------------------------------------------------
+
+def test_depends_on_coerces_malformed_value_without_crash_or_charsplit():
+    """`sorted(depends_on)` must not crash on a mixed-type list (TypeError) nor
+    split a bare-string depends_on into characters."""
+    from spec_graph import _as_id_list
+    assert _as_id_list("PRD-2") == []                                  # not ['-','2','D','P','R']
+    assert _as_id_list(["PRD-1", {"k": "v"}, "PRD-2"]) == ["PRD-1", "PRD-2"]  # no TypeError
+    assert _as_id_list(None) == []
+    assert _as_id_list(["B", "A"]) == ["A", "B"]
+
+
+def test_build_graph_survives_bare_string_depends_on(tmp_path):
+    proj = tmp_path / "p"
+    prod = proj / "docs" / "product" / "prds"
+    prod.mkdir(parents=True)
+    (proj / "docs" / "product" / "PRODUCT.md").write_text(
+        "---\nid: PRODUCT\ntype: product\nstatus: draft\nlang: en\n"
+        "name: X\ncore_value: y\npersonas: [s]\n---\n")
+    (prod / "a.md").write_text(
+        "---\nid: PRD-A\ntype: prd\nbrd_goals: [BRD-G1]\nstatus: draft\n"
+        "lang: en\ndepends_on: PRD-2\n---\n")
+    g = build_graph(proj)  # must not raise
+    node = next(n for n in g["nodes"] if n["id"] == "PRD-A")
+    assert node["depends_on"] == []  # bare string coerced to empty, no char-split
+
+
+def test_closure_excludes_start_on_self_edge():
+    from spec_graph import _closure
+    assert _closure({"E1": ["E1", "S1"], "S1": []}, "E1") == {"S1"}

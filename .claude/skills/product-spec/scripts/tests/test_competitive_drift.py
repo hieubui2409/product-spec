@@ -285,3 +285,14 @@ def test_cli_emits_anchors_and_exits_zero(tmp_path):
     assert any(a["artifact_id"] == "PRD-CHECKOUT" and a["eligible"] is True
                and a["all_behind_competitors"] == ["Acme Commerce", "Shopify"]
                for a in anchors), f"CLI must emit resolved anchors: {anchors}"
+
+
+def test_none_parity_not_counted_as_data(tmp_path):
+    """An unset `COMP-X:` parses to Python None ("tracked, no verdict") and must
+    NOT count toward competitors_with_data — only real verdicts do."""
+    proj = _scaffold(tmp_path, _COMP_ACME, _COMP_SHOPIFY, _COMP_NICHE)
+    _write_prd(proj, "c.md", "PRD-C", scope="core-value",
+               parity={"COMP-ACME": "", "COMP-SHOPIFY": "behind", "COMP-NICHE": "behind"})
+    a = _anchor_for(proj, "PRD-C")
+    assert a["competitors_with_data"] == 2, f"None parity must be excluded: {a}"
+    assert "Acme Commerce" not in a["all_behind_competitors"]

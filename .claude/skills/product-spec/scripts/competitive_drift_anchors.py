@@ -42,7 +42,9 @@ exits 0 (an advisory feeder, never a gate), mirroring time_realism_anchors.py.
 
 CLI:
     competitive_drift_anchors.py --root <project-dir>
-        Prints {schema_version, root, anchors:[...]} to stdout. Exits 0.
+        Prints {schema_version, root, checked_at, anchors:[...]} to stdout. Exits 0.
+        (`checked_at` is wall-clock provenance, same envelope as the validate
+        findings schema; the deterministic payload is `anchors`.)
 """
 
 import argparse
@@ -109,8 +111,10 @@ def build_anchors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             })
         resolved.sort(key=lambda r: str(r["competitor_id"]))
         # `none` parity is "tracked but no verdict" — it is NOT a data point. Only
-        # real verdicts (ahead/parity/behind) count toward the drift gate.
-        real = [r for r in resolved if r["parity"] != "none"]
+        # real verdicts (ahead/parity/behind) count toward the drift gate. An unset
+        # `COMP-A:` parses to Python None (check_consistency allows it); None is the
+        # same "no verdict" case as the literal "none" and must not be counted.
+        real = [r for r in resolved if r["parity"] not in (None, "none")]
         competitors_with_data = len(real)
         all_behind = [r["competitor"] for r in real if r["parity"] == "behind"]
         scope = n.get("scope")

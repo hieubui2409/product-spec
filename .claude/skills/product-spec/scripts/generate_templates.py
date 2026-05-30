@@ -12,8 +12,11 @@ Optional sections: `<!-- OPTIONAL: name --> ... <!-- /OPTIONAL -->` blocks
 are kept ONLY if `name` appears in --keep-optional (comma-separated). All
 other optional blocks are dropped.
 
-ID allocation: parent-scoped. For a single run, an in-memory counter ensures
-unique IDs when multiple artifacts share a parent (used by --auto braindump).
+ID allocation: parent-scoped. The CLI allocates ONE id per invocation (it passes
+an empty `session_used`). `allocate_id(..., session_used=[...])` is the library
+entry point for callers that mint MULTIPLE ids in one process: pass the ids
+already handed out this session so siblings under the same parent don't collide
+(exercised by the tests).
 
 CLI:
     generate_templates.py --root <project-dir> --type <type> [--slug <slug>] \\
@@ -282,6 +285,16 @@ def fill_defaults(values: Dict[str, Any], target_type: str, artifact_id: str, la
     for k in MAP_FIELDS:
         out[k] = {}
     out.update(values)
+    # A caller may pass an explicit None for a structural field (e.g. {"personas":
+    # null} from a --values payload), which would shadow the [] / {} default and
+    # break downstream iteration (renderers do `for x in personas`). Restore the
+    # empty default for any None'd list/map field.
+    for k in LIST_FIELDS:
+        if out.get(k) is None:
+            out[k] = []
+    for k in MAP_FIELDS:
+        if out.get(k) is None:
+            out[k] = {}
     out["id"] = artifact_id
     # Defense-in-depth: generate never mints `approved` artifacts. Approval is
     # a separate explicit promotion flow (records owner + date + version bump).
@@ -365,7 +378,11 @@ def main() -> int:
             print(json.dumps(response, indent=2, ensure_ascii=False))
             return 0
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(rendered, encoding="utf-8")
+        # Write with newline translation DISABLED so the generated file is
+        # byte-identical across platforms (LF as authored), not os.linesep-
+        # normalized — matches migrate_multidim_fields' write discipline.
+        with open(out_path, "w", encoding="utf-8", newline="") as fh:
+            fh.write(rendered)
         response["written"] = True
 
     print(json.dumps(response, indent=2, ensure_ascii=False))

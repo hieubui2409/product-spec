@@ -32,7 +32,9 @@ pinnable today. Always exits 0 (an advisory feeder, never a gate); a malformed
 
 CLI:
     time_realism_anchors.py --root <project-dir> [--today YYYY-MM-DD]
-        Prints {schema_version, root, today, anchors:[...]} to stdout. Exits 0.
+        Prints {schema_version, root, today, checked_at, anchors:[...]} to stdout.
+        Exits 0. (`checked_at` is wall-clock provenance, same envelope as the
+        validate findings schema; the deterministic payload is `anchors`.)
 """
 
 import argparse

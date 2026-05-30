@@ -231,7 +231,7 @@ def risk(graph: Dict[str, Any]) -> str:
     if unrated:
         span = len(_RISK_LIKELIHOOD_COLS)
         unrated_row = (
-            f"<tr><th scope='row'>(unrated)</th>"
+            f"<tr><th scope='row'>{_escape('(unrated)')}</th>"
             f'<td class="rg-cell rg-cell--unrated" colspan="{span}">{_risk_cell_detail(unrated)}</td></tr>'
         )
 
@@ -351,7 +351,7 @@ def _competition_heatmap(competitors: list, lang: str = "en") -> str:
         name = _escape(str(c.get("name") or c.get("id") or "(unnamed)"))
         threat = c.get("threat")
         cls = _THREAT_CELL_CLASS.get(threat, "")
-        text = _escape(_threat_label(threat, lang)) if threat is not None else "(unrated)"
+        text = _escape(_threat_label(threat, lang)) if threat is not None else _escape("(unrated)")
         rows.append(
             f"<tr><th scope='row'>{name}</th>"
             f'<td class="cm-cell {cls}">{text}</td></tr>'

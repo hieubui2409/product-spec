@@ -506,3 +506,11 @@ def test_write_snapshot_same_second_does_not_overwrite(tmp_path):
     assert path_a != path_b, "distinct graph contents must produce distinct snapshot paths"
     assert path_a.exists(), "snapshot A must exist"
     assert path_b.exists(), "snapshot B must exist"
+
+
+def test_fill_defaults_restores_list_field_when_caller_passes_none():
+    """A caller-supplied None for a list field must not shadow the [] default —
+    downstream renderers iterate these (e.g. `for p in personas`)."""
+    from generate_templates import fill_defaults
+    out = fill_defaults({"personas": None}, "prd", "PRD-X", "en")
+    assert out["personas"] == [], f"None must be restored to []: {out.get('personas')!r}"
