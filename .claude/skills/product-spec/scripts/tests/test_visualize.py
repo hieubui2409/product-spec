@@ -70,6 +70,26 @@ def test_ascii_grid_separator_aligns_with_overlong_label():
     assert len(widths) == 1, f"misaligned grid: line widths {widths}"
 
 
+def test_ascii_summary_line_collapses_multiline_title():
+    """A multi-line YAML title must not inject extra lines into the one-line-per-node
+    text summary (would corrupt the deterministic grammar + any line-count parser)."""
+    n = {"id": "PRD-X", "type": "prd", "title": "Line one\nLine two\rthree", "status": "draft"}
+    line = render_ascii._summary_line(n, "PRD-X", 1)
+    assert "\n" not in line and "\r" not in line
+    assert "[prd:PRD-X] Line one Line two three · draft" in line
+
+
+def test_ascii_competition_grid_stays_aligned_with_multiline_name():
+    """A competitor name with a newline must not break the aligned grid: every row
+    is one line and all rows share the separator width."""
+    g = {"competitors": [{"id": "COMP-A", "name": "Acme\nEvil", "threat": "high"}],
+         "nodes": [{"id": "PRD-X", "type": "prd", "competitive_parity": {"COMP-A": "behind"}}]}
+    out = render_ascii.competition(g)
+    widths = {len(l) for l in out.splitlines()}
+    assert len(widths) == 1, f"misaligned grid: {widths}"
+    assert "Acme Evil" in out
+
+
 def test_ascii_scope_grid_has_moscow_columns():
     out = render_ascii.scope(_graph())
     for col in ("must", "should", "could", "wont"):

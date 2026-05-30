@@ -42,7 +42,7 @@ def _ascii_product_name(graph: Dict[str, Any]) -> str:
     """The PRODUCT header name for the ASCII tree/forest, or `(no PRODUCT.md)`.
     One home for the ASCII fallback string (render_html.product_name uses a
     different `(unnamed)` fallback for the HTML chrome — intentionally distinct)."""
-    return (graph.get("product") or {}).get("name") or "(no PRODUCT.md)"
+    return _inline((graph.get("product") or {}).get("name") or "(no PRODUCT.md)")
 
 
 def _mark(node: Dict[str, Any], text: str) -> str:
@@ -57,6 +57,15 @@ def _node_id_marker(node: Dict[str, Any], nid: str) -> str:
     return f"{nid} *" if _is_deferred(node) else nid
 
 
+def _inline(s: Any) -> str:
+    """Collapse any whitespace run (incl. CR/LF/tabs) to a single space and strip
+    the ends. A free-text title written as a multi-line YAML scalar would otherwise
+    inject extra lines into a one-line-per-node text summary or tree row, corrupting
+    the deterministic grammar (and any naive line-count parser of the CI output).
+    Mermaid's `_safe_label` and export's `_heading` collapse the same way."""
+    return " ".join(str(s).split())
+
+
 def _summary_line(node: Optional[Dict[str, Any]], nid: str, depth: int) -> str:
     """One text-summary node line in the fixed grammar (phase-spec §"Text-summary
     tree format", F10): `<2*depth spaces>[<type>:<id>] <title> · <status>`. The
@@ -64,8 +73,8 @@ def _summary_line(node: Optional[Dict[str, Any]], nid: str, depth: int) -> str:
     art — this is the zero-dep, byte-deterministic terminal/CI summary."""
     n = node or {}
     ntype = n.get("type") or "?"
-    title = n.get("title") or ""
-    status = n.get("status") or "?"
+    title = _inline(n.get("title") or "")
+    status = _inline(n.get("status") or "?")
     indent = "  " * depth
     return f"{indent}[{ntype}:{_node_id_marker(n, nid)}] {title} · {status}"
 
@@ -472,7 +481,7 @@ def competition(graph: Dict[str, Any]) -> str:
     cols = [str(p.get("id") or "") for p in prds] + ["threat"]
     rows = []
     for c in competitors:
-        name = str(c.get("name") or c.get("id") or "(unnamed)")
+        name = _inline(c.get("name") or c.get("id") or "(unnamed)")
         cells = []
         for p in prds:
             val = _cell(c, p)
@@ -598,7 +607,7 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en") -> str:
             return
         seen = seen | {nid}
         n = nodes_by_id.get(nid, {})
-        title = n.get("title") or ""
+        title = _inline(n.get("title") or "")
         text = f"{nid} — {title}" if (is_root and title) else nid
         lines.append(f"{prefix}{'└── ' if last else '├── '}{_mark(n, text)}")
         kid_prefix = prefix + ("    " if last else "│   ")
