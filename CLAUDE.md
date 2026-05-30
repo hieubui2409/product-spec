@@ -164,9 +164,10 @@ Scripts available:
 - **No prose overwrite on update.** Flag, don't rewrite.
 - **No runtime external network calls when assets are vendored.** Everything runs from the local install (vendored
   Mermaid + marked + DOMPurify, stdlib + pyyaml); the one-time installer is the only network step. Degraded-install
-  caveat: if `mermaid.min.js` failed to vendor, the **9 graph views** fall back to a jsdelivr CDN `<script>` at
-  browser-render time (install.sh warns about this). **Body views never reach a CDN** — if marked/DOMPurify are missing
-  they **fail closed** to escaped plain text, never a CDN sanitizer.
+  caveat: if `mermaid.min.js` failed to vendor, the **Mermaid-rendering graph views** fall back to a jsdelivr CDN
+  `<script>` at browser-render time (install.sh warns about this); ASCII-fallback HTML views (`heatmap`/`persona`/
+  no-baseline `delta`) carry no Mermaid and reach no CDN. **Body views never reach a CDN** — if marked/DOMPurify are
+  missing they **fail closed** to escaped plain text, never a CDN sanitizer.
 - **No SVG/PNG output.** Visualizations are ASCII, Mermaid (markdown-fenced), or self-contained HTML.
 - **No live-reload / server.** Every HTML output is a one-shot, self-contained file opened directly in a browser.
 - **No edit-from-viewer.** `board`/`explorer`/`export` are read/consume surfaces; artifacts are edited via the interview
