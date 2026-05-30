@@ -629,6 +629,30 @@ def product_name(graph: Dict[str, Any]) -> str:
     return (graph.get("product") or {}).get("name") or "(unnamed)"
 
 
+def goal_detail_md(node: Dict[str, Any], lang: str = "en") -> str:
+    """Synthesize a markdown detail body for a BRD goal card.
+
+    Goals are expanded from `brd.md.goals` and carry no narrative body of their own
+    (spec_graph.index_artifacts deliberately does not key them — the BRD prose is the
+    container's, not any one goal's). The board/explorer detail panel renders a
+    per-card markdown body, so a goal card would otherwise open empty while a PRD/
+    epic/story shows its file body. Surface the goal's own structured fields that no
+    card badge already carries — the metrics it is measured by, and its owner — as
+    markdown that flows through the same client sanitize chokepoint as every body.
+    Returns "" for any non-goal node so callers fall back to the artifact body, and
+    "" for a goal with neither field (nothing truthful to synthesize)."""
+    if node.get("type") != "goal":
+        return ""
+    lines = []
+    metrics = [str(m) for m in (node.get("metrics") or []) if m]
+    if metrics:
+        lines.append(f"**{label('metrics', lang)}:** " + ", ".join(metrics))
+    owner = node.get("owner")
+    if isinstance(owner, str) and owner.strip():
+        lines.append(f"**{label('owner', lang)}:** {owner.strip()}")
+    return "\n\n".join(lines)
+
+
 def chrome_values(graph: Dict[str, Any], lang: str, title: str) -> Dict[str, str]:
     """The body-shell token preamble shared by export / board / explorer:
     `lang_attr`, escaped `title`, escaped `product_name`, `generated_at`. Pairs

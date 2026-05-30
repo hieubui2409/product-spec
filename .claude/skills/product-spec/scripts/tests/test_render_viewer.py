@@ -19,6 +19,7 @@ from spec_graph import build_graph, load_artifacts, resolve_ac  # noqa: E402
 import render_ascii  # noqa: E402
 import render_board  # noqa: E402
 import render_explorer  # noqa: E402
+import render_html  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 VALID = FIXTURES / "valid-spec"
@@ -98,6 +99,43 @@ def test_board_payload_missing_group_field_buckets_unassigned():
     payload = render_board.build_payload(g, a, group_by="moscow")
     # goals (no moscow) bucket into the unassigned column.
     assert "unassigned" in payload["columns"]
+
+
+# ---------- goal cards carry a synthesized detail body (no empty panel) --------
+
+def test_goal_detail_md_synthesizes_metrics_and_skips_non_goal():
+    """A goal has no file body; goal_detail_md surfaces its metrics so the detail
+    panel is not empty. A non-goal node returns "" (caller uses the artifact body)."""
+    goal = {"type": "goal", "metrics": ["arr", "repeat-rate"], "owner": "Jane Doe"}
+    md = render_html.goal_detail_md(goal, "en")
+    assert "**Metrics:** arr, repeat-rate" in md
+    assert "**Owner:** Jane Doe" in md
+    assert render_html.goal_detail_md({"type": "prd"}, "en") == ""
+    # a goal with nothing to surface yields "" rather than a stray empty heading
+    assert render_html.goal_detail_md({"type": "goal"}, "en") == ""
+
+
+def test_goal_detail_md_localizes_labels():
+    md = render_html.goal_detail_md({"type": "goal", "metrics": ["arr"]}, "vi")
+    assert "**Chỉ số:** arr" in md
+
+
+def test_board_goal_card_body_is_populated():
+    """Regression: clicking a BRD goal card showed an empty panel while PRD/epic/
+    story cards showed a body — goals are not in index_artifacts so bodies.get was
+    "". The card now carries the synthesized goal body."""
+    g, a = _ga()
+    payload = render_board.build_payload(g, a, group_by="status")
+    goals = [c for c in payload["cards"] if c["type"] == "goal"]
+    assert goals and all(c["body"] for c in goals)
+    assert any("arr" in c["body"] for c in goals)
+
+
+def test_explorer_goal_item_body_is_populated():
+    g, a = _ga()
+    payload = render_explorer.build_payload(g, a)
+    goals = [i for i in payload["items"] if i["type"] == "goal"]
+    assert goals and all(i["body"] for i in goals)
 
 
 # ---------- board: XSS (body + attribute) ----------

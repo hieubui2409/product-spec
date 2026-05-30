@@ -91,7 +91,9 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "layer": n.get("type"),
             "ac_count": ac_counts.get(nid, 0),
             "parents": parents,  # multi-parent; roots have []
-            "body": bodies.get(nid, ""),
+            # Goals carry no file body (they expand from brd.md.goals); synthesize
+            # one from their structured fields so the detail panel is not empty.
+            "body": bodies.get(nid) or render_html.goal_detail_md(n, lang),
         })
 
     # Recompute depth from the RECONCILED multi-parent chain (over present_ids):

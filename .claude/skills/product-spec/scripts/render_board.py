@@ -63,7 +63,9 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             # where goal→brd, which would render a stray 'brd' chip and no 'goal').
             "layer": n.get("type"),
             "column": col,
-            "body": bodies.get(str(n["id"]), ""),
+            # Goals carry no file body (they expand from brd.md.goals); synthesize
+            # one from their structured fields so the detail panel is not empty.
+            "body": bodies.get(str(n["id"])) or render_html.goal_detail_md(n, lang),
         })
 
     # Single source for column ordering: render_ascii._board_columns owns the
