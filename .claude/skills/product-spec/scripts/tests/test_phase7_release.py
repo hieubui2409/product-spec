@@ -10,8 +10,7 @@ cases the phase spec's "Tests First" table names:
         has been MIGRATED to v2 (carries real risk/time/competition data) AND
         still validates with 0 structural errors.
   - test_i18n_new_labels      (G-H1) — every new view/enum label localizes under
-        --lang vi, and a programmatic native-review-pending note is surfaceable
-        (today it is only an inline code comment — not consumable by a renderer).
+        --lang vi (VI is native-reviewed for natural wording).
 
 Back-compat (G-A2, eval `backcompat-v1-spec`) is graded by the eval runner, not
 here; the structural half — a v1 spec (no v2 fields) building + validating clean
@@ -151,10 +150,8 @@ def test_acme_shop_validate():
 
 
 # ---------------------------------------------------------------------------
-# G-H1 — bilingual EN/VI labels for all new enums/views + native-review note.
-# Every new view name and dimension enum must localize under --lang vi, and the
-# "VI ships best-effort, native review pending" note must be a *programmatic*
-# surface (a renderer/skill can show it), not merely an inline code comment.
+# G-H1 — bilingual EN/VI labels for all new enums/views.
+# Every new view name and dimension enum must localize under --lang vi.
 # ---------------------------------------------------------------------------
 
 
@@ -184,15 +181,4 @@ def test_i18n_new_labels():
     assert not untranslated, (
         "these new view labels are not localized under --lang vi (VI == EN "
         f"passthrough): {untranslated}"
-    )
-
-    # A programmatic native-review-pending note must be surfaceable (so the skill
-    # can show the PO that VI is best-effort) — not just an inline code comment.
-    note = getattr(i18n_labels, "NATIVE_REVIEW_NOTE", None)
-    assert isinstance(note, str) and note.strip(), (
-        "i18n_labels must expose a non-empty NATIVE_REVIEW_NOTE the renderers can "
-        "surface (G-H1 native-review-pending note); none found"
-    )
-    assert "vi" in note.lower() or "review" in note.lower(), (
-        f"NATIVE_REVIEW_NOTE should mention the VI/native-review caveat; got {note!r}"
     )

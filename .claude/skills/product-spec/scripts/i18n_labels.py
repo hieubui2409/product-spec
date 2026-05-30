@@ -13,16 +13,6 @@ Frontmatter keys and IDs always stay English regardless of `lang`.
 from typing import Dict
 
 
-# Programmatic native-review caveat (bilingual convention). The VI locale had a
-# native-speaker phrasing pass; this note (surfaced once when --lang vi is
-# active) invites the PO to flag any remaining awkwardness. It is a *consumable*
-# string — not just an inline comment — so the board/explorer/visualization
-# headers can show it. Written in VI since it is shown to VI users.
-NATIVE_REVIEW_NOTE = (
-    "Nhãn tiếng Việt đã qua rà soát người bản ngữ — nếu còn chỗ nào chưa tự nhiên, hãy báo để chỉnh."
-)
-
-
 LABELS: Dict[str, Dict[str, str]] = {
     "en": {
         # horizon labels

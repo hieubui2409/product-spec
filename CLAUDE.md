@@ -79,7 +79,7 @@ lineage-readable — no central counter.
   per `lang`.
 - **Visualization labels** (`Now/Next/Later`, `Must/Should/Could/Won't`) localize via `scripts/i18n_labels.py` when
   `--lang vi`.
-- Vietnamese ships best-effort. On the first VI session, note that native-speaker review of phrasing is pending.
+- Vietnamese phrasing is native-reviewed for natural wording; IDs and frontmatter keys stay English.
 
 ---
 
