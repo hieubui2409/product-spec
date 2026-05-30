@@ -1,4 +1,4 @@
-# GOAL — Hardcore Dual-Skill Review (10 cycles)
+# GOAL — Hardcore Dual-Skill Review (15 cycles)
 
 Durable resume anchor for an in-progress, multi-cycle hardcore review of two Claude Code skills.
 The per-cycle reports live under `plans/reports/` which is **gitignored** (`.gitignore:61`), so this file
@@ -10,12 +10,12 @@ is the authoritative, self-contained state — written so the review can continu
 
 ## Mission
 
-Max-recall, whole-skill review of **`cleanmatic:product-spec`** and **`cleanmatic:claude-pack`**, run as up to **10 cycles**.
+Max-recall, whole-skill review of **`cleanmatic:product-spec`** and **`cleanmatic:claude-pack`**, run as up to **15 cycles**.
 Each cycle re-runs the same hardcore review, carrying forward the prior cycles' findings as context, and **must finish all fixes before the next cycle begins**.
 
 ### Locked operating parameters (do NOT re-ask)
 - **Scope:** whole skill — every script, reference, template, `SKILL.md`, tests, `install.sh`.
-- **Termination:** converge-then-stop — stop after **2 consecutive cycles with zero new findings**, hard cap **10**.
+- **Termination:** converge-then-stop — stop after **2 consecutive cycles with zero new findings**, hard cap **15** (raised from 10 on 2026-05-30).
 - **Fix autonomy:** auto-fix safe findings; **interview only** on risky/ambiguous items or anything touching a locked decision (safety pattern / determinism / scope).
 
 ### Locked design decisions (carry across all cycles — never silently reverse)
@@ -28,10 +28,10 @@ Each cycle re-runs the same hardcore review, carrying forward the prior cycles' 
 
 ---
 
-## EXPANDED SCOPE for Cycles 3 → 10
+## EXPANDED SCOPE for Cycles 3 → 15
 
 The owner is implementing a **new product-spec feature (a product-spec update)** before Cycle 3 resumes.
-From **Cycle 3 through Cycle 10**, the review scope **expands** to cover, in addition to the two existing skills:
+From **Cycle 3 through Cycle 15**, the review scope **expands** to cover, in addition to the two existing skills:
 
 - the **new product-spec feature/update** (review for correctness + fix), AND
 - **regression** introduced by that new feature into existing product-spec behavior, AND
@@ -51,12 +51,12 @@ Cycle 3 therefore begins **only after** the new product-spec feature lands. Trea
 | 4 | ✅ DONE (fixes applied 2026-05-29) | **29 findings** (2 HIGH · 4 MED · 23 LOW; 0 CRITICAL) — 26 CONFIRMED + 3 PLAUSIBLE, ~all in product-spec (claude-pack regression-clean). Dedup → **22 distinct fixes, ALL applied + verified** (owner: "fix all, no defer"). Workflow re-scaled worked: **26 agents / ~2.1M tok** (vs C3's 42/~3M). Owner decisions: Q1=fail-loud `--layers` (validate token + empty-result guard) · Q2=ASCII explorer orphan-root · Q3=hoist facet/search engine into `_BODY_RENDER_JS` (incl. the deferred F15). |
 | 5 | ✅ DONE (fixes applied 2026-05-30) | **39 findings** (11 MED · 28 LOW; 0 CRITICAL/HIGH) — 38 CONFIRMED + 1 PLAUSIBLE, 0 REFUTED. 19 correctness · 3 altitude · 17 cleanup; claude-pack 3 (cleanup/doc). **ALL 39 fixed + verified** (owner: "fix all, no defer"). Sweep wave was productive (+11 findings) — first sweep run hit a StructuredOutput false-negative, re-run via resume recovered it. Owner decisions: Q1=fail-loud `--layers` **both** surfaces · Q2=**multi-parent** explorer (HTML matches ASCII) · Q3=qualify CLAUDE.md network claim (doc-only) · Q4=fix all incl. pre-existing. |
 | 6 | ✅ DONE (fixes applied 2026-05-30) | FULL thorough pass (owner override). **28 findings** (1 HIGH · 3 MED · 24 LOW; 28 CONFIRMED, 0 REFUTED). **The full pass earned its keep: caught 3 regressions the C5 fixes introduced** (HIGH hook-matcher divergence + llm-AC-double + horizon-label-missing). ALL fixed + verified (3 micro-perf items accepted-documented per YAGNI). primary surface = C5 fix diff. |
-| 7 | 🔜 PLANNED — review **product-spec v2.0.0 multidim** (just shipped 2026-05-30) | PRIMARY surface = the v2 feature diff (`c80aa3a..8f1f5ac`: RISK enum/HTML-grid · TIME `target_date`/`depends_on`+cycle-detection · COMPETITION parity · impact-propagation engine · ASCII→HTML-native downgrade · v1→v2 migration). Protocol = the established lean 3-wave flow (**find → consolidate → sweep → main agent → interview → fix**). **Token-quota-limited:** the 5-hour usage window is at ~**57/100%** → run the **Lean tier** (scope = v2 diff primary, batched per-file verify, modest finder count, sweep only if a finding lands) to fit the remaining ~43%. (Contrast: the v2 *build* was heavy — Workflow orchestrator, 124 agents / ~4.15M tok; the *review* stays lean.) |
-| 8 → 10 | ⏸️ PENDING | Per convergence rule (stop after 2 consecutive zero-finding cycles; hard cap C10). |
+| 7 | ✅ DONE (fixes applied 2026-05-30) | Lean tier over the v2.0.0 multidim diff via the **Workflow tool, file-partitioned** (5 finders, disjoint file ownership → near-free dedup → per-group verify → sweep). **5 findings (3 CRITICAL · 2 MED; 5 CONFIRMED, 0 REFUTED, sweep clean).** The 3 CRITICALs = one mechanism: `check_consistency` enum membership (`v not in <set>`) **crashes with TypeError on an unhashable YAML value** (`status: [draft]` / risk `impact: [high]` / competitor `threat: [high]`) — a fail-soft violation; fixed with the `isinstance(v,(list,dict))→invalid_type` guard already used by `_check_competitive_parity`. MED: migration dropped CRLF (violated its byte-for-byte promise) → read/write `newline=""` + per-file newline detection; `render_mermaid.roadmap` silently truncated each section to `[:8]` → cap removed (owner: "no cut off"). **ALL 5 fixed + verified**, +7 regression tests (**314 → 321** green; acme-shop `strict_gate` 0/0). Cost: **9 agents / ~784K tok / ~494s**. |
+| 8 → 15 | ⏸️ PENDING | Per convergence rule (stop after 2 consecutive zero-finding cycles; hard cap **C15**). **Run mode (owner, 2026-05-30): the FULL C7-style review** (Workflow-tool, file-partitioned finders → per-group verify → sweep), NOT the narrow correctness-only convergence pass. Two relaxations vs C7: **file ownership MAY overlap** (a file can be assigned to >1 finder for cross-angle recall; dedup moves back into the consolidate step) and the **scan-agent count MAY increase** (scale finders/verifiers up — token quota permitting). See "Cycle 8+ config" below. |
 
-**Convergence:** NOT converged. Cycle 6 was not clean (28 findings) → counter at 0. Cycle-6 fixes applied. **Next = Cycle 7, now re-scoped to review the just-shipped product-spec v2.0.0 multidim feature** (per the EXPANDED SCOPE rule — newest feature diff is the primary surface). The convergence counter only advances on a zero-finding cycle; a new feature diff almost certainly resets expectations. **Note: the C5 fixes introduced the C6 regressions (1 HIGH + 2 MED) — fixes-induced defects keep surfacing, so convergence is not near.** Stop after 2 consecutive zero-finding cycles; hard cap 10.
+**Convergence:** NOT converged. Cycle 7 was not clean (**5 findings, incl. 3 CRITICAL crash-on-malformed-input**) → counter still at 0. Cycle-7 fixes applied + verified. **Next = Cycle 8**, run as a FULL C7-style review (file-partitioned Workflow; overlap allowed; agent count scalable — see "Cycle 8+ config"). The convergence counter only advances on a zero-finding cycle. **Note: fixes-induced defects keep surfacing (C5 fixes induced the C6 regressions); and the v2 feature itself shipped 3 CRITICALs the build-review missed — so convergence is not near.** Stop after 2 consecutive zero-finding cycles; hard cap **15**.
 
-**Test state (green):** `claude-pack` **78** (not re-run this session — last verified Cycle 6) · `product-spec` **314** (was 215 at Cycle-6 close; +99 from the v2.0.0 multidim feature — verified green 2026-05-30).
+**Test state (green):** `claude-pack` **78** (not re-run this session — last verified Cycle 6; untouched by C7) · `product-spec` **321** (was 314 at Cycle-7 start; +7 C7 regression tests — verified green 2026-05-30).
 Run: `PYTHONPATH=.claude/skills/<skill>/scripts ./.claude/skills/.venv/bin/python3 -m pytest .claude/skills/<skill>/scripts/tests -q`
 
 **Report paths (local, gitignored — may be absent on fresh clone):**
@@ -76,7 +76,7 @@ Full protocol in **`WORKFLOW-REVIEW.md`** (repo root, committed). Each cycle = o
 - **Cycle 4** (the single thorough pass, after Cycle-3 fixes land): scope = **full whole-skill** (both skills); **all 9 angles incl. cleanup**; per-file batched verify; sweep included. ✅ DONE — actual cost **26 agents / ~2.1M tok** (within estimate).
 - **Cycle 5** (the second full thorough pass): ✅ DONE — full whole-skill, all 9 angles, batched per-file verify, sweep. Actual **39 findings / ~31 agents (incl. sweep re-run) / ~2.0M tok**. Sweep wave proved its worth (+11 findings). One workflow lesson: a finder/sweeper that concludes "nothing new" can end with prose and skip the StructuredOutput call → false-negative; the sweep prompt now MANDATES the tool call (even for `{candidates: []}`).
 - **Cycle 6/7+** (convergence checks — two full passes C4+C5 now done, all cleanup fixed): scope = **narrow regression** (files touched by fixes + immediate callers); **correctness-only** (cleanup is cataloged + fixed in the thorough passes; re-running cleanup angles never converges to zero and would block the 2-clean-cycle stop); lean batched verify; sweep only if a finding lands. Est ~8 agents / ~0.6M tok.
-- **Convergence unchanged:** stop after 2 consecutive cycles with **zero new findings**; hard cap Cycle 10.
+- **Convergence unchanged:** stop after 2 consecutive cycles with **zero new findings**; hard cap Cycle 15.
 
 ### Cycle 7 config (LOCKED 2026-05-30) — review product-spec v2.0.0 multidim
 
@@ -86,6 +86,19 @@ The first cycle over the **new v2 feature**. Same protocol shape as C4–C6, run
 - **Protocol flow (the established 3-wave, lean):** **find bugs** (parallel finders over the v2 diff) → **consolidate** (dedup + group-by-file, orchestration, no agent cost) → batched per-file **verify** → **sweep** (one gap-finder holding the verified list) → **to main agent** (rank correctness > cleanup, then severity) → **interview** the owner on risky / locked-decision / ambiguous items → **fix** all before any Cycle 8.
 - **Token-quota-limited:** the 5-hour usage window is at ~**57/100%** at cycle start. Run the **Lean tier** (WORKFLOW-REVIEW §5: ~8 agents / ~0.6M tok) — narrow to the v2 diff + immediate callers, correctness-first angles, a single/few batched verifiers, sweep **only if** a finding lands. Do NOT launch a 124-agent build-scale fan-out for a review. If the quota is exhausted mid-cycle, checkpoint findings to a report + this file and resume after the window resets (resume-from-runId caches completed agents at 0 cost).
 - **New v2 locked decisions to NOT re-flag (REFUTED unless a NEW regression is proven):** new schema fields optional → back-compat preserved (v1 specs still parse); `depends_on` cycle detection is iterative 3-color DFS (no RecursionError); structural checks (`dep_cycle`/`dep_dangling`/`dep_order`/`time_child_late`/`risk_high_ratio`/`risk_blindspot`/`overdue`) are deterministic Python, LLM checks (`time_realism`/`competitive_drift`) cite anchors or don't flag; `today`-consuming checks are advisory only (never gate determinism); ASCII downgraded to text-summary (NOT deleted); competitor `url` with `private:` prefix is ignored (OpSec). Authoritative gates: `plans/260530-0503-product-spec-multidim-impact-v2/goal.md` (the *build* DoD — distinct from this *review* log).
+
+### Cycle 8+ config (LOCKED 2026-05-30) — full C7-style review, overlap-allowed, scalable
+
+Owner directive (2026-05-30): the next cycles (**C8, C9, C10**, and onward to the C15 cap) run the **FULL C7-style review**, NOT the narrow correctness-only convergence pass. C7 proved the file-partitioned Workflow surfaces real CRITICALs the build-review missed, so keep running it at full strength until convergence.
+
+- **Engine:** the **Workflow tool**, file-partitioned finders (the C7 shape: per-file/per-subsystem finder → consolidate → per-group verify → sweep → main-agent rank → interview → fix). This is the durable run mode for every remaining cycle.
+- **Angles:** ALL 9 (correctness + cleanup + altitude) — "detect all problems + cleanup", not correctness-only. (The §4 "convergence pass = correctness-only" rule is explicitly OVERRIDDEN by the owner for C8+: cleanup nits are re-surfaced each cycle; a cycle is "clean" only when finders + sweep return zero across all angles.)
+- **Two relaxations vs C7:**
+  1. **File ownership MAY overlap.** A file can be assigned to >1 finder (e.g. one angle-focused finder + one subsystem finder) for cross-angle recall. Disjoint ownership is no longer required, so the **consolidate step must dedup by `file:line` + same-mechanism** again (it was near-free in C7 only because ownership was disjoint).
+  2. **Scan-agent count MAY increase.** Scale the finder/verifier pool up beyond C7's 5 (more finders, finer file slices, more verifier shards) — token quota permitting. No hard agent cap; recall first.
+- **Token posture:** prefer a fresh 5-hour window or a high remaining quota before launching (a full overlap pass costs more than C7's ~784K tok). If the quota is exhausted mid-cycle, checkpoint to a report + this file and resume via `resumeFromRunId` (completed agents cache at 0 cost).
+- **Carry-forward regression surface for C8:** the C7 fixes — `check_consistency` enum guards (3 sites: scalar-enum loop, `_check_competitors` threat, `_check_risks` enum) now branch `isinstance(list,dict)→invalid_type` before the set test; `migrate_multidim_fields` reads/writes with `newline=""` + detects the file's newline in `_insert_before_closing_fence` (dropped the `read_text_utf8` import); `render_mermaid.roadmap` removed the `[:8]` per-section cap (now renders ALL items). Watch these for over/under-guarding + the now-uncapped roadmap on a huge horizon.
+- **Locked v2 decisions** (carry the C7 REFUTED list above unchanged).
 
 ---
 
@@ -163,6 +176,15 @@ Third full thorough pass (owner override: full, not narrow). Primary surface = t
 - **Accepted (YAGNI, no fix):** Flat-tabs bar rebuild on filter-change · `_dispatch_body_view` empty-guard recompute · `selection` redundant sorted-pick (finders concurred on the latter two).
 - **Verification:** product-spec **211 → 215** (+4) + claude-pack **77 → 78** (+1) green; DOM-stub of both viewers re-run after the client refactors; e2e (vi H1 "Xuất đặc tả", board-vi "Mốc thời gian" horizon label, all flows exit 0, strict_gate clean).
 
+### Cycle 7 (5 findings — FIXED 2026-05-30; all applied)
+
+First cycle over the v2.0.0 multidim diff. Lean tier via the **Workflow tool, file-partitioned** (5 disjoint finders → per-group verify → sweep). **5 findings: 3 CRITICAL · 2 MED — 5 CONFIRMED, 0 REFUTED, sweep clean.** Owner: "fix all, no cut off." All in product-spec. Cost **9 agents / ~784K tok / ~494s**.
+
+- **3× CRITICAL — enum membership crashes on an unhashable YAML value (`check_consistency.py`) ✅** `v not in ENUMS[field]` (`ENUMS` values are SETs) raises `TypeError: unhashable type: 'list'` when a scalar enum field is given a YAML list/dict — `status: [draft]` (scalar-enum loop, ~line 142), competitor `threat: [high]` (`_check_competitors`, ~line 364), risk `impact: [high]`/`likelihood`/`status` (`_check_risks`, ~line 592). A validation script crashing on malformed input is exactly the fail-soft contract it's meant to enforce. Fix: each site now branches `isinstance(v,(list,dict)) → invalid_type` BEFORE the membership test — the SAME guard `_check_competitive_parity` (line 414) already used. +3 regression tests (each asserts no-crash + `invalid_type`).
+- **MED — migration dropped CRLF (`migrate_multidim_fields.py`) ✅** the module promised the file is "preserved byte-for-byte", but `read_text_utf8` (universal newlines) + `write_text` (os.linesep) silently reflowed a CRLF spec to LF. Fix: `apply_file` reads/writes with `open(..., newline="")` (no translation); `_insert_before_closing_fence` detects the file's newline (`"\r\n" if "\r\n" in src else "\n"`) and terminates inserted placeholder lines with it; dropped the now-unused `read_text_utf8` import. +3 regression tests (insert-CRLF, insert-LF, apply-file-CRLF-on-disk).
+- **MED — roadmap silently truncated each section (`render_mermaid.py`) ✅** `for it in items[:8]:` dropped items 9+ from every Mermaid roadmap section with no marker/doc (a prior review's MIN-3, never addressed). Owner: "no cut off" → cap removed; renders ALL items. +1 regression test (12 items in `now`, all present).
+- **Verification:** product-spec **314 → 321** (+7) green; `examples/acme-shop` `strict_gate` **0 errors / 0 warns**; live repro confirmed `status: [draft]` now emits `invalid_type` instead of a traceback. claude-pack **78** untouched.
+
 ---
 
 ## How to resume (Cycle 3+)
@@ -173,7 +195,7 @@ Third full thorough pass (owner override: full, not narrow). Primary surface = t
 4. Fix all findings this cycle before starting the next (auto-fix safe; interview on risky/locked-decision items). **Cycle 3 + Cycle 4 fixes are DONE** (2026-05-29) — Cycle 5 may start.
 5. Keep both test suites green; add tests for new behavior.
 6. Write a cycle report to `plans/reports/` and update **this file's** Progress + Convergence.
-7. Stop when 2 consecutive cycles produce zero new findings, or at Cycle 10.
+7. Stop when 2 consecutive cycles produce zero new findings, or at Cycle 15.
 
 ## Open questions
 **Cycle 3 owner decisions — LOCKED & applied (2026-05-29):** A=viewer artifact-type vocab · B=emit-once+dedup, unresolved→error · C=`llm`+`html` hard-reject · F10=escape-all-`<`.
@@ -184,7 +206,9 @@ Third full thorough pass (owner override: full, not narrow). Primary surface = t
 
 **Cycle 6 — DONE (2026-05-30), no owner decisions needed** (all 28 findings were clear auto-fixes; 0 locked-decision conflict). Owner ran it as a FULL pass (override of the narrow default). The full pass caught 3 regressions the C5 fixes had introduced (HIGH hook-matcher + 2 MED).
 
-**Next — Cycle 7 (LOCKED 2026-05-30):** review the just-shipped **product-spec v2.0.0 multidim** feature. The v2 diff is the PRIMARY surface (newest-feature rule); regression on prior product-spec + claude-pack is secondary. Run the **Lean tier** — token-quota-limited (5-hour usage window at ~57/100% → fit the remaining ~43%): narrow scope, correctness-first angles, batched per-file verify, sweep only if a finding lands. Flow = find → consolidate → sweep → main agent → interview → fix (see "Cycle 7 config" above). **Also watch for regressions from the C6 fixes** (carried-forward secondary surface)**:** the shared `manifest_loader.match_hooks` (claude-pack validate+selection), `spec_graph.children_of`/`_closure` (consumed by downstream/ancestors/assemble_digest), `render_export._content_with_ac` + body-H1 localization, the horizon i18n/`_UI_KEYS`/`psBuildFacets` chip-value change, `render_html._write_visual` + `psMetaBadges`/`psWireSearch`/`appendHeader` client refactor, `render_ascii.is_visible` + the slimmed `_orphan_forest`. Config in `WORKFLOW-REVIEW.md`. **Watch for regressions from the C5 fixes:** the explorer multi-parent payload (`parents` list) + the rewritten `explorer-shell.html` client (multi-parent Tree, cyclic guards, lazy active-mode render, tab-cache); `render_ascii.explorer`/`_orphan_forest` routing through `select_cards` + `parents_of`; the shared `spec_graph` helpers (`parents_of`/`matching_child_counts`/`diff_graphs`) consumed by render_ascii/render_mermaid/check_traceability; `assemble_digest` `all`-empty guard + the partitioned `--layers` warning + literal VISION/PRODUCT resolution; the `_yaml_scalar` frontmatter quoting; `visualize._VIEW_KWARGS`/`_dispatch_view`. Owner may opt for another full pass instead. Config in `WORKFLOW-REVIEW.md`.
+**Cycle 7 — DONE (2026-05-30).** Reviewed the v2.0.0 multidim diff via the file-partitioned Workflow (5 finders, disjoint ownership). 5 findings (3 CRITICAL `check_consistency` enum-unhashable crashes + 2 MED: migration CRLF loss, roadmap `[:8]` truncation), 0 refuted, sweep clean. Owner decision: **"fix all, no cut off"** — all 5 fixed + 7 regression tests (314 → 321 green). No locked-decision conflict (the enum-guard fix matches the existing `_check_competitive_parity` pattern; the roadmap-cap removal honors "no cut off"). The 3 CRITICALs were correctness bugs the v2 *build*-review missed → reinforces continuing full passes.
+
+**Next — Cycle 8 (LOCKED 2026-05-30):** run the **FULL C7-style review** (Workflow-tool, file-partitioned), ALL 9 angles, **file overlap allowed + scan-agent count scalable** (owner directive — see "Cycle 8+ config" above). Hard cap raised **10 → 15**. PRIMARY surface = whole product-spec + claude-pack (the v2 feature is now reviewed once; treat the C7 fix diff + the whole skill as the surface). **Carry-forward regression surface (C7 fixes):** `check_consistency` enum guards (scalar-enum loop · `_check_competitors` threat · `_check_risks` enum — all now `isinstance→invalid_type` before the set test); `migrate_multidim_fields` `newline=""` read/write + per-file newline detect (+ dropped `read_text_utf8` import); `render_mermaid.roadmap` uncapped (watch huge-horizon output). **Carry-forward from C5/C6 fixes (still secondary):** `manifest_loader.match_hooks`, `spec_graph.children_of`/`_closure`/`parents_of`/`matching_child_counts`/`diff_graphs`, `render_export._content_with_ac` + body-H1 localization, horizon i18n/`_UI_KEYS`/`psBuildFacets`, `render_html._write_visual` + client refactor, `render_ascii.is_visible`/`_orphan_forest`/`select_cards`, explorer multi-parent payload + `explorer-shell.html`, `assemble_digest` guards, `_yaml_scalar`, `visualize._VIEW_KWARGS`/`_dispatch_view`. Config in `WORKFLOW-REVIEW.md`.
 
 **Newest product-spec feature — ✅ SHIPPED v2.0.0 (2026-05-30) — Cycle 7's PRIMARY review surface**: multi-dimensional impact. RISK (PRD risks + enum-validated impact/likelihood/status + mitigation + `risk_high_ratio`/`risk_blindspot` script warns + HTML-native 3×3 grid) · TIME (`target_date` ISO + `depends_on` graph edge with iterative 3-color-DFS cycle detection + `dep_dangling`/`dep_order`/`time_child_late` + out-of-gate `time_advisory.py --today` overdue + `time_realism` LLM warn + roadmap/gantt views) · COMPETITION (`competitors`@BRD + `competitive_parity`@PRD + HTML-native parity matrix/threat heatmap + `competitive_drift` LLM warn + `private:`-URL OpSec skip) · impact-propagation engine (`downstream()` + LLM 1-liner on `--update`/`--validate`, `docs/product/impact/<ts>.md`) · ASCII→HTML-native default downgrade (ASCII retained as text-summary tree) · v1→v2 migration script + back-compat (new fields optional).
 - Plan (7 phases; red-teamed + validated, Failed:0): `plans/260530-0503-product-spec-multidim-impact-v2/plan.md`; build DoD: `…/goal.md` (gates G-A..G-H).

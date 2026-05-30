@@ -12,8 +12,8 @@ reports under `plans/reports/` are gitignored, so condense each cycle into `GOAL
 ## 1. Goal & termination
 
 - **Max-recall:** catch every real bug. Recall > precision — a missed bug ships, a false positive is cheap to drop.
-- Run as up to **10 cycles** (C1 → C10).
-- **Converge-then-stop:** stop after **2 consecutive cycles with ZERO new findings**. Hard cap **C10**.
+- Run as up to **15 cycles** (C1 → C15). (Cap raised 10 → 15 on 2026-05-30.)
+- **Converge-then-stop:** stop after **2 consecutive cycles with ZERO new findings**. Hard cap **C15**.
 - **Fix-before-next (non-negotiable):** every finding in a cycle is resolved (fixed, or owner-decided) **before** the next cycle begins. A cycle never starts with unfixed findings from the prior one.
 - **Fix autonomy:** auto-fix safe findings; **interview the owner** only on risky/ambiguous items or anything touching a *locked decision* (safety filter · determinism · scope · a value the owner already confirmed). Never silently reverse a locked or owner-confirmed decision.
 
@@ -59,6 +59,7 @@ orchestration JS (no agent cost).
 Angle selection per cycle:
 - **Thorough passes (C4 and C5):** all 9 angles. (Plan change 2026-05-29: C5 repeats the full thorough pass rather than narrowing — C4 surfaced 23 cleanup findings, so one more full sweep is wanted before convergence.)
 - **Convergence passes (C6/7+, after a cleanup-clean cycle):** **correctness-only** — cleanup nits never converge to zero, so re-running them every cycle would block the 2-clean-cycle stop condition. Cleanup is cataloged in the thorough passes and fixed there.
+- **C8+ OWNER OVERRIDE (2026-05-30):** run **ALL 9 angles** (correctness + cleanup + altitude) on every remaining cycle — "detect all problems + cleanup", not correctness-only. This supersedes the convergence-pass narrowing above for C8→C15. A cycle is "clean" only when finders + sweep return zero across ALL angles. Engine = the **C7 file-partitioned Workflow**, with two relaxations: **(a) file ownership MAY overlap** (assign a file to >1 finder for cross-angle recall — so the consolidate step must dedup by `file:line` + same-mechanism, not rely on disjoint ownership), and **(b) the scan-agent pool MAY grow** beyond C7's 5 (more/finer finders + verifier shards), token-quota permitting. Recall first; no hard agent cap.
 
 ## 5. Quality vs token strategy (cost levers)
 
@@ -87,8 +88,9 @@ Cost tiers (choose per cycle):
 | C4 | FULL whole-skill (both skills) | all 9 (incl. cleanup) | batched per-file | NONE | ✅ 29 found (26 agents / ~2.1M tok), fixed |
 | **C5** | **FULL whole-skill** (same as C4) | **all 9 (incl. cleanup)** | **batched per-file** | **NONE** | ✅ 39 found (~31 agents incl. sweep re-run / ~2.0M tok), all fixed |
 | C6 | FULL whole-skill (owner override) | all 9 | batched per-file | NONE | ✅ 28 found (~29 agents / ~2.6M tok), all fixed — caught 3 C5-fix-induced regressions (1 HIGH) |
-| **C7+** | owner's call: full again, or **narrow correctness-only** | per choice | lean/batched | none | pending — narrow per §4 once a cleanup-clean cycle lands; full still defensible (fixes keep inducing regressions) |
-| … C10 | per convergence rule | — | — | — | hard cap |
+| C7 | v2.0.0 multidim diff (primary) | all (file-partitioned) | batched per-group | NONE | ✅ 5 found (3 CRITICAL enum-crash + 2 MED), Lean tier, **file-partitioned Workflow** (9 agents / ~784K tok), all fixed |
+| **C8+** | **FULL C7-style** (owner directive): file-partitioned Workflow, whole-skill | **all 9** (incl. cleanup) | batched per-group | **NONE; overlap allowed; agent count scalable** | pending — run every remaining cycle at full strength until 2 clean cycles |
+| … C15 | per convergence rule | — | — | — | hard cap (raised from C10) |
 
 ## 7. Locked decisions (carry across all cycles — never silently reverse)
 
