@@ -39,7 +39,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from encoding_utils import configure_utf8_console, read_text_utf8
+from encoding_utils import configure_utf8_console
 from frontmatter_parser import parse_file
 
 configure_utf8_console()
@@ -106,6 +106,10 @@ def _insert_before_closing_fence(text: str, lines: List[str]) -> Optional[str]:
     are preserved verbatim, so the `.bak`/idempotency invariants hold and a
     YAML round-trip never reflows the PO's hand-authored frontmatter."""
     src = text.lstrip("﻿")
+    # Preserve the file's existing line-ending style: a CRLF (Windows-authored)
+    # spec must not be silently reflowed to LF. Detect from the source and apply
+    # the same terminator to the inserted placeholder lines.
+    newline = "\r\n" if "\r\n" in src else "\n"
     src_lines = src.splitlines(keepends=True)
     # Find the opening fence (first line that is exactly `---`) and the matching
     # closing fence (the next `---`). Mirrors frontmatter_parser's FRONTMATTER_RE
@@ -125,7 +129,7 @@ def _insert_before_closing_fence(text: str, lines: List[str]) -> Optional[str]:
     if close_idx is None:
         return None
 
-    insert_block = "".join(ln if ln.endswith("\n") else ln + "\n" for ln in lines)
+    insert_block = "".join(ln.rstrip("\r\n") + newline for ln in lines)
     new_lines = src_lines[:close_idx] + [insert_block] + src_lines[close_idx:]
     return "".join(new_lines)
 
@@ -184,7 +188,11 @@ def apply_file(path: Path) -> bool:
         # Idempotent: nothing to add → no write, no `.bak` (so a prior run's
         # original-content `.bak` is preserved).
         return False
-    text = read_text_utf8(path)
+    # Read + write with newline translation DISABLED (newline="") so the file's
+    # existing CRLF/LF style survives — read_text_utf8/write_text would normalize
+    # via universal-newlines + os.linesep and break the byte-for-byte contract.
+    with open(path, "r", encoding="utf-8", newline="") as fh:
+        text = fh.read()
     new_text = _insert_before_closing_fence(text, [line for (_n, line) in missing])
     if new_text is None or new_text == text:
         return False
@@ -194,7 +202,8 @@ def apply_file(path: Path) -> bool:
     # never overwrite the genuine pre-migration copy with a half-migrated one.
     if not bak.exists():
         shutil.copy2(path, bak)
-    path.write_text(new_text, encoding="utf-8")
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(new_text)
     return True
 
 

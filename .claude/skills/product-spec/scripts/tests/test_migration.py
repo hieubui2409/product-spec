@@ -422,3 +422,42 @@ def test_snapshot_serializes_dates(tmp_path):
     node = next(n for n in loaded["nodes"] if n["id"] == "PRD-A")
     assert node["target_date"] == "2026-08-01", \
         "write_snapshot must coerce a datetime.date target_date to an ISO string"
+
+
+# ---------------------------------------------------------------------------
+# Line-ending preservation (Cycle 7): the migration promises the rest of the
+# file is preserved byte-for-byte. A CRLF-authored spec must NOT be silently
+# reflowed to LF when placeholder lines are inserted.
+# ---------------------------------------------------------------------------
+
+from migrate_multidim_fields import _insert_before_closing_fence, apply_file  # noqa: E402
+
+
+def test_insert_preserves_crlf_line_endings():
+    src = "---\r\nid: PRD-A\r\ntype: prd\r\n---\r\nbody\r\n"
+    out = _insert_before_closing_fence(src, ["risks: []", "target_date: null"])
+    assert out is not None
+    assert "\r\n" in out
+    assert out.replace("\r\n", "").find("\n") == -1, "a bare LF leaked into a CRLF file"
+    assert "risks: []\r\n" in out and "target_date: null\r\n" in out
+    assert "id: PRD-A\r\n" in out  # existing line unchanged
+
+
+def test_insert_preserves_lf_line_endings():
+    src = "---\nid: PRD-A\ntype: prd\n---\nbody\n"
+    out = _insert_before_closing_fence(src, ["risks: []"])
+    assert out is not None
+    assert "\r" not in out
+    assert "risks: []\n" in out
+
+
+def test_apply_file_preserves_crlf_end_to_end(tmp_path):
+    prd = tmp_path / "prds"
+    prd.mkdir()
+    f = prd / "a.md"
+    f.write_bytes(b"---\r\nid: PRD-A\r\ntype: prd\r\nbrd_goals: [BRD-G1]\r\nstatus: draft\r\nlang: en\r\n---\r\nbody\r\n")
+    assert apply_file(f) is True
+    raw = f.read_bytes()
+    assert b"\r\n" in raw
+    assert raw.replace(b"\r\n", b"").find(b"\n") == -1, "a bare LF leaked into a CRLF file on disk"
+    assert b"risks: []" in raw

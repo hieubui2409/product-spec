@@ -1317,3 +1317,14 @@ def test_no_cdn_in_body_views(tmp_path):
     assert ("DOMPurify" in body) or ("Markdown libraries not vendored" in body), (
         "body view must inline the sanitizer OR fail closed to a plain-text banner"
     )
+
+
+def test_mermaid_roadmap_renders_all_items_no_cap():
+    """A horizon with more than 8 items must render ALL of them — the roadmap
+    timeline does not silently truncate a section (Cycle 7: removed the [:8] cap)."""
+    nodes = [{"id": f"PRD-X-E1-S{i}", "type": "story", "horizon": "now", "status": "draft"}
+             for i in range(1, 13)]  # 12 stories under 'now'
+    g = {"nodes": nodes, "edges": []}
+    out = render_mermaid.roadmap(g)
+    for i in range(1, 13):
+        assert f"PRD-X-E1-S{i}" in out, f"story S{i} dropped from roadmap (silent truncation?)"

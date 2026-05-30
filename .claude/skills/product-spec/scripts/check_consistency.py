@@ -139,7 +139,13 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             v = n.get(field)
             if v is None:
                 continue
-            if v not in ENUMS[field]:
+            # Guard the set-membership test: an unhashable value (a YAML list/dict
+            # where a scalar enum is expected, e.g. `status: [draft]`) would raise
+            # TypeError on `v not in <set>`. Surface it as invalid_type rather than
+            # crashing — same fail-soft contract as _check_competitive_parity.
+            if isinstance(v, (list, dict)):
+                findings.append(_f("invalid_type", "error", n, f"Field {field}={v!r} must be a single enum value; got {type(v).__name__}.", field=field, value=v))
+            elif v not in ENUMS[field]:
                 findings.append(_f("unknown_enum", "error", n, f"Field {field}={v!r} not in {sorted(ENUMS[field])}.", field=field, value=v))
 
         for field in LIST_FIELDS:
@@ -361,7 +367,15 @@ def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             ))
             continue
         threat = entry.get("threat")
-        if threat is not None and threat not in ENUMS["competitor_threat"]:
+        if isinstance(threat, (list, dict)):
+            # Unhashable value where a scalar enum is expected → guard the
+            # membership test below from raising TypeError (fail-soft).
+            findings.append(_f(
+                "invalid_type", "error", brd_carrier,
+                f"competitor threat={threat!r} must be a single enum value; got {type(threat).__name__}.",
+                field="competitors[].threat", value=threat,
+            ))
+        elif threat is not None and threat not in ENUMS["competitor_threat"]:
             findings.append(_f(
                 "unknown_enum", "error", brd_carrier,
                 f"competitor threat={threat!r} not in {sorted(ENUMS['competitor_threat'])}.",
@@ -589,7 +603,18 @@ def _check_risks(node: Dict[str, Any]) -> List[Dict[str, Any]]:
             val = entry.get(risk_field)
             if val is None:
                 continue
-            if val not in ENUMS[enum_key]:
+            if isinstance(val, (list, dict)):
+                # Unhashable value where a scalar enum is expected → guard the
+                # membership test below from raising TypeError (fail-soft).
+                findings.append(_f(
+                    "invalid_type",
+                    "error",
+                    node,
+                    f"risk {risk_field}={val!r} must be a single enum value; got {type(val).__name__}.",
+                    field=f"risks[].{risk_field}",
+                    value=val,
+                ))
+            elif val not in ENUMS[enum_key]:
                 findings.append(_f(
                     "unknown_enum",
                     "error",

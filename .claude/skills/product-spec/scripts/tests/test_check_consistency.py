@@ -526,3 +526,76 @@ competitive_parity:
         f"expected invalid_type for a list-valued parity entry; got checks: "
         f"{sorted({f['check'] for f in findings})}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Fail-soft enum guards (Cycle 7): a scalar enum field handed an UNHASHABLE YAML
+# value (a list/dict where a single value is expected) must surface as
+# invalid_type, never crash `value not in <set>` with TypeError. Mirrors the
+# guard already in _check_competitive_parity.
+# ---------------------------------------------------------------------------
+
+
+def test_scalar_enum_unhashable_value_is_invalid_type_not_crash(tmp_path):
+    """`status: [draft]` (a YAML list) must not raise TypeError on the
+    set-membership test — it surfaces as invalid_type (fail-soft)."""
+    proj = _scaffold(tmp_path)
+    (proj / "docs" / "product" / "prds" / "a.md").write_text("""---
+id: PRD-A
+type: prd
+brd_goals: [BRD-G1]
+status: [draft]
+lang: en
+---
+""")
+    _, findings = _checks(proj)  # must not raise
+    bad = [f for f in findings if f["check"] == "invalid_type"
+           and (f.get("context") or {}).get("field") == "status"]
+    assert bad, f"expected invalid_type for list-valued status; got {sorted({f['check'] for f in findings})}"
+
+
+def test_risk_enum_unhashable_value_is_invalid_type_not_crash(tmp_path):
+    """A risk's `impact: [high]` (list) must not crash the risk-enum membership
+    test — surfaces as invalid_type."""
+    proj = _scaffold(tmp_path)
+    (proj / "docs" / "product" / "prds" / "a.md").write_text("""---
+id: PRD-A
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+risks:
+  - description: leak
+    impact: [high]
+---
+""")
+    _, findings = _checks(proj)  # must not raise
+    bad = [f for f in findings if f["check"] == "invalid_type"
+           and "impact" in str((f.get("context") or {}).get("field", ""))]
+    assert bad, f"expected invalid_type for list-valued risk impact; got {sorted({f['check'] for f in findings})}"
+
+
+def test_competitor_threat_unhashable_value_is_invalid_type_not_crash(tmp_path):
+    """A competitor `threat: [high]` (list) must not crash the threat-enum
+    membership test — surfaces as invalid_type."""
+    proj = _scaffold(tmp_path)
+    (proj / "docs" / "product" / "brd.md").write_text("""---
+id: BRD
+type: brd
+status: draft
+lang: en
+goals:
+  - id: BRD-G1
+    title: g
+    status: draft
+    metrics: [m]
+competitors:
+  - id: COMP-X
+    name: X
+    threat: [high]
+---
+""")
+    _, findings = _checks(proj)  # must not raise
+    bad = [f for f in findings if f["check"] == "invalid_type"
+           and "threat" in str((f.get("context") or {}).get("field", ""))]
+    assert bad, f"expected invalid_type for list-valued competitor threat; got {sorted({f['check'] for f in findings})}"

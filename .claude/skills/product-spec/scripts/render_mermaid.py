@@ -158,7 +158,7 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
             continue
         section = label(h, lang) if h != "unspecified" else "Unspecified"
         lines.append(f"  section {section}")
-        for it in items[:8]:
+        for it in items:
             marker = " *" if _is_deferred(nodes_by_id.get(it, {})) else ""
             # Route item id through _safe_label: PO-controlled ids may contain
             # markup characters that would inject live HTML in the rendered page.
