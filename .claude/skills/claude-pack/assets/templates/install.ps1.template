@@ -182,8 +182,13 @@ if (Test-Path $bundleSkills) {
 }
 Write-Host ""
 
-$bundleClaude = Join-Path $BundleDir ".claude"
-Get-ChildItem -Recurse -File -Path $bundleClaude | Sort-Object FullName | ForEach-Object {
+# Walk the whole bundle root so top-level files (README.md, CLAUDE.md, etc.)
+# that were packed but have no .claude/ prefix are also installed.
+# Installer metadata files (MANIFEST.json, INSTALL.md, install.sh, install.ps1)
+# are excluded — they belong to the bundle, not to the recipient's repo.
+$ExcludeNames = @("MANIFEST.json", "INSTALL.md", "install.sh", "install.ps1")
+Get-ChildItem -Recurse -File -Path $BundleDir | Sort-Object FullName | ForEach-Object {
+    if ($ExcludeNames -contains $_.Name -and $_.Directory.FullName -eq $BundleDir) { return }
     $src = $_.FullName
     $rel = $src.Substring($BundleDir.Length + 1) -replace '\\', '/'
     $dst = Join-Path $TargetDir $rel

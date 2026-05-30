@@ -28,7 +28,7 @@ Developer-facing skill that bundles a curated subset of this repo's `.claude/` t
 |------|---------|
 | (no flag) | Interactive menu → build manifest → preview → confirm → pack. |
 | `--manifest <path>` | Manifest file (default `.claude/pack.manifest.yaml`). |
-| `--all` | (v0.5+) Pack everything under `.claude/` not on the always-drop list. Not implemented in v0.1 — errors. |
+| `--all` | Pack everything under `.claude/` not on the always-drop list. Not implemented in v0.1 — errors (exit 1); list skills/agents/rules explicitly. |
 | `--skills <list>` | Comma-separated skill slugs (override manifest). |
 | `--agents <list>` | Comma-separated agent slugs (override manifest). |
 | `--hooks <list>` | Comma-separated hook filenames (override manifest). |
@@ -141,7 +141,7 @@ Run via the per-skill venv created by `install.sh`:
   --root <repo-root> [flags]
 ```
 
-All scripts emit JSON on `--json`. Analytical scripts exit 0; the `--strict` gate is the LLM's job. Determinism is the script's job: byte-identical tar.gz for the same input + `SOURCE_DATE_EPOCH`.
+The pack builder (`python -m pack`) emits JSON on `--json`. The other scripts (`manifest_loader.py`, `safety_check.py`, `build_manifest.py`) emit JSON to stdout unconditionally — they have no `--json` flag. Analytical scripts exit 0; the `--strict` gate is the LLM's job. Determinism is the script's job: byte-identical tar.gz for the same input + `SOURCE_DATE_EPOCH`.
 
 ## What This Skill Does NOT Do
 

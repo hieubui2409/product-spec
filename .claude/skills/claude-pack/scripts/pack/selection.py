@@ -8,7 +8,7 @@ File-granular sorted walk: never call ``tar.add(dir)``, always per-file
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import manifest_loader  # type: ignore[import-not-found]
 import safety_check  # type: ignore[import-not-found]
@@ -78,11 +78,40 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
     if top.get("include_ck_config") and (claude_dir / ".ck.json").is_file():
         entries.append((claude_dir / ".ck.json", ".claude/.ck.json"))
 
+    claude_dir_resolved = claude_dir.resolve()
+    root_resolved = root.resolve()
+
     safe: list[tuple[Path, str]] = []
     for src, arc in entries:
+        # Belt-and-suspenders chokepoint: reject any arcname that would cause
+        # tar-slip (path traversal or absolute), regardless of which category
+        # produced it.  manifest_loader.validate() enforces the same rule on
+        # manifest inputs; this layer catches any category added in the future.
+        arc_pure = PurePosixPath(arc)
+        if ".." in arc_pure.parts or arc_pure.is_absolute():
+            sys.stderr.write(
+                f"WARN: rejected arcname with traversal/absolute: {arc!r} (src: {src})\n"
+            )
+            continue
+        # Also verify the resolved source path stays within the repo root to
+        # guard against symlink-based escapes.
+        try:
+            src_resolved = src.resolve()
+            if not str(src_resolved).startswith(str(root_resolved) + "/") and src_resolved != root_resolved:
+                sys.stderr.write(
+                    f"WARN: rejected src escaping repo root: {src} (arcname: {arc!r})\n"
+                )
+                continue
+        except OSError:
+            pass  # broken symlink: let tarball's is_dropped/missing-file paths handle it
+
         dropped, _ = safety_check.is_dropped(arc)
         if not dropped:
             safe.append((src, arc))
+
+    # Sort by (arcname-bytes, src-string) BEFORE the dedup loop so the collision
+    # survivor is path-deterministic (independent of rglob/iteration order).
+    safe.sort(key=lambda x: (x[1].encode("utf-8"), str(x[0])))
 
     seen: dict[str, Path] = {}
     unique: list[tuple[Path, str]] = []

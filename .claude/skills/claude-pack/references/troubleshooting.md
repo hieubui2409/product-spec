@@ -42,7 +42,7 @@ Top recipient + maintainer failures and fixes. For error codes, see `error-catal
 
 **Symptom:** Manifest validates but selection is empty.
 
-**Fix:** Your `skills`/`agents`/`rules`/`extra` lists resolved to zero files on disk. Check spelling + case (skill slugs are case-sensitive). Run `build_manifest.py --discover --root.` to see what's actually available.
+**Fix:** Your `skills`/`agents`/`rules`/`extra` lists resolved to zero files on disk. Check spelling; case sensitivity follows the host filesystem (case-sensitive on Linux ext4, case-insensitive on macOS/Windows). Run `build_manifest.py --discover --root.` to see what's actually available.
 
 ## Windows: `install.ps1 cannot be loaded because running scripts is disabled`
 

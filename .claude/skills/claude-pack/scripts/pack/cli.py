@@ -35,10 +35,18 @@ def _emit(args: argparse.Namespace, payload: dict, *, fp=sys.stdout) -> None:
             fp.write(f"{k}: {v}\n")
 
 
+def _packed_skill_dirs(manifest: dict, root: Path) -> list[Path]:
+    """Return existing skill directories referenced by manifest."""
+    return [
+        root / ".claude/skills" / s
+        for s in manifest.get("skills", [])
+        if (root / ".claude/skills" / s).is_dir()
+    ]
+
+
 def _warn_shared_refs(manifest: dict, root: Path) -> int:
     """Emit a WARN per un-included _shared/ reference. Returns the count."""
-    skill_dirs = [root / ".claude/skills" / s for s in manifest.get("skills", [])
-                  if (root / ".claude/skills" / s).is_dir()]
+    skill_dirs = _packed_skill_dirs(manifest, root)
     include_shared = set(manifest.get("_include_shared") or [])
     count = 0
     for ref, skill_id in safety_check.find_shared_refs(skill_dirs):
@@ -87,8 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     # and union them into _include_shared so resolve_selection bundles them and
     # _warn_shared_refs treats them as covered (no --strict failure).
     if manifest.get("follow_shared"):
-        skill_dirs = [root / ".claude/skills" / s for s in manifest.get("skills", [])
-                      if (root / ".claude/skills" / s).is_dir()]
+        skill_dirs = _packed_skill_dirs(manifest, root)
         found_refs = {ref for ref, _ in safety_check.find_shared_refs(skill_dirs)}
         existing = set(manifest.get("_include_shared") or [])
         manifest["_include_shared"] = sorted(existing | found_refs)
@@ -123,16 +130,32 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dry_run:
         file_count, total_bytes = filter_findings(selection)
+        # Resolve max_size the same way write_tarball does so --dry-run never
+        # reports success for a payload the real run would reject (EXIT 5).
+        cli_max = getattr(args, "max_size", None)
+        manifest_max = (manifest.get("defaults") or {}).get("max_size_bytes", None)
+        if cli_max is not None:
+            max_size = cli_max
+        elif manifest_max is not None:
+            max_size = manifest_max
+        else:
+            max_size = 100 * 1024 * 1024
         payload: dict = {
             "bundle_root": bundle_root,
             "file_count": file_count,
             "total_bytes": total_bytes,
             "output_path": str(out_dir / f"{bundle_root}.tar.gz"),
+            "max_size": max_size,
         }
         if args.compute_sha:
+            buf = io.BytesIO()
             payload["would_be_sha256"] = build_tarball(
-                versioned, embedded, io.BytesIO(), source_date_epoch=epoch,
+                versioned, embedded, buf, source_date_epoch=epoch,
             )
+            compressed_size = buf.tell()
+            payload["over_max_size"] = compressed_size > max_size
+        else:
+            payload["over_max_size"] = False
         _emit(args, payload)
         return EXIT_OK
 

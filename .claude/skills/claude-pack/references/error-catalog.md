@@ -12,7 +12,7 @@ Every error code, message template, and remediation surfaced by `cleanmatic:clau
 | `MANIFEST_E010` | `<category> must be a list, got <type>` | `validate` | Rewrite as YAML list. |
 | `MANIFEST_E011` | `<category> entry must be non-empty string` | `validate` | Remove blank/None entries. |
 | `MANIFEST_E012` | `duplicate entries in <category>` | `validate` | Dedupe the list. |
-| `MANIFEST_E020` | `absolute paths not allowed in extra: <path>` | `validate` | Use repo-relative paths. CRITICAL fix per. |
+| `MANIFEST_E020` | `absolute paths not allowed in extra: <path>` | `validate` | Use repo-relative paths; absolute paths are rejected to keep bundles self-contained. |
 | `MANIFEST_E021` | `path traversal not allowed in extra: <path>` | `validate` | Remove `..` segments. |
 | `MANIFEST_E030` | `top_level must be a mapping` | `validate` | Use a YAML mapping under `top_level:`. |
 | `MANIFEST_E031` | `unknown top_level key: <key>` | `validate` | Use only `include_readme`, `include_claudemd`, `include_settings`, `include_ck_config`. |
@@ -23,7 +23,7 @@ Every error code, message template, and remediation surfaced by `cleanmatic:clau
 | `MANIFEST_E043` | `defaults.<key> must be bool; got <value>` | `validate` | `include_scripts`/`include_schemas` take `true`/`false` only. |
 | `MANIFEST_E050` | `follow_shared must be bool` | `validate` | Use `true` or `false`. |
 | `MANIFEST_E060` | `unknown top-level key: <key>` | `validate` | Remove or check spelling against schema. |
-| `MANIFEST_E070` | `missing skill: <slug>` | `validate` | Verify the skill dir exists under `.claude/skills/`. Case-sensitive. |
+| `MANIFEST_E070` | `missing skill: <slug>` | `validate` | Verify the skill dir exists under `.claude/skills/`. Case sensitivity follows the host filesystem (case-sensitive on Linux ext4; case-insensitive on macOS APFS/HFS+ and Windows NTFS, where a wrong-case slug may silently resolve). |
 | `MANIFEST_E071` | `missing/ambiguous agents: <slug>` | `validate` | Pin by basename or full path; rename to disambiguate. |
 | `MANIFEST_E072` | `missing/ambiguous rules: <slug>` | `validate` | Same as above. |
 | `MANIFEST_E073` | `missing hook: <name>` | `validate` | Provide full filename including extension. |
@@ -46,6 +46,18 @@ No hard errors raised at scan time. All "drops" are emitted as warn-level findin
 | Code | Message | Raised by | Remediation |
 |------|---------|-----------|-------------|
 | (no code) | `output exists: <path> (use --force to overwrite)` | `atomic_replace` | Either pass `--force` (backup made as `.bak.{epoch}`) or move the existing file aside. |
+
+## `build_manifest.py` Exit Codes (`scripts/build_manifest.py --write`)
+
+These codes apply ONLY to the `build_manifest.py` entry point and differ from `pack/cli.py`:
+
+| Code | Condition |
+|------|-----------|
+| 0 | Success (manifest written). |
+| 1 | Validation error — includes `manifest_loader.validate` failures and the stderr message `refuse to write outside repo root: <path>` (path would escape the repo root). |
+| 2 | Collision — manifest file already exists; stderr: `manifest exists: <path> (use --force to overwrite)`. |
+
+Note: `build_manifest.py`'s exit code 2 means collision; in `pack/cli.py` exit code 2 means strict-gate — the namespaces are distinct.
 
 ## Exit Codes (`scripts/pack/cli.py`)
 

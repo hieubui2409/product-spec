@@ -98,7 +98,17 @@ def is_dropped(path: str) -> tuple[bool, str | None]:
     rule-id format: ``always-drop:exact:<name>`` | ``always-drop:dir:<name>``
     | ``always-drop:pattern:<glob>`` (canonical lowercase rule label).
     """
-    p = PurePosixPath(path)
+    pp = PurePosixPath(path)
+    # Defense-in-depth: drop any path that contains a traversal component or is
+    # absolute. This is the final backstop — manifest_loader.validate() and
+    # selection.resolve_selection() enforce the same rules upstream, but this
+    # filter is self-sufficient even if a new category bypasses those layers.
+    if ".." in pp.parts or path.startswith("/") or path.startswith("\\") or (
+        len(path) >= 2 and path[1] == ":"
+    ):
+        return True, "always-drop:traversal"
+
+    p = pp
     basename = p.name
     basename_lower = basename.lower()
 
@@ -199,8 +209,14 @@ def _walk_findings(root: Path, scan_subdir: str) -> list[dict]:
             })
 
     # Cross-skill _shared/ refs (warn-only).
-    skills_dir = root / ".claude" / "skills"
-    if skills_dir.is_dir():
+    # Derive the skills dir from the actual scan root so --scan is honored.
+    # When scan_subdir ends with '.claude' the skills dir is scan_root/'skills';
+    # for any other --scan value (e.g. a bare skill dir) skip the shared_dep pass.
+    if scan_subdir.rstrip("/\\").endswith(".claude"):
+        skills_dir = scan_root / "skills"
+    else:
+        skills_dir = None
+    if skills_dir is not None and skills_dir.is_dir():
         skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir() and d.name != "_shared"]
         shared_root = skills_dir / "_shared"
         for shared_name, skill_id in find_shared_refs(skill_dirs):

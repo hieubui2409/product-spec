@@ -64,14 +64,37 @@ def discover(root: Path) -> dict:
                 available_skills.append(entry.name)
 
     def _basenames(directory: Path, suffix: str) -> list[str]:
+        """Return stem names that are unambiguous (1:1 stem → file).
+
+        Stems that map to more than one file (same stem, different directories)
+        are excluded because ``manifest_loader._resolve_extension`` would be
+        ambiguous on them — including them as options would produce MANIFEST_E071/
+        E072 collisions at validate time.
+        """
         if not directory.is_dir():
             return []
-        return sorted({p.stem for p in directory.rglob(f"*{suffix}") if p.is_file()})
+        stem_to_paths: dict[str, list[str]] = {}
+        for p in directory.rglob(f"*{suffix}"):
+            if p.is_file():
+                stem_to_paths.setdefault(p.stem, []).append(str(p))
+        # Only offer stems that have exactly one backing file.
+        return sorted(stem for stem, paths in stem_to_paths.items() if len(paths) == 1)
 
     def _filenames(directory: Path) -> list[str]:
+        """Return relative posix paths for all files under directory (recursive).
+
+        Hooks may live in subdirectories; using rglob here aligns with
+        ``manifest_loader.match_hooks`` which also recurses, so offered options
+        match what validates and ships.
+        """
         if not directory.is_dir():
             return []
-        return sorted({p.name for p in directory.iterdir() if p.is_file()})
+        base = directory
+        return sorted(
+            p.relative_to(base).as_posix()
+            for p in directory.rglob("*")
+            if p.is_file()
+        )
 
     return {
         "available_skills": available_skills,

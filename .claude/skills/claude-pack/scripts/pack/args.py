@@ -79,8 +79,13 @@ def resolve_epoch(args: argparse.Namespace) -> int:
         return 0
     if val == "env":
         env = os.environ.get("SOURCE_DATE_EPOCH")
-        return int(env) if env and env.isdigit() else 0
+        # Guard against unicode-digit strings: str.isdigit() returns True for
+        # chars like '²' but int() raises ValueError on them.  Require ASCII.
+        return int(env) if env and env.isascii() and env.isdigit() else 0
     try:
-        return int(val)
+        n = int(val)
     except ValueError:
         raise SystemExit(f"--source-date-epoch must be int or 'env'; got {val!r}")
+    if n < 0:
+        raise SystemExit("--source-date-epoch must be >= 0")
+    return n

@@ -58,7 +58,9 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -RunHooks
 
 ## What gets installed
 
-{{FILE_COUNT}} files, {{TOTAL_SIZE}} into your repo's `.claude/` directory.
+{{FILE_COUNT}} files, {{TOTAL_SIZE}} into your repo. Files under `.claude/` go
+into the matching path in your repo; any top-level files (e.g. `README.md`,
+`CLAUDE.md`) that were included in the bundle are installed at your repo root.
 See `MANIFEST.json` for the full list with per-file SHA256.
 
 ## Troubleshooting

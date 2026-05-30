@@ -118,6 +118,23 @@ def test_case_insensitive_pattern_drops():
         assert dropped, f"case-insensitive pattern drop missed: {path}"
 
 
+def test_traversal_path_dropped():
+    """Paths containing '..' must be unconditionally dropped (tar-slip defense)."""
+    for path in ("a/../b", "../etc/passwd", "../../secret", ".claude/../.env",
+                 "skills/foo/../../bar"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"traversal path not dropped: {path!r}"
+        assert rule == "always-drop:traversal", f"wrong rule for {path!r}: {rule!r}"
+
+
+def test_absolute_path_dropped():
+    """Absolute paths must be unconditionally dropped."""
+    for path in ("/etc/passwd", "\\Windows\\system32", "C:/foo"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"absolute path not dropped: {path!r}"
+        assert rule == "always-drop:traversal"
+
+
 def test_find_shared_refs_strips_code_blocks(tmp_path):
     """regex skips refs inside fenced code blocks."""
     skill = tmp_path / "demo"

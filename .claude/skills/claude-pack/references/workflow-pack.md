@@ -19,7 +19,9 @@ Source-of-truth: `build_manifest.py --list-questions --root.` returns the JSON b
 | ID | Header | Question | Type | Default | Validate |
 |----|--------|----------|------|---------|----------|
 | `version` | Version | Bundle version (SemVer 2.0.0, e.g. 1.0.0)? | text | `0.1.0` | semver |
-| `bundle_name` | Bundle name | Bundle filename stem? | text | `claude-pack` | `^[a-zA-Z0-9][a-zA-Z0-9._-]*$` |
+| `bundle_name` | Bundle name | Bundle filename stem? | text | `claude-pack` | — (see note) |
+
+> **Note:** `bundle_name` regex validation (`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`) is enforced at `--write` time via `BUNDLE_NAME_RE` in `manifest_loader.validate` (→ `MANIFEST_E003`). The question bank JSON emitted by `--list-questions` does NOT carry a `validate` field for `bundle_name`.
 
 ### Batch 2: categories (4 questions)
 

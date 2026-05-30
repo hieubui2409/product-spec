@@ -87,8 +87,11 @@ semver_compare() {
     local i
     for i in 0 1 2; do
         local ai="${av[$i]:-0}" bi="${bv[$i]:-0}"
-        if (( ai < bi )); then echo -1; return; fi
-        if (( ai > bi )); then echo  1; return; fi
+        # Force base-10 so leading-zero fields (08, 09) are not parsed as
+        # invalid octal by bash arithmetic — that would make both comparisons
+        # error and fall through to echo 0 (OK SAME), silently skipping upgrades.
+        if (( 10#${ai} < 10#${bi} )); then echo -1; return; fi
+        if (( 10#${ai} > 10#${bi} )); then echo  1; return; fi
     done
 
     # Cores are equal — compare pre-release.
@@ -111,8 +114,9 @@ semver_compare() {
         if [ -n "$ai" ] && [ -z "$bi" ]; then echo  1; return; fi
         # Both numeric?
         if [[ "$ai" =~ ^[0-9]+$ ]] && [[ "$bi" =~ ^[0-9]+$ ]]; then
-            if (( ai < bi )); then echo -1; return; fi
-            if (( ai > bi )); then echo  1; return; fi
+            # Force base-10 to guard against leading-zero octal misparse.
+            if (( 10#${ai} < 10#${bi} )); then echo -1; return; fi
+            if (( 10#${ai} > 10#${bi} )); then echo  1; return; fi
         elif [[ "$ai" =~ ^[0-9]+$ ]]; then
             # Numeric identifier < alphanumeric identifier
             echo -1; return
@@ -274,7 +278,11 @@ while IFS= read -r REL; do
         note "[+] $REL"
         ADDED=$((ADDED+1))
     fi
-done < <(LC_ALL=C find .claude -type f -print | LC_ALL=C sort)
+# Walk the whole bundle root so top-level files (README.md, CLAUDE.md, etc.)
+# that were packed but have no .claude/ prefix are also installed.
+# Installer metadata files (MANIFEST.json, INSTALL.md, install.sh, install.ps1)
+# are excluded — they belong to the bundle, not to the recipient's repo.
+done < <(LC_ALL=C find . -type f -print | LC_ALL=C sort | grep -vE '^(./MANIFEST\.json|./INSTALL\.md|./install\.sh|./install\.ps1)$')
 
 # --- Run per-skill install hooks (opt-in) ---
 # These hooks execute arbitrary code on the recipient's machine.

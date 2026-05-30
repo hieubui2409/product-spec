@@ -54,7 +54,7 @@ Strict known-keys check. Unknown keys → `MANIFEST_E031`. Non-bool values → `
 - `bundle_name` regex enforces filesystem-safe stem.
 - Each list category: non-empty strings; no duplicates.
 - `extra` paths: no absolute (`/etc/foo` or `C:\bar`); no traversal (`..`).
-- On-disk existence checked case-sensitively (`MANIFEST_E070`+).
+- On-disk existence is checked using `is_dir()`/`rglob` with no case normalization — case sensitivity follows the host filesystem (case-sensitive on Linux ext4; case-insensitive on macOS APFS/HFS+ and Windows NTFS, where a wrong-case slug may resolve without error).
 - Ambiguous basename match (multiple files under search root) → `MANIFEST_E071` (agents), `E072` (rules), `E074` (hooks). Rename or pin a unique path; this guards against a non-deterministic `rglob` pick.
 
 ## Extension Auto-Append

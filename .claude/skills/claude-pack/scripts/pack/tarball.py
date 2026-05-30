@@ -40,6 +40,8 @@ def make_normalize_filter(source_date_epoch: int):
             _log_warn(f"dropped symlink {tarinfo.name} -> {tarinfo.linkname}")
             return None
 
+        # Defense-in-depth: safety_check.is_dropped now catches traversal/absolute
+        # as its first rule, but be explicit here so the filter is self-sufficient.
         dropped, rule = safety_check.is_dropped(tarinfo.name)
         if dropped:
             _log_warn(f"dropped {tarinfo.name} (rule: {rule})")

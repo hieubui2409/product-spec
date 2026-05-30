@@ -26,7 +26,7 @@ DEFAULT_SCHEMA_VERSION = "1.0"
 SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.0"})
 
 SEMVER_RE = re.compile(
-    r"^(?:\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?|0\.0\.0-dev)$"
+    r"^(?:(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?|0\.0\.0-dev)$"
 )
 BUNDLE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
 
@@ -179,7 +179,11 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
     errors: list[str] = []
 
     schema_version = manifest.get("schema_version", DEFAULT_SCHEMA_VERSION)
-    if schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+    if not isinstance(schema_version, str):
+        errors.append(
+            f"[MANIFEST_E102] schema_version must be a string; got {type(schema_version).__name__}"
+        )
+    elif schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         errors.append(
             f"[MANIFEST_E101] unsupported schema_version: {schema_version!r}; "
             f"this builder supports {sorted(SUPPORTED_SCHEMA_VERSIONS)}"
@@ -211,8 +215,27 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         for item in value:
             if not isinstance(item, str) or not item.strip():
                 errors.append(f"[MANIFEST_E011] {category} entry must be non-empty string; got {item!r}")
-        if len(set(value)) != len(value):
+        # Duplicate detection: compare only string entries to avoid TypeError on
+        # unhashable elements (lists/dicts); non-strings are already caught by E011.
+        strs = [i for i in value if isinstance(i, str)]
+        if len(set(strs)) != len(strs):
             errors.append(f"[MANIFEST_E012] duplicate entries in {category}")
+
+    # Traversal/absolute checks for ALL path-bearing categories (not just extra).
+    # skills/agents/rules/hooks use slug resolution but a traversal slug like
+    # '../../x' would produce an arcname outside the extraction dir (tar-slip).
+    for category in ("skills", "agents", "rules", "hooks"):
+        for path_entry in manifest.get(category, []) or []:
+            if not isinstance(path_entry, str):
+                continue
+            if _is_absolute_or_drive(path_entry):
+                errors.append(
+                    f"[MANIFEST_E020] absolute paths not allowed in {category}: {path_entry!r}"
+                )
+            if _has_traversal(path_entry):
+                errors.append(
+                    f"[MANIFEST_E021] path traversal not allowed in {category}: {path_entry!r}"
+                )
 
     for path_entry in manifest.get("extra", []) or []:
         if not isinstance(path_entry, str):
@@ -224,6 +247,20 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         if _has_traversal(path_entry):
             errors.append(
                 f"[MANIFEST_E021] path traversal not allowed in extra: {path_entry!r}"
+            )
+
+    # _include_shared is a `_`-prefixed key exempt from the unknown-key check, but
+    # traversal in shared slugs would produce arcnames outside the extraction dir.
+    for path_entry in manifest.get("_include_shared", []) or []:
+        if not isinstance(path_entry, str):
+            continue
+        if _is_absolute_or_drive(path_entry):
+            errors.append(
+                f"[MANIFEST_E020] absolute paths not allowed in _include_shared: {path_entry!r}"
+            )
+        if _has_traversal(path_entry):
+            errors.append(
+                f"[MANIFEST_E021] path traversal not allowed in _include_shared: {path_entry!r}"
             )
 
     top_level = manifest.get("top_level", {}) or {}
@@ -271,11 +308,27 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         if key not in ALLOWED_TOP_LEVEL_KEYS and not key.startswith("_"):
             errors.append(f"[MANIFEST_E060] unknown top-level key: {key!r}")
 
-    # On-disk existence (case-sensitive)
+    # On-disk existence (case-sensitive) + resolve-within-base containment.
+    # The traversal check above catches '../../x' syntactically; here we also
+    # resolve symlinks and verify the real path stays within the skills base,
+    # catching symlink-based escapes.
     claude_dir = root / ".claude"
+    skills_base = (claude_dir / "skills").resolve()
     for slug in manifest.get("skills", []) or []:
-        if isinstance(slug, str) and not (claude_dir / "skills" / slug).is_dir():
+        if not isinstance(slug, str):
+            continue
+        skill_dir = claude_dir / "skills" / slug
+        if not skill_dir.is_dir():
             errors.append(f"[MANIFEST_E070] missing skill: {slug}")
+        else:
+            try:
+                resolved_skill = skill_dir.resolve()
+                if not str(resolved_skill).startswith(str(skills_base) + "/") and resolved_skill != skills_base:
+                    errors.append(
+                        f"[MANIFEST_E021] skill path escapes skills base: {slug!r}"
+                    )
+            except OSError:
+                pass  # broken symlink; E070 will catch missing dir
     for slug in manifest.get("agents", []) or []:
         if isinstance(slug, str):
             try:
@@ -305,6 +358,22 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
                     f"[MANIFEST_E074] ambiguous hook: {slug} matches "
                     f"{len(hook_matches)} files; use a unique name or path"
                 )
+
+    # _include_shared: verify each slug stays within .claude/skills/_shared/
+    shared_base = (claude_dir / "skills" / "_shared").resolve()
+    for slug in manifest.get("_include_shared", []) or []:
+        if not isinstance(slug, str):
+            continue
+        shared_dir = claude_dir / "skills" / "_shared" / slug
+        if shared_dir.exists():
+            try:
+                resolved_shared = shared_dir.resolve()
+                if not str(resolved_shared).startswith(str(shared_base) + "/") and resolved_shared != shared_base:
+                    errors.append(
+                        f"[MANIFEST_E021] _include_shared path escapes shared base: {slug!r}"
+                    )
+            except OSError:
+                pass
 
     return errors
 

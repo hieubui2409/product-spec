@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -71,7 +73,11 @@ def build_manifest_json(
     built_at = datetime.fromtimestamp(epoch, timezone.utc).isoformat(timespec="seconds")
 
     source_commit = _git_command(["rev-parse", "HEAD"], repo_root) or "unknown"
-    source_repo = _git_command(["remote", "get-url", "origin"], repo_root)
+    _raw_repo = _git_command(["remote", "get-url", "origin"], repo_root)
+    # Strip userinfo (user:token@) from the URL before embedding in the shipped
+    # MANIFEST.json — a credential-bearing origin like https://user:token@host/repo
+    # would otherwise leak the token to every bundle recipient.
+    source_repo = re.sub(r"(://)[^/@]*@", r"\1", _raw_repo)
 
     payload = {
         "schema_version": MANIFEST_SCHEMA_VERSION,
@@ -111,7 +117,7 @@ def atomic_replace(tmp: Path, final: Path, *, force: bool) -> None:
     try:
         os.replace(str(tmp), str(final))
     except OSError as e:
-        if "cross-device" in str(e).lower() or "EXDEV" in str(e):
+        if e.errno == errno.EXDEV:
             # Cross-fs fallback. If the move ALSO fails, restore the backup and
             # drop the tmp before re-raising — mirror the non-EXDEV path so the
             # user's output is never left only as a .bak.{epoch} with final absent.

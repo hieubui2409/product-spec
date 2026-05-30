@@ -280,3 +280,97 @@ def test_resolve_selection_tolerates_non_list_include_shared(tmp_path):
     (tmp_path / ".claude").mkdir()
     sel = resolve_selection({"_include_shared": 123, "skills": []}, tmp_path)
     assert isinstance(sel, list)  # coerced to no-op, not a TypeError
+
+
+# ---------------------------------------------------------------------------
+# Cycle-9 regression tests — tar-slip / traversal (P1+SW2) + unhashable fixes
+# ---------------------------------------------------------------------------
+
+def test_validate_traversal_in_hooks(tmp_root):
+    """../../x in hooks must produce a traversal error."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "hooks": ["../../x"]}, tmp_root
+    )
+    assert any("MANIFEST_E021" in e for e in errors)
+
+
+def test_validate_traversal_in_agents(tmp_root):
+    """../x in agents must produce a traversal error."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "agents": ["../x"]}, tmp_root
+    )
+    assert any("MANIFEST_E021" in e for e in errors)
+
+
+def test_validate_traversal_in_skills(tmp_root):
+    """../x in skills must produce a traversal error."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "skills": ["../x"]}, tmp_root
+    )
+    assert any("MANIFEST_E021" in e for e in errors)
+
+
+def test_validate_traversal_in_include_shared(tmp_root):
+    """../x in _include_shared must produce a traversal error."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "_include_shared": ["../x"]}, tmp_root
+    )
+    assert any("MANIFEST_E021" in e for e in errors)
+
+
+def test_validate_traversal_returns_nonempty_errors(tmp_root):
+    """validate() must return a non-empty list (EXIT_VALIDATION signal) for traversal."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "hooks": ["../../x"], "agents": ["../x"],
+         "skills": ["../x"], "_include_shared": ["../x"]},
+        tmp_root,
+    )
+    assert len(errors) > 0
+
+
+def test_resolve_selection_never_emits_dotdot_arcname(tmp_root):
+    """resolve_selection must not emit any arcname containing '..'."""
+    from pack.selection import resolve_selection
+    # Even if someone passes a manifest with traversal entries directly,
+    # the chokepoint in resolve_selection must filter them out.
+    manifest = {
+        "version": "1.0.0",
+        "extra": ["../../etc/passwd"],  # will be caught by manifest_loader but belt-and-suspenders
+        "skills": [],
+    }
+    sel = resolve_selection(manifest, tmp_root)
+    for _, arc in sel:
+        from pathlib import PurePosixPath
+        assert ".." not in PurePosixPath(arc).parts, f"traversal arcname leaked: {arc!r}"
+
+
+def test_validate_schema_version_list_does_not_raise(tmp_root):
+    """validate() must not raise TypeError when schema_version is a list."""
+    errors = manifest_loader.validate({"version": "1.0.0", "schema_version": ["x"]}, tmp_root)
+    assert any("MANIFEST_E102" in e for e in errors)
+
+
+def test_validate_duplicate_unhashable_does_not_raise(tmp_root):
+    """validate() must not raise TypeError when a category list has unhashable elements."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "skills": [["nested"], ["nested"]]}, tmp_root
+    )
+    # Should catch E011 (non-string entry) without raising TypeError
+    assert any("MANIFEST_E011" in e for e in errors)
+
+
+def test_semver_re_rejects_leading_zero():
+    """SEMVER_RE must reject leading-zero versions like 01.0.0."""
+    assert not manifest_loader.SEMVER_RE.match("01.0.0")
+    assert not manifest_loader.SEMVER_RE.match("1.01.0")
+    assert not manifest_loader.SEMVER_RE.match("1.0.01")
+
+
+def test_semver_re_accepts_valid_versions():
+    """SEMVER_RE accepts valid SemVer 2.0.0 versions including 0.0.0-dev."""
+    assert manifest_loader.SEMVER_RE.match("1.0.0")
+    assert manifest_loader.SEMVER_RE.match("0.1.0")
+    assert manifest_loader.SEMVER_RE.match("10.20.30")
+    assert manifest_loader.SEMVER_RE.match("1.0.0-alpha.1")
+    assert manifest_loader.SEMVER_RE.match("1.0.0+build.42")
+    assert manifest_loader.SEMVER_RE.match("0.0.0-dev")

@@ -15,7 +15,7 @@ All boolean flags use `argparse.BooleanOptionalAction` (default `None`). `None` 
 | `--version <semver>` | string | (manifest) | `version` | Override bundle version. SemVer 2.0.0; `0.0.0-dev` requires `--allow-dev-version`. |
 | `--bundle-name <name>` | string | `claude-pack` | `bundle_name` | Output filename stem. Must match `^[a-zA-Z0-9][a-zA-Z0-9._-]*$`. |
 | `--out <dir>` | path | `dist/` | (none, CLI-only) | Output directory. Auto-created. |
-| `--all` | flag | off | (none) | Pack everything under `.claude/` minus always-drop list. **Not implemented in v0.1** — errors (exit 1); list skills/agents/rules explicitly. Planned for v0.5. |
+| `--all` | flag | off | (none) | Pack everything under `.claude/` minus always-drop list. **Not implemented in v0.1** — errors (exit 1); list skills/agents/rules explicitly. |
 | `--skills <list>` | csv | (manifest) | `skills` | Comma-separated skill slugs. Deduped. |
 | `--agents <list>` | csv | (manifest) | `agents` | Comma-separated agent basenames. `.md` auto-appended if extension absent. |
 | `--hooks <list>` | csv | (manifest) | `hooks` | Comma-separated hook filenames. Extension required. |
@@ -33,7 +33,7 @@ All boolean flags use `argparse.BooleanOptionalAction` (default `None`). `None` 
 | `--dry-run` / `--no-dry-run` | bool | off | (none) | List files + total size; no tarball. |
 | `--compute-sha` / `--no-compute-sha` | bool | off | (none) | With `--dry-run`: include would-be tarball SHA256 (uses BytesIO). |
 | `--json` / `--no-json` | bool | off | (none) | Emit JSON status to stdout (machine-parseable). |
-| `--source-date-epoch <val>` | int\|`env` | (none) → 0 | (none — CLI only) | Mtime root. `env` honors `SOURCE_DATE_EPOCH` env var. |
+| `--source-date-epoch <val>` | int\|`env` | (none) → 0 | (none — CLI only) | Mtime root. `env` honors `SOURCE_DATE_EPOCH` env var; if the var is unset, empty, or non-numeric it falls back silently to 0 (deterministic default). A direct integer value must be ≥ 0 (negative values error). |
 | `--max-size <bytes>` | int | 100MB | `defaults.max_size_bytes` | Reject if compressed bigger than this. |
 | `--strict` | flag | off | (none) | Treat un-included `_shared/` references as errors (exit 2) instead of warnings. |
 | `--allow-dev-version` | flag | off | (none) | Allow `version: "0.0.0-dev"` placeholder. |

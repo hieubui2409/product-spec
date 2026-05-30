@@ -15,7 +15,7 @@ Match is **case-insensitive**: `.ENV`, `.Env`, and `.env` are all dropped. This 
 | `id_rsa`, `id_ed25519`, `id_ecdsa`, `id_dsa` | SSH private keys. |
 | `.netrc` | curl/wget machine credentials. |
 | `.pgpass` | PostgreSQL password file. |
-| `metadata.json` | Anthropic skill runtime state (per-skill ephemeral). |
+| `metadata.json` | Anthropic skill runtime state (per-skill ephemeral). Matches ANY file named `metadata.json` by basename at any depth — name legitimate data fixtures differently. |
 | `.DS_Store` | macOS Finder metadata. |
 | `Thumbs.db` | Windows Explorer thumbnails. |
 | `desktop.ini` | Windows folder customization. |
