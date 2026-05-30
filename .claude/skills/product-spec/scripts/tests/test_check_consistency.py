@@ -326,3 +326,203 @@ lang: en
     assert not any(
         f["check"] == "invalid_type" and f["artifact_id"] == "PRD-A" for f in findings
     ), f"depends_on on a PRD must be allowed; got: {findings}"
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 — COMPETITION consistency checks (G-E1 enum + unknown_ref + COMP-ID
+# grammar + malformed-shape→invalid_type). All deterministic enum / ref / shape
+# checks — no LLM (G-B1). The `competitive_drift` LLM warn is graded by the eval
+# runner, not here.
+#
+# Competitor identity is the BRD's DRY home: a `competitors:` list of
+# {id, name, url, threat}. A PRD references them by ID via the ID-keyed map
+# `competitive_parity: {COMP-ACME: behind}`. Validation:
+#   - threat ∈ {low, med, high}                       → unknown_enum
+#   - parity value ∈ {ahead, parity, behind, none}    → unknown_enum
+#   - every parity KEY must resolve to a graph competitor id → else unknown_ref
+#   - a parity value that is a list/dict, or a competitors[] entry that is not a
+#     mapping → reuse the EXISTING invalid_type (NOT a new invalid_shape; F7)
+#   - competitor id must match the COMP-<SLUG> grammar → invalid_id
+# ---------------------------------------------------------------------------
+
+
+def _write_brd_with_competitors(proj: Path, competitors_yaml: str) -> None:
+    """Overwrite brd.md with a goals block + an indented `competitors:` block.
+    `competitors_yaml` is the list body (already indented two spaces)."""
+    (proj / "docs" / "product" / "brd.md").write_text(
+        "---\n"
+        "id: BRD\n"
+        "type: brd\n"
+        "status: draft\n"
+        "lang: en\n"
+        "goals:\n"
+        "  - id: BRD-G1\n"
+        "    title: g\n"
+        "    status: draft\n"
+        "    metrics: [m]\n"
+        "competitors:\n"
+        + competitors_yaml
+        + "---\n"
+    )
+
+
+_ACME_OK = (
+    "  - id: COMP-ACME\n"
+    '    name: "Acme Commerce"\n'
+    '    url: "https://acme.example"\n'
+    "    threat: high\n"
+)
+
+
+def test_threat_enum(tmp_path):
+    """A competitor `threat: extreme` (not in low|med|high) → `unknown_enum`."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, (
+        "  - id: COMP-ACME\n"
+        '    name: "Acme Commerce"\n'
+        '    url: "https://acme.example"\n'
+        "    threat: extreme\n"
+    ))
+    _, findings = _checks(proj)
+    enum = [f for f in findings if f["check"] == "unknown_enum"]
+    assert enum, (
+        f"expected unknown_enum for threat: extreme; got checks: "
+        f"{sorted({f['check'] for f in findings})}"
+    )
+    assert any("extreme" in str(f.get("detail", "")) or
+               (f.get("context") or {}).get("value") == "extreme"
+               for f in enum), (
+        f"unknown_enum should reference the bad threat value 'extreme'; got: {enum}"
+    )
+
+
+def test_parity_enum(tmp_path):
+    """A PRD parity value `COMP-ACME: invalid` (not in ahead|parity|behind|none)
+    → `unknown_enum`."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, _ACME_OK)
+    (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---
+id: PRD-AUTH
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+competitive_parity:
+  COMP-ACME: invalid
+---
+""")
+    _, findings = _checks(proj)
+    assert any(f["check"] == "unknown_enum" for f in findings), (
+        f"expected unknown_enum for parity COMP-ACME: invalid; got checks: "
+        f"{sorted({f['check'] for f in findings})}"
+    )
+
+
+def test_parity_unknown_ref(tmp_path):
+    """A parity KEY `COMP-GHOST` that does not resolve to any BRD competitor id
+    → `unknown_ref` error (the parity map references an undefined competitor).
+    The competitor identity lives ONCE in the BRD; a PRD cannot invent one."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, _ACME_OK)  # only COMP-ACME is defined
+    (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---
+id: PRD-AUTH
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+competitive_parity:
+  COMP-GHOST: behind
+---
+""")
+    _, findings = _checks(proj)
+    ref = [f for f in findings if f["check"] == "unknown_ref"]
+    assert ref, (
+        f"expected unknown_ref for parity key COMP-GHOST (not a BRD competitor); "
+        f"got checks: {sorted({f['check'] for f in findings})}"
+    )
+    assert ref[0]["severity"] == "error", f"unknown_ref must be an error: {ref[0]}"
+    assert any("COMP-GHOST" in str(f.get("detail", "")) or
+               (f.get("context") or {}).get("ref") == "COMP-GHOST"
+               for f in ref), (
+        f"unknown_ref should reference the unresolved id COMP-GHOST; got: {ref}"
+    )
+
+
+def test_parity_known_ref_clean(tmp_path):
+    """The supported case: a parity KEY that DOES resolve to a BRD competitor
+    must NOT trip unknown_ref — guards against the check firing on valid refs."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, _ACME_OK)
+    (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---
+id: PRD-AUTH
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+competitive_parity:
+  COMP-ACME: behind
+---
+""")
+    _, findings = _checks(proj)
+    assert not any(f["check"] == "unknown_ref" for f in findings), (
+        f"a resolvable parity key must not trip unknown_ref; got: "
+        f"{[f for f in findings if f['check'] == 'unknown_ref']}"
+    )
+
+
+def test_competitor_invalid_id_grammar(tmp_path):
+    """A competitor id that violates the `COMP-<SLUG>` grammar (e.g. lowercase /
+    missing prefix) → `invalid_id` error. Parent-scoped ID grammar discipline,
+    same family as PRD/epic/story id validation (G-A1)."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, (
+        "  - id: acme\n"               # not COMP-<SLUG>
+        '    name: "Acme Commerce"\n'
+        '    url: "https://acme.example"\n'
+        "    threat: high\n"
+    ))
+    _, findings = _checks(proj)
+    bad = [f for f in findings if f["check"] == "invalid_id"]
+    assert bad, (
+        f"expected invalid_id for competitor id 'acme' (not COMP-<SLUG>); got "
+        f"checks: {sorted({f['check'] for f in findings})}"
+    )
+
+
+def test_competitor_bad_shape_reuses_invalid_type(tmp_path):
+    """A competitors[] entry that is not a mapping (e.g. a bare string) must
+    reuse the EXISTING `invalid_type` finding — NOT a new `invalid_shape`
+    (design report F7, same discipline as malformed risks[])."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, '  - "just a string"\n')
+    _, findings = _checks(proj)
+    invalid = [f for f in findings if f["check"] == "invalid_type"]
+    assert invalid, (
+        f"expected invalid_type for a non-mapping competitors[] entry; got "
+        f"checks: {sorted({f['check'] for f in findings})}"
+    )
+    assert not any(f["check"] == "invalid_shape" for f in findings), (
+        "must reuse invalid_type, not invent a new invalid_shape check id"
+    )
+
+
+def test_parity_value_bad_shape_reuses_invalid_type(tmp_path):
+    """A parity VALUE that is not a scalar enum (e.g. a list) must reuse the
+    EXISTING `invalid_type` (F7) rather than crash the enum check."""
+    proj = _scaffold(tmp_path)
+    _write_brd_with_competitors(proj, _ACME_OK)
+    (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---
+id: PRD-AUTH
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+competitive_parity:
+  COMP-ACME: [behind, ahead]
+---
+""")
+    _, findings = _checks(proj)
+    assert any(f["check"] == "invalid_type" for f in findings), (
+        f"expected invalid_type for a list-valued parity entry; got checks: "
+        f"{sorted({f['check'] for f in findings})}"
+    )

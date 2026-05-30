@@ -108,6 +108,7 @@ When generating reports or summaries:
    - Persona list.
    - Top 3 risks (highest impact × likelihood).
    - **TIME line** — horizon spread (count of PRDs/epics per now/next/later) + the nearest upcoming `target_date` across all artifacts (the soonest deadline; "none set" when no artifact carries a `target_date`). Read dates from the graph nodes' `target_date`; this is a one-line roll-up, parallel to the competition line. Do NOT consume the wall clock here — "nearest" is just the minimum ISO date, so the summary stays reproducible (the overdue-vs-today call is `time_advisory.py`'s job, not the summary's).
+   - **COMPETITION line** — competitor count + threat tiers (from `graph['competitors']`, the BRD's DRY identity home) and the count of PRDs that are `behind` on ≥1 tracked competitor (read each PRD's `competitive_parity` map; "no competitors tracked" when the BRD declares none). A one-line roll-up parallel to the TIME line — a pure structural count over the graph, no LLM judgment and no wall clock, so the summary stays reproducible (the "is this drift" call is `competitive_drift`'s job, not the summary's).
 3. Call `generate_templates.py --type exec_summary --values <json> --write` to render `docs/product/exec-summary.md`.
 4. Optionally render an HTML version: `visualize.py --view tree --format html --root <root>` and bundle.
 

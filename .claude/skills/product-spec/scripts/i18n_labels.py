@@ -50,6 +50,17 @@ LABELS: Dict[str, Dict[str, str]] = {
         # TIME view (gantt title + ASCII header)
         "roadmap_deadlines": "Roadmap & Deadlines",
         "no_date": "no date",
+        # COMPETITION view — parity-matrix cell verdicts + threat-heatmap tiers.
+        # EN labels are the enum identity (the matrix renders the raw enum word);
+        # VI translates. Keys are distinct from the risk tiers to avoid clashes.
+        "competition": "Competition",
+        "parity_ahead": "ahead",
+        "parity_parity": "parity",
+        "parity_behind": "behind",
+        "parity_none": "none",
+        "threat_low": "low",
+        "threat_med": "med",
+        "threat_high": "high",
     },
     "vi": {
         "now": "Bây giờ",
@@ -82,6 +93,15 @@ LABELS: Dict[str, Dict[str, str]] = {
         # TIME view — VI ships best-effort; native-speaker review of phrasing pending.
         "roadmap_deadlines": "Lộ trình & Hạn chót",
         "no_date": "chưa có hạn",
+        # COMPETITION view — VI ships best-effort; native-speaker review pending.
+        "competition": "Cạnh tranh",
+        "parity_ahead": "dẫn trước",
+        "parity_parity": "ngang bằng",
+        "parity_behind": "thua kém",
+        "parity_none": "không có",
+        "threat_low": "thấp",
+        "threat_med": "trung bình",
+        "threat_high": "cao",
     },
 }
 

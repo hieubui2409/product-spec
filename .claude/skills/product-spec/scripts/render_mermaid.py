@@ -17,6 +17,7 @@ from render_ascii import (
     heatmap as ascii_heatmap,
     persona as ascii_persona,
     risk as ascii_risk,
+    competition as ascii_competition,
     _is_deferred,
     is_visible,
 )
@@ -220,6 +221,14 @@ def risk(graph: Dict[str, Any]) -> str:
     # Mermaid quadrantChart can't express 3x3 risk cleanly; fall back to a
     # plain markdown fence (same convention as heatmap/persona).
     return f"```\n{ascii_risk(graph)}\n```"
+
+
+def competition(graph: Dict[str, Any]) -> str:
+    # The competition view (parity matrix + threat heatmap) is HTML-native by
+    # design (Q30/Q44) — Mermaid can't express the comp×PRD matrix cleanly. Fall
+    # back to a plain markdown fence around the ASCII grid (same convention as
+    # risk/heatmap/persona). The html dispatch routes to render_html.competition.
+    return f"```\n{ascii_competition(graph)}\n```"
 
 
 def _dep_safe_order(graph: Dict[str, Any]) -> List[str]:

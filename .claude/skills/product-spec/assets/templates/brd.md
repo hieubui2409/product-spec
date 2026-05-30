@@ -1,6 +1,16 @@
 <!--
 TEMPLATE: brd.md (Business Requirements Document) — singular per product.
 Goals carry IDs (BRD-G1, BRD-G2, ...). Each goal pairs with a success metric.
+
+COMPETITION dimension — `competitors:` is the DRY home for competitor IDENTITY
+(defined ONCE here; each PRD references them by ID via `competitive_parity`).
+Each entry:
+  - id: COMP-ACME            # ID grammar: COMP-<SLUG> (uppercase, ≤16-char slug)
+    name: "Acme Commerce"
+    url: "https://acme.example"   # stored ONLY, never fetched; a `private:`
+                                  # prefix is IGNORED (OpSec — never displayed)
+    threat: high              # enum: low | med | high
+Omit the whole block and the field defaults to empty (a v1 BRD stays valid).
 -->
 ---
 id: BRD
@@ -26,6 +36,10 @@ updated: {{updated}}
 #       status: draft
 #       owner: Jane Doe
 goals: {{goals}}
+# competitors: list-of-dicts (DRY home for competitor identity). Each entry
+# carries id (COMP-<SLUG>) + name + url + threat (low|med|high). Empty [] is fine
+# for a v1 BRD; each PRD references these by ID via `competitive_parity`.
+competitors: {{competitors}}
 ---
 
 # Business Requirements Document | Tài liệu Yêu cầu Kinh doanh

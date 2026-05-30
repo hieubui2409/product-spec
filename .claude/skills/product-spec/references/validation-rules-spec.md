@@ -46,6 +46,7 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 | `gold_plating` | LLM | warn | scope expansion beyond the stated PRD problem | "{id}: gold-plating — {addition} not motivated by stated problem." |
 | `semantic_duplication` | LLM | warn | two artifacts express the same intent in different words | "{id1} ≈ {id2}: semantic duplication detected — {explanation}." |
 | `time_realism` | LLM (anchored to SCRIPT-precomputed numbers — see scaffold below) | warn | an epic's deadline is unrealistic for its scope — flag ONLY when all anchors present AND `size=='L'` AND `child_story_count>=6` AND `days_remaining<21`; uncertain/missing anchor → no-flag | "{id}: deadline likely unrealistic — size {size}, {child_story_count} stories, {days_remaining} days to {target_date}." |
+| `competitive_drift` | LLM (anchored to SCRIPT-resolved parity — see scaffold below) | warn | a core-value PRD is losing its competitive edge — flag ONLY when `eligible` (scope=='core-value' AND `competitors_with_data>=2`) AND EVERY real (non-`none`) parity is `behind`; wrong scope / <2 data / any non-`behind` → no-flag | "{id}: competitive drift — behind on every tracked competitor ({all_behind_competitors}); scope core-value." |
 | `contradiction` | LLM | error | a new claim contradicts an `approved` artifact | "{id} contradicts approved {other_id}: {contradiction}. SURFACE TO PO — never auto-flip." |
 
 ## `--strict` Gate Behavior
@@ -107,6 +108,36 @@ Score + 1-line rationale included in the finding. The PO confirms the `scope: co
 - **The finding REQUIRES cited data.** A `time_realism` warn MUST carry `context.cited_data` = `{size, child_story_count, days_remaining, target_date, horizon}` (verbatim from the anchor) plus `context.threshold_crossed` (which conditions tripped). A finding without `cited_data` is invalid (this is what the hallucination evals — `eval/evals.json` ids 8-10 — gate).
 
 This mirrors the Script-vs-LLM split (CLAUDE.md): the structural numbers are deterministic Python; only the "is this realistic" judgment is the LLM's, and even that is reduced to a fixed threshold over script-supplied numbers.
+
+## `competitive_drift` LLM Scaffold (anchored — never parity-guessed by the LLM)
+
+`competitive_drift` is an LLM-judgment warn ("this PRD is losing its competitive edge"), the COMPETITION sibling of `time_realism`. "Mất lợi thế" is the classic over-flag, so the LLM is **pinned to structured, script-resolved parity anchors** and forbidden from inventing a competitor or a parity verdict. The split:
+
+- **Script half** — `scripts/competitive_drift_anchors.py --root <root>` resolves each PRD's ID-keyed `competitive_parity` map against the BRD's DRY competitor identity home (`graph['competitors']`) and pre-computes, per **PRD**, the anchor record:
+
+  ```json
+  {"artifact_id": "PRD-CHECKOUT", "type": "prd", "scope": "core-value",
+   "competitive_parity": [{"competitor_id": "COMP-ACME", "competitor": "Acme Commerce", "parity": "behind"},
+                          {"competitor_id": "COMP-SHOPIFY", "competitor": "Shopify", "parity": "behind"}],
+   "competitors_with_data": 2, "all_behind_competitors": ["Acme Commerce", "Shopify"],
+   "incomplete": true, "eligible": true}
+  ```
+
+  `competitors_with_data` (the count of parity entries whose value is NOT `none`), the resolved competitor NAMES, and `all_behind_competitors` are computed **here, by the script** — the LLM does NO counting and never re-parses `brd.md` (F6). `none` parity means "tracked, no verdict yet" and is **not** a data point. A parity KEY that does not resolve to a BRD competitor is dropped from the resolved block (its `unknown_ref` error is the consistency check's job) so the LLM never sees a phantom competitor. `eligible = (scope == "core-value" AND competitors_with_data >= 2)` — the anchored gate. PRDs with no `competitive_parity` map are not emitted (a v1 PRD is not a drift unit). Output is sorted by `artifact_id` → deterministic (G-A4). The script NEVER decides flag/no-flag.
+
+- **LLM half** — apply this FIXED rule to each anchor (no prose, no market speculation):
+
+  | Anchor state | LLM output |
+  |--------------|------------|
+  | `eligible == false` (scope ≠ core-value, OR `competitors_with_data < 2`) | `{finding: null, reason: "missing_anchor"}` |
+  | `eligible == true` AND EVERY real (non-`none`) parity is `behind` (i.e. `len(all_behind_competitors) == competitors_with_data`) | a `competitive_drift` **warn** (see below) |
+  | otherwise (eligible but at least one real parity is `ahead`/`parity`) | `{finding: null, reason: "below_threshold"}` |
+
+  The conservative default is **no-flag**: if uncertain, scope is not core-value, there are fewer than 2 real verdicts, or any tracked competitor is NOT `behind`, do not flag.
+
+- **The finding REQUIRES cited data.** A `competitive_drift` warn MUST carry `context.cited_data` = `{scope, competitors_with_data, all_behind_competitors, competitive_parity}` (verbatim from the anchor) plus `context.threshold_crossed` (which conditions tripped). A finding without `cited_data` is invalid (this is what the hallucination evals — `eval/evals.json` ids 11-13 — gate).
+
+This mirrors `time_realism` exactly: the structural resolution + counting is deterministic Python; only the "is this drift" judgment is the LLM's, and even that is a fixed rule over script-supplied parity anchors.
 
 ## Contradiction Protocol (CRITICAL — never auto-flip)
 

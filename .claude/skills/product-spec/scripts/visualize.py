@@ -36,7 +36,7 @@ import render_explorer
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "time", "delta", "board", "explorer")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "board", "explorer")
 FORMATS = ("ascii", "mermaid", "html")
 # Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
 # help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
@@ -259,6 +259,18 @@ def main() -> int:
     if args.view == "risk":
         grid = render_html.risk(graph)
         out = render_html.write(root, "risk", "risk-grid", grid, graph, lang=args.lang)
+        print(_written_json(out, root))
+        return 0
+
+    # The competition view is HTML-native too (parity matrix + threat heatmap;
+    # design report Q30/Q44 — NOT Mermaid). It reuses the SAME pre-rendered
+    # native-fragment path as risk (view_format "html"): render_html.competition
+    # escapes every spec-derived value server-side, so the fragment is injected
+    # as-is. Route it BEFORE the generic Mermaid path so it never wraps in a
+    # <div class="mermaid"> or an ASCII <pre> fallback (G-E2).
+    if args.view == "competition":
+        frag = render_html.competition(graph, lang=args.lang)
+        out = render_html.write(root, "competition", "html", frag, graph, lang=args.lang)
         print(_written_json(out, root))
         return 0
 

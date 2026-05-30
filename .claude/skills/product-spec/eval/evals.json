@@ -134,6 +134,43 @@
         {"id": "realism-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-ROADMAP-E3 — days_remaining is null, so the rule cannot be evaluated; no fabricated date."},
         {"id": "realism-missing-anchor-eligibility", "_gating": "structural", "text": "time_realism_anchors marks PRD-ROADMAP-E3 eligible==false with target_date==null and days_remaining==null."}
       ]
+    },
+    {
+      "id": 11,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-E3 (T2) true-positive. `competitive_drift` is an LLM-judgment warn anchored to SCRIPT-resolved parity (competitive_drift_anchors.py resolves the PRD's ID-keyed competitive_parity map against the BRD competitor identity home and pre-computes competitors_with_data + all_behind_competitors). The script half (resolution, counting, eligibility) is graded deterministically by test_competitive_drift.py; THIS eval grades only the LLM JUDGMENT — does it flag the all-behind core-value PRD AND cite the anchors? The rule (design §0.1): flag only if scope=='core-value' AND competitors_with_data>=2 AND every real parity=='behind'.",
+      "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. Pre-compute anchors via scripts/competitive_drift_anchors.py, then apply the competitive_drift scaffold in references/validation-rules-spec.md. PRD-CHECKOUT is scope core-value and is `behind` on BOTH tracked competitors (Acme Commerce, Shopify) — 2 real verdicts, all behind.",
+      "expected_output": "A competitive_drift warn finding for PRD-CHECKOUT whose context.cited_data carries scope=core-value, competitors_with_data=2, all_behind_competitors=[Acme Commerce, Shopify], and competitive_parity, plus threshold_crossed. No parity invented by the LLM (the verdicts come from the anchor).",
+      "files": ["fixtures/competitive-drift-spec"],
+      "assertions": [
+        {"id": "drift-flags-all-behind", "_gating": "llm_advisory", "text": "The LLM emits a competitive_drift warn for PRD-CHECKOUT (scope core-value AND competitors_with_data>=2 AND every real parity is behind all hold per the resolved anchor)."},
+        {"id": "drift-cites-data", "_gating": "llm_advisory", "text": "The finding's context.cited_data includes scope, competitors_with_data, all_behind_competitors, and competitive_parity taken verbatim from the script anchor — the LLM invents no competitor and no parity verdict."},
+        {"id": "drift-anchor-deterministic", "_gating": "structural", "text": "competitive_drift_anchors.build_anchors(graph) returns PRD-CHECKOUT with competitors_with_data==2, all_behind_competitors==[Acme Commerce, Shopify], and eligible==true, identical across two runs."}
+      ]
+    },
+    {
+      "id": 12,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-E3 (T2) must-not-flag (borderline). The conservative default: when an eligible PRD has at least one real parity that is NOT behind, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-SEARCH is eligible (scope core-value AND 2 real verdicts) but one verdict is `parity`, not `behind`.",
+      "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-SEARCH is scope core-value with 2 real verdicts, but COMP-SHOPIFY is `parity` (not `behind`) — the rule 'every real parity == behind' does not hold.",
+      "expected_output": "No competitive_drift finding for PRD-SEARCH (the LLM returns {finding: null, reason: 'below_threshold'}).",
+      "files": ["fixtures/competitive-drift-spec"],
+      "assertions": [
+        {"id": "drift-no-flag-below-threshold", "_gating": "llm_advisory", "text": "The LLM emits NO competitive_drift finding for PRD-SEARCH — one tracked competitor is at parity, so the rule does not trip and the conservative default returns finding:null."},
+        {"id": "drift-below-threshold-anchor", "_gating": "structural", "text": "competitive_drift_anchors marks PRD-SEARCH eligible==true with competitors_with_data==2 but all_behind_competitors==[Acme Commerce] only (len != competitors_with_data, so the rule does not trip)."}
+      ]
+    },
+    {
+      "id": 13,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-E3 (T2) missing-anchor. Without the anchored gate (scope core-value AND >=2 real verdicts) the rule cannot be evaluated, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of flagging on a lone `behind` — the explicit anti-hallucination case. PRD-REPORTS is scope `in` AND has only 1 real verdict (COMP-NICHE is `none`).",
+      "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-REPORTS is scope `in` (NOT core-value) and has only 1 real verdict — COMP-NICHE is `none`, which is not a data point.",
+      "expected_output": "No competitive_drift flag for PRD-REPORTS; the LLM returns {finding: null, reason: 'missing_anchor'} because it is not core-value and has <2 real verdicts. It must NOT flag on the single `behind` alone.",
+      "files": ["fixtures/competitive-drift-spec"],
+      "assertions": [
+        {"id": "drift-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-REPORTS — scope is `in` and there are <2 real verdicts, so the gate is not met; no flag on the lone behind."},
+        {"id": "drift-missing-anchor-eligibility", "_gating": "structural", "text": "competitive_drift_anchors marks PRD-REPORTS eligible==false with scope=='in' and competitors_with_data==1 (COMP-NICHE 'none' is not counted)."}
+      ]
     }
   ]
 }

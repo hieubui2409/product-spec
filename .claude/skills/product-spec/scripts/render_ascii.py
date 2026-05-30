@@ -379,6 +379,36 @@ def risk(graph: Dict[str, Any]) -> str:
     return _grid("Impact \\ Lik", cols, rows)
 
 
+def competition(graph: Dict[str, Any]) -> str:
+    """Text parity matrix + threat list for the COMPETITION dimension.
+
+    The competition view is HTML-native by design (parity matrix + threat
+    heatmap; G-E2). This ASCII form is the terminal/CI fallback the dispatcher
+    reaches for `--format ascii|mermaid` (mirroring risk's ASCII fallback): rows
+    = competitor names, cols = PRD ids, cells = the parity enum (blank when
+    unset); a trailing threat column shows each competitor's threat tier.
+    Resolves the BRD's competitor identity against each PRD's parity map."""
+    competitors = [c for c in (graph.get("competitors") or []) if isinstance(c, dict)]
+    prds = sorted(
+        (n for n in graph.get("nodes", []) if n.get("type") == "prd"),
+        key=lambda n: str(n.get("id") or ""),
+    )
+    if not competitors:
+        return "No competitors recorded in the BRD yet."
+    cols = [str(p.get("id") or "") for p in prds] + ["threat"]
+    rows = []
+    for c in competitors:
+        name = str(c.get("name") or c.get("id") or "(unnamed)")
+        cells = []
+        for p in prds:
+            parity = p.get("competitive_parity")
+            val = parity.get(c.get("id")) if isinstance(parity, dict) else None
+            cells.append(str(val) if val is not None else "-")
+        cells.append(str(c.get("threat") or "-"))
+        rows.append([name] + cells)
+    return _grid("Competitor \\ PRD", cols, rows)
+
+
 def _filter_by_layers(nodes: List[Dict[str, Any]], layers: Optional[List[str]]) -> List[Dict[str, Any]]:
     """Keep only nodes whose ARTIFACT TYPE is selected. `layers` None or empty →
     keep all. Shared by the ASCII board and the html board/explorer so `--layers`

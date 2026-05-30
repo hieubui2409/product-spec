@@ -12,6 +12,14 @@ Does NOT enumerate stories (that lives in epic/story files).
 TIME dimension (both OPTIONAL — omit and the field defaults to empty/none):
   target_date: 2026-09-30      # ISO YYYY-MM-DD; the deadline for this PRD
   depends_on: [PRD-BILLING]    # IDs this PRD waits on (PRD+Epic only; a cycle is a dep_cycle error)
+
+COMPETITION dimension — `competitive_parity` is an ID-keyed MAP referencing the
+BRD's competitors (defined ONCE in brd.md's `competitors:`). Each KEY is a
+competitor id (must resolve to a BRD competitor → else unknown_ref); each VALUE
+is the parity enum ahead|parity|behind|none. Empty {} is fine (a v1 PRD):
+  competitive_parity:
+    COMP-ACME: behind
+    COMP-SHOPIFY: parity
 -->
 ---
 id: {{id}}
@@ -29,6 +37,10 @@ moscow: {{moscow}}
 horizon: {{horizon}}
 metrics: {{metrics}}
 risks: {{risks}}
+# COMPETITION (optional) — ID-keyed map of BRD competitor id → parity enum
+# (ahead|parity|behind|none). Empty {} parses cleanly. Each key must resolve to
+# a competitor defined in brd.md's `competitors:` list.
+competitive_parity: {{competitive_parity}}
 # TIME (optional) — uncomment to set; absence parses cleanly as none/empty:
 # target_date: 2026-09-30
 # depends_on: [PRD-OTHER]

@@ -113,6 +113,13 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         # Kept as `None` when absent so a v1 artifact without risks: stays
         # back-compatible (no empty-list churn in snapshots/diffs).
         "risks": fm.get("risks"),
+        # COMPETITION dimension: a PRD references BRD competitors by ID via an
+        # ID-keyed map `competitive_parity: {COMP-ACME: behind}` (enum value
+        # ahead|parity|behind|none). Preserved verbatim on the node so the
+        # consistency check enum-/ref-validates each entry, the matrix/heatmap
+        # renderer reads it, and the drift LLM-input builder resolves it against
+        # graph["competitors"]. `None` when absent → a v1 PRD stays back-compat.
+        "competitive_parity": fm.get("competitive_parity"),
     }
 
 
@@ -164,13 +171,20 @@ def _assemble_graph(artifacts: List[Dict[str, Any]], product_dir: Path, root: Pa
         "nodes": nodes,
         "edges": edges,
         "risks": _risks(artifacts, product_dir),
+        # COMPETITION dimension: the single DRY home for competitor IDENTITY,
+        # materialized once from the BRD's `competitors:` list. The consistency
+        # check, the parity-matrix/threat-heatmap renderer, AND the drift
+        # LLM-input builder ALL read this top-level key — nothing re-parses
+        # brd.md inline. Empty list when the BRD declares no competitors (a v1
+        # spec stays back-compatible).
+        "competitors": _competitors(artifacts),
         "parse_errors": parse_errors,
         "root_path": str(root),
     }
 
 
 def _missing_dir_graph(root: Path) -> Dict[str, Any]:
-    return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "parse_errors": [], "missing_product_dir": True, "root_path": str(root)}
+    return {"version": "1.0", "generated_at": _now(), "product": {}, "nodes": [], "edges": [], "risks": [], "competitors": [], "parse_errors": [], "missing_product_dir": True, "root_path": str(root)}
 
 
 def build_graph(root: Path) -> Dict[str, Any]:
@@ -245,6 +259,55 @@ def _risks(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict[str,
             if isinstance(r, dict):
                 risks.append({"node": fm.get("id"), **r})
     return risks
+
+
+# A competitor `url` beginning with this prefix is an internal/secret reference
+# (e.g. `private:internal/teardown.pdf`). It is the OpSec single chokepoint: the
+# parser DROPS such a URL here so the secret path can never reach the graph, the
+# consistency findings, OR any render. The competitor itself is still kept (only
+# its url is stripped) — id/name/threat remain usable.
+_PRIVATE_URL_PREFIX = "private:"
+
+
+def _competitors(artifacts: List[Dict[str, Any]]) -> List[Any]:
+    """Materialize the BRD's `competitors:` list into the graph's single DRY home.
+
+    Competitor IDENTITY lives ONCE in the BRD. Each well-formed entry surfaces
+    as `{id, name, url, threat}`; a `url` starting `private:` is the encrypted
+    OpSec case — its value is dropped to `None` so the secret path never reaches
+    the graph, the findings, OR any render (single chokepoint, G-E4).
+
+    A non-mapping entry (e.g. a bare string) is PRESERVED verbatim in the list so
+    check_consistency can flag it as `invalid_type` — the single DRY home carries
+    the raw shape; consumers (renderers, the drift builder) filter to dicts (the
+    same `isinstance(c, dict)` guard the tests use). The BRD is not a graph node
+    (its goals are expanded), so this top-level key is competitors' only home.
+    Empty list when there is no BRD / no `competitors:` (a v1 spec stays clean).
+    """
+    competitors: List[Any] = []
+    for a in artifacts:
+        if not a["ok"]:
+            continue
+        fm = a["frontmatter"]
+        ntype = fm.get("type") or a.get("__type_hint")
+        if ntype != "brd":
+            continue
+        for c in fm.get("competitors") or []:
+            if not isinstance(c, dict):
+                competitors.append(c)  # bad shape → invalid_type (check_consistency)
+                continue
+            url = c.get("url")
+            # OpSec single chokepoint: a `private:`-prefixed URL is dropped so
+            # the secret path never reaches the graph or any render (G-E4).
+            if isinstance(url, str) and url.strip().startswith(_PRIVATE_URL_PREFIX):
+                url = None
+            competitors.append({
+                "id": c.get("id"),
+                "name": c.get("name"),
+                "url": url,
+                "threat": c.get("threat"),
+            })
+    return competitors
 
 
 def _closure(adj: Dict[str, List[str]], start: str) -> Set[str]:

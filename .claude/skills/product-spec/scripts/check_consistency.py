@@ -37,6 +37,11 @@ ID_PATTERN_BY_TYPE = {
     "story": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+-S[0-9]+$"),
 }
 
+# Competitor ID grammar: `COMP-<SLUG>` (uppercase ASCII start, digits/hyphens,
+# ≤16-char slug) — the same parent-scoped discipline as PRD/epic/story ids, just
+# under the COMP- prefix. A competitor id that violates it trips `invalid_id`.
+COMP_ID_PATTERN = re.compile(r"^COMP-[A-Z][A-Z0-9-]{0,15}$")
+
 ENUMS = {
     "status": {"draft", "review", "approved"},
     "scope": {"in", "out", "core-value"},
@@ -50,6 +55,12 @@ ENUMS = {
     "risk_impact": {"low", "med", "high"},
     "risk_likelihood": {"low", "med", "high"},
     "risk_status": {"open", "mitigated", "accepted"},
+    # COMPETITION enums. `threat` is a BRD competitor's threat tier;
+    # `competitive_parity` is a PRD's per-competitor parity verdict. Distinct
+    # keys so each carries its own closed set. Validated in _check_competitors()
+    # (threat) and _check_competitive_parity() (parity).
+    "competitor_threat": {"low", "med", "high"},
+    "competitive_parity": {"ahead", "parity", "behind", "none"},
 }
 
 # List-typed frontmatter fields. If a generate-templates regression (or a
@@ -148,6 +159,7 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
         findings.extend(_check_risks(n))
         findings.extend(_check_target_date_shape(n))
         findings.extend(_check_depends_on_type(n))
+        findings.extend(_check_competitive_parity(n, graph))
 
         # Soft cap on personas — surface as a warn (not blocking). Lives
         # alongside enum checks because the cap shape is closed (count) even
@@ -179,6 +191,7 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings.extend(_risk_blindspot(graph))
     findings.extend(_time_child_late(graph))
     findings.extend(_dep_order(graph))
+    findings.extend(_check_competitors(graph))
     return findings
 
 
@@ -295,6 +308,123 @@ def _dep_order(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                     target_date=str(ad),
                     prerequisite_target_date=str(bd),
                 ))
+    return findings
+
+
+# ── COMPETITION-dimension structural checks (enum + ref + id + shape) ───────
+#
+# All deterministic — closed-enum membership + an ID-grammar regex + an
+# id-set lookup against graph["competitors"]. No LLM (G-B1): the `competitive_drift`
+# warn is the LLM's job, graded by the eval runner, NOT here.
+#
+# Competitor IDENTITY lives ONCE in the BRD's `competitors:` list (the single DRY
+# home, materialized onto graph["competitors"]). A PRD references competitors by
+# ID via the ID-keyed map `competitive_parity: {COMP-ACME: behind}`.
+
+
+def _competitor_ids(graph: Dict[str, Any]) -> set:
+    """The set of well-formed BRD competitor ids — the resolve target for every
+    PRD `competitive_parity` key. Skips non-dict / id-less entries (their bad
+    shape is flagged separately by _check_competitors)."""
+    out: set = set()
+    for c in graph.get("competitors") or []:
+        if isinstance(c, dict) and isinstance(c.get("id"), str):
+            out.add(c["id"])
+    return out
+
+
+def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Validate the BRD `competitors:` list (the DRY identity home).
+
+    Three deterministic checks, mirroring the risk-entry discipline:
+      - a non-mapping entry (e.g. `- "just a string"`) reuses the EXISTING
+        `invalid_type` finding (NOT a new `invalid_shape`; F7).
+      - `threat` validated against its closed enum → `unknown_enum`.
+      - the competitor `id` must match the `COMP-<SLUG>` grammar → `invalid_id`.
+
+    Competitors are NOT graph nodes (the BRD's only node-expansion is its goals),
+    so findings here carry `artifact_id=BRD` / `file=brd.md` for the PO."""
+    findings: List[Dict[str, Any]] = []
+    competitors = graph.get("competitors")
+    if not isinstance(competitors, list):
+        return findings
+    # A synthetic BRD-scoped node carrier so _f() attributes the finding to the
+    # BRD file (competitors have no node of their own). brd.md is the single home.
+    brd_carrier = {"id": "BRD", "file": "brd.md"}
+    for entry in competitors:
+        if not isinstance(entry, dict):
+            findings.append(_f(
+                "invalid_type", "error", brd_carrier,
+                f"competitors[] entry {entry!r} must be a YAML mapping with an "
+                f"`id`/`name`/`threat`; got {type(entry).__name__}.",
+                field="competitors", value=entry,
+            ))
+            continue
+        threat = entry.get("threat")
+        if threat is not None and threat not in ENUMS["competitor_threat"]:
+            findings.append(_f(
+                "unknown_enum", "error", brd_carrier,
+                f"competitor threat={threat!r} not in {sorted(ENUMS['competitor_threat'])}.",
+                field="competitors[].threat", value=threat,
+            ))
+        cid = entry.get("id")
+        if not (isinstance(cid, str) and COMP_ID_PATTERN.match(cid)):
+            findings.append(_f(
+                "invalid_id", "error", brd_carrier,
+                f"competitor id {cid!r} does not match the COMP-<SLUG> grammar "
+                f"({COMP_ID_PATTERN.pattern}).",
+                field="competitors[].id", value=cid, expected_pattern=COMP_ID_PATTERN.pattern,
+            ))
+    return findings
+
+
+def _check_competitive_parity(node: Dict[str, Any], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Validate one PRD's `competitive_parity` ID-keyed map.
+
+    Three deterministic checks:
+      - the whole field must be a mapping; a non-mapping (`competitive_parity:
+        [..]`) reuses the EXISTING `invalid_type` (F7).
+      - each KEY must resolve to a `graph["competitors"][].id` → else
+        `unknown_ref` error (a PRD cannot invent a competitor; identity is the
+        BRD's DRY home).
+      - each VALUE must be in the parity enum → `unknown_enum`; a non-scalar
+        value (a list/dict) reuses `invalid_type` rather than crashing the
+        membership test.
+    Absent → clean (optional; a v1 PRD has no parity map, G-A2)."""
+    cp = node.get("competitive_parity")
+    if cp is None:
+        return []
+    if not isinstance(cp, dict):
+        return [_f(
+            "invalid_type", "error", node,
+            f"competitive_parity={cp!r} must be an ID-keyed mapping "
+            f"(e.g. {{COMP-ACME: behind}}); got {type(cp).__name__}.",
+            field="competitive_parity", value=cp,
+        )]
+    findings: List[Dict[str, Any]] = []
+    known = _competitor_ids(graph)
+    for comp_id, parity in cp.items():
+        if comp_id not in known:
+            findings.append(_f(
+                "unknown_ref", "error", node,
+                f"competitive_parity key {comp_id!r} does not resolve to any BRD "
+                f"competitor id; competitor identity lives in the BRD's competitors: list.",
+                field="competitive_parity", ref=comp_id,
+            ))
+        if isinstance(parity, (list, dict)):
+            findings.append(_f(
+                "invalid_type", "error", node,
+                f"competitive_parity[{comp_id!r}]={parity!r} must be a single parity "
+                f"enum value; got {type(parity).__name__}.",
+                field="competitive_parity", value=parity,
+            ))
+        elif parity is not None and parity not in ENUMS["competitive_parity"]:
+            findings.append(_f(
+                "unknown_enum", "error", node,
+                f"competitive_parity[{comp_id!r}]={parity!r} not in "
+                f"{sorted(ENUMS['competitive_parity'])}.",
+                field="competitive_parity", value=parity,
+            ))
     return findings
 
 

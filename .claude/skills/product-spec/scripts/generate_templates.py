@@ -253,6 +253,16 @@ LIST_FIELDS = (
     "brd_goals",
     "risks",
     "acceptance_criteria",
+    # COMPETITION: the BRD's competitor-identity list. Same per-character-iteration
+    # hazard as the other list fields, so default to [] (never the bare "TBD").
+    "competitors",
+)
+
+# COMPETITION: a PRD's `competitive_parity` is an ID-keyed MAP, not a list, so it
+# defaults to an empty mapping {} (token substitution emits valid YAML `{}`).
+# Kept separate from LIST_FIELDS so the [] default doesn't mis-shape the map.
+MAP_FIELDS = (
+    "competitive_parity",
 )
 
 
@@ -269,6 +279,8 @@ def fill_defaults(values: Dict[str, Any], target_type: str, artifact_id: str, la
     }
     for k in LIST_FIELDS:
         out[k] = []
+    for k in MAP_FIELDS:
+        out[k] = {}
     out.update(values)
     out["id"] = artifact_id
     # Defense-in-depth: generate never mints `approved` artifacts. Approval is
