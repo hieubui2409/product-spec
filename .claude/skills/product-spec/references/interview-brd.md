@@ -15,7 +15,7 @@ Question bank for drafting/refining the **single** Business Requirements Documen
 **target:** `brd.md → goals[]` (each becomes `BRD-G<n>`)
 
 - **EN:** "What are the 2–5 business goals this product must hit? State each as something measurable."
-- **VI:** "Có 2–5 mục tiêu kinh doanh nào sản phẩm phải đạt? Phát biểu mỗi mục tiêu có thể đo lường được."
+- **VI:** "Có 2–5 mục tiêu kinh doanh nào sản phẩm phải đạt? Nêu mỗi mục tiêu dưới dạng có thể đo lường được."
 - **Options (seed forms):**
   - "Reach ${amount} ARR in {timeframe}." | "Đạt ${số tiền} ARR trong {thời gian}."
   - "Achieve {n}% repeat-purchase rate." | "Đạt tỷ lệ mua lặp lại {n}%."
@@ -43,7 +43,7 @@ Question bank for drafting/refining the **single** Business Requirements Documen
 **target:** `brd.md → constraints`
 
 - **EN:** "What hard constraints bind the product — budget, deadline, regulation, partnerships?"
-- **VI:** "Sản phẩm bị ràng buộc bởi điều gì cứng — ngân sách, hạn chót, quy định, đối tác?"
+- **VI:** "Sản phẩm bị ràng buộc chặt bởi điều gì — ngân sách, hạn chót, quy định, đối tác?"
 
 ## B6 — Market Context (narrative)
 

@@ -231,10 +231,10 @@ def test_export_body_h1_localized_and_newline_collapsed():
 
 def test_horizon_facet_label_localized_and_shipped():
     assert label("horizon", "en") == "Horizon"
-    assert label("horizon", "vi") == "Mốc thời gian"
+    assert label("horizon", "vi") == "Khung thời gian"
     g = _graph([_node("PRD-X", "prd", horizon="now")], [])
     payload = render_board.build_payload(g, [_art("PRD-X", "prd")], group_by="status", lang="vi")
-    assert payload["labels"].get("horizon") == "Mốc thời gian"  # ships so client header resolves it
+    assert payload["labels"].get("horizon") == "Khung thời gian"  # ships so client header resolves it
 
 
 def test_children_of_mirrors_parents_and_drives_downstream():

@@ -64,7 +64,7 @@ For each requirement the PO names, ask:
 **target:** `prd.md → OPTIONAL: scope_in_out`
 
 - **EN:** "Anything close to this feature that is EXPLICITLY out of scope this round?"
-- **VI:** "Có gì gần với tính năng này CHẮC CHẮN ngoài phạm vi lần này?"
+- **VI:** "Có gì sát với tính năng này mà CHẮC CHẮN nằm ngoài phạm vi lần này không?"
 
 ## P8 — Dependencies & Risks (narrative, OPTIONAL)
 
@@ -113,7 +113,7 @@ For each risk the PO raises in P8, capture the four enums + mitigation (same sha
 Only offered when the BRD declares `competitors:`. For each BRD competitor, ask where this feature-area stands:
 
 - **EN:** "Versus {competitor name}, on this feature-area are we **ahead**, at **parity**, **behind**, or do we **not** play here (none)?"
-- **VI:** "So với {tên đối thủ}, ở mảng tính năng này mình **dẫn trước (ahead)**, **ngang bằng (parity)**, **kém hơn (behind)**, hay **không tham gia (none)**?"
+- **VI:** "So với {tên đối thủ}, ở mảng tính năng này mình **dẫn trước (ahead)**, **ngang bằng (parity)**, **thua kém (behind)**, hay **không tham gia (none)**?"
 - **Mode:** per-competitor single-select, pre-populated from the BRD's `competitors:` IDs.
 - **Keys are IDs, not names:** each key must resolve to a BRD `COMP-<SLUG>` (else `unknown_ref` error at validate). Never re-declare a competitor here — identity lives once in `brd.md`.
 - **parity enum (closed):** `ahead | parity | behind | none`.
@@ -130,7 +130,7 @@ Only offered when the BRD declares `competitors:`. For each BRD competitor, ask 
 **target:** `prd.md → horizon`, `scope`
 
 - **EN:** "Is this feature-area NOW (this release), NEXT, or LATER? And is it part of the product's CORE value or just IN scope?"
-- **VI:** "Mảng tính năng này là BÂY GIỜ (release này), TIẾP, hay SAU? Và là phần CỐT LÕI của giá trị sản phẩm hay chỉ TRONG phạm vi?"
+- **VI:** "Mảng tính năng này thuộc HIỆN TẠI (release này), TIẾP THEO, hay SAU NÀY? Và nó là phần CỐT LÕI của giá trị sản phẩm, hay chỉ NẰM TRONG phạm vi?"
 
 ## Adaptivity Rules
 

@@ -31,7 +31,7 @@ Use during PRD functional-requirements interview.
 ### Prompt Template
 
 - **EN:** "If '{requirement}' delays launch by a month, do we still ship without it?"
-- **VI:** "Nếu '{yêu cầu}' khiến ra mắt trễ một tháng, có ra mắt mà không có nó không?"
+- **VI:** "Nếu '{yêu cầu}' làm ra mắt trễ một tháng, ta có ra mắt mà thiếu nó không?"
 
 ### Rules
 
@@ -45,7 +45,7 @@ Use during PRD functional-requirements interview.
 - **Must / Bắt buộc:** the product is not viable without it.
 - **Should / Nên:** important but not launch-blocking.
 - **Could / Có thể:** nice-to-have if there's room.
-- **Won't / Không:** out of scope for this round (still recorded for visibility).
+- **Won't / Không làm:** out of scope for this round (still recorded for visibility).
 
 ## Story Mapping
 
@@ -88,4 +88,4 @@ If any fails, the LLM flags it in `--validate` as an `invest_quality` finding (w
 
 ## Bilingual Translation Note
 
-All Vietnamese phrasings in this file are best-effort and pending native-speaker review. The interview always uses correct diacritics; if you see a translation that reads stiffly, flag it for the next VI pass.
+The Vietnamese phrasings in this file have had a native-speaker pass for natural wording. The interview always uses correct diacritics; if any line still reads stiffly, flag it so it can be refined.

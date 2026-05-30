@@ -357,7 +357,7 @@ def test_ascii_roadmap_vi_localizes_headers():
     per visualization-spec.md L107. Previously the labels were hardcoded
     English regardless of lang."""
     out = render_ascii.roadmap(_graph(), lang="vi")
-    assert "BÂY GIỜ" in out, f"expected localized VI now-header, got: {out[:200]}"
+    assert "HIỆN TẠI" in out, f"expected localized VI now-header, got: {out[:200]}"
     assert "NOW" not in out, "EN header leaked into VI output"
 
 
@@ -373,7 +373,7 @@ def test_ascii_roadmap_en_default_unchanged():
     """NEW-6 backward-compat: lang default must remain English."""
     out = render_ascii.roadmap(_graph())
     assert "NOW" in out
-    assert "BÂY GIỜ" not in out
+    assert "HIỆN TẠI" not in out
 
 
 def test_html_ascii_fallback_view_skips_mermaid_js(tmp_path):

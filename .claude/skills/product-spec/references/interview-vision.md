@@ -21,7 +21,7 @@ The LLM composes `AskUserQuestion` calls from these records and skips questions 
 **target:** `vision.md → Personas`, `PRODUCT.md → personas` (labels)
 
 - **EN:** "Who are the 2–4 main types of people who will use this product?"
-- **VI:** "Có 2–4 nhóm người dùng chính nào sẽ dùng sản phẩm này?"
+- **VI:** "Sản phẩm này có 2–4 nhóm người dùng chính nào?"
 - **Mode:** multi-select with custom add. Cap at 4 (soft).
 - **5-Why trigger:** PO names more than 4 personas → ask which two are the primary buyers.
 
@@ -41,7 +41,7 @@ The LLM composes `AskUserQuestion` calls from these records and skips questions 
 **target:** `vision.md → North-Star Metric`
 
 - **EN:** "If you could track exactly one number that says the product is winning, what is it?"
-- **VI:** "Nếu chỉ chọn một chỉ số duy nhất nói sản phẩm đang thắng, đó là chỉ số gì?"
+- **VI:** "Nếu chỉ chọn một chỉ số duy nhất cho thấy sản phẩm đang thắng thế, đó là chỉ số gì?"
 - **Options (PO-friendly):**
   - "Active users per week" | "Người dùng hoạt động mỗi tuần"
   - "Repeat purchase rate" | "Tỷ lệ mua lặp lại"

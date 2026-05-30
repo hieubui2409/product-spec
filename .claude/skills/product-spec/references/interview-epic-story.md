@@ -79,13 +79,13 @@ For each story under the epic:
 **target:** `story.md → acceptance_criteria` (list)
 
 - **EN:** "Give 2–4 acceptance criteria. Use the Given / When / Then form."
-- **VI:** "Cho 2–4 tiêu chí chấp nhận. Dùng dạng Khi / Thì / Sao đó."
+- **VI:** "Cho 2–4 tiêu chí chấp nhận. Dùng dạng Giả sử / Khi / Thì (Given/When/Then)."
 - **Templates (EN seed):**
   - "Given {state}, when {action}, then {outcome}."
   - "Given an unauthenticated visitor, when they submit valid credentials, then they reach the home page."
 - **Templates (VI seed):**
-  - "Khi {trạng thái}, lúc {hành động}, thì {kết quả}."
-  - "Khi chưa đăng nhập, lúc nhập thông tin đúng, thì vào trang chủ."
+  - "Giả sử {trạng thái}, khi {hành động}, thì {kết quả}."
+  - "Giả sử khách chưa đăng nhập, khi nhập đúng thông tin, thì vào được trang chủ."
 - **5-Why trigger:** AC contains "should", "easy", "fast" without numbers; ask for an observable test.
 
 ## S3 — Size
