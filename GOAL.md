@@ -1,243 +1,121 @@
 # GOAL — Hardcore Dual-Skill Review (15 cycles)
 
-Durable resume anchor for an in-progress, multi-cycle hardcore review of two Claude Code skills.
-The per-cycle reports live under `plans/reports/` which is **gitignored** (`.gitignore:61`), so this file
-is the authoritative, self-contained state — written so the review can continue even if the local reports are lost.
-
-> Conversational language with the owner is Vietnamese; this file is English to match the repo's docs (references/SKILL.md/CLAUDE.md).
+Durable resume anchor for an in-progress, multi-cycle hardcore review of two Claude Code skills
+(**`cleanmatic:product-spec`**, **`cleanmatic:claude-pack`**). Per-cycle reports under `plans/reports/`
+are **gitignored** (`.gitignore:61`) → this file is the authoritative, self-contained record.
+Owner conversation = Vietnamese; this file is English to match the repo docs.
 
 ---
 
 ## Mission
 
-Max-recall, whole-skill review of **`cleanmatic:product-spec`** and **`cleanmatic:claude-pack`**, run as up to **15 cycles**.
-Each cycle re-runs the same hardcore review, carrying forward the prior cycles' findings as context, and **must finish all fixes before the next cycle begins**.
+Max-recall, whole-skill review of both skills, up to **15 cycles**. Each cycle re-runs the same hardcore
+review, carries forward prior findings, and **finishes all fixes before the next cycle begins**.
 
 ### Locked operating parameters (do NOT re-ask)
 - **Scope:** whole skill — every script, reference, template, `SKILL.md`, tests, `install.sh`.
-- **Termination:** converge-then-stop — stop after **2 consecutive cycles with zero new findings**, hard cap **15** (raised from 10 on 2026-05-30).
-- **Fix autonomy:** auto-fix safe findings; **interview only** on risky/ambiguous items or anything touching a locked decision (safety pattern / determinism / scope).
+- **Termination:** converge-then-stop — stop after **2 consecutive zero-finding cycles**; hard cap **15** (raised from 10 on 2026-05-30).
+- **Fix autonomy:** auto-fix safe findings; **interview** only on risky/ambiguous or locked-decision items.
 
 ### Locked design decisions (carry across all cycles — never silently reverse)
-1. **scripts/schemas opt-in.** Top-level `.claude/scripts` + `.claude/schemas` are CK-framework internals; NOT shipped by default. Enable via `--include-scripts` / `--include-schemas` or `defaults.include_scripts/_schemas: true`.
-2. **Commit CK files, drop `agents:` from seed manifest.** `.claude/{agents,scripts,schemas}` are tracked (`.gitignore` re-includes them) so the repo self-packs reproducibly; the seed `.claude/pack.manifest.yaml` carries `agents: []`.
-3. **Bundle hygiene:** drop only `plans/` from bundles (keep `eval/` + `tests/`). `plans` is in `ALWAYS_DROP_DIRS`.
-4. **`follow_shared` granularity:** keep dir-granular (segment-0), not file-granular. Not a bug — documented.
-5. **Safety filter:** case-insensitive across all 3 layers (exact/dirs/patterns); basename + full-arcname matching.
-6. **Installer:** full SemVer-2.0 precedence; recipient per-skill hooks are opt-in (`RUN_HOOKS=1` / `-RunHooks`).
+1. **scripts/schemas opt-in.** Top-level `.claude/scripts` + `.claude/schemas` are CK internals; not shipped by default (`--include-scripts`/`--include-schemas`).
+2. **Commit CK files, seed manifest `agents: []`.** `.claude/{agents,scripts,schemas}` tracked so the repo self-packs reproducibly.
+3. **Bundle hygiene:** drop only `plans/` (in `ALWAYS_DROP_DIRS`); keep `eval/`+`tests/`.
+4. **`follow_shared`** dir-granular (segment-0), not file-granular — documented, intended.
+5. **Safety filter:** case-insensitive across all 3 layers (exact/dirs/patterns); basename + full-arcname.
+6. **Installer:** full SemVer-2.0 precedence; recipient per-skill hooks opt-in (`RUN_HOOKS=1`/`-RunHooks`).
 
----
-
-## EXPANDED SCOPE for Cycles 3 → 15
-
-The owner is implementing a **new product-spec feature (a product-spec update)** before Cycle 3 resumes.
-From **Cycle 3 through Cycle 15**, the review scope **expands** to cover, in addition to the two existing skills:
-
-- the **new product-spec feature/update** (review for correctness + fix), AND
-- **regression** introduced by that new feature into existing product-spec behavior, AND
-- continued regression sweep on all Cycle-2 changes (below).
-
-Cycle 3 therefore begins **only after** the new product-spec feature lands. Treat the new feature's diff as primary review surface, with the rest of both skills as secondary.
+### Expanded scope (Cycles 3→15)
+v2 product-spec feature shipped before C7 → from C3 on, scope covers the new feature + regression it introduced + ongoing regression sweep on all prior changes.
 
 ---
 
 ## Progress
 
-| Cycle | Status | Result |
-|-------|--------|--------|
+| Cycle | Status | Result (count → fixes) |
+|-------|--------|------------------------|
 | 1 | ✅ DONE | 31 findings, all fixed |
-| 2 | ✅ DONE (CLOSED) | 23 findings + 3 late-found, all fixed; 2 stale notes corrected; deferred cosmetics later fixed on owner request |
-| 3 | ✅ DONE (fixes applied 2026-05-29) | **30 findings** (5 HIGH · 11 MED · 14 LOW · 0 CRITICAL) + 2 refuted, all in export+viewer (`6009c50`). **29/30 fully fixed + verified; F15 partial** (detail-panel hoisted; facet/search engine deferred — no DOM-test harness). Owner decisions locked: A=viewer artifact-type vocab · B=emit-once+dedup+guard · C=reject llm+html · F10=escape-all-`<`. claude-pack: 0 findings. |
-| 4 | ✅ DONE (fixes applied 2026-05-29) | **29 findings** (2 HIGH · 4 MED · 23 LOW; 0 CRITICAL) — 26 CONFIRMED + 3 PLAUSIBLE, ~all in product-spec (claude-pack regression-clean). Dedup → **22 distinct fixes, ALL applied + verified** (owner: "fix all, no defer"). Workflow re-scaled worked: **26 agents / ~2.1M tok** (vs C3's 42/~3M). Owner decisions: Q1=fail-loud `--layers` (validate token + empty-result guard) · Q2=ASCII explorer orphan-root · Q3=hoist facet/search engine into `_BODY_RENDER_JS` (incl. the deferred F15). |
-| 5 | ✅ DONE (fixes applied 2026-05-30) | **39 findings** (11 MED · 28 LOW; 0 CRITICAL/HIGH) — 38 CONFIRMED + 1 PLAUSIBLE, 0 REFUTED. 19 correctness · 3 altitude · 17 cleanup; claude-pack 3 (cleanup/doc). **ALL 39 fixed + verified** (owner: "fix all, no defer"). Sweep wave was productive (+11 findings) — first sweep run hit a StructuredOutput false-negative, re-run via resume recovered it. Owner decisions: Q1=fail-loud `--layers` **both** surfaces · Q2=**multi-parent** explorer (HTML matches ASCII) · Q3=qualify CLAUDE.md network claim (doc-only) · Q4=fix all incl. pre-existing. |
-| 6 | ✅ DONE (fixes applied 2026-05-30) | FULL thorough pass (owner override). **28 findings** (1 HIGH · 3 MED · 24 LOW; 28 CONFIRMED, 0 REFUTED). **The full pass earned its keep: caught 3 regressions the C5 fixes introduced** (HIGH hook-matcher divergence + llm-AC-double + horizon-label-missing). ALL fixed + verified (3 micro-perf items accepted-documented per YAGNI). primary surface = C5 fix diff. |
-| 7 | ✅ DONE (fixes applied 2026-05-30) | Lean tier over the v2.0.0 multidim diff via the **Workflow tool, file-partitioned** (5 finders, disjoint file ownership → near-free dedup → per-group verify → sweep). **5 findings (3 CRITICAL · 2 MED; 5 CONFIRMED, 0 REFUTED, sweep clean).** The 3 CRITICALs = one mechanism: `check_consistency` enum membership (`v not in <set>`) **crashes with TypeError on an unhashable YAML value** (`status: [draft]` / risk `impact: [high]` / competitor `threat: [high]`) — a fail-soft violation; fixed with the `isinstance(v,(list,dict))→invalid_type` guard already used by `_check_competitive_parity`. MED: migration dropped CRLF (violated its byte-for-byte promise) → read/write `newline=""` + per-file newline detection; `render_mermaid.roadmap` silently truncated each section to `[:8]` → cap removed (owner: "no cut off"). **ALL 5 fixed + verified**, +7 regression tests (**314 → 321** green; acme-shop `strict_gate` 0/0). Cost: **9 agents / ~784K tok / ~494s**. |
-| 8 | ✅ DONE (fixes applied 2026-05-30) | FULL whole-skill (product-spec + claude-pack) via **Workflow tool, 13 finders** (8 subsystem + 3 cross-cutting OVERLAP + 2 claude-pack regression), all 9 angles, dedup-by-file → per-file verify → sweep. **15 findings (raw 16 → 13 primary + 2 sweep; 3 refuted/dup).** Owner decisions: **Q1 = REFUTE the `checked_at` "determinism" cluster** (3 findings — it is intended provenance documented in `validation-rules-spec.md:186`, sits beside `root`; G-A4 binds the `anchors/findings` PAYLOAD which IS deterministic) + fix the LOW doc-drift (add `checked_at` to the 3 script docstrings); **Q2 = fix all 4 minor**. **Distinct fixes (11), ALL applied + verified:** spec_graph `depends_on` coerce (CRITICAL crash + HIGH char-corruption on a bare-string/mixed-list); spec_graph `_closure` self-edge (HIGH, `downstream` reported a node as its own descendant); competitive_drift None-parity excluded (HIGH); generate_templates `fill_defaults` None-overwrite restore (CRITICAL); manifest_io `atomic_replace` EXDEV-fallback restores backup (CRITICAL/claude-pack); selection `_include_shared` untyped guard (HIGH) + arc-collision WARN (MED, no silent drop); generate_templates newline="" on write + session_used docstring (kept the tested mechanism per rule-3, fixed the overclaim); render_html `(unrated)` literals escaped. **product-spec 321 → 326 (+5), claude-pack 78 → 80 (+2)** green; strict_gate acme-shop 0/0. Cost: **23 agents / ~1.88M tok / ~490s**. The full overlap pass earned its keep — caught 5 CRITICAL + 6 HIGH the C7 lean pass missed. |
-| 9 → 15 | ⏸️ PENDING | Per convergence rule (stop after 2 consecutive zero-finding cycles; hard cap **C15**). Run mode = the FULL C7-style review (Workflow-tool, file-partitioned finders, **overlap allowed + scan-agent count scalable**, all 9 angles). See "Cycle 8+ config" below. |
+| 2 | ✅ DONE | 23 + 3 late, all fixed |
+| 3 | ✅ DONE | 30 (0 CRIT) → 29 full + F15 partial (closed in C4); all product-spec export+viewer |
+| 4 | ✅ DONE | 29 → 22 distinct fixes, all applied. 26 agents / ~2.1M tok |
+| 5 | ✅ DONE | 39 (0 CRIT/HIGH) → all fixed. Sweep +11. ~31 agents / ~2.0M tok |
+| 6 | ✅ DONE | 28 (1 HIGH) → all fixed; caught 3 C5-introduced regressions |
+| 7 | ✅ DONE | 5 (3 CRIT · 2 MED) → all fixed. Lean v2-diff pass. 9 agents / ~784K tok |
+| 8 | ✅ DONE | 15 → 11 fixes + 3 refuted. Full overlap pass. 23 agents / ~1.88M tok |
+| 9 | ✅ DONE | **101** (3 CRIT · 13 HIGH · ~13 MED · ~72 LOW) + 4 extra crash sites → all fixed; 5 refuted. 63 agents / ~4.9M tok |
+| 10 → 15 | ⏸️ PENDING | Full C7-style run mode (below). Stop after 2 consecutive zero-finding cycles; cap C15 |
 
-**Convergence:** NOT converged. Cycle 8 was not clean (**15 findings, incl. 5 CRITICAL + 6 HIGH spanning BOTH skills**) → counter still at 0. Cycle-8 fixes applied + verified. **Next = Cycle 9**, run as a FULL C7-style review (file-partitioned Workflow; overlap allowed; agent count scalable — see "Cycle 8+ config"). The convergence counter only advances on a zero-finding cycle. **Note: the v2 build shipped multiple CRITICALs (C7 found 3 in check_consistency; C8 found a build_graph crash + claude-pack atomic-replace gap the prior 6 cycles missed) — the whole-skill overlap pass is still surfacing foundational defects, so convergence is NOT near.** Stop after 2 consecutive zero-finding cycles; hard cap **15**.
+**Convergence:** NOT converged (counter = 0; C9 had 101 findings incl. 3 CRIT + 13 HIGH across both skills).
+The full overlap pass is STILL surfacing foundational CRITICALs the build-review + prior cycles missed (a tar-slip arbitrary-file-write, a gate-crash on an out-of-range date, an unhashable-key crash family across renderers/gates) → convergence not near. The 16-finder overlap pass with a dedicated crash-safety/fail-soft + doc-drift lens dug far deeper than C7/C8.
 
-**Test state (green):** `claude-pack` **80** (was 78; +2 C8 regression tests — atomic_replace EXDEV restore, selection untyped `_include_shared`) · `product-spec` **326** (was 321 at Cycle-8 start; +5 C8 regression tests — depends_on coerce, closure self-edge, drift None-parity, fill_defaults None, build_graph malformed-dep survival — verified green 2026-05-30).
+**Test state (green):** `product-spec` **351** (was 326; +25 C9 regression tests) · `claude-pack` **109** (was 80; +31 C9 regression tests). (as of C9 close, 2026-05-31).
 Run: `PYTHONPATH=.claude/skills/<skill>/scripts ./.claude/skills/.venv/bin/python3 -m pytest .claude/skills/<skill>/scripts/tests -q`
 
-**Report paths (local, gitignored — may be absent on fresh clone):**
-- Cycle 1: `.claude/skills/claude-pack/plans/reports/cycle-01-dual-skill-review-260529-0940-findings-and-fixes-report.md`
-- Cycle 2: `plans/reports/cycle-02-dual-skill-review-260529-findings-fixes-and-pending-report.md`
-- Cycle 3: `plans/reports/cycle-03-dual-skill-review-260529-1816-export-viewer-findings-report.md` (ALL 30 + 2 refuted; review-only, no fixes)
-- Cycle 4: condensed into this file (§"Cycle 4" below). Raw 29-finding workflow output was ephemeral (`/tmp`); the durable record is the condensed block here.
-- Cycle 5: `plans/reports/cycle-05-dual-skill-review-260530-findings-and-fixes-report.md` (39 findings + fixes + verification) + condensed in §"Cycle 5" below.
-- Cycle 6: `plans/reports/cycle-06-dual-skill-review-260530-findings-and-fixes-report.md` (28 findings + fixes + verification) + condensed in §"Cycle 6" below.
-
-### Cycle 4/5 workflow config (LOCKED 2026-05-29)
-
-Full protocol in **`WORKFLOW-REVIEW.md`** (repo root, committed). Each cycle = one Workflow, 3 waves: **Find → consolidate/dedup → batched Verify → Sweep**. Main cost lever vs Cycle 3 (~42 agents / ~3M tok): **batched verify — one verifier per FILE, not per candidate** → the ~32 per-candidate verify agents collapse to ~6–8.
-
-- **Order:** fix **all** Cycle-3 findings → commit + push → run Cycle 4. Never start a cycle with unfixed findings from the prior one.
-- **Finders: NO cap.** Each finder surfaces every real defect (no padding, no ceiling); **consolidate/distinct happens in orchestration before** the verify (wave 2) and sweep (wave 3) waves, so cost is controlled by batching, not by truncating finders.
-- **Cycle 4** (the single thorough pass, after Cycle-3 fixes land): scope = **full whole-skill** (both skills); **all 9 angles incl. cleanup**; per-file batched verify; sweep included. ✅ DONE — actual cost **26 agents / ~2.1M tok** (within estimate).
-- **Cycle 5** (the second full thorough pass): ✅ DONE — full whole-skill, all 9 angles, batched per-file verify, sweep. Actual **39 findings / ~31 agents (incl. sweep re-run) / ~2.0M tok**. Sweep wave proved its worth (+11 findings). One workflow lesson: a finder/sweeper that concludes "nothing new" can end with prose and skip the StructuredOutput call → false-negative; the sweep prompt now MANDATES the tool call (even for `{candidates: []}`).
-- **Cycle 6/7+** (convergence checks — two full passes C4+C5 now done, all cleanup fixed): scope = **narrow regression** (files touched by fixes + immediate callers); **correctness-only** (cleanup is cataloged + fixed in the thorough passes; re-running cleanup angles never converges to zero and would block the 2-clean-cycle stop); lean batched verify; sweep only if a finding lands. Est ~8 agents / ~0.6M tok.
-- **Convergence unchanged:** stop after 2 consecutive cycles with **zero new findings**; hard cap Cycle 15.
-
-### Cycle 7 config (LOCKED 2026-05-30) — review product-spec v2.0.0 multidim
-
-The first cycle over the **new v2 feature**. Same protocol shape as C4–C6, run at the **Lean tier** because of a token quota.
-
-- **Surface:** PRIMARY = the v2 multidim diff (`c80aa3a..8f1f5ac`, 6 commits, ~+99 tests); SECONDARY = regression on prior product-spec + claude-pack. The v2 feature touched the graph, parsers, checks, renderers, migration, SKILL.md, references, and `examples/acme-shop` — so the blast radius is wide; keep the secondary sweep honest.
-- **Protocol flow (the established 3-wave, lean):** **find bugs** (parallel finders over the v2 diff) → **consolidate** (dedup + group-by-file, orchestration, no agent cost) → batched per-file **verify** → **sweep** (one gap-finder holding the verified list) → **to main agent** (rank correctness > cleanup, then severity) → **interview** the owner on risky / locked-decision / ambiguous items → **fix** all before any Cycle 8.
-- **Token-quota-limited:** the 5-hour usage window is at ~**57/100%** at cycle start. Run the **Lean tier** (WORKFLOW-REVIEW §5: ~8 agents / ~0.6M tok) — narrow to the v2 diff + immediate callers, correctness-first angles, a single/few batched verifiers, sweep **only if** a finding lands. Do NOT launch a 124-agent build-scale fan-out for a review. If the quota is exhausted mid-cycle, checkpoint findings to a report + this file and resume after the window resets (resume-from-runId caches completed agents at 0 cost).
-- **New v2 locked decisions to NOT re-flag (REFUTED unless a NEW regression is proven):** new schema fields optional → back-compat preserved (v1 specs still parse); `depends_on` cycle detection is iterative 3-color DFS (no RecursionError); structural checks (`dep_cycle`/`dep_dangling`/`dep_order`/`time_child_late`/`risk_high_ratio`/`risk_blindspot`/`overdue`) are deterministic Python, LLM checks (`time_realism`/`competitive_drift`) cite anchors or don't flag; `today`-consuming checks are advisory only (never gate determinism); ASCII downgraded to text-summary (NOT deleted); competitor `url` with `private:` prefix is ignored (OpSec). Authoritative gates: `plans/260530-0503-product-spec-multidim-impact-v2/goal.md` (the *build* DoD — distinct from this *review* log).
-
-### Cycle 8+ config (LOCKED 2026-05-30) — full C7-style review, overlap-allowed, scalable
-
-Owner directive (2026-05-30): the next cycles (**C8, C9, C10**, and onward to the C15 cap) run the **FULL C7-style review**, NOT the narrow correctness-only convergence pass. C7 proved the file-partitioned Workflow surfaces real CRITICALs the build-review missed, so keep running it at full strength until convergence.
-
-- **Engine:** the **Workflow tool**, file-partitioned finders (the C7 shape: per-file/per-subsystem finder → consolidate → per-group verify → sweep → main-agent rank → interview → fix). This is the durable run mode for every remaining cycle.
-- **Angles:** ALL 9 (correctness + cleanup + altitude) — "detect all problems + cleanup", not correctness-only. (The §4 "convergence pass = correctness-only" rule is explicitly OVERRIDDEN by the owner for C8+: cleanup nits are re-surfaced each cycle; a cycle is "clean" only when finders + sweep return zero across all angles.)
-- **Two relaxations vs C7:**
-  1. **File ownership MAY overlap.** A file can be assigned to >1 finder (e.g. one angle-focused finder + one subsystem finder) for cross-angle recall. Disjoint ownership is no longer required, so the **consolidate step must dedup by `file:line` + same-mechanism** again (it was near-free in C7 only because ownership was disjoint).
-  2. **Scan-agent count MAY increase.** Scale the finder/verifier pool up beyond C7's 5 (more finders, finer file slices, more verifier shards) — token quota permitting. No hard agent cap; recall first.
-- **Token posture:** prefer a fresh 5-hour window or a high remaining quota before launching (a full overlap pass costs more than C7's ~784K tok). If the quota is exhausted mid-cycle, checkpoint to a report + this file and resume via `resumeFromRunId` (completed agents cache at 0 cost).
-- **Carry-forward regression surface for C8:** the C7 fixes — `check_consistency` enum guards (3 sites: scalar-enum loop, `_check_competitors` threat, `_check_risks` enum) now branch `isinstance(list,dict)→invalid_type` before the set test; `migrate_multidim_fields` reads/writes with `newline=""` + detects the file's newline in `_insert_before_closing_fence` (dropped the `read_text_utf8` import); `render_mermaid.roadmap` removed the `[:8]` per-section cap (now renders ALL items). Watch these for over/under-guarding + the now-uncapped roadmap on a huge horizon.
-- **Locked v2 decisions** (carry the C7 REFUTED list above unchanged).
+**Reports (local, gitignored — may be absent on fresh clone):** C1 `.claude/skills/claude-pack/plans/reports/cycle-01-…`; C2/C3/C5/C6 `plans/reports/cycle-0{2,3,5,6}-…`; C4/C7/C8 condensed below only.
 
 ---
 
-## Bugs fixed (condensed — survives loss of reports)
+## Run mode for Cycles 10→15 (Cycle 8+ config, LOCKED 2026-05-30)
 
-### Cycle 1 (31) — highlights
-- **CRITICAL** secret leak via case-sensitivity → safety filter made case-insensitive (`.ENV`/`ID_RSA`/`.GIT`/`DEPLOY.PEM` all drop).
-- **CRITICAL** 3× stored-XSS in self-contained HTML viz → `_safe_label`/`_safe_id` markup-clean; `<`/`>` escaped in HTML layer.
-- **CRITICAL** `.gitignore` excluded `claude-pack/assets/` (3 installer templates + manifest example) → skill non-functional on fresh clone; fixed.
-- `follow_shared` dead code; MANIFEST.json followed symlinks (hash leak); installer missing macOS `shasum`; installer downgrade split-brain; `brd_goals` iterated per-char; SKILL.md `--discover` wrong; eval fixture gaps; +18 MED/LOW.
+Owner directive: remaining cycles run the **FULL C7-style review**, not a narrow correctness-only pass — C7 proved the file-partitioned Workflow surfaces real CRITICALs the build-review missed.
 
-### Cycle 2 (all fixed)
-- **Regressions from Cycle-1:** `max_size_bytes: false` bricked builds (bool ⊂ int) → reject bool; mermaid HTML double-escaped `&` (`R&D`→`R&amp;amp;D`) → HTML layer escapes only `<`/`>`; +composition test.
-- **Packaging CRITICAL:** seed manifest + default-ship scripts/schemas were untracked → fresh-clone pack abort (E071). Fixed via the opt-in flip + committing CK files + `agents: []`.
-- **Bundle leak:** internal `plans/` shipped into bundles → added to `ALWAYS_DROP_DIRS`.
-- **Non-deterministic hook pick** (rglob order) → sorted + ambiguous-hook error `MANIFEST_E074`.
-- **Installer (sh+ps1):** version regex matched `min_version:` → anchored `^…version:`; locale-sensitive semver compare → `LC_ALL=C` (sh) / ordinal (ps1); unparseable-version + FORCE overwrote → `UNKNOWN VERSION → SKIP` (was a real ps1 gap); wrong "Stale kept" summary → split `STALE_KEPT`/`STALE_WROTE` counters with FORCE-aware message.
-- **product-spec ASCII (owner opted to fix deferred cosmetics):** heatmap dropped non-canonical status → `other` column; table separators sized from header → shared `_grid()` computes width from `max(label across header+rows)` (heatmap/scope/persona/risk).
-- **Misc:** `_nonneg_int` for `--max-size`; atomic-replace double-fault annotates restore failure + backup path; `_include_shared` string normalized; delta baseline by mtime not filename; +E042/E043 documented in error-catalog.
-- **Docs synced** to all behavior changes (manifest-spec, flag-reference, safety-rules, error-catalog, SKILL.md).
+- **Engine:** the **Workflow tool**, file-partitioned finders → consolidate/dedup → per-file verify (3-state) → sweep → main-agent rank → interview → fix. Durable run mode for every remaining cycle.
+- **Angles:** ALL 9 (correctness + cleanup + altitude) every cycle. A cycle is "clean" only when finders + sweep return zero across all angles. (Overrides the old "convergence pass = correctness-only" rule.)
+- **Relaxations vs C7:** (1) file ownership MAY overlap (angle-finder + subsystem-finder on one file) → consolidate must dedup by `file:line` + same-mechanism; (2) scan-agent count MAY scale up — recall first, no hard cap, quota permitting.
+- **Token posture:** prefer a fresh 5-hour window. If exhausted mid-cycle, checkpoint here + resume via `resumeFromRunId` (completed agents cache at 0 cost).
 
-### Cycle 3 (30 findings — FIXED 2026-05-29; 29 full + F15 partial)
+### LOCKED REFUTED list — do NOT re-flag (adjudicated C7/C8; flag only on proven NEW regression)
+- `checked_at`/`today`/`root` in `*_anchors.py` + `time_advisory.py` + competitive_drift output = **intended provenance** (documented `validation-rules-spec.md:186` + `frontmatter-and-id-spec.md:231`; sits beside `root`). G-A4 binds the **payload**, which `build_anchors` produces without it. NOT a determinism bug.
+- New v2 schema fields optional → v1 back-compat preserved. `depends_on` cycle detection = iterative 3-color DFS. ASCII = deterministic text-summary downgrade (not deleted). competitor `url` `private:` prefix ignored (OpSec). Mermaid graph-views bundle Mermaid's OWN DOMPurify (exempt from the "no SKILL body-sanitizer" contract). `generate_templates.session_used` is a TESTED library mechanism — keep (rule-3).
 
-All in product-spec, export+viewer feature (`6009c50`). 0 CRITICAL. Fix report: `plans/reports/cycle-03-...-1907-export-viewer-fixes-report.md` (gitignored). By cluster:
-
-- **A (F1,F2,F9,F13) ✅** viewer `--layers`/facet/Flat-tabs now use **artifact type** (`goal,…`): `_filter_by_layers` filters by `n.type`; board/explorer card `layer`=type; `LAYER_FOR_TYPE` import dropped from viewers; i18n labels added. Export keeps doc-layer vocab (`vision,brd,…`) — surfaces intentionally differ.
-- **B (F3,F4,F6,F8,F12) ✅** `_resolve_selection` splits VISION/BRD/PRODUCT out as singletons; `build_digest` **raises** on unresolved/empty (CLI exit 2); PRODUCT kept (`_in_layers`); VISION emit-once (dedup); `--layers` warning = one-per-excluded-**type**.
-- **C (F5) ✅** `write_export` hard-rejects `--compact-mode llm`+`--format html` (exit 2).
-- **D (F7,F11) ✅** ASCII explorer forwards `--layers`; explorer depth recomputed from reconciled parent chain (Tree/Table agree post-filter).
-- **E (F10) ✅** `embed_spec_data` escapes **every `<` → `<`** (not `&#x3c;` — wrong for a script island; `<` round-trips via JSON.parse). Closes F10 + the R2 gap (structural-invariant + round-trip + `<!--` primer tests). R1 sound (no action).
-- **F (F14) ✅** help lists board/explorer.
-- **G (F16,F17,F27,F28) ✅** `build_graph_with_artifacts` (parse once); adjacency built once; markdown rendered once (timestamp-stripped hash).
-- **H (F20,F21,F22,F24,F29,F30) ✅** shared `spec_graph._now`/`index_artifacts` + `render_html.product_name/chrome_values/assemble_body_shell`.
-- **I:** F18 ✅ panel CSS → `_viewer-head.html` (explorer divergence fixed); F19 ✅ docstring/CLAUDE.md/workflow-export narrowed; F23 ✅ dead `_safe_href`/`psSafeHref` removed; F25 ✅ singleton double-gate dropped; F26 ✅ `_body_or_struct`. **F15 ◐ PARTIAL** — detail-panel trio hoisted to `_BODY_RENDER_JS` (body-view-only, preserves H4 gating); facet/search engine left per-shell (no DOM-test harness to verify a parameterized refactor — deferred to a DOM-tested pass; **completed in Cycle 4 — see Q3 below**).
-
-### Cycle 4 (29 findings — FIXED 2026-05-29; 22 distinct fixes, all applied)
-
-Owner: **"fix all, no defer."** All in product-spec; claude-pack regression-clean. By cluster:
-
-- **Q1 fail-loud `--layers` (2 findings, HIGH) ✅** `build_digest` now raises on (a) an unknown `--layers` token (validated vs `ALL_LAYERS`) and (b) a non-`all` selection filtered to empty (e.g. `--export VISION --layers prd` — the asymmetry where PRODUCT was protected but VISION/BRD silently dropped). `visualize.py` validates viewer tokens vs `goal,prd,epic,story` → exit 2. Closes the silent-empty-doc class the C3 fix only half-closed.
-- **Q2 ASCII explorer orphan-root (1, MED) ✅** new `render_ascii._orphan_forest` reparents nodes whose parent was filtered out as roots (cyclic-edge guard included); `explorer()` delegates to `tree()` when no `--layers` (preserves `explorer==tree`), else forest. Was: empty `PRODUCT:` header for any goal-excluding subset.
-- **HTML export frontmatter leak (1, MED ×3 angles) ✅** `_strip_frontmatter` drops the `.md` YAML block from the HTML body island (was rendering as a stray `<hr>`+setext `<h2>`); `render_html_doc(graph,…)` now reuses `chrome_values`.
-- **Q3 facet/search hoist (1, LOW altitude — the C3-deferred F15) ✅** engine (`psFacetGroups/psDistinct/psSelfMatch/psBadge/psBuildFacets`) hoisted into `render_html._BODY_RENDER_JS`; both shells call it. Verified by **executing** the assembled JS under a DOM stub (node) — facets build, render emits nodes, click/search re-render without throwing — plus `node --check`. `psBuildFacets` also **localizes the Layer facet** (`L[v]`) — fixes the vi-facet-not-localized finding.
-- **DRY ✅** `render_ascii.select_cards` (board/explorer/ascii-board); `render_html.file_timestamp` (4 writers); `spec_graph._now` imported into the 3 analytical scripts (`dt` removed); board column key uses `_hashable` (parity with ASCII board on malformed enums).
-- **Cleanup ✅** dead `_SINGLETON_TYPES` removed; stale detail-panel comments (both shells); stale `assemble_digest` module docstring ("vision NOT a node"); `install.sh` header (marked+DOMPurify step); leaf-type (story) `--layers` warning wording; `<missing-id>` sentinel filtered from the unresolved-ID error; `visualize.py` reuses `_written_json` + `_unfence` (no double ASCII render on html mermaid-fallback); i18n `explorer` label.
-- **H4 (1, PLAUSIBLE/LOW) ✅** the mermaid graph-view bundles Mermaid's OWN DOMPurify (third-party SVG sanitizer) — the H4 contract is "no SKILL body-sanitizer (`psRenderMarkdown`)", which holds. Test made precise (asserts `psRenderMarkdown` absent on ascii AND mermaid paths) + wording clarified (Mermaid bundle exempt).
-- **Verification:** 189 product-spec (173→189, +16 new regression tests) + 77 claude-pack green; e2e on a temp fixture (all Q1 exit-2 cases, Q2 orphan-root, frontmatter-strip, valid exports); DOM-stub execution of both viewers' hoisted JS.
-
-### Cycle 5 (39 findings — FIXED 2026-05-30; all applied)
-
-Owner: **"fix all, no defer."** 0 CRITICAL/HIGH. Mostly product-spec; claude-pack 3 (cleanup/doc). Full report: `plans/reports/cycle-05-...-findings-and-fixes-report.md` (gitignored). By cluster:
-
-- **Q1 fail-loud `--layers` BOTH surfaces (F2,F7) ✅** export `all`-branch no longer exempt unconditionally — raises (exit 2) when `--layers` strips PRE-EXISTING content (`all` on a genuinely empty spec stays allowed-empty); viewers (`board`/`explorer`) now raise (exit 2) on empty-after-filter at the `_dispatch_body_view` chokepoint. Closes the asymmetry the C3/C4 "fail-loud" only half-covered.
-- **Q2 multi-parent explorer (F10,F1,F33,F34) ✅** explorer payload carries `parents` (list, all in-set parents) not a single `parent`; the HTML Tree renders a multi-goal PRD under EACH goal (matches the ASCII tree) with a per-path cycle guard; `visibleSet` walks all parents with a `seen` guard (F1 — a self/cyclic parent no longer hangs the tab; `spec_graph.parents_of` drops self-edges server-side). Depth = shortest-to-root. `_DEPTH_BY_TYPE` derived from `_LAYER_ORDER`.
-- **ASCII/HTML/mermaid explorer parity (F3,F4) ✅** `explorer()` routes through the orphan-forest whenever `layers OR filter_wont` (was: only `layers`), using `select_cards` for the keep-set — so a kept child of a deferred OR layer-pruned parent reparents as a root on every format. Root determination tests ANY parent (multi-goal-aware).
-- **Export correctness (F5,F6,F11,F12,F13,F14) ✅** YAML-safe frontmatter scalars (`:`/`#`/newline no longer break/truncate the `.md` or the HTML strip); bodyless story renders AC once at `--depth full`; `--compact-mode llm` includes a body-present story's AC + neutralizes a body `-->`; stable-filename docstring corrected to scope idempotency to the hash; export HTML title localized (`--lang vi`).
-- **Resolution + warning truth (F8,F9) ✅** `--export VISION/PRODUCT` resolves by literal token (no self-contradictory "unresolved" when `id:` omitted); the `--layers` exclusion warning partitions excluded goals/prds into surfaced-via-sub-layer vs absent-entirely (no longer claims a childless goal is surfaced).
-- **DRY helpers hoisted to `spec_graph` (F24,F25,F33,F37,F22) ✅** `CHILD_TYPE_FOR_PARENT` + `matching_child_counts` (gap rule, was triplicated across render_ascii/render_mermaid/check_traceability), `diff_graphs` (delta set-math + product-diff, was duplicated), `parents_of` (tree-parent index, was 2 homes w/ divergent coercion); dead `PARENT_FIELD_BY_TYPE` deleted; `ancestors()` kept-with-note.
-- **Viewer/dispatch cleanup (F15,F16,F23,F29,F30,F31,F35,F36,F38,F39) ✅** board `--group-by horizon` facet added; persona honors `--filter-wont` in mermaid/html via a unified `_VIEW_KWARGS`/`_dispatch_view` (replaces the duplicated ascii/mermaid arity ladders); explorer renders only the active mode per keystroke (+ lazy repaint) and reuses cached vis on tab-click; board buckets-once; dead `all` label dropped; unused `List` import dropped; detail-panel body memoized; `visualize.py` docstring corrected (11 views).
-- **claude-pack (F26,F27,F28) ✅** hook resolution indexes the tree once (was O(H·F) rescan per name); `is_dropped` hoists `_PATTERNS_LOWER` (no per-call re-lowercase); SKILL.md flags table gains the `--hooks` row.
-- **Docs drift (F17,F18,F19,F20) ✅** removed the non-existent `--color` flag + the false stdin-input claim from visualization-spec; qualified CLAUDE.md "no runtime network calls" to match the shipped Mermaid graph-view CDN fallback (Q3, doc-only); documented `--filter-wont` (was in ZERO markdown) in SKILL.md + visualization-spec.
-- **Verification:** product-spec **190 → 211** (+21 regression tests) + claude-pack **77** green; node DOM-stub of both viewers (multi-parent renders PRD under both goals, cyclic chains terminate, horizon facet, mode/tab/search clean); e2e on a temp fixture (export md/html/vi/layers/depth, board/explorer html/ascii/vi/filter-wont/group-by, persona-mermaid-filter-wont, gap, delta, strict_gate 0-errors; fail-loud exit-2 confirmed for unknown tokens + empty-after-filter export).
-
-### Cycle 6 (28 findings — FIXED 2026-05-30; all applied)
-
-Third full thorough pass (owner override: full, not narrow). Primary surface = the C5 fix diff. 0 CRITICAL. **The full pass caught 3 regressions the C5 fixes introduced.** Full report: `plans/reports/cycle-06-...-findings-and-fixes-report.md` (gitignored). By cluster:
-
-- **H1 (HIGH, claude-pack) ✅** the C5 basename-only hook index (F26) **diverged** from `validate()`'s `rglob` → a path-qualified/glob hook name passed validation but was silently dropped from the tarball (exit 0), breaking the E074 "pin a unique path" remedy. Fix: ONE shared `manifest_loader.match_hooks()` (rglob) used by both `validate()` and `selection.resolve_selection` (drops C5's index — perf was negligible; also closes the un-mirrored validate twin). +regression test.
-- **M1 (correctness) ✅** bodyless story rendered AC twice under `--compact-mode llm` (C5 F6 fixed only the full branch). Fix: shared `_content_with_ac` body-first helper used by both branches (can't diverge); dead `_body_or_struct` removed.
-- **M3 + DRY (cleanup) ✅** C5 added `parents_of` but no mirror → forward children-adjacency re-typed in 4 sites + the closure walk in 3. Fix: add `spec_graph.children_of` + `_closure`; `downstream`/`ancestors`/`assemble_digest` consume them. Plus `is_visible` (ascii+mermaid tree), `_write_visual` (3 writers), `psMetaBadges`/`psWireSearch`/`appendHeader` (board+explorer client), agents+rules fold, dead `_orphan_forest` filter_wont param + vestigial goal `parent:"BRD"` removed, `--layers` warning reuses memoized child-reach.
-- **Horizon facet label (C5 F15 added the facet, not its label) ✅** add `horizon` to i18n (en/vi) + both `_UI_KEYS`; `psBuildFacets` localizes chip values for all groups (`L[v]||v`, was layer-only); visualization-spec lists the horizon facet. (Fixes the bare lowercase `horizon:` header + raw chip values under `--lang vi`.)
-- **render_export i18n/robustness ✅** body H1 localizes via `label('export',lang)` (matched the chrome title; .md+.html now agree under vi) + CR/LF in the product name collapse (a newline+`---` no longer garbles the H1).
-- **defensive ✅** `render_explorer._depth` memoizes only at top level (no order-dependent depth on a malformed cyclic spec); `render_html` facet engine `state.facets[g]||{}` guards (group LIST is the single source of truth); `render_mermaid.delta` docstring notes its field-level limitation.
-- **Doc ✅** `workflow-export.md` documents the `--export all --layers X` fail-loud case.
-- **Accepted (YAGNI, no fix):** Flat-tabs bar rebuild on filter-change · `_dispatch_body_view` empty-guard recompute · `selection` redundant sorted-pick (finders concurred on the latter two).
-- **Verification:** product-spec **211 → 215** (+4) + claude-pack **77 → 78** (+1) green; DOM-stub of both viewers re-run after the client refactors; e2e (vi H1 "Xuất đặc tả", board-vi "Mốc thời gian" horizon label, all flows exit 0, strict_gate clean).
-
-### Cycle 7 (5 findings — FIXED 2026-05-30; all applied)
-
-First cycle over the v2.0.0 multidim diff. Lean tier via the **Workflow tool, file-partitioned** (5 disjoint finders → per-group verify → sweep). **5 findings: 3 CRITICAL · 2 MED — 5 CONFIRMED, 0 REFUTED, sweep clean.** Owner: "fix all, no cut off." All in product-spec. Cost **9 agents / ~784K tok / ~494s**.
-
-- **3× CRITICAL — enum membership crashes on an unhashable YAML value (`check_consistency.py`) ✅** `v not in ENUMS[field]` (`ENUMS` values are SETs) raises `TypeError: unhashable type: 'list'` when a scalar enum field is given a YAML list/dict — `status: [draft]` (scalar-enum loop, ~line 142), competitor `threat: [high]` (`_check_competitors`, ~line 364), risk `impact: [high]`/`likelihood`/`status` (`_check_risks`, ~line 592). A validation script crashing on malformed input is exactly the fail-soft contract it's meant to enforce. Fix: each site now branches `isinstance(v,(list,dict)) → invalid_type` BEFORE the membership test — the SAME guard `_check_competitive_parity` (line 414) already used. +3 regression tests (each asserts no-crash + `invalid_type`).
-- **MED — migration dropped CRLF (`migrate_multidim_fields.py`) ✅** the module promised the file is "preserved byte-for-byte", but `read_text_utf8` (universal newlines) + `write_text` (os.linesep) silently reflowed a CRLF spec to LF. Fix: `apply_file` reads/writes with `open(..., newline="")` (no translation); `_insert_before_closing_fence` detects the file's newline (`"\r\n" if "\r\n" in src else "\n"`) and terminates inserted placeholder lines with it; dropped the now-unused `read_text_utf8` import. +3 regression tests (insert-CRLF, insert-LF, apply-file-CRLF-on-disk).
-- **MED — roadmap silently truncated each section (`render_mermaid.py`) ✅** `for it in items[:8]:` dropped items 9+ from every Mermaid roadmap section with no marker/doc (a prior review's MIN-3, never addressed). Owner: "no cut off" → cap removed; renders ALL items. +1 regression test (12 items in `now`, all present).
-- **Verification:** product-spec **314 → 321** (+7) green; `examples/acme-shop` `strict_gate` **0 errors / 0 warns**; live repro confirmed `status: [draft]` now emits `invalid_type` instead of a traceback. claude-pack **78** untouched.
-
-### Cycle 8 (15 findings — FIXED 2026-05-30; 11 distinct fixes + 3 refuted)
-
-First FULL whole-skill pass run via the **Workflow tool with 13 file-partitioned finders** (8 product-spec subsystem + 3 cross-cutting OVERLAP + 2 claude-pack regression), all 9 angles, dedup-by-file → per-file verify → sweep. **15 kept (13 primary + 2 sweep); 3 refuted/dup.** Owner: Q1 = REFUTE checked_at cluster + doc-drift fix; Q2 = fix all 4 minor. Cost **23 agents / ~1.88M tok**. By cluster:
-
-- **spec_graph `depends_on` coerce (CRITICAL + HIGH) ✅** `sorted(fm.get("depends_on") or [])` crashed on a mixed-type list (`TypeError: '<' not supported between dict and str`) and silently char-split a bare string (`depends_on: PRD-2` → `['-','2','D','P','R']`). build_graph is the foundation — a crash there pre-empts every check. Fixed at the single source: new `_as_id_list()` returns a sorted list of ID strings (non-list → []); all 6 consumers (check_traceability adjacency/dangling, check_consistency dep_order/type, render_ascii/mermaid) inherit the clean list. +unit+e2e tests.
-- **spec_graph `_closure` self-edge (HIGH) ✅** a self-dependency (A depends_on A) made `downstream(A)` include A — a node reported as its own descendant (wrong impact-propagation + assemble_digest). Fix: `return out - {start}` (also catches a cycle that loops back to start). +test.
-- **competitive_drift None-parity (HIGH) ✅** `r["parity"] != "none"` counted a Python `None` (an unset `COMP-A:` in YAML, which check_consistency allows) as a real data point → inflated `competitors_with_data` → wrong drift-gate eligibility. Fix: exclude `(None, "none")`. +test.
-- **generate_templates `fill_defaults` None-overwrite (CRITICAL) ✅** `out.update(values)` let a caller-supplied `{"personas": None}` shadow the `[]` default → downstream `for p in personas` TypeError. Fix: restore the empty default for any None'd LIST_FIELDS/MAP_FIELDS after the update. +test.
-- **manifest_io `atomic_replace` EXDEV gap (CRITICAL, claude-pack) ✅** the cross-fs `shutil.move` fallback was NOT wrapped — if it raised, the pre-existing output (already renamed to `.bak.{epoch}`) was orphaned and `final` left absent. Fix: wrap the fallback, restore the backup + drop tmp before re-raising (mirrors the non-EXDEV path). +test (monkeypatched EXDEV + move-failure).
-- **selection `_include_shared` untyped (HIGH) + arc-collision silent drop (MED, claude-pack) ✅** a malformed scalar `_include_shared: 123` crashed the walk (`for slug in 123`) → guard to `[]`; and two different sources colliding on one arcname were dropped silently → now a `WARN:` to stderr (no silent content loss). +test.
-- **Minor (owner "fix all 4") ✅** generate_templates writes with `newline=""` (byte-identical generated file, matches migration discipline); render_html `(unrated)` literals routed through `_escape` (uphold the "every text node escaped" invariant; no-op but auditable); session_used — **kept** the tested library mechanism (rule-3: don't delete tested behaviour), fixed the docstring overclaim that "--auto braindump" uses it.
-- **REFUTED (3, owner Q1) — `checked_at` is intended provenance, NOT a determinism bug:** documented in `validation-rules-spec.md:186` + `frontmatter-and-id-spec.md:231`, sits in the same envelope as `root` (also environment-dependent); G-A4 determinism binds the `anchors/findings` PAYLOAD, which `build_anchors` produces WITHOUT checked_at (the evals test that). Residual = doc-drift only: added `checked_at` to the 3 script docstrings' CLI-output lines.
-- **Verification:** product-spec **321 → 326** (+5) + claude-pack **78 → 80** (+2) green; strict_gate acme-shop 0/0; competitive_drift + time_advisory exit 0.
+### Carry-forward regression surface (scrutinize for over/under-guarding + stale callers)
+- **C9:** `spec_graph._scalar_id` (id → str|`<missing-id>`|`<invalid-id>`) + `_scalar_link` (epic/prd → str|None) + node_type coerce + build_edges brd_goals guard + non-str competitor url→None; shared hoists `make_finding`/`HORIZON_ORDER`/`moscow_story_counts`/`competitor_id_to_name`/`resolve_ac`/`ID_PATTERN_BY_TYPE`/`COMP_ID_PATTERN`; `frontmatter_parser` catches `(YAMLError, ValueError)` + `UnicodeDecodeError` + empty-block message; renderer unhashable-key guards (`_hashable`/isinstance) across risk/competition/dashboard/roadmap/time + `_parity_label`/`_threat_label`; `generate_templates` content-only types + PRD slug derive; claude-pack **tar-slip 3-layer containment** (validate all categories + `_include_shared`, selection chokepoint, `is_dropped` traversal drop) + `MANIFEST_E102` (schema_version type) + tightened `SEMVER_RE` (strict 2.0, rejects leading zeros) + `manifest_io` userinfo scrub + `errno.EXDEV` + `args` epoch >=0/ascii guard + install.sh base-10 semver + installers walk bundle root (README/CLAUDE installed). **Watch:** the strict SEMVER_RE now rejects a leading-zero version (intended behavior change); the installer bundle-root walk.
+- **C8:** `spec_graph._as_id_list` (depends_on coerce; every consumer assumes a clean list) + `_closure` returns `out-{start}`; `competitive_drift_anchors` None-parity excluded; `generate_templates.fill_defaults` None-restore for LIST/MAP fields + `newline=""` write; `manifest_io.atomic_replace` EXDEV restores backup; `selection` `_include_shared` non-list→`[]` guard + arc-collision WARN; `render_html` `(unrated)` escapes.
+- **C7:** `check_consistency` enum guards `isinstance(list,dict)→invalid_type` at 3 sites; `migrate_multidim_fields` `newline=""` + per-file newline detect; `render_mermaid.roadmap` `[:8]` cap removed (watch huge horizon).
+- **C5/C6:** shared `match_hooks` (validate + selection); `spec_graph` hoists (`parents_of`/`children_of`/`_closure`, `CHILD_TYPE_FOR_PARENT`, `matching_child_counts`, `diff_graphs`); explorer multi-parent payload; `render_export` i18n; horizon facet+label.
 
 ---
 
-## How to resume (Cycle 3+)
+## Per-cycle record (condensed — survives loss of reports)
 
-1. Confirm the new product-spec feature has landed; get its diff (`git diff` of the feature commits).
-2. Re-read this file + (if present) the Cycle-1/2 reports for carried context.
-3. Run the review (finders → verify → sweep) over the cycle's surface. **Cycle 4+ uses a re-scaled, leaner workflow** (Cycle 3's ~42-agent/~3M-token full pipeline was too costly for the owner's plan — config decided by interview, recorded in the Cycle-3 chat / report).
-4. Fix all findings this cycle before starting the next (auto-fix safe; interview on risky/locked-decision items). **Cycle 3 + Cycle 4 fixes are DONE** (2026-05-29) — Cycle 5 may start.
-5. Keep both test suites green; add tests for new behavior.
-6. Write a cycle report to `plans/reports/` and update **this file's** Progress + Convergence.
-7. Stop when 2 consecutive cycles produce zero new findings, or at Cycle 15.
+**Cycle 1 (31, all fixed):** CRITICAL secret-leak via case-sensitivity → safety filter case-insensitive; 3× stored-XSS in self-contained HTML viz → `_safe_label`/`_safe_id` + escape `<`/`>`; `.gitignore` excluded `claude-pack/assets/` (installer templates+manifest) → skill non-functional on fresh clone, fixed; `follow_shared` dead code; MANIFEST symlink hash-leak; installer macOS `shasum` + downgrade split-brain; `brd_goals` per-char iteration; +18.
+
+**Cycle 2 (23+3, all fixed):** C1 regressions — `max_size_bytes:false` bricked builds (reject bool); mermaid HTML double-escaped `&` (escape only `<`/`>`). Packaging CRITICAL: seed manifest + default scripts/schemas untracked → fresh-clone abort (E071) → opt-in flip + commit CK files + `agents:[]`. Bundle leak `plans/` → `ALWAYS_DROP_DIRS`. Non-det hook pick → sorted + `E074`. Installer: version regex anchored, `LC_ALL=C` semver, unparseable-version→SKIP, split STALE_KEPT/WROTE counters. ASCII heatmap `other` column + shared `_grid()`. Docs synced.
+
+**Cycle 3 (30 → 29 full + F15 partial):** product-spec export+viewer (`6009c50`), 0 CRIT. Owner: A=viewer **artifact-type** vocab · B=emit-once+dedup, unresolved→error (exit 2) · C=`llm`+`html` hard-reject · F10=escape-all-`<`. Clusters: layers-by-type, VISION/BRD/PRODUCT singleton split, ASCII explorer forwarding, parse-once DRY. F15 facet/search hoist deferred → done in C4.
+
+**Cycle 4 (29 → 22 fixes, all applied):** owner "fix all, no defer". Q1=fail-loud `--layers` (validate token vs surface vocab + raise on empty-after-filter); Q2=ASCII explorer orphan-root reparent (parity w/ HTML); Q3=hoist facet/search engine into `_BODY_RENDER_JS` (closes F15, verified via node DOM-stub). HTML export frontmatter leak fixed. H4 clarified: "no SKILL body-sanitizer" — Mermaid's bundled DOMPurify is third-party/exempt.
+
+**Cycle 5 (39, all fixed):** owner "fix all". 0 CRIT/HIGH. Q1=fail-loud `--layers` BOTH surfaces (export `all`-branch raises when layers strip pre-existing content; viewers raise on empty-after-filter at `_dispatch_body_view`); Q2=**multi-parent** explorer (payload `parent`→`parents`; PRD under each goal; cycle guard); Q3=qualify CLAUDE.md "no network" claim (Mermaid CDN fallback, doc-only); Q4=fix all incl. pre-existing. DRY hoists to `spec_graph` (`CHILD_TYPE_FOR_PARENT`, `matching_child_counts`, `diff_graphs`, `parents_of`). YAML-safe frontmatter scalars. Sweep +11.
+
+**Cycle 6 (28, all fixed):** full pass (owner override), 0 CRIT. **Caught 3 C5-introduced regressions:** HIGH — C5 basename-only hook index diverged from `validate()`'s rglob (path-qualified/glob hook silently dropped) → ONE shared `manifest_loader.match_hooks()`; MED — bodyless story AC-double under `--compact-mode llm` → shared `_content_with_ac`; MED — horizon facet had no label → i18n. Added `spec_graph.children_of`/`_closure`. 3 micro-perf accepted (YAGNI).
+
+**Cycle 7 (5, all fixed):** lean v2.0.0-multidim-diff pass via Workflow (5 disjoint finders). Owner "no cut off". **3× CRITICAL** — `check_consistency` enum membership (`v not in <set>`) raises `TypeError` on an unhashable YAML value (`status:[draft]` / competitor `threat:[high]` / risk `impact:[high]`); fixed with `isinstance(list,dict)→invalid_type` guard at 3 sites (matching `_check_competitive_parity`). MED — migration dropped CRLF (`read_text`/`write_text` translated) → `newline=""` + per-file newline detect. MED — `render_mermaid.roadmap` `[:8]` truncated each section → cap removed. +7 tests (314→321); acme-shop `strict_gate` 0/0.
+
+**Cycle 8 (15 → 11 fixes + 3 refuted):** FULL whole-skill via Workflow (13 overlap finders). Owner: Q1=**REFUTE** the `checked_at` cluster (intended provenance) + fix LOW doc-drift; Q2=fix all 4 minor. Fixes — `spec_graph._as_id_list` (depends_on: crash on mixed-list + char-split on bare-string, CRIT+HIGH) + `_closure` `-{start}` (self-descendant, HIGH); `competitive_drift` None-parity excluded (HIGH); `generate_templates.fill_defaults` None-overwrite restore (CRIT) + `newline=""`; `manifest_io.atomic_replace` EXDEV restores backup (CRIT, claude-pack); `selection` `_include_shared` guard (HIGH) + arc-collision WARN (MED); `render_html` `(unrated)` escapes; `session_used` kept (rule-3), docstring overclaim fixed. +7 tests (ps 321→326, cp 78→80). The overlap pass caught 5 CRIT + 6 HIGH the prior 6 cycles missed.
+
+**Cycle 9 (101 → all fixed; 5 refuted):** FULL C7-style via Workflow (16 finders: 8 product-spec subsystem + 2 claude-pack + 4 cross-cutting overlap + 2 references), all 9 angles, per-file verify, 2 sweep. 63 agents / ~4.9M tok. Owner: fix ALL 101 (no accept) · TIGHTEN SEMVER_RE strict-2.0 · installers INSTALL README/CLAUDE. **3 CRITICAL:** (1) **tar-slip / arbitrary-file-write** (claude-pack) — traversal guard applied only to `extra`; `skills`/`agents`/`rules`/`hooks`/`_include_shared` emitted a `..` arcname into the tarball; fixed in 3 layers (validate containment all categories, selection chokepoint, `is_dropped` traversal drop). (2) **gate crash on unquoted out-of-range date** — PyYAML raises bare `ValueError` (not `YAMLError`); `frontmatter_parser` now catches `(YAMLError, ValueError)`. (3) **`epic`/`prd`/`id` list/dict poison the graph** (carry-forward: C7/C8 coerced depends_on+brd_goals but not the scalar links) → `spec_graph._scalar_id`/`_scalar_link` single-source coercion. **13 HIGH** crash-safety family (matrix joins, renderer unhashable-keys, frontmatter UnicodeDecodeError, generate_templates content-only types + PRD slug, brd_goals char-split). **~13 MED** (credential leak in MANIFEST.json scrubbed, schema_version/dup guards `MANIFEST_E102`, install.sh octal-semver, README/CLAUDE install). **~72 LOW** doc-drift + DRY hoists + dead-code + edge-cases. **PLUS 4 extra crash sites** found in fix-verification repro (ascii/mermaid roadmap+time horizon-key, html `_parity_label`/`_threat_label` set-membership). REFUTED 5 (e.g. render_html chrome-fold = deliberate divergence, not a bug). +25 product-spec / +31 claude-pack regression tests (326→351, 78→109); acme-shop strict_gate 0/0; 14/14 viz combos OK. Report: `plans/reports/cycle-09-…`. Executed by lead foundation + 5 file-partitioned sub-batches (no overlap).
+
+---
+
+## How to resume
+
+1. Re-read this file (carries all prior context + carry-forward surface + REFUTED list).
+2. Run the cycle's review (finders → per-file verify → sweep) per the C8+ run mode above.
+3. Fix all findings before the next cycle (auto-fix safe; interview risky/locked-decision).
+4. Keep both test suites green; add regression tests for new behaviour.
+5. Update this file's Progress + Convergence; write/refresh a report under `plans/reports/`.
+6. Stop after 2 consecutive zero-finding cycles, or at Cycle 15.
+
+---
+
+## Shipped features (durable review surfaces)
+
+**product-spec v2.0.0 — multi-dimensional impact (2026-05-30, C7's primary surface).** RISK (PRD risks + enum impact/likelihood/status + `risk_high_ratio`/`risk_blindspot` + HTML 3×3 grid) · TIME (`target_date` ISO + `depends_on` edge w/ iterative 3-color DFS + `dep_dangling`/`dep_order`/`time_child_late` + out-of-gate `time_advisory.py --today` + `time_realism` LLM + roadmap/gantt) · COMPETITION (`competitors`@BRD + `competitive_parity`@PRD + HTML parity matrix/threat heatmap + `competitive_drift` LLM + `private:`-URL OpSec) · impact-propagation (`downstream()` + LLM 1-liner) · ASCII→HTML-native default downgrade · v1→v2 migration + back-compat. Plan: `plans/260530-0503-product-spec-multidim-impact-v2/plan.md` (build DoD gates G-A..G-H in `…/goal.md`). Commits (branch `feat/product-spec-v2-multidim`): `c80aa3a` RISK · `3cde05d` TIME · `4951cce` COMPETITION · `9ad5584` impact+migration · `5a5ff74` ASCII · `8f1f5ac` docs+2.0.0. Tests 215→314. SKILL.md 1.1.0→2.0.0.
+
+**product-spec v1.1.0 — read-once Export + interactive Viewer (2026-05-29, C3–C6 surface).** `--export` (read-once md/print-HTML) + `--viz board`/`explorer` + unified ALL `--viz` HTML under one design system (marked+DOMPurify vendored+inlined, print-CSS, theme). New scripts: `assemble_digest.py`, `render_export.py`, `render_board.py`, `render_explorer.py`, `install-vendor-markdown.sh`. Design doc + plan: `.claude/skills/product-spec/plans/…/260529-1504-product-spec-export-and-viewer/`. Tests 92→156.
+
+---
 
 ## Open questions
-**Cycle 3 owner decisions — LOCKED & applied (2026-05-29):** A=viewer artifact-type vocab · B=emit-once+dedup, unresolved→error · C=`llm`+`html` hard-reject · F10=escape-all-`<`.
-
-**Cycle 4 owner decisions — LOCKED & applied (2026-05-29):** Q1=fail-loud `--layers` (validate token vs the surface vocab + raise on empty-after-filter) · Q2=ASCII explorer orphan-root (reparent filtered orphans, parity with HTML) · Q3=hoist the facet/search engine into `_BODY_RENDER_JS` (closes the C3-deferred F15). Owner directive: **"fix all, no defer"** — all 22 distinct fixes applied. H4 contract clarified: "no SKILL body-sanitizer (`psRenderMarkdown`)" — Mermaid's bundled DOMPurify is third-party/exempt.
-
-**Cycle 5 owner decisions — LOCKED & applied (2026-05-30):** Q1=fail-loud `--layers` on **both** surfaces — export `all`-branch raises on layers-stripped-content (not just named selections), viewers raise on empty-after-filter (extends the C4 decision, which only covered token validation on viewers + the empty guard on export). Q2=**multi-parent** explorer — HTML Tree renders a multi-goal PRD under each goal, matching the ASCII tree (payload changed `parent`→`parents`). Q3=qualify the CLAUDE.md "no runtime external network calls" claim to match the already-shipped Mermaid graph-view CDN fallback (doc-only; body views still fail-closed). Q4=**fix all 39, no defer** incl. the 2 pre-existing behavioral items (board horizon facet, persona `--filter-wont` in mermaid/html). New locked decision: **viewer explorer is multi-parent** (was implicitly single-parent first-edge-wins).
-
-**Cycle 6 — DONE (2026-05-30), no owner decisions needed** (all 28 findings were clear auto-fixes; 0 locked-decision conflict). Owner ran it as a FULL pass (override of the narrow default). The full pass caught 3 regressions the C5 fixes had introduced (HIGH hook-matcher + 2 MED).
-
-**Cycle 7 — DONE (2026-05-30).** Reviewed the v2.0.0 multidim diff via the file-partitioned Workflow (5 finders, disjoint ownership). 5 findings (3 CRITICAL `check_consistency` enum-unhashable crashes + 2 MED: migration CRLF loss, roadmap `[:8]` truncation), 0 refuted, sweep clean. Owner decision: **"fix all, no cut off"** — all 5 fixed + 7 regression tests (314 → 321 green). No locked-decision conflict (the enum-guard fix matches the existing `_check_competitive_parity` pattern; the roadmap-cap removal honors "no cut off"). The 3 CRITICALs were correctness bugs the v2 *build*-review missed → reinforces continuing full passes.
-
-**Cycle 8 — DONE (2026-05-30).** FULL whole-skill via the Workflow tool (13 file-partitioned finders, overlap allowed, all 9 angles). 15 findings; **11 distinct fixes applied + verified, 3 refuted.** Owner decisions: **Q1 = REFUTE the `checked_at` cluster** (intended provenance documented in validation-rules-spec:186; G-A4 binds the payload, not the wrapper) + fix the LOW doc-drift; **Q2 = fix all 4 minor.** One rule-3 judgment call: session_used was NOT removed (it is a tested library API; deletion would drop a passing test + a forward mechanism) — the docstring overclaim was fixed instead. The overlap pass earned its keep (5 CRITICAL + 6 HIGH across both skills, incl. a build_graph crash + a claude-pack atomic-replace gap the prior 6 cycles missed).
-
-**Next — Cycle 9 (LOCKED 2026-05-30):** run the **FULL C7-style review** again (Workflow-tool, file-partitioned, **overlap allowed + scan-agent count scalable**, ALL 9 angles — see "Cycle 8+ config"). Hard cap **15**. **Carry-forward regression surface (C8 fixes):** `spec_graph._as_id_list` (depends_on coercion — every consumer now assumes a clean list) + `_closure` `- {start}`; `competitive_drift_anchors` None-parity filter; `generate_templates.fill_defaults` None-restore + `newline=""` write; `manifest_io.atomic_replace` EXDEV restore; `selection` `_include_shared` guard + arc-collision WARN; render_html `(unrated)` escapes. **Carry-forward (C7):** check_consistency enum guards, migrate newline, uncapped roadmap. **Carry-forward (C5/C6):** match_hooks, spec_graph helpers, render_export, horizon i18n, explorer multi-parent, assemble_digest guards, _yaml_scalar, visualize dispatch. Config in `WORKFLOW-REVIEW.md`.
-
-**Newest product-spec feature — ✅ SHIPPED v2.0.0 (2026-05-30) — Cycle 7's PRIMARY review surface**: multi-dimensional impact. RISK (PRD risks + enum-validated impact/likelihood/status + mitigation + `risk_high_ratio`/`risk_blindspot` script warns + HTML-native 3×3 grid) · TIME (`target_date` ISO + `depends_on` graph edge with iterative 3-color-DFS cycle detection + `dep_dangling`/`dep_order`/`time_child_late` + out-of-gate `time_advisory.py --today` overdue + `time_realism` LLM warn + roadmap/gantt views) · COMPETITION (`competitors`@BRD + `competitive_parity`@PRD + HTML-native parity matrix/threat heatmap + `competitive_drift` LLM warn + `private:`-URL OpSec skip) · impact-propagation engine (`downstream()` + LLM 1-liner on `--update`/`--validate`, `docs/product/impact/<ts>.md`) · ASCII→HTML-native default downgrade (ASCII retained as text-summary tree) · v1→v2 migration script + back-compat (new fields optional).
-- Plan (7 phases; red-teamed + validated, Failed:0): `plans/260530-0503-product-spec-multidim-impact-v2/plan.md`; build DoD: `…/goal.md` (gates G-A..G-H).
-- **Landed via the Workflow-tool orchestrator (full-auto P1→P7 + multi-wave review).** Converged: overallVerdict pass, 2/2 clean waves, shipReady. Build cost: **124 agents / ~4.15M tok** (heavy — this is the *build*; Cycle 7 *review* is Lean). SKILL.md bumped **1.1.0 → 2.0.0** (major; schema grows but v1 still parses).
-- Commits (branch `feat/product-spec-v2-multidim`, pushed): `c80aa3a` RISK · `3cde05d` TIME · `4951cce` COMPETITION · `9ad5584` impact+migration · `5a5ff74` ASCII downgrade · `8f1f5ac` docs+2.0.0 release.
-- Tests (green): product-spec **215 → 314** (+99). `examples/acme-shop` migrated to v2 → `strict_gate` 0 errors / 0 warns.
-- **Cycle 7 reviews this diff** (lean, token-quota-limited — see Progress + Cycle 7 config above). Plan dir + per-cycle reports are gitignored under `plans/`; this GOAL.md + the committed skill code are the durable record.
-
-**Prior product-spec feature — ✅ IMPLEMENTED (2026-05-29), reviewed in Cycles 3–6**: read-once **Export** (`--export`) + interactive **Viewer** (`--viz board`/`explorer`) + unified ALL `--viz` HTML under one design system (marked+DOMPurify vendored + inlined, print-CSS, theme/palette).
-- Design doc: `.claude/skills/product-spec/plans/reports/brainstorm-design-260529-1504-product-spec-export-and-viewer-report.md`
-- Plan (7 phases; red-teamed + validated; Failed:0): `.claude/skills/product-spec/plans/260529-1504-product-spec-export-and-viewer/plan.md`
-- Red-team report: `.claude/skills/product-spec/plans/reports/red-team-260529-1504-product-spec-export-and-viewer-plan-review-report.md`
-- **Landed via `/ck:cook`.** SKILL.md bumped 1.0.0 → 1.1.0. New scripts: `assemble_digest.py`, `render_export.py`, `render_board.py`, `render_explorer.py`, `install-vendor-markdown.sh`; new templates: `_viewer-head.html`, `export-shell.html`, `board-shell.html`, `explorer-shell.html`; committed vendored libs `assets/vendor/{marked,purify}.min.js` (~68 KB). Modified: `render_html.py` (single-pass `substitute()` + body-render substrate), `render_ascii.py`, `visualize.py`, `i18n_labels.py`, `visual-html-shell.html`, `install.sh`, `SKILL.md`, repo-root `CLAUDE.md`, `references/visualization-spec.md` (+ new `references/workflow-export.md`), `eval/evals.json`. Fixture: added `vision.md` to `valid-spec`. `.claude/.ckignore`: allow the vendor dir.
-- Tests (green): product-spec **92 → 156** (+64) · claude-pack **77** + golden integration **1**. Independent code-review PASS (0 CRITICAL/HIGH; XSS neutralization proven in a live DOM; 1 MED `assemble_digest.py` 220 LOC accepted-with-note, 2 LOW fixed).
-- **Cycle 3 DONE — reviewed (18:16) + FIXED (19:07), 2026-05-29.** 30 findings; **29 fully fixed + verified, F15 partial** (facet/search hoist deferred). Reports (gitignored): `cycle-03-...-1816-...-findings-report.md` (review) + `cycle-03-...-1907-...-fixes-report.md` (fixes). product-spec 156→**173** tests · claude-pack **77**. **Next: run the re-scaled Cycle 4** (full thorough pass). Plan dir + per-cycle reports are gitignored (under `plans/`); this GOAL.md + the committed skill code are the durable record.
+None outstanding. All prior owner decisions locked + applied (folded into the per-cycle record above).

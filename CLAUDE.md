@@ -63,7 +63,7 @@ Default = flag only; regeneration is opt-in per node.
 | Epic     | `PRD-<SLUG>-E<n>`      | `PRD-AUTH-E1`    |
 | Story    | `PRD-<SLUG>-E<n>-S<n>` | `PRD-AUTH-E1-S1` |
 
-`<SLUG>`: uppercase ASCII letters/digits, hyphen permitted but prefer flat, ≤16 chars. `<n>`: the next free integer
+`<SLUG>`: must begin with an uppercase ASCII letter; remaining characters may be uppercase letters, digits, or hyphens; ≤16 characters total (enforced regex: `^[A-Z][A-Z0-9-]{0,15}$`). Prefer flat slugs. `<n>`: the next free integer
 **within that parent**, allocated by `generate_templates.py`. Parent-scoped means globally unique by construction and
 lineage-readable — no central counter.
 
@@ -321,7 +321,7 @@ All scripts under `.claude/skills/claude-pack/scripts/`. Run via shared venv:
 | `manifest_loader.py` | Parse + validate + resolve manifest        |
 | `build_manifest.py`  | Discover + emit questions + write manifest |
 
-Exit codes: 0 success · 1 validation · 2 strict-gate · 3 collision · 4 write error · 5 empty/oversize · 130 SIGINT.
+Exit codes (`python -m pack` entry point): 0 success · 1 validation · 2 strict-gate · 3 collision · 4 write error · 5 empty/oversize · 130 SIGINT. Note: `build_manifest.py --write` uses its own codes (0 ok · 1 validation · 2 collision), where 2 means collision rather than strict-gate.
 
 ## Output Layout
 
