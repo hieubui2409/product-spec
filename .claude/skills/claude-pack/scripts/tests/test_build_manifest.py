@@ -124,3 +124,49 @@ def test_canonical_key_order(tmp_root):
     seen_positions = [canonical.index(k) for k in seen_keys if k in canonical]
     assert seen_positions == sorted(seen_positions), \
         f"keys out of canonical order: {seen_keys}"
+
+
+# ---------------------------------------------------------------------------
+# Cycle-10 regression tests
+# ---------------------------------------------------------------------------
+
+def test_write_non_dict_null_returns_validation_error(tmp_root, monkeypatch):
+    """--write with JSON null on stdin must return EXIT_VALIDATION, not AttributeError."""
+    import io
+    out_path = tmp_root / ".claude" / "c10-null.yaml"
+    monkeypatch.setattr("sys.stdin", io.StringIO("null"))
+    # main() reads from sys.stdin when --write is used
+    rc = build_manifest.main([
+        "--write", "--root", str(tmp_root), "--out", str(out_path),
+        "--allow-dev-version",
+    ])
+    assert rc == build_manifest.EXIT_VALIDATION, \
+        f"expected EXIT_VALIDATION (1) for null stdin, got {rc}"
+    assert not out_path.exists(), "no file should be written for invalid stdin"
+
+
+def test_write_non_dict_list_returns_validation_error(tmp_root, monkeypatch):
+    """--write with JSON array on stdin must return EXIT_VALIDATION, not AttributeError."""
+    import io
+    out_path = tmp_root / ".claude" / "c10-list.yaml"
+    monkeypatch.setattr("sys.stdin", io.StringIO('["skill-a", "skill-b"]'))
+    rc = build_manifest.main([
+        "--write", "--root", str(tmp_root), "--out", str(out_path),
+        "--allow-dev-version",
+    ])
+    assert rc == build_manifest.EXIT_VALIDATION, \
+        f"expected EXIT_VALIDATION (1) for list stdin, got {rc}"
+    assert not out_path.exists()
+
+
+def test_write_non_dict_number_returns_validation_error(tmp_root, monkeypatch):
+    """--write with a plain number on stdin must return EXIT_VALIDATION."""
+    import io
+    out_path = tmp_root / ".claude" / "c10-num.yaml"
+    monkeypatch.setattr("sys.stdin", io.StringIO("42"))
+    rc = build_manifest.main([
+        "--write", "--root", str(tmp_root), "--out", str(out_path),
+        "--allow-dev-version",
+    ])
+    assert rc == build_manifest.EXIT_VALIDATION
+    assert not out_path.exists()

@@ -54,21 +54,21 @@ All boolean flags use `argparse.BooleanOptionalAction` (default `None`). `None` 
 
 ```bash
 # Build from manifest, deterministic
-python -m pack --manifest.claude/pack.manifest.yaml
+python -m pack --manifest .claude/pack.manifest.yaml
 
 # Override version for ad-hoc build
-python -m pack --manifest.claude/pack.manifest.yaml --version 0.2.0-rc1
+python -m pack --manifest .claude/pack.manifest.yaml --version 0.2.0-rc1
 
 # Dry-run + would-be SHA (no double-pass cost)
-python -m pack --manifest.claude/pack.manifest.yaml --dry-run --compute-sha
+python -m pack --manifest .claude/pack.manifest.yaml --dry-run --compute-sha
 
 # JSON output (CI-friendly)
-python -m pack --manifest.claude/pack.manifest.yaml --json
+python -m pack --manifest .claude/pack.manifest.yaml --json
 
 # Honor SOURCE_DATE_EPOCH from CI
 SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) python -m pack \
- --manifest.claude/pack.manifest.yaml --source-date-epoch env
+ --manifest .claude/pack.manifest.yaml --source-date-epoch env
 
 # Opt-in _shared/ subtrees
-python -m pack --manifest.claude/pack.manifest.yaml --include-shared lib,utils
+python -m pack --manifest .claude/pack.manifest.yaml --include-shared lib,utils
 ```

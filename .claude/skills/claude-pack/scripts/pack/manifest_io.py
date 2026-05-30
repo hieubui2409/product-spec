@@ -77,7 +77,13 @@ def build_manifest_json(
     # Strip userinfo (user:token@) from the URL before embedding in the shipped
     # MANIFEST.json — a credential-bearing origin like https://user:token@host/repo
     # would otherwise leak the token to every bundle recipient.
-    source_repo = re.sub(r"(://)[^/@]*@", r"\1", _raw_repo)
+    # The pattern `[^/]*@` consumes up to the LAST '@' before the first '/' in the
+    # authority, so a password containing a literal '@' (e.g. user:p@ss@host) is
+    # fully stripped rather than leaking "ss@host".
+    # scp-style origins (git@host:org/repo) carry no secret in the username — the
+    # user@host form is the standard SSH alias for that remote; it is intentionally
+    # retained as stripping it would make the source_repo field unresolvable.
+    source_repo = re.sub(r"(://)[^/]*@", r"\1", _raw_repo)
 
     payload = {
         "schema_version": MANIFEST_SCHEMA_VERSION,

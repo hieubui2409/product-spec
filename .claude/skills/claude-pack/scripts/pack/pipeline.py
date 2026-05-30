@@ -1,4 +1,4 @@
-"""pipeline — build-stage helpers for pack.cli.
+"""pipeline — build-stage helpers for pack.cli and dry-run path.
 
 Pulled out of ``cli.py`` to keep it under the 200-LOC budget. These functions
 are pure orchestration over tarball/manifest_io/selection; they return data
@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import secrets
+from typing import Any
 from pathlib import Path
 
 from .manifest_io import (
@@ -27,6 +28,26 @@ EXIT_OK = 0
 EXIT_COLLISION = 3
 EXIT_WRITE = 4
 EXIT_EMPTY_OR_OVER_SIZE = 5
+
+
+def resolve_max_size(args: Any, manifest: dict) -> int:
+    """Resolve the effective max_size in bytes from CLI args and manifest defaults.
+
+    Resolution ladder (first non-None wins):
+    1. ``args.max_size`` (CLI flag ``--max-size``)
+    2. ``manifest.defaults.max_size_bytes``
+    3. Hard default: 100 MiB
+
+    Using explicit ``None`` checks so that ``0`` (reject-all) is honored at every
+    level rather than being swallowed by a falsy ``or`` chain.
+    """
+    cli_max = getattr(args, "max_size", None)
+    manifest_max = (manifest.get("defaults") or {}).get("max_size_bytes", None)
+    if cli_max is not None:
+        return cli_max
+    if manifest_max is not None:
+        return manifest_max
+    return 100 * 1024 * 1024
 
 
 def prepare_build(manifest: dict, root: Path, epoch: int, bundle_root: str,
@@ -69,17 +90,7 @@ def write_tarball(args: argparse.Namespace, manifest: dict, out_dir: Path,
     try:
         with tmp_path.open("wb") as f:
             tar_sha = build_tarball(versioned, embedded, f, source_date_epoch=epoch)
-        # Use explicit None checks so that 0 (reject-all) is honored for both
-        # the CLI flag and the manifest field. A falsy `or` chain would silently
-        # skip 0 and fall through to the default, which is incorrect.
-        cli_max = getattr(args, "max_size", None)
-        manifest_max = (manifest.get("defaults") or {}).get("max_size_bytes", None)
-        if cli_max is not None:
-            max_size = cli_max
-        elif manifest_max is not None:
-            max_size = manifest_max
-        else:
-            max_size = 100 * 1024 * 1024
+        max_size = resolve_max_size(args, manifest)
         actual_size = tmp_path.stat().st_size
         if actual_size > max_size:
             tmp_path.unlink(missing_ok=True)

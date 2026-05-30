@@ -1,7 +1,9 @@
 # install.ps1 — recipient installer for claude-pack v{{VERSION}}.
 #
-# Run from the extracted bundle directory. Copies selected .claude/ artifacts
-# into the target repo (default: $PWD). Version-aware per skill.
+# Run from the extracted bundle directory. Installs the bundle contents
+# (selected .claude/ artifacts PLUS any packed top-level files such as
+# README.md/CLAUDE.md) into the target repo (default: $PWD).
+# Version-aware per skill.
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
@@ -186,6 +188,8 @@ Write-Host ""
 # that were packed but have no .claude/ prefix are also installed.
 # Installer metadata files (MANIFEST.json, INSTALL.md, install.sh, install.ps1)
 # are excluded — they belong to the bundle, not to the recipient's repo.
+# PARITY: install.sh excludes the same 4 names via grep -vE — keep both lists
+# in sync.
 $ExcludeNames = @("MANIFEST.json", "INSTALL.md", "install.sh", "install.ps1")
 Get-ChildItem -Recurse -File -Path $BundleDir | Sort-Object FullName | ForEach-Object {
     if ($ExcludeNames -contains $_.Name -and $_.Directory.FullName -eq $BundleDir) { return }
@@ -193,6 +197,15 @@ Get-ChildItem -Recurse -File -Path $BundleDir | Sort-Object FullName | ForEach-O
     $rel = $src.Substring($BundleDir.Length + 1) -replace '\\', '/'
     $dst = Join-Path $TargetDir $rel
     $dstDir = Split-Path -Parent $dst
+
+    # Defense-in-depth traversal guard (recipient-side).
+    # The builder already validates arcnames, but we re-check here so a
+    # manually crafted or corrupted bundle cannot escape $TargetDir.
+    # Parity: install.sh has an equivalent `case` guard — keep both in sync.
+    if ($rel -match '(^|[\\/])\.\.([\\/]|$)' -or [System.IO.Path]::IsPathRooted($rel)) {
+        Note "[SKIP traversal] $rel"
+        return
+    }
 
     # Determine skill slug from path (.claude/skills/<slug>/...)
     $localSlug = $null

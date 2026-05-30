@@ -149,3 +149,33 @@ def test_find_shared_refs_strips_code_blocks(tmp_path):
     names = {name for name, _ in refs}
     assert "foo" in names
     assert "bar" not in names
+
+
+# ---------------------------------------------------------------------------
+# Cycle-10 regression tests
+# ---------------------------------------------------------------------------
+
+def test_backslash_traversal_dropped():
+    """Backslash-encoded traversal 'a\\..\\b' must be dropped (C10 fix)."""
+    dropped, rule = safety_check.is_dropped("a\\..\\b")
+    assert dropped, "backslash-encoded traversal not dropped"
+    assert rule == "always-drop:traversal"
+
+
+def test_drive_letter_check_does_not_over_drop_posix_colon():
+    """POSIX arcname 'a:b' (colon at index 1, no separator follows) must NOT drop.
+
+    The old check was `len(path)>=2 and path[1]==':'` which would falsely drop
+    a POSIX path like 'a:b' that happens to have a colon at position 1.
+    The fixed check requires the next char to be '/', '\\', or end-of-string.
+    """
+    dropped, _ = safety_check.is_dropped("a:b")
+    assert not dropped, "POSIX path 'a:b' must not be dropped as a drive-letter path"
+
+
+def test_windows_drive_letter_still_dropped():
+    """Windows drive-letter absolute paths (C:/ or C:\\) must still drop."""
+    for path in ("C:/foo/bar", "C:\\foo", "D:/"):
+        dropped, rule = safety_check.is_dropped(path)
+        assert dropped, f"Windows drive path not dropped: {path!r}"
+        assert rule == "always-drop:traversal"

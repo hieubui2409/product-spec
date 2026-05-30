@@ -64,7 +64,15 @@ Match anchored: `path == key` OR `path.endswith("/" + key)`. No substring matchi
 
 ## `_shared/` Policy (warn-only)
 
-When a packed skill's `SKILL.md` references `_shared/<name>`, pack emits:
+The `_shared/` pass runs **only when the standalone scanner's `--scan` target ends with `.claude`** (a full `.claude/` root scan). For any other `--scan` value (e.g. a bare skill dir), the pass is skipped.
+
+When the pass runs and a packed skill's `SKILL.md` references `_shared/<name>`, the standalone scanner emits a JSON `shared_dep` finding (severity `info` if the shared dir exists; severity `warn` as `shared_dep_missing` if it does not):
+
+```json
+{"check": "shared_dep", "severity": "info", "path": ".claude/skills/_shared/<name>", "referring_skill": "<skill-id>"}
+```
+
+The `pack/cli.py` build path additionally logs a human-readable warning:
 
 ```
 WARN: skill <skill-id> references _shared/<name> — use --include-shared <name> to include

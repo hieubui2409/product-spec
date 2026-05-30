@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # install.sh — recipient installer for claude-pack v{{VERSION}}.
 #
-# Run from the extracted bundle directory. Copies selected .claude/ artifacts
-# into the target repo (default: pwd). Version-aware: detects stale/newer/same
-# versions per skill and reports an action plan.
+# Run from the extracted bundle directory. Installs the bundle contents
+# (selected .claude/ artifacts PLUS any packed top-level files such as
+# README.md/CLAUDE.md) into the target repo (default: pwd).
+# Version-aware: detects stale/newer/same versions per skill and reports
+# an action plan.
 #
 # Usage:
 #   bash install.sh                       # install into current repo
@@ -217,6 +219,17 @@ cd "$BUNDLE_DIR"
 # a piped `while` runs in a subshell and its variable updates are lost.
 # LC_ALL=C ensures locale-stable bytewise sort, matching the builder's sort order.
 while IFS= read -r REL; do
+    # Defense-in-depth traversal guard (recipient-side).
+    # The builder already validates arcnames, but we re-check here so a
+    # manually crafted or corrupted bundle cannot escape $TARGET_DIR.
+    # Parity: install.ps1 has an equivalent check — keep both lists in sync.
+    case "$REL" in
+        /*|*/../*|../*|*/..)
+            note "[SKIP traversal] $REL"
+            continue
+            ;;
+    esac
+
     SRC="$BUNDLE_DIR/$REL"
     DST="$TARGET_DIR/$REL"
     DST_DIR="$(dirname "$DST")"
@@ -282,6 +295,8 @@ while IFS= read -r REL; do
 # that were packed but have no .claude/ prefix are also installed.
 # Installer metadata files (MANIFEST.json, INSTALL.md, install.sh, install.ps1)
 # are excluded — they belong to the bundle, not to the recipient's repo.
+# PARITY: install.ps1 excludes the same 4 names via $ExcludeNames — keep both
+# lists in sync.
 done < <(LC_ALL=C find . -type f -print | LC_ALL=C sort | grep -vE '^(./MANIFEST\.json|./INSTALL\.md|./install\.sh|./install\.ps1)$')
 
 # --- Run per-skill install hooks (opt-in) ---

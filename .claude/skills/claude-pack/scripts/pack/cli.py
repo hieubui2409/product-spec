@@ -14,7 +14,7 @@ import safety_check  # type: ignore[import-not-found]
 
 from .args import build_parser, resolve_epoch
 from .manifest_io import cleanup_stale_tmp, filter_findings
-from .pipeline import prepare_build, write_tarball
+from .pipeline import prepare_build, resolve_max_size, write_tarball
 from .selection import resolve_selection
 from .tarball import build_tarball
 from .templates import TemplateError
@@ -116,9 +116,13 @@ def main(argv: list[str] | None = None) -> int:
     version = manifest["version"]
     bundle_root = f"{bundle_name}-{version}"
     out_dir = args.out.resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-    cleanup_stale_tmp(out_dir)
     epoch = resolve_epoch(args)
+
+    # FS side-effects (mkdir + stale-tmp cleanup) are skipped under --dry-run:
+    # they mutate the filesystem and are not needed for a read-only size/count check.
+    if not args.dry_run:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        cleanup_stale_tmp(out_dir)
 
     try:
         _, embedded, versioned = prepare_build(
@@ -132,14 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         file_count, total_bytes = filter_findings(selection)
         # Resolve max_size the same way write_tarball does so --dry-run never
         # reports success for a payload the real run would reject (EXIT 5).
-        cli_max = getattr(args, "max_size", None)
-        manifest_max = (manifest.get("defaults") or {}).get("max_size_bytes", None)
-        if cli_max is not None:
-            max_size = cli_max
-        elif manifest_max is not None:
-            max_size = manifest_max
-        else:
-            max_size = 100 * 1024 * 1024
+        max_size = resolve_max_size(args, manifest)
         payload: dict = {
             "bundle_root": bundle_root,
             "file_count": file_count,
@@ -155,7 +152,10 @@ def main(argv: list[str] | None = None) -> int:
             compressed_size = buf.tell()
             payload["over_max_size"] = compressed_size > max_size
         else:
-            payload["over_max_size"] = False
+            # over_max_size is null (not False) when --compute-sha is absent:
+            # we didn't compress, so we cannot know if the output would exceed
+            # max_size.  Callers must not interpret null as a passing verdict.
+            payload["over_max_size"] = None
         _emit(args, payload)
         return EXIT_OK
 

@@ -38,6 +38,13 @@ def render(template_text: str, tokens: dict[str, str]) -> str:
 
 
 def render_template(template_path: Path, tokens: dict[str, str]) -> bytes:
-    """Read ``template_path`` and return rendered bytes (UTF-8 encoded)."""
-    text = template_path.read_text(encoding="utf-8")
+    """Read ``template_path`` and return rendered bytes (UTF-8 encoded).
+
+    Raises ``TemplateError`` (not a bare ``OSError``) when the template file is
+    missing or unreadable so callers only need to catch one exception type.
+    """
+    try:
+        text = template_path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise TemplateError(f"template not readable: {template_path}: {e}") from e
     return render(text, tokens).encode("utf-8")

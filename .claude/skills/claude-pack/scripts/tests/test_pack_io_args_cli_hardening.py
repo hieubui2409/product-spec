@@ -271,12 +271,17 @@ def test_dry_run_over_max_size_field_present(tmp_root):
     assert payload["max_size"] == 1
 
 
-def test_dry_run_without_compute_sha_has_over_max_size_false(tmp_root):
-    """--dry-run without --compute-sha still emits over_max_size: false."""
+def test_dry_run_without_compute_sha_has_over_max_size_null(tmp_root):
+    """--dry-run without --compute-sha emits over_max_size: null (not false).
+
+    We cannot know whether the compressed output would exceed max_size without
+    actually compressing, so null is the honest value.  Callers must not
+    interpret null as a passing verdict.
+    """
     _write_sample_manifest(tmp_root)
     payload = _run_pack_subprocess(tmp_root, ["--dry-run"])
     assert "over_max_size" in payload
-    assert payload["over_max_size"] is False
+    assert payload["over_max_size"] is None
 
 
 # ---------------------------------------------------------------------------

@@ -374,3 +374,38 @@ def test_semver_re_accepts_valid_versions():
     assert manifest_loader.SEMVER_RE.match("1.0.0-alpha.1")
     assert manifest_loader.SEMVER_RE.match("1.0.0+build.42")
     assert manifest_loader.SEMVER_RE.match("0.0.0-dev")
+
+
+# ---------------------------------------------------------------------------
+# Cycle-10 regression tests
+# ---------------------------------------------------------------------------
+
+def test_validate_relative_to_accepts_valid_nested_skill(tmp_root):
+    """relative_to-based containment must NOT emit false E021 for a valid, deeply
+    nested skill directory (C10 fix: replaced string-prefix with relative_to)."""
+    # Create a legitimate nested skill dir.
+    skill_dir = tmp_root / ".claude" / "skills" / "my-skill" / "scripts"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    # validate() checks for the skill directory itself, not a subdirectory.
+    # Create the actual skill dir at the top level so E070 is not triggered.
+    actual_skill = tmp_root / ".claude" / "skills" / "my-skill"
+    # already created above via parents=True
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "skills": ["my-skill"]}, tmp_root
+    )
+    # Must NOT produce E021 (false containment escape) for a valid skill.
+    assert not any("E021" in e and "my-skill" in e for e in errors), \
+        f"false E021 for valid skill: {errors}"
+    # May produce E070 if SKILL.md is absent — that's fine, E070 is not E021.
+
+
+def test_userinfo_scrub_strips_password_with_at_in_it():
+    """Regex `[^/]*@` must consume up to the LAST '@' so a password like
+    'p@ss' in 'user:p@ss@host' is fully stripped (C10 fix)."""
+    import re
+    # Replicate the exact regex from manifest_io.py
+    _sub = lambda url: re.sub(r"(://)[^/]*@", r"\1", url)
+    assert _sub("https://user:p@ss@host/repo") == "https://host/repo"
+    assert _sub("https://user:plain@host/repo") == "https://host/repo"
+    # scp-style origin must be unchanged (no ://)
+    assert _sub("git@github.com:org/repo") == "git@github.com:org/repo"

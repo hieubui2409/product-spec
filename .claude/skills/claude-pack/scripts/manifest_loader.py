@@ -69,6 +69,13 @@ def load(path: Path) -> dict:
     """Load manifest YAML. Returns ``{}`` for empty file.
 
     Wraps ``yaml.YAMLError`` -> ``ManifestError`` with file:line:col context.
+
+    **Duplicate top-level keys**: ``yaml.safe_load`` follows YAML 1.1 behaviour
+    where a duplicate key silently last-wins (the later value overwrites the
+    earlier one).  This is a YAML spec grey-area; the behaviour is documented
+    here rather than patched (adding a custom loader for a LOW-risk edge case
+    would be non-trivial and break other things).  If you see unexpected values,
+    check the manifest for duplicate keys.
     """
     try:
         text = path.read_text(encoding="utf-8")
@@ -174,6 +181,26 @@ def _has_traversal(p: str) -> bool:
     return ".." in PurePosixPath(p.replace("\\", "/")).parts
 
 
+def _check_path_safety(entries: list, label: str, errors: list[str]) -> None:
+    """Validate each path entry in ``entries`` for absolute / traversal patterns.
+
+    Emits ``MANIFEST_E020`` (absolute) or ``MANIFEST_E021`` (traversal) into
+    ``errors``.  Non-string entries are skipped (caught upstream by E011).
+    Called for each path-bearing category so the check is defined once.
+    """
+    for path_entry in entries or []:
+        if not isinstance(path_entry, str):
+            continue
+        if _is_absolute_or_drive(path_entry):
+            errors.append(
+                f"[MANIFEST_E020] absolute paths not allowed in {label}: {path_entry!r}"
+            )
+        if _has_traversal(path_entry):
+            errors.append(
+                f"[MANIFEST_E021] path traversal not allowed in {label}: {path_entry!r}"
+            )
+
+
 def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> list[str]:
     """Run all hardened checks. Returns list of error strings (each with stable code)."""
     errors: list[str] = []
@@ -225,43 +252,13 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
     # skills/agents/rules/hooks use slug resolution but a traversal slug like
     # '../../x' would produce an arcname outside the extraction dir (tar-slip).
     for category in ("skills", "agents", "rules", "hooks"):
-        for path_entry in manifest.get(category, []) or []:
-            if not isinstance(path_entry, str):
-                continue
-            if _is_absolute_or_drive(path_entry):
-                errors.append(
-                    f"[MANIFEST_E020] absolute paths not allowed in {category}: {path_entry!r}"
-                )
-            if _has_traversal(path_entry):
-                errors.append(
-                    f"[MANIFEST_E021] path traversal not allowed in {category}: {path_entry!r}"
-                )
+        _check_path_safety(manifest.get(category, []) or [], category, errors)
 
-    for path_entry in manifest.get("extra", []) or []:
-        if not isinstance(path_entry, str):
-            continue
-        if _is_absolute_or_drive(path_entry):
-            errors.append(
-                f"[MANIFEST_E020] absolute paths not allowed in extra: {path_entry!r}"
-            )
-        if _has_traversal(path_entry):
-            errors.append(
-                f"[MANIFEST_E021] path traversal not allowed in extra: {path_entry!r}"
-            )
+    _check_path_safety(manifest.get("extra", []) or [], "extra", errors)
 
     # _include_shared is a `_`-prefixed key exempt from the unknown-key check, but
     # traversal in shared slugs would produce arcnames outside the extraction dir.
-    for path_entry in manifest.get("_include_shared", []) or []:
-        if not isinstance(path_entry, str):
-            continue
-        if _is_absolute_or_drive(path_entry):
-            errors.append(
-                f"[MANIFEST_E020] absolute paths not allowed in _include_shared: {path_entry!r}"
-            )
-        if _has_traversal(path_entry):
-            errors.append(
-                f"[MANIFEST_E021] path traversal not allowed in _include_shared: {path_entry!r}"
-            )
+    _check_path_safety(manifest.get("_include_shared", []) or [], "_include_shared", errors)
 
     top_level = manifest.get("top_level", {}) or {}
     if not isinstance(top_level, dict):
@@ -310,8 +307,10 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
 
     # On-disk existence (case-sensitive) + resolve-within-base containment.
     # The traversal check above catches '../../x' syntactically; here we also
-    # resolve symlinks and verify the real path stays within the skills base,
-    # catching symlink-based escapes.
+    # resolve symlinks and verify the real path stays within the category base,
+    # catching symlink-based escapes.  We use pathlib's relative_to() instead of
+    # a string-prefix test so the check is separator-agnostic (avoids false E021
+    # on Windows builders where Path.__str__ uses '\\').
     claude_dir = root / ".claude"
     skills_base = (claude_dir / "skills").resolve()
     for slug in manifest.get("skills", []) or []:
@@ -323,24 +322,42 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         else:
             try:
                 resolved_skill = skill_dir.resolve()
-                if not str(resolved_skill).startswith(str(skills_base) + "/") and resolved_skill != skills_base:
-                    errors.append(
-                        f"[MANIFEST_E021] skill path escapes skills base: {slug!r}"
-                    )
+                resolved_skill.relative_to(skills_base)
+            except ValueError:
+                errors.append(
+                    f"[MANIFEST_E021] skill path escapes skills base: {slug!r}"
+                )
             except OSError:
                 pass  # broken symlink; E070 will catch missing dir
+
     for slug in manifest.get("agents", []) or []:
         if isinstance(slug, str):
             try:
-                _resolve_extension(slug, claude_dir / "agents", "agents")
+                resolved_agent = _resolve_extension(slug, claude_dir / "agents", "agents")
+                try:
+                    agents_base = (claude_dir / "agents").resolve()
+                    resolved_agent.resolve().relative_to(agents_base)
+                except ValueError:
+                    errors.append(f"[MANIFEST_E021] agent path escapes agents base: {slug!r}")
+                except OSError:
+                    pass
             except ManifestError as e:
                 errors.append(f"[MANIFEST_E071] {e}")
+
     for slug in manifest.get("rules", []) or []:
         if isinstance(slug, str):
             try:
-                _resolve_extension(slug, claude_dir / "rules", "rules")
+                resolved_rule = _resolve_extension(slug, claude_dir / "rules", "rules")
+                try:
+                    rules_base = (claude_dir / "rules").resolve()
+                    resolved_rule.resolve().relative_to(rules_base)
+                except ValueError:
+                    errors.append(f"[MANIFEST_E021] rule path escapes rules base: {slug!r}")
+                except OSError:
+                    pass
             except ManifestError as e:
                 errors.append(f"[MANIFEST_E072] {e}")
+
     for slug in manifest.get("hooks", []) or []:
         if isinstance(slug, str):
             # Must match a FILE (a slug naming a directory would pass a bare
@@ -358,6 +375,17 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
                     f"[MANIFEST_E074] ambiguous hook: {slug} matches "
                     f"{len(hook_matches)} files; use a unique name or path"
                 )
+            else:
+                # Containment check for hooks as well.
+                try:
+                    hooks_base = (claude_dir / "hooks").resolve()
+                    hook_matches[0].resolve().relative_to(hooks_base)
+                except ValueError:
+                    errors.append(
+                        f"[MANIFEST_E021] hook path escapes hooks base: {slug!r}"
+                    )
+                except OSError:
+                    pass
 
     # _include_shared: verify each slug stays within .claude/skills/_shared/
     shared_base = (claude_dir / "skills" / "_shared").resolve()
@@ -367,11 +395,11 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         shared_dir = claude_dir / "skills" / "_shared" / slug
         if shared_dir.exists():
             try:
-                resolved_shared = shared_dir.resolve()
-                if not str(resolved_shared).startswith(str(shared_base) + "/") and resolved_shared != shared_base:
-                    errors.append(
-                        f"[MANIFEST_E021] _include_shared path escapes shared base: {slug!r}"
-                    )
+                shared_dir.resolve().relative_to(shared_base)
+            except ValueError:
+                errors.append(
+                    f"[MANIFEST_E021] _include_shared path escapes shared base: {slug!r}"
+                )
             except OSError:
                 pass
 

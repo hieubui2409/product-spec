@@ -27,7 +27,8 @@ tar -xzf {{BUNDLE_NAME}}-{{VERSION}}.tar.gz
 
 ## Install (macOS/Linux)
 
-> **Security notice:** `install.sh` copies files into your repo's `.claude/` directory.
+> **Security notice:** `install.sh` installs the bundle contents into your repo — selected
+> `.claude/` artifacts PLUS any packed top-level files (e.g. `README.md`, `CLAUDE.md`).
 > Each skill in the bundle may also ship its own `install.sh` hook (sets up a venv, etc.).
 > These per-skill hooks execute on your machine and run only when you pass `RUN_HOOKS=1`.
 > **Review `install.sh` and each `.claude/skills/*/install.sh` before running.**
@@ -43,8 +44,9 @@ cd {{BUNDLE_NAME}}-{{VERSION}}/ && RUN_HOOKS=1 bash install.sh
 
 ## Install (Windows)
 
-> **Security notice:** Same as above — review `install.ps1` and each `.claude/skills/*/install.ps1`
-> before running. Per-skill hooks run only when you pass `-RunHooks`.
+> **Security notice:** Same as above — `install.ps1` installs the bundle contents into your repo.
+> Review `install.ps1` and each `.claude/skills/*/install.ps1` before running.
+> Per-skill hooks run only when you pass `-RunHooks`.
 
 ```powershell
 cd {{BUNDLE_NAME}}-{{VERSION}}\

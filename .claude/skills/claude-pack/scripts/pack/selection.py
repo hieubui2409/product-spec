@@ -94,14 +94,17 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
             )
             continue
         # Also verify the resolved source path stays within the repo root to
-        # guard against symlink-based escapes.
+        # guard against symlink-based escapes.  Use relative_to() instead of a
+        # string-prefix test so the check is separator-agnostic (avoids false
+        # positives on Windows builders where Path.__str__ uses '\\').
         try:
             src_resolved = src.resolve()
-            if not str(src_resolved).startswith(str(root_resolved) + "/") and src_resolved != root_resolved:
-                sys.stderr.write(
-                    f"WARN: rejected src escaping repo root: {src} (arcname: {arc!r})\n"
-                )
-                continue
+            src_resolved.relative_to(root_resolved)
+        except ValueError:
+            sys.stderr.write(
+                f"WARN: rejected src escaping repo root: {src} (arcname: {arc!r})\n"
+            )
+            continue
         except OSError:
             pass  # broken symlink: let tarball's is_dropped/missing-file paths handle it
 

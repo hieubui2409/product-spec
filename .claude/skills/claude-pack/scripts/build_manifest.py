@@ -323,6 +323,11 @@ def main(argv: list[str] | None = None) -> int:
         except json.JSONDecodeError as e:
             sys.stderr.write(f"answers JSON parse error: {e}\n")
             return EXIT_VALIDATION
+        if not isinstance(answers, dict):
+            sys.stderr.write(
+                f"answers JSON must be an object (dict); got {type(answers).__name__}\n"
+            )
+            return EXIT_VALIDATION
         return write_manifest(answers, out_path, root,
                               force=args.force,
                               allow_dev_version=args.allow_dev_version)

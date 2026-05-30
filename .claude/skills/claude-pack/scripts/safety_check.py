@@ -97,15 +97,28 @@ def is_dropped(path: str) -> tuple[bool, str | None]:
 
     rule-id format: ``always-drop:exact:<name>`` | ``always-drop:dir:<name>``
     | ``always-drop:pattern:<glob>`` (canonical lowercase rule label).
+
+    Self-sufficient backstop: this function is the LAST line of defense even if
+    a new input category bypasses manifest_loader.validate() and
+    selection.resolve_selection().  It intentionally duplicates those checks so
+    that safety holds under any future refactoring that adds a new input path.
     """
-    pp = PurePosixPath(path)
+    # Normalize backslashes to forward slashes BEFORE PurePosixPath so that a
+    # backslash-encoded traversal like "foo\\..\\bar" is caught by the ".." parts
+    # check (PurePosixPath would otherwise treat the whole string as one component).
+    normalized = path.replace("\\", "/")
+    pp = PurePosixPath(normalized)
     # Defense-in-depth: drop any path that contains a traversal component or is
-    # absolute. This is the final backstop — manifest_loader.validate() and
-    # selection.resolve_selection() enforce the same rules upstream, but this
-    # filter is self-sufficient even if a new category bypasses those layers.
-    if ".." in pp.parts or path.startswith("/") or path.startswith("\\") or (
-        len(path) >= 2 and path[1] == ":"
-    ):
+    # absolute.  The drive-letter check mirrors manifest_loader._is_absolute_or_drive:
+    # require letter at index 0, ':' at index 1, then end-of-string or a separator.
+    # This avoids over-dropping POSIX arcnames whose 2nd char happens to be ':'.
+    is_drive = (
+        len(path) >= 2
+        and path[0].isalpha()
+        and path[1] == ":"
+        and (len(path) == 2 or path[2] in "/\\")
+    )
+    if ".." in pp.parts or normalized.startswith("/") or path.startswith("\\") or is_drive:
         return True, "always-drop:traversal"
 
     p = pp
@@ -187,26 +200,32 @@ def _walk_findings(root: Path, scan_subdir: str) -> list[dict]:
         return findings
 
     for entry in scan_root.rglob("*"):
-        if not entry.is_file():
+        try:
+            if not entry.is_file():
+                continue
+            rel = entry.relative_to(root).as_posix()
+            dropped, rule = is_dropped(rel)
+            if dropped:
+                findings.append({
+                    "check": "always_drop",
+                    "severity": "warn",
+                    "path": rel,
+                    "rule": rule,
+                })
+                continue
+            opt, label = is_optional(rel)
+            if opt:
+                findings.append({
+                    "check": "optional",
+                    "severity": "info",
+                    "path": rel,
+                    "rule": label,
+                })
+        except (OSError, ValueError):
+            # An OS error mid-walk (e.g. a broken symlink, race-deleted file) or
+            # a ValueError from relative_to() must not abort the scanner — it is
+            # a diagnostic tool and must always exit 0.
             continue
-        rel = entry.relative_to(root).as_posix()
-        dropped, rule = is_dropped(rel)
-        if dropped:
-            findings.append({
-                "check": "always_drop",
-                "severity": "warn",
-                "path": rel,
-                "rule": rule,
-            })
-            continue
-        opt, label = is_optional(rel)
-        if opt:
-            findings.append({
-                "check": "optional",
-                "severity": "info",
-                "path": rel,
-                "rule": label,
-            })
 
     # Cross-skill _shared/ refs (warn-only).
     # Derive the skills dir from the actual scan root so --scan is honored.
