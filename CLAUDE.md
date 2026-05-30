@@ -111,7 +111,7 @@ Scripts available:
 - `check_consistency.py` — AC presence, ID grammar, duplicate IDs, enum integrity, status inconsistency.
 - `build_traceability_matrix.py` — render the story → epic → PRD → goal → metric matrix.
 - `generate_templates.py` — instantiate an artifact from `assets/templates/` with `{{token}}` substitution; allocates the next parent-scoped ID.
-- `visualize.py` — 11 views × 3 formats: the 9 graph views (ASCII/Mermaid/HTML) + the body-bearing `board` (kanban) and `explorer` (Tree/Flat-tabs/Table-tree), which default to `--format html`.
+- `visualize.py` — the view dispatcher. Graph views (ASCII/Mermaid/HTML) + the HTML-native matrix/multi-dim views (`risk`, `competition`, and the HTML-only `dashboard`) + the body-bearing `board` (kanban) and `explorer` (Tree/Flat-tabs/Table-tree). **Per-view default format** (§0.2): HTML for `risk`/`competition`/`dashboard`/`board`/`explorer`, ASCII for the rest. ASCII is **downgraded, not removed** — `tree` renders a minimal deterministic text-summary (structure + counts) for the zero-dep terminal/CI path; `board`/`explorer` keep a text-summary fallback on `--format mermaid`.
 - `assemble_digest.py` — deterministic assembler for `--export`: (selection + `--layers` + `--depth`) → ordered digest model; Vision/BRD/PRODUCT prepended as singletons. Powers `--export` only — the `board`/`explorer` viewers build their own payloads and do not use `build_digest`.
 - `render_export.py` — F1 read-once Export (`--export`): one self-contained md or print-ready HTML doc under `docs/product/exports/`.
 - `render_board.py` / `render_explorer.py` — F2 viewer HTML writers (kanban / tri-mode explorer).
@@ -163,16 +163,18 @@ Never assume:
 
 `visualize.py --view <name> --format <ascii|mermaid|html>` returns one of:
 
-- **ASCII** → plain text on stdout. Default; zero deps.
-- **Mermaid** → a fenced markdown block. For views Mermaid can't express cleanly (`heatmap`, `persona`, `risk`, no-baseline `delta`), the renderer emits a plain ` ``` ` fence with the ASCII fallback inside (the dispatcher routes the HTML path accordingly). **Exception — `risk`:** its Mermaid form still falls back to the plain fence, but its **HTML** form is an HTML-native `<table>` grid (`render_html.risk()`, impact × likelihood, cells drill down to description + mitigation + status), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native (Q44).
-- **HTML** → a self-contained file under `docs/product/visuals/<view>-<timestamp>.html`. Mermaid runtime embedded inline for views that need it; omitted for ASCII-fallback views and the HTML-native `risk` grid to keep file size small.
+- **ASCII** → plain text on stdout. Per-view default (the zero-dep terminal/CI path). **Downgraded, not removed (§0.2):** the `tree` view renders a minimal deterministic **text-summary** (one line/node `[type:id] title · status`, 2-space indent, sorted by ID, counts footer) instead of the old box-drawing graph-art.
+- **Mermaid** → a fenced markdown block. For views Mermaid can't express cleanly (`heatmap`, `persona`, `risk`, `competition`, no-baseline `delta`), the renderer emits a plain ` ``` ` fence with the ASCII fallback inside (the dispatcher routes the HTML path accordingly). **Exception — `risk`/`competition`:** their Mermaid form still falls back to the plain fence, but their **HTML** form is HTML-native (`render_html.risk()` impact × likelihood grid; `render_html.competition()` parity matrix + threat heatmap), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native (Q30/Q44).
+- **HTML** → a self-contained file under `docs/product/visuals/<view>-<timestamp>.html`. **Default format** for `risk`/`competition`/`dashboard` + `board`/`explorer`. Mermaid runtime embedded inline only for views that need it; omitted for ASCII-fallback views and the HTML-native `risk`/`competition`/`dashboard` fragments to keep file size small.
+
+The HTML-only **`dashboard`** view is a multi-dim page that stacks the already-escaped roadmap + risk grid + competition fragments on one page (no card bodies → carries no Mermaid runtime and no body sanitizer). A `--format ascii|mermaid` request renders HTML anyway with a one-line stderr note.
 
 The two **body-bearing** views render artifact bodies, not graphs:
 
-- **`board`** — kanban grouped by `--group-by status|horizon|moscow`; cards = goal/PRD/epic/story; client-side search + facet filters; click → sanitized body. Defaults to `--format html`; `--format mermaid` falls back to the ASCII board.
+- **`board`** — kanban grouped by `--group-by status|horizon|moscow`; cards = goal/PRD/epic/story; client-side search + facet filters; click → sanitized body. Defaults to `--format html`; `--format mermaid` falls back to the ASCII board (text-summary).
 - **`explorer`** — one page, in-page toggle across **Tree / Flat-tabs / Table-tree**, shared search + facets, last mode persisted to `localStorage`. Defaults to `--format html`; `--format mermaid` falls back to the ASCII tree.
 
-**One design system for ALL product-spec HTML.** The 9 graph views + `board` + `explorer` + `export` share a single head partial (`assets/templates/_viewer-head.html`): theme toggle + palette + typography + `@media print`. Bodies render through one client chokepoint — `DOMPurify.sanitize(marked.parse(md))` (both vendored + inlined) — and **fail closed** to escaped text if the libs are absent. Symmetric payload gating: body views carry no Mermaid; the 9 graph views carry no marked/DOMPurify.
+**One design system for ALL product-spec HTML.** The graph views + `risk`/`competition`/`dashboard` + `board` + `explorer` + `export` share a single head partial (`assets/templates/_viewer-head.html`): theme toggle + palette + typography + `@media print`. Bodies render through one client chokepoint — `DOMPurify.sanitize(marked.parse(md))` (both vendored + inlined) — and **fail closed** to escaped text if the libs are absent. Symmetric payload gating: body views carry no Mermaid; the graph + HTML-native-table views carry no marked/DOMPurify.
 
 All renders are deterministic: same input → same output (HTML carries only a timestamp; the sanitized body is deterministic). The graph JSON is the single source of truth (`scripts/spec_graph.py`).
 

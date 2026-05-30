@@ -419,6 +419,88 @@ _COMPETITION_CSS = (
 )
 
 
+# ── HTML-native multi-dimensional dashboard (HTML-only; PO decision §0.2) ───
+#
+# The dashboard is the new HTML-only multi-dim view (G-G1): ONE self-contained
+# page that stacks the existing HTML-native fragments — roadmap-by-horizon +
+# risk grid + competition (parity matrix + threat heatmap) — so a PO sees TIME,
+# RISK, and COMPETITION at a glance without opening three files. It composes the
+# already-escaped builders (risk()/competition()) plus a small roadmap table; it
+# adds NO new escaping surface and NO Mermaid runtime (every fragment is plain
+# server-escaped HTML, the SAME chokepoint discipline as the risk/competition
+# grids). Deterministic — no timestamp inside the fragment (G-A4).
+
+_DASHBOARD_HORIZONS = ("now", "next", "later")
+
+
+def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
+    """An HTML-native roadmap/deadline table for the dashboard: PRD/Epic/Story
+    grouped by horizon (now/next/later/unspecified), each row showing id +
+    target_date. Server-escaped + deterministic (sorted by id within horizon).
+    Horizon headers localize via i18n_labels."""
+    groups: Dict[str, list] = {}
+    for n in graph.get("nodes", []):
+        if n.get("type") not in ("prd", "epic", "story"):
+            continue
+        h = n.get("horizon") or "unspecified"
+        groups.setdefault(h, []).append(n)
+
+    sections = []
+    order = list(_DASHBOARD_HORIZONS) + ["unspecified"]
+    for h in order:
+        items = sorted(groups.get(h, []), key=lambda n: str(n.get("id") or ""))
+        if not items and h == "unspecified":
+            continue
+        head = _escape(label(h, lang).upper() if h in _DASHBOARD_HORIZONS else "UNSPECIFIED")
+        rows = []
+        for n in items:
+            nid = _escape(str(n.get("id") or ""))
+            td = n.get("target_date")
+            date_txt = _escape(str(td)) if td else '<span class="db-nodate">—</span>'
+            rows.append(f'<tr><th scope="row">{nid}</th><td>{date_txt}</td></tr>')
+        body = "".join(rows) or '<tr><td class="db-empty" colspan="2">(none)</td></tr>'
+        sections.append(
+            f'<h3 class="db-h">{head}</h3>'
+            f'<table class="db-roadmap"><thead><tr>'
+            f'<th scope="col">item</th><th scope="col">target date</th>'
+            f"</tr></thead><tbody>{body}</tbody></table>"
+        )
+    return "".join(sections) or '<p class="ps-meta">No PRDs/epics/stories with a horizon yet.</p>'
+
+
+def dashboard(graph: Dict[str, Any], lang: str = "en") -> str:
+    """HTML-only multi-dim dashboard: roadmap + risk grid + competition, stacked
+    on one page (G-G1). Reuses the already-escaped HTML-native builders, so the
+    fragment is self-contained and carries no Mermaid runtime. Deterministic."""
+    return (
+        _DASHBOARD_CSS
+        + '<section class="db-panel"><h2 class="db-title">Roadmap &amp; Deadlines</h2>'
+        + _dashboard_roadmap(graph, lang)
+        + '</section>'
+        + '<section class="db-panel"><h2 class="db-title">Risk</h2>'
+        + risk(graph)
+        + '</section>'
+        + '<section class="db-panel"><h2 class="db-title">Competition</h2>'
+        + competition(graph, lang)
+        + '</section>'
+    )
+
+
+# Scoped dashboard CSS — only the panel chrome; the embedded risk/competition
+# fragments ship their own scoped <style>. Reuses the shared palette vars.
+_DASHBOARD_CSS = (
+    "<style>"
+    ".db-panel{margin:0 0 2rem;}"
+    ".db-title{font-size:1.1rem;margin:0 0 .75rem;padding-bottom:.3rem;border-bottom:1px solid var(--border);}"
+    ".db-h{font-size:.9rem;color:var(--muted);margin:.75rem 0 .35rem;}"
+    ".db-roadmap{border-collapse:collapse;width:100%;max-width:48rem;margin-bottom:.5rem;}"
+    ".db-roadmap th,.db-roadmap td{border:1px solid var(--border);padding:.4rem .6rem;text-align:left;}"
+    ".db-roadmap thead th,.db-roadmap tbody th{background:var(--recessed);color:var(--muted);font-weight:600;font-size:.85rem;}"
+    ".db-nodate,.db-empty{color:var(--muted);font-style:italic;}"
+    "</style>"
+)
+
+
 # ── Shared body-render substrate (export / board / explorer) ────────────────
 #
 # Body-bearing HTML outputs render artifact markdown bodies CLIENT-SIDE through

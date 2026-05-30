@@ -36,7 +36,7 @@ import render_explorer
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "board", "explorer")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "dashboard", "board", "explorer")
 FORMATS = ("ascii", "mermaid", "html")
 # Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
 # help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
@@ -45,6 +45,17 @@ VIEWER_LAYERS = ("goal", "prd", "epic", "story")
 # to --format html (the 9 graph views default to ascii) and have NO Mermaid form
 # (a --format mermaid request falls back to their ascii renderer with a note).
 BODY_VIEWS = ("board", "explorer")
+# PO decision §0.2 — HTML-native is the NEW default for the rich multi-dim/matrix
+# views: the risk grid + competition matrix/heatmap (Mermaid can't express these
+# cleanly) and the HTML-only `dashboard`. tree/roadmap/heatmap/scope/persona/gap/
+# moscow/time/delta keep their ASCII default so the zero-dep terminal path loses
+# nothing (the ASCII downgrade preserved a text-summary, not removed it).
+HTML_DEFAULT_VIEWS = ("risk", "competition", "dashboard")
+# `dashboard` is HTML-only (no ASCII/Mermaid form). A non-HTML request falls back
+# to HTML with a stderr note rather than crashing (parity with the board/explorer
+# mermaid fallback). It is a GRAPH view (not a body view): no card bodies, so no
+# sanitizer payload — it stacks the already-escaped risk/competition fragments.
+HTML_ONLY_VIEWS = ("dashboard",)
 
 
 # Which kwargs each graph view's renderer accepts. ONE map drives both the ascii
@@ -216,8 +227,22 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    # Resolve the per-view default format.
-    fmt = args.format or ("html" if args.view in BODY_VIEWS else "ascii")
+    # Resolve the per-view default format: body viewers + the HTML-native
+    # multi-dim/matrix views default to html; the other graph views to ascii.
+    if args.format:
+        fmt = args.format
+    elif args.view in BODY_VIEWS or args.view in HTML_DEFAULT_VIEWS:
+        fmt = "html"
+    else:
+        fmt = "ascii"
+
+    # HTML-only views (dashboard) have no ascii/mermaid form: a non-html request
+    # falls back to html with a stderr note (parity with board/explorer's mermaid
+    # fallback) so the PO still gets the page instead of a crash/blank.
+    if args.view in HTML_ONLY_VIEWS and fmt != "html":
+        print(f"note: '{args.view}' is HTML-only; rendering HTML "
+              f"(requested --format {fmt} has no {args.view} form).", file=sys.stderr)
+        fmt = "html"
     layers = [s.strip() for s in args.layers.split(",") if s.strip()] if args.layers else None
     if layers:
         bad = [l for l in layers if l not in VIEWER_LAYERS]
@@ -271,6 +296,17 @@ def main() -> int:
     if args.view == "competition":
         frag = render_html.competition(graph, lang=args.lang)
         out = render_html.write(root, "competition", "html", frag, graph, lang=args.lang)
+        print(_written_json(out, root))
+        return 0
+
+    # The dashboard is the HTML-only multi-dim view (PO decision §0.2 / G-G1): one
+    # page stacking the already-escaped roadmap + risk grid + competition fragments.
+    # Like risk/competition it routes through the native "html" view_format (no
+    # Mermaid wrapper, no sanitizer payload). HTML_ONLY_VIEWS guarantees fmt==html
+    # here (a mermaid/ascii request was downgraded to html with a note above).
+    if args.view == "dashboard":
+        frag = render_html.dashboard(graph, lang=args.lang)
+        out = render_html.write(root, "dashboard", "html", frag, graph, lang=args.lang)
         print(_written_json(out, root))
         return 0
 

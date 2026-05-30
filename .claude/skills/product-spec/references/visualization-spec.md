@@ -21,30 +21,38 @@ The views × formats matrix, the graph-JSON shape consumed by every renderer, an
 | `persona` | `--viz persona` | persona × feature coverage: rows = persona, cols = PRD/epic, cells = story count. |
 | `gap` | `--viz gap` | gap-analysis: BRD goals with no PRDs; PRDs with no epics; epics with no stories. Structural-only — sufficiency judgment is separate. |
 | `moscow` | `--viz moscow` | MoSCoW quadrant: must/should/could/wont distribution across stories. |
-| `risk` | `--viz risk` | risk matrix: impact (rows) × likelihood (cols) from `risks` frontmatter on epics/PRDs. |
+| `risk` | `--viz risk` | risk matrix: impact (rows) × likelihood (cols) from `risks` frontmatter on epics/PRDs. HTML-native default. |
+| `competition` | `--viz competition` | competitive parity matrix (competitor × PRD) + threat heatmap. HTML-native default. |
+| `time` | `--viz time [--filter-wont]` | TIME dimension: PRD/Epic by horizon with `target_date` + `depends_on`. ASCII text + Mermaid gantt. |
+| `dashboard` | `--viz dashboard` | **HTML-only** multi-dim page: roadmap/deadlines + risk grid + competition, stacked on one page. No ASCII/Mermaid form. |
 | `delta` | `--viz delta [--snapshot <name>]` | diff between two graph snapshots from `docs/product/visuals/.snapshots/`. |
 | `board` | `--viz board [--group-by status\|horizon\|moscow] [--layers …]` | kanban: columns = the group field, cards = goal/PRD/epic/story; client-side search + facet filters (status/moscow/horizon/persona/layer); click a card → its sanitized body. Default `--format html`. |
 | `explorer` | `--viz explorer [--layers …]` | one page, in-page toggle across **Tree** (collapsible nav) / **Flat-tabs** (per layer) / **Table-tree** (treegrid w/ metadata columns); shared search + facets; last mode persisted to `localStorage`. Default `--format html`. |
 
 ## View × Format Matrix
 
-The 9 graph views support all 3 formats. The 2 body views default to HTML and fall back to their ASCII renderer on `--format mermaid` (they carry no Mermaid by design).
+Most graph views support all 3 formats. **Default format is per-view** (PO decision §0.2): the rich matrix/multi-dim views — `risk`, `competition`, and the HTML-only `dashboard` — default to **HTML-native**; the 2 body views (`board`/`explorer`) default to HTML; everything else (`tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `time`, `delta`) defaults to **ASCII**, preserving the zero-dep terminal/CI path.
 
 | View | ASCII | Mermaid | HTML |
 |------|-------|---------|------|
-| `tree` | tree characters (├ │ └) | `flowchart BT` | Mermaid + collapse/zoom JS |
+| `tree` | **text-summary** (one line/node `[type:id] title · status`, 2-space indent, counts footer; NO box-drawing art) | `flowchart BT` | Mermaid + collapse/zoom JS |
 | `heatmap` | ASCII table | `quadrantChart` or text fallback | Mermaid embed |
 | `scope` | 2D ASCII grid | `quadrantChart` | Mermaid embed |
 | `roadmap` | grouped lists (now/next/later) | `timeline` | Mermaid embed |
 | `persona` | ASCII table (persona × feature) | text fallback (`pre`) | Mermaid embed |
 | `gap` | ASCII bullet list of unaddressed nodes | `flowchart LR` with gap nodes highlighted | Mermaid embed |
 | `moscow` | 2×2 ASCII grid | `quadrantChart` (must/should × could/wont) | Mermaid embed |
-| `risk` | 3×3 ASCII grid | text fallback (`pre`) | **HTML-native `<table>`** (impact × likelihood; cells drill down to description + mitigation + status). Not Mermaid — Q44. |
+| `risk` | 3×3 ASCII grid (terminal fallback) | text fallback (`pre`) | **default** — HTML-native `<table>` (impact × likelihood; cells drill down to description + mitigation + status). Not Mermaid — Q44. |
+| `competition` | parity matrix + threat list (terminal fallback) | text fallback (`pre`) | **default** — HTML-native parity matrix + threat heatmap. Not Mermaid — Q30/Q44. |
+| `time` | grouped-by-horizon text (target_date + depends_on) | `gantt` (cycle-safe; dep annotations) | Mermaid gantt embed |
+| `dashboard` | — (HTML-only) | — (HTML-only; `--format mermaid\|ascii` → HTML + stderr note) | **default + only** — roadmap + risk grid + competition stacked on one page |
 | `delta` | unified-diff-style text | `flowchart TB` with +/− tags | Mermaid embed |
 | `board` | grouped lists per `--group-by` | → ASCII board (note on stderr) | **default** — kanban + search/facets + click→sanitized body |
 | `explorer` | = `tree`; with `--layers` an orphan-rooted forest (surviving nodes whose parent was filtered out become roots, like the HTML explorer) | → ASCII tree (note on stderr) | **default** — Tree/Flat-tabs/Table-tree + search/facets |
 
-If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment. The `risk` view is the exception that goes the other way: Mermaid still falls back to text, but its **HTML** form is an HTML-native `<table>` (`render_html.risk()`), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native per Q44. Body views (`board`/`explorer`) have no Mermaid form at all — `--format mermaid` falls back to their ASCII renderer with a one-line note on stderr.
+**ASCII downgraded, NOT removed (PO decision §0.2).** HTML-native is the new default for the rich views, but the ASCII path stays alive: the `tree` view renders a minimal, deterministic **text-summary** (compact structure + node/finding counts) instead of the old heavy box-drawing graph-art, and `board`/`explorer` keep their text-summary fallback on `--format mermaid`. The zero-dependency terminal/CI path loses nothing.
+
+If a Mermaid view type can't cleanly express a view (e.g., `heatmap`-as-quadrant is awkward), the Mermaid output falls back to a text fallback inside a `pre` block. Document the fallback in the renderer's comment. The `risk` and `competition` views go the other way: Mermaid still falls back to text, but their **HTML** form is HTML-native (`render_html.risk()` / `render_html.competition()`), not a `<pre>` — matrix/heatmap/risk-grid render HTML-native per Q44. The `dashboard` is HTML-only — a `--format mermaid|ascii` request renders HTML anyway with a one-line note on stderr. Body views (`board`/`explorer`) have no Mermaid form at all — `--format mermaid` falls back to their ASCII renderer with a one-line note on stderr.
 
 ## Graph JSON Shape (single source of truth)
 
@@ -100,9 +108,11 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
 ## Flag → View / Format Mapping
 
 ```
---viz <view>            # default --format ascii
+--viz <view>            # default --format is per-view: html for risk/competition/dashboard
+                        #   + board/explorer; ascii for everything else
 --viz <view> --format mermaid
 --viz <view> --format html
+--viz dashboard         # HTML-only multi-dim page (no ascii/mermaid form)
 
 --viz delta             # uses two most-recent snapshots
 --viz delta --snapshot <name>     # explicit baseline
@@ -153,11 +163,11 @@ Delta detection is purely on the graph JSON (no `git show` archaeology):
 
 ## Determinism
 
-ASCII and Mermaid outputs are **deterministic** (same input → same output). This is testable: `pytest scripts/tests/test_visualize.py` asserts exact text. HTML may carry a generation timestamp (best-effort to localize), but the embedded Mermaid graph itself is deterministic.
+ASCII and Mermaid outputs are **deterministic** (same input → same output). This is testable: `pytest scripts/tests/test_visualize.py` asserts exact text — including the `tree` text-summary (sorted by ID at each depth → byte-identical run-to-run) and its counts footer. HTML may carry a generation timestamp (best-effort to localize), but the embedded fragment / Mermaid graph itself is deterministic.
 
 ## Renderer Limits (advisory)
 
-- Tree view with >200 nodes → ASCII becomes hard to read; offer Mermaid/HTML as the preferred format.
+- The ASCII `tree` is now a compact text-summary (structure + counts), so even large specs stay readable in a terminal; for the rich hierarchical layout use the HTML or Mermaid form.
 - Mermaid `quadrantChart` doesn't render some labels well — if labels overlap, fall back to a 2D ASCII grid embedded in a `pre` block.
 - `timeline` Mermaid view requires the v11 timeline syntax; ensure it stays valid.
 

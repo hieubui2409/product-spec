@@ -48,16 +48,75 @@ def _mark(node: Dict[str, Any], text: str) -> str:
     return f"{text} *" if _is_deferred(node) else text
 
 
+def _node_id_marker(node: Dict[str, Any], nid: str) -> str:
+    """The `<id>` token (with a trailing ` *` when deferred) used inside the
+    text-summary bracket — so the marker sits adjacent to the id, keeping the
+    deferred contract a literal `<id> *` substring regardless of the title."""
+    return f"{nid} *" if _is_deferred(node) else nid
+
+
+def _summary_line(node: Optional[Dict[str, Any]], nid: str, depth: int) -> str:
+    """One text-summary node line in the fixed grammar (phase-spec §"Text-summary
+    tree format", F10): `<2*depth spaces>[<type>:<id>] <title> · <status>`. The
+    deferred `*` marker sits next to the id (`[<type>:<id> *]`). No box-drawing
+    art — this is the zero-dep, byte-deterministic terminal/CI summary."""
+    n = node or {}
+    ntype = n.get("type") or "?"
+    title = n.get("title") or ""
+    status = n.get("status") or "?"
+    indent = "  " * depth
+    return f"{indent}[{ntype}:{_node_id_marker(n, nid)}] {title} · {status}"
+
+
+_SPEC_NODE_TYPES = ("goal", "prd", "epic", "story")
+# Plural forms for the counts footer (`1 goal · 2 stories`); the structural
+# node types are summary-counted, product/vision meta are excluded.
+_COUNT_PLURAL = {"goal": "goals", "prd": "prds", "epic": "epics", "story": "stories"}
+
+
+def _counts_footer(graph: Dict[str, Any]) -> str:
+    """The text-summary counts line: total spec nodes + per-type breakdown +
+    structural-finding total. Singular for 1, plural otherwise (`1 goal` /
+    `2 stories`). `findings` reuses check_traceability (the single home for the
+    structural-finding rule) so the summary's count never drifts from --validate;
+    a clean spec reports `0 findings`. Deterministic — pure counts over the graph.
+
+    Lazy import keeps render_ascii's top-level imports minimal and avoids any
+    module-load ordering coupling (check_traceability imports spec_graph, never
+    render_ascii — so there is no cycle either way)."""
+    by_type: Dict[str, int] = defaultdict(int)
+    for n in graph["nodes"]:
+        t = n.get("type")
+        if t in _SPEC_NODE_TYPES:
+            by_type[t] += 1
+    total = sum(by_type.values())
+
+    import check_traceability
+    findings = len(check_traceability.check(graph))
+
+    parts = [f"{total} nodes"]
+    for t in _SPEC_NODE_TYPES:
+        c = by_type.get(t, 0)
+        word = t if c == 1 else _COUNT_PLURAL[t]
+        parts.append(f"{c} {word}")
+    parts.append(f"{findings} findings")
+    return "— " + " · ".join(parts)
+
+
 def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
-    """Vision -> PRODUCT -> BRD -> goals -> PRDs -> epics -> stories.
+    """Minimal, deterministic TEXT-SUMMARY tree (PO decision §0.2 — DOWNGRADE,
+    not removal): the heavy box-drawing graph-art is gone; HTML/Mermaid render the
+    rich hierarchy now. This keeps the zero-dependency terminal/CI path alive as a
+    compact structure + counts summary.
 
-    The only localizable token in the tree is the `PRODUCT:` prefix. IDs and
-    goal titles are frontmatter-driven (the artifact's own `lang:` field
-    governs prose), and the separator dash is locale-neutral.
+    Grammar (phase-spec §"Text-summary tree format", F10):
+      header   : `PRODUCT: <name>`  (the `PRODUCT:` prefix localizes via i18n)
+      per node : `<2*depth spaces>[<type>:<id>] <title> · <status>`
+      ordering : sorted by ID at each depth (byte-deterministic)
+      footer   : `— <N> nodes · <g> goal · <p> prd · <e> epic · <s> stories · <f> findings`
 
-    `filter_wont=True` drops nodes marked `moscow: wont` or `scope: out` from
-    the rendered tree entirely. Default keeps them and suffixes a `*` marker
-    so the PO can see what's deferred without losing visibility.
+    `filter_wont=True` drops nodes marked `moscow: wont` or `scope: out` entirely.
+    Default keeps them with a `*` marker next to the id (`[<type>:<id> *]`).
     """
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
 
@@ -69,30 +128,19 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     lines: List[str] = []
     lines.append(f"{label('product', lang)}: {_ascii_product_name(graph)}")
 
-    goal_ids = sorted([nid for nid, n in nodes_by_id.items() if n["type"] == "goal" and _visible(nid)])
-    for i, gid in enumerate(goal_ids):
-        last_g = i == len(goal_ids) - 1
-        gnode = nodes_by_id[gid]
-        glabel = _mark(gnode, f"{gid} — {gnode.get('title') or ''}")
-        lines.append(f"{'└── ' if last_g else '├── '}{glabel}")
-        prefix_g = "    " if last_g else "│   "
-        prds = sorted(pid for pid in children.get(gid, []) if _visible(pid))
-        for j, pid in enumerate(prds):
-            last_p = j == len(prds) - 1
-            plabel = _mark(nodes_by_id.get(pid, {}), pid)
-            lines.append(f"{prefix_g}{'└── ' if last_p else '├── '}{plabel}")
-            prefix_p = prefix_g + ("    " if last_p else "│   ")
-            epics = sorted(eid for eid in children.get(pid, []) if _visible(eid))
-            for k, eid in enumerate(epics):
-                last_e = k == len(epics) - 1
-                elabel = _mark(nodes_by_id.get(eid, {}), eid)
-                lines.append(f"{prefix_p}{'└── ' if last_e else '├── '}{elabel}")
-                prefix_e = prefix_p + ("    " if last_e else "│   ")
-                stories = sorted(sid for sid in children.get(eid, []) if _visible(sid))
-                for m, sid in enumerate(stories):
-                    last_s = m == len(stories) - 1
-                    slabel = _mark(nodes_by_id.get(sid, {}), sid)
-                    lines.append(f"{prefix_e}{'└── ' if last_s else '├── '}{slabel}")
+    # Walk goal(1) -> prd(2) -> epic(3) -> story(4), sorted by id at each depth so
+    # the output is byte-deterministic (G-A4). Depth drives the 2-space indent.
+    goal_ids = sorted(nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid))
+    for gid in goal_ids:
+        lines.append(_summary_line(nodes_by_id.get(gid), gid, 1))
+        for pid in sorted(p for p in children.get(gid, []) if _visible(p)):
+            lines.append(_summary_line(nodes_by_id.get(pid), pid, 2))
+            for eid in sorted(e for e in children.get(pid, []) if _visible(e)):
+                lines.append(_summary_line(nodes_by_id.get(eid), eid, 3))
+                for sid in sorted(s for s in children.get(eid, []) if _visible(s)):
+                    lines.append(_summary_line(nodes_by_id.get(sid), sid, 4))
+
+    lines.append(_counts_footer(graph))
     return "\n".join(lines)
 
 

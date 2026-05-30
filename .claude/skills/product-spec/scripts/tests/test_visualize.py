@@ -1075,3 +1075,245 @@ def test_mermaid_html_single_encodes_ampersand():
     html = render_html.assemble("tree", "mermaid", view_text, g)
     assert "R&amp;D" in html
     assert "R&amp;amp;D" not in html
+
+
+# ============================================================================
+# Phase 6 — ASCII Downgrade to HTML-native (TDD RED)
+#
+# PO decision §0.2 (DOWNGRADE, not removal):
+#   - HTML-native is the NEW default for the rich matrix/multi-dim views
+#     (risk grid, competition matrix/heatmap) + the new HTML-only `dashboard`.
+#   - ASCII is NOT deleted: `--viz tree --format ascii` keeps a minimal,
+#     deterministic TEXT-SUMMARY tree (structure + counts) for terminal/CI.
+#   - board/explorer keep their text-summary fallback on `--format mermaid`
+#     (NOT removed — §0.2 reverses Q45).
+#   - body views never reach a CDN (fail-closed unchanged — G-A4).
+#
+# The text-summary tree grammar (phase spec §"Text-summary tree format", F10):
+#   header line     : "PRODUCT: <name>"
+#   one line/node   : "<2*depth spaces>[<type>:<id>] <title> · <status>"
+#   ordering        : sorted by ID at each depth (byte-deterministic)
+#   counts footer   : "— <N> nodes · <g> goal · <p> prd · <e> epic · <s> stories · <f> findings"
+# ============================================================================
+
+
+def _text_summary_graph():
+    """A small goal→prd→epic→story spec with explicit titles + statuses so the
+    documented text-summary grammar can be asserted without the empty-title
+    ambiguity of the shared valid-spec fixture. Mirrors the phase-spec example
+    shape (one goal, one prd, one epic, two stories)."""
+    return {
+        "product": {"name": "Acme Shop", "core_value": "v", "personas": ["p"]},
+        "nodes": [
+            {"id": "BRD-G1", "type": "goal", "title": "Increase conversion",
+             "status": "approved", "personas": []},
+            {"id": "PRD-AUTH", "type": "prd", "title": "Authentication",
+             "status": "review", "personas": [], "scope": "in",
+             "moscow": "must", "horizon": "now", "brd_goals": ["BRD-G1"]},
+            {"id": "PRD-AUTH-E1", "type": "epic", "title": "Login",
+             "status": "draft", "personas": [], "scope": "in",
+             "moscow": "must", "horizon": "now", "prd": "PRD-AUTH"},
+            {"id": "PRD-AUTH-E1-S1", "type": "story", "title": "Email login",
+             "status": "draft", "personas": ["p"], "scope": "in",
+             "moscow": "must", "horizon": "now", "epic": "PRD-AUTH-E1"},
+            {"id": "PRD-AUTH-E1-S2", "type": "story", "title": "Social login",
+             "status": "draft", "personas": ["p"], "scope": "in",
+             "moscow": "must", "horizon": "now", "epic": "PRD-AUTH-E1"},
+        ],
+        "edges": [
+            {"from": "PRD-AUTH-E1-S1", "to": "PRD-AUTH-E1", "kind": "epic"},
+            {"from": "PRD-AUTH-E1-S2", "to": "PRD-AUTH-E1", "kind": "epic"},
+            {"from": "PRD-AUTH-E1", "to": "PRD-AUTH", "kind": "prd"},
+            {"from": "PRD-AUTH", "to": "BRD-G1", "kind": "brd_goal"},
+        ],
+        "risks": [],
+    }
+
+
+def test_tree_text_summary_retained():
+    """G-G2 / F10: `--viz tree --format ascii` renders the minimal text-summary
+    tree (NOT the heavy box-drawing graph-art). One line per node in the fixed
+    grammar `[<type>:<id>] <title> · <status>`, 2-space indent per depth, sorted
+    by ID at each level, plus a node/finding counts footer. This locks the exact
+    contract the phase spec defines; the structure must stay visible on a
+    terminal (zero-dep path preserved)."""
+    g = _text_summary_graph()
+    out = render_ascii.tree(g)
+    lines = out.splitlines()
+
+    # Header: product name on the first line.
+    assert lines[0] == "PRODUCT: Acme Shop", f"unexpected header line: {lines[0]!r}"
+
+    # The heavy box-drawing art must be GONE (downgrade, not the old tree()).
+    assert "├──" not in out and "└──" not in out and "│" not in out, (
+        "text-summary tree must drop the box-drawing graph-art"
+    )
+
+    # One node line per node, fixed grammar with 2-space indent per depth and the
+    # middot separator before status. Depth: goal=1, prd=2, epic=3, story=4.
+    assert "  [goal:BRD-G1] Increase conversion · approved" in lines
+    assert "    [prd:PRD-AUTH] Authentication · review" in lines
+    assert "      [epic:PRD-AUTH-E1] Login · draft" in lines
+    assert "        [story:PRD-AUTH-E1-S1] Email login · draft" in lines
+    assert "        [story:PRD-AUTH-E1-S2] Social login · draft" in lines
+
+    # Sorted-by-ID at each level: S1 before S2 (byte-deterministic ordering).
+    assert out.index("PRD-AUTH-E1-S1") < out.index("PRD-AUTH-E1-S2")
+
+    # Counts footer: structure + finding totals. 5 spec nodes (1 goal, 1 prd,
+    # 1 epic, 2 stories), 0 findings on this graph.
+    footer = lines[-1]
+    assert footer.startswith("—"), f"expected a counts footer line, got: {footer!r}"
+    assert "5 nodes" in footer
+    assert "1 goal" in footer and "1 prd" in footer and "1 epic" in footer
+    assert "2 stories" in footer
+    assert "0 findings" in footer
+
+
+def test_html_default_for_matrix(tmp_path):
+    """G-G3 / §0.2: `--viz competition` with NO `--format` defaults to HTML-native
+    (the matrix/heatmap render as HTML tables, not ASCII). The dispatcher must
+    write a self-contained HTML file under docs/product/visuals/ and emit the
+    `{"written": ...}` JSON — NOT print an ASCII grid to stdout."""
+    import subprocess
+    import shutil
+    import json as _json
+
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    py = sys.executable
+    viz = SCRIPTS_DIR / "visualize.py"
+    r = subprocess.run(
+        [py, str(viz), "--root", str(proj), "--view", "competition"],  # no --format
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    # The HTML default writes a file and emits a {"written": ...} JSON line; the
+    # ASCII default instead prints a plain-text grid. Distinguish the two by the
+    # JSON shape so the RED reason reads as "still defaulting to ASCII", not a raw
+    # JSON parse error.
+    stdout = r.stdout.strip()
+    assert stdout.startswith("{") and '"written"' in stdout, (
+        f"competition with no --format must default to HTML (a written-file JSON "
+        f"line), not an ASCII grid on stdout; got: {stdout!r}"
+    )
+    payload = _json.loads(stdout)
+    assert payload["written"].endswith(".html")
+    htmls = sorted((proj / "docs" / "product" / "visuals").glob("competition-*.html"))
+    assert htmls, "competition (no --format) must default to a written HTML file"
+
+
+def test_dashboard_html_only(tmp_path):
+    """G-G1: the new multi-dim `dashboard` view is HTML-only. `--viz dashboard`
+    must be a registered view that writes an HTML file; `--format mermaid` falls
+    back (with a stderr note) and still exits 0 — it never crashes or emits an
+    unknown-view error."""
+    import visualize
+    assert "dashboard" in visualize.VIEWS, "dashboard must be a registered view"
+
+    import subprocess
+    import shutil
+    import json as _json
+
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    py = sys.executable
+    viz = SCRIPTS_DIR / "visualize.py"
+
+    # Default → HTML file written.
+    r = subprocess.run(
+        [py, str(viz), "--root", str(proj), "--view", "dashboard"],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    payload = _json.loads(r.stdout)
+    assert payload.get("written", "").endswith(".html"), (
+        f"dashboard must default to a written HTML file; got: {r.stdout!r}"
+    )
+
+    # --format mermaid → graceful fallback with a note, still exit 0.
+    r2 = subprocess.run(
+        [py, str(viz), "--root", str(proj), "--view", "dashboard", "--format", "mermaid"],
+        capture_output=True, text=True,
+    )
+    assert r2.returncode == 0, r2.stderr
+    assert "note" in r2.stderr.lower() or "fallback" in r2.stderr.lower(), (
+        f"dashboard --format mermaid must emit a fallback note on stderr; got: {r2.stderr!r}"
+    )
+
+
+def test_board_textsummary_fallback(tmp_path):
+    """§0.2 (reverses Q45): board KEEPS its text-summary fallback. `--viz board
+    --format mermaid` must still print a text-summary that SHOWS the structure
+    (grouped card ids), emit a fallback note, and exit 0 — the fallback is NOT
+    removed."""
+    import subprocess
+    import shutil
+
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    py = sys.executable
+    viz = SCRIPTS_DIR / "visualize.py"
+    r = subprocess.run(
+        [py, str(viz), "--root", str(proj), "--view", "board", "--format", "mermaid"],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    # Fallback note on stderr (board has no Mermaid form).
+    assert "note" in r.stderr.lower() or "fallback" in r.stderr.lower()
+    # The text-summary must still be on stdout with visible structure (card ids
+    # grouped), NOT a removal/error message.
+    out = r.stdout
+    assert "PRD-AUTH" in out and "BRD-G1" in out, (
+        f"board text-summary fallback must show card structure; got: {out!r}"
+    )
+    assert "###" in out, "board fallback must keep its grouped text-summary headers"
+
+
+def test_visualize_determinism():
+    """G-A4: the retained text-summary tree is byte-deterministic — same input →
+    byte-identical output across repeated renders. Also asserts the new
+    text-summary contract is in effect (counts footer present), so this is a true
+    determinism check on the NEW format, not the old box-art."""
+    g = _text_summary_graph()
+    first = render_ascii.tree(g)
+    second = render_ascii.tree(g)
+    assert first == second, "text-summary tree must be byte-identical run-to-run"
+    # Determinism is asserted on the NEW format (counts footer present).
+    assert first.splitlines()[-1].startswith("—") and "nodes" in first.splitlines()[-1], (
+        "determinism must hold on the new text-summary format (counts footer)"
+    )
+
+
+def test_no_cdn_in_body_views(tmp_path):
+    """G-A4 / fail-closed: a body view (board) HTML inlines the marked + DOMPurify
+    sanitizer (or fails CLOSED to a plain-text banner) and NEVER reaches a CDN.
+    The downgrade must not weaken the body-view no-network guarantee."""
+    import subprocess
+    import shutil
+
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    py = sys.executable
+    viz = SCRIPTS_DIR / "visualize.py"
+    r = subprocess.run(
+        [py, str(viz), "--root", str(proj), "--view", "board", "--format", "html"],
+        capture_output=True, text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    body = sorted((proj / "docs" / "product" / "visuals").glob("board-*.html"))[-1].read_text()
+    # Never a CDN for body views.
+    assert "cdn.jsdelivr.net" not in body, "body views must never reach a CDN"
+    # No external network SINK: no <script src="http..."> / <link href="http...">.
+    # (Inlined vendored libs legitimately contain http(s) substrings in comments /
+    # W3C XML namespaces — those are inert, not a fetch.)
+    import re as _re
+    network_sink = _re.search(r'<(?:script|link)[^>]*\b(?:src|href)\s*=\s*["\']https?://', body)
+    assert network_sink is None, (
+        f"body view must have no external network sink; found: {network_sink.group(0)!r}"
+    )
+    # The sanitize chokepoint is always present; libs inlined OR fail-closed banner.
+    assert "psRenderMarkdown" in body, "body view must ship the sanitize chokepoint"
+    assert ("DOMPurify" in body) or ("Markdown libraries not vendored" in body), (
+        "body view must inline the sanitizer OR fail closed to a plain-text banner"
+    )
