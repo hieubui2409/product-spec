@@ -7,17 +7,25 @@ to paste into markdown. Where a view cannot be expressed cleanly in Mermaid,
 the renderer falls back to a `pre`-block with the ASCII version.
 """
 
+import re
 from collections import defaultdict
 from typing import Any, Dict, List
 
 from i18n_labels import label
-from spec_graph import CHILD_TYPE_FOR_PARENT, matching_child_counts, diff_graphs
+from spec_graph import (
+    CHILD_TYPE_FOR_PARENT,
+    HORIZON_ORDER,
+    moscow_story_counts,
+    matching_child_counts,
+    diff_graphs,
+)
 from render_ascii import (
     tree as ascii_tree,
     heatmap as ascii_heatmap,
     persona as ascii_persona,
     risk as ascii_risk,
     competition as ascii_competition,
+    _dep_safe_order,
     _is_deferred,
     is_visible,
 )
@@ -92,7 +100,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         if not (_visible(e["from"]) and _visible(e["to"])):
             continue
         lines.append(f"  {_safe_id(e['from'])} --> {_safe_id(e['to'])}")
-    goal_ids = [nid for nid, n in nodes_by_id.items() if n["type"] == "goal" and _visible(nid)]
+    goal_ids = [nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid)]
     for gid in goal_ids:
         lines.append(f"  {_safe_id(gid)} --> PRODUCT")
     return _fence("\n".join(lines))
@@ -108,9 +116,8 @@ def _safe_id(s: str) -> str:
     # [A-Za-z0-9_] is replaced with `_` so that PO-controlled id values
     # containing `<`, `>`, `"`, `]`, spaces, or other markup characters cannot
     # reach the Mermaid node-identifier position and inject HTML.
-    import re as _re
     out = s.replace("-", "__").replace(":", "_C_")
-    return _re.sub(r"[^A-Za-z0-9_]", "_", out)
+    return re.sub(r"[^A-Za-z0-9_]", "_", out)
 
 
 def heatmap(graph: Dict[str, Any]) -> str:
@@ -150,11 +157,12 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
             continue
         if filter_wont and _is_deferred(n):
             continue
-        items_by_horizon[n.get("horizon") or "unspecified"].append(n["id"])
+        h = n.get("horizon")
+        items_by_horizon[h if isinstance(h, str) else "unspecified"].append(n["id"])
     lines = ["timeline", "  title Roadmap"]
-    for h in ("now", "next", "later", "unspecified"):
+    for h in (*HORIZON_ORDER, "unspecified"):
         items = sorted(items_by_horizon.get(h, []))
-        if not items and h == "unspecified":
+        if not items:
             continue
         section = label(h, lang) if h != "unspecified" else "Unspecified"
         lines.append(f"  section {section}")
@@ -195,11 +203,7 @@ def gap(graph: Dict[str, Any]) -> str:
 
 
 def moscow(graph: Dict[str, Any], lang: str = "en") -> str:
-    counts = defaultdict(int)
-    for n in graph["nodes"]:
-        if n["type"] != "story":
-            continue
-        counts[n.get("moscow") or "?"] += 1
+    counts = moscow_story_counts(graph)
     must_l = label("must", lang)
     should_l = label("should", lang)
     could_l = label("could", lang)
@@ -231,41 +235,6 @@ def competition(graph: Dict[str, Any]) -> str:
     return f"```\n{ascii_competition(graph)}\n```"
 
 
-def _dep_safe_order(graph: Dict[str, Any]) -> List[str]:
-    """Return PRD+Epic ids in a deterministic, CYCLE-SAFE walk over depends_on.
-
-    Walks each node's depends_on chain with a visited-set guard — the SAME guard
-    as spec_graph._closure (`if x in seen: continue`) — so a circular chain
-    (A→B→A) terminates instead of hanging the renderer (trade-off T1 / G-D3).
-    Output is every PRD/Epic id, prerequisites emitted before dependents where
-    the ordering is acyclic; a cycle just degrades to sorted order for its nodes.
-    """
-    dep_adj: Dict[str, List[str]] = {}
-    for n in graph["nodes"]:
-        if n.get("type") in ("prd", "epic"):
-            dep_adj[n["id"]] = sorted(n.get("depends_on") or [])
-    ordered: List[str] = []
-    seen: set = set()
-    for root in sorted(dep_adj):
-        # Iterative post-order: push the node, then its (sorted) deps; emit on
-        # the way back up. The visited set makes a back-edge a no-op (no hang).
-        stack = [(root, False)]
-        while stack:
-            node, processed = stack.pop()
-            if processed:
-                if node not in ordered:
-                    ordered.append(node)
-                continue
-            if node in seen:
-                continue
-            seen.add(node)
-            stack.append((node, True))
-            for dep in dep_adj.get(node, []):
-                if dep in dep_adj and dep not in seen:
-                    stack.append((dep, False))
-    return ordered
-
-
 def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
     """Mermaid `gantt` for the TIME dimension (design Q47): each PRD/Epic is a
     task, grouped into now/next/later sections, dated by `target_date` when set.
@@ -291,10 +260,11 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
 
     by_horizon: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for n in timed:
-        by_horizon[n.get("horizon") or "unspecified"].append(n)
+        h = n.get("horizon")
+        by_horizon[h if isinstance(h, str) else "unspecified"].append(n)
 
     lines = ["gantt", f"  title {_safe_label(label('roadmap_deadlines', lang))}", "  dateFormat YYYY-MM-DD"]
-    for h in ("now", "next", "later", "unspecified"):
+    for h in (*HORIZON_ORDER, "unspecified"):
         items = by_horizon.get(h, [])
         if not items:
             continue

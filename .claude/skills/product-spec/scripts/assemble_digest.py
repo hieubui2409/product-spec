@@ -341,7 +341,15 @@ def compact_fields(entry: Dict[str, Any]) -> List[List[str]]:
     if entry["type"] == "brd":
         goals = fm.get("goals")
         if isinstance(goals, list):
-            titles = [str(g.get("title") or g.get("id") or "") for g in goals if isinstance(g, dict)]
+            # Filter empty strings after mapping: goal entries lacking both title
+            # and id produce "" — exclude them so the separator isn't stray.
+            titles = [
+                t for t in (
+                    str(g.get("title") or g.get("id") or "")
+                    for g in goals if isinstance(g, dict)
+                )
+                if t
+            ]
             if titles:
                 out.append(["goals", "; ".join(titles)])
     if entry["type"] == "story" and isinstance(entry.get("ac"), list):

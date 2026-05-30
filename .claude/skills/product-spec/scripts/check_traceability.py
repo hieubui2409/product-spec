@@ -21,7 +21,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, _now, CHILD_TYPE_FOR_PARENT, matching_child_counts
+from spec_graph import (
+    build_graph, _now, CHILD_TYPE_FOR_PARENT, matching_child_counts,
+    make_finding as _f,
+)
 
 configure_utf8_console()
 
@@ -178,17 +181,6 @@ def _check_dep_cycles(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             cycle=cycle,
         ))
     return findings
-
-
-def _f(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:
-    return {
-        "check": check_id,
-        "severity": severity,
-        "artifact_id": node.get("id"),
-        "file": node.get("file"),
-        "detail": detail,
-        "context": context or None,
-    }
 
 
 def main() -> int:

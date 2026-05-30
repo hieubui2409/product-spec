@@ -35,10 +35,10 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph
+from spec_graph import build_graph, ID_PATTERN_BY_TYPE, COMP_ID_PATTERN
 
 configure_utf8_console()
 
@@ -67,28 +67,24 @@ OUTPUT_PATH_FOR_TYPE = {
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "assets" / "templates"
 
-# Strict parent-ID patterns. Kept in sync with check_consistency.ID_PATTERN_BY_TYPE
-# so a parent passed at generate time fast-fails the same way it would be flagged
-# at validate time. Slug section is 1+15=16 chars max (uppercase, digits, hyphens).
-PARENT_PATTERN_FOR_PRD = re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$")
-PARENT_PATTERN_FOR_EPIC = re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$")
-# The slug regex above is permissive (hyphens allowed). A trailing -E<n> or
-# -E<n>-S<n> means the ID is actually an epic or story shape — reject when a
-# PRD ID is expected so callers can't accidentally pass an epic/story.
+# Strict parent-ID patterns — derived from spec_graph.ID_PATTERN_BY_TYPE (the
+# single authoritative home) so a parent passed at generate time fast-fails the
+# same way it would be flagged at validate time.
+PARENT_PATTERN_FOR_PRD = ID_PATTERN_BY_TYPE["prd"]   # PRD-<SLUG>, slug ≤16 chars
+PARENT_PATTERN_FOR_EPIC = ID_PATTERN_BY_TYPE["epic"]  # PRD-<SLUG>-E<n>
+# A trailing -E<n> or -E<n>-S<n> means the ID is an epic or story shape — reject
+# when a PRD ID is expected so callers can't accidentally pass an epic/story.
 PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY = re.compile(r"-E\d+(-S\d+)?$")
 # Bare PRD slug fast-fail (uppercase ASCII letter start, digits/hyphens, ≤16
 # chars). Must match the slug section of PARENT_PATTERN_FOR_PRD so that
 # `PRD-<SLUG>` produced below is itself a valid parent for an epic.
 SLUG_PATTERN_FOR_PRD = re.compile(r"^[A-Z][A-Z0-9-]{0,15}$")
 
-# Caller-supplied `--id` override patterns. Kept in sync with
-# check_consistency.ID_PATTERN_BY_TYPE so an --auto batch caller that
-# pre-allocates IDs cannot smuggle an invalid one past the generator.
-ID_PATTERN_OVERRIDE = {
-    "goal": re.compile(r"^BRD-G[0-9]+$"),
-    "prd": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$"),
-    "epic": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$"),
-    "story": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+-S[0-9]+$"),
+# Caller-supplied `--id` override patterns — keyed from spec_graph.ID_PATTERN_BY_TYPE
+# (the single authoritative home) so an --auto batch caller that pre-allocates IDs
+# cannot smuggle an invalid one past the generator.
+ID_PATTERN_OVERRIDE: Dict[str, re.Pattern] = {
+    **ID_PATTERN_BY_TYPE,
     "product": re.compile(r"^PRODUCT$"),
     "vision": re.compile(r"^VISION$"),
     "brd": re.compile(r"^BRD$"),
@@ -164,7 +160,6 @@ def allocate_id(graph: Dict[str, Any], target_type: str, slug: Optional[str], pa
 
 
 def _next_with_prefix(existing: set, prefix: str) -> str:
-    n = 1
     pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$")
     used = []
     for x in existing:
@@ -228,10 +223,16 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
     return rendered
 
 
-def output_path(root: Path, target_type: str, artifact_id: str, slug: Optional[str]) -> Path:
+def output_path(root: Path, target_type: str, artifact_id: str, slug: Optional[str]) -> Optional[Path]:
+    """Return the output path for a type that has an OUTPUT_PATH_FOR_TYPE mapping,
+    or None for content-only types (sign_off, change_log_entry) that have no file home
+    in the standard layout."""
     template = OUTPUT_PATH_FOR_TYPE.get(target_type)
     if template is None:
-        raise ValueError(f"no output path mapping for type {target_type!r}")
+        return None
+    # PRD: ensure slug is never empty (would produce `prds/.md`)
+    if target_type == "prd" and not slug and artifact_id.upper().startswith("PRD-"):
+        slug = artifact_id[4:].lower()  # derive from PRD-<SLUG> → <slug>
     out_rel = template.format(id=artifact_id, slug=(slug or "").lower())
     return root / "docs" / "product" / out_rel
 
@@ -240,9 +241,12 @@ def load_values(spec: Optional[str]) -> Dict[str, Any]:
     if not spec:
         return {}
     p = Path(spec)
-    if p.exists():
-        return json.loads(p.read_text(encoding="utf-8"))
-    return json.loads(spec)
+    try:
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+        return json.loads(spec)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--values: invalid JSON ({exc})") from exc
 
 
 # List-typed frontmatter fields. If the caller omits them, default to [] so
@@ -329,6 +333,25 @@ def main() -> int:
     ap.add_argument("--id", default=None, help="override allocated ID (used by --auto batch)")
     args = ap.parse_args()
 
+    try:
+        return _run(args)
+    except ValueError as exc:
+        # Analytical script contract: any ValueError surfaces as a JSON finding
+        # on stdout + exit 0 — never a bare traceback (validation-rules-spec.md:63).
+        response = {
+            "type": args.type,
+            "id": args.id or "",
+            "path": None,
+            "written": False,
+            "content": None,
+            "error": "invalid_input",
+            "message": str(exc),
+        }
+        print(json.dumps(response, indent=2, ensure_ascii=False))
+        return 0
+
+
+def _run(args: argparse.Namespace) -> int:
     root = Path(args.root).resolve()
     graph = build_graph(root)
     keep_optional = [s.strip() for s in args.keep_optional.split(",") if s.strip()]
@@ -348,26 +371,50 @@ def main() -> int:
         artifact_id = args.id
     else:
         artifact_id = allocate_id(graph, args.type, args.slug, args.parent, session_used=[])
+
+    # For types with no OUTPUT_PATH mapping (sign_off, change_log_entry), the
+    # artifact is content-only — no file path is assigned and --write is a no-op.
+    has_path_mapping = args.type in OUTPUT_PATH_FOR_TYPE
+
+    # Derive slug from --id when --type prd and --slug omitted, to prevent the
+    # output path from collapsing to `prds/.md`.
+    effective_slug = args.slug
+    if args.type == "prd" and not effective_slug and artifact_id.upper().startswith("PRD-"):
+        effective_slug = artifact_id[4:].lower()
+
+    # For epic/story: when --id given without --parent, derive the parent ID from
+    # the artifact_id so token substitution doesn't leave the parent token as 'TBD'
+    # (a downstream dangling-link error).
+    effective_parent = args.parent
+    if not effective_parent and args.id:
+        if args.type == "story" and "-S" in args.id:
+            effective_parent = args.id.rsplit("-S", 1)[0]
+        elif args.type == "epic" and "-E" in args.id:
+            effective_parent = args.id.rsplit("-E", 1)[0]
+
     values = fill_defaults(values, args.type, artifact_id, args.lang)
-    if args.parent:
+    if effective_parent:
         if args.type == "story":
-            values.setdefault("epic", args.parent)
+            values.setdefault("epic", effective_parent)
         elif args.type == "epic":
-            values.setdefault("prd", args.parent)
+            values.setdefault("prd", effective_parent)
 
     template_path = TEMPLATES_DIR / TYPE_TEMPLATE[args.type]
     template_text = template_path.read_text(encoding="utf-8")
     rendered = render(template_text, values, keep_optional)
 
-    out_path = output_path(root, args.type, artifact_id, args.slug)
-    response = {
+    out_path = output_path(root, args.type, artifact_id, effective_slug) if has_path_mapping else None
+    response: Dict[str, Any] = {
         "type": args.type,
         "id": artifact_id,
-        "path": str(out_path.relative_to(root)) if out_path.is_relative_to(root) else str(out_path),
+        "path": (
+            str(out_path.relative_to(root)) if (out_path is not None and out_path.is_relative_to(root))
+            else (str(out_path) if out_path is not None else None)
+        ),
         "written": False,
         "content": rendered,
     }
-    if args.write:
+    if args.write and out_path is not None:
         if out_path.exists() and not args.force:
             response["error"] = "exists"
             response["message"] = (

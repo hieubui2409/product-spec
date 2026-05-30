@@ -25,22 +25,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, matching_child_counts, _now
+from spec_graph import (
+    build_graph,
+    matching_child_counts,
+    _now,
+    ID_PATTERN_BY_TYPE,
+    COMP_ID_PATTERN,
+    competitor_id_to_name,
+    make_finding as _f,
+    resolve_ac as _resolve_ac,
+)
 
 configure_utf8_console()
 
-
-ID_PATTERN_BY_TYPE = {
-    "goal": re.compile(r"^BRD-G[0-9]+$"),
-    "prd": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$"),
-    "epic": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$"),
-    "story": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+-S[0-9]+$"),
-}
-
-# Competitor ID grammar: `COMP-<SLUG>` (uppercase ASCII start, digits/hyphens,
-# ≤16-char slug) — the same parent-scoped discipline as PRD/epic/story ids, just
-# under the COMP- prefix. A competitor id that violates it trips `invalid_id`.
-COMP_ID_PATTERN = re.compile(r"^COMP-[A-Z][A-Z0-9-]{0,15}$")
 
 ENUMS = {
     "status": {"draft", "review", "approved"},
@@ -101,6 +98,11 @@ STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
 # A non-empty list on any other artifact type reuses the existing `invalid_type`
 # finding — NOT a new check id — keeping the catalog small.
 DEPENDS_ON_ALLOWED_TYPES = ("prd", "epic")
+
+# `competitive_parity` is a PRD-level map (a PRD's per-competitor verdict). A
+# parity map on any other artifact type is misplaced → reuses `invalid_type`
+# (symmetric with DEPENDS_ON_ALLOWED_TYPES), keeping the catalog small.
+COMPETITIVE_PARITY_ALLOWED_TYPES = ("prd",)
 
 # ISO calendar-date shape (YYYY-MM-DD) for `target_date`. PyYAML auto-parses a
 # valid date to a datetime.date; a malformed/quoted value stays a str and is
@@ -236,10 +238,17 @@ def _check_target_date_shape(node: Dict[str, Any]) -> List[Dict[str, Any]]:
     if isinstance(v, (dt.date, dt.datetime)):
         return []
     if isinstance(v, str) and _ISO_DATE_RE.match(v.strip()):
-        return []
+        # Regex-valid shape is not enough: a quoted `"2026-13-99"` / `"2026-02-30"`
+        # matches YYYY-MM-DD but is not a real calendar date. Parse it to confirm,
+        # mirroring the lenient parse in _parse_iso_date.
+        try:
+            dt.date.fromisoformat(v.strip())
+            return []
+        except ValueError:
+            pass
     return [_f(
         "invalid_type", "error", node,
-        f"Field target_date={v!r} must be an ISO date (YYYY-MM-DD).",
+        f"Field target_date={v!r} must be a valid ISO calendar date (YYYY-MM-DD).",
         field="target_date", value=v,
     )]
 
@@ -330,13 +339,10 @@ def _dep_order(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def _competitor_ids(graph: Dict[str, Any]) -> set:
     """The set of well-formed BRD competitor ids — the resolve target for every
-    PRD `competitive_parity` key. Skips non-dict / id-less entries (their bad
-    shape is flagged separately by _check_competitors)."""
-    out: set = set()
-    for c in graph.get("competitors") or []:
-        if isinstance(c, dict) and isinstance(c.get("id"), str):
-            out.add(c["id"])
-    return out
+    PRD `competitive_parity` key. Delegates to the single DRY home
+    (spec_graph.competitor_id_to_name) so the 'resolvable competitor' rule has
+    one authority shared with the drift anchors."""
+    return set(competitor_id_to_name(graph))
 
 
 def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -357,6 +363,7 @@ def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     # A synthetic BRD-scoped node carrier so _f() attributes the finding to the
     # BRD file (competitors have no node of their own). brd.md is the single home.
     brd_carrier = {"id": "BRD", "file": "brd.md"}
+    seen_ids: set = set()
     for entry in competitors:
         if not isinstance(entry, dict):
             findings.append(_f(
@@ -389,6 +396,17 @@ def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 f"({COMP_ID_PATTERN.pattern}).",
                 field="competitors[].id", value=cid, expected_pattern=COMP_ID_PATTERN.pattern,
             ))
+        else:
+            # Two competitor entries sharing one COMP- id make a PRD parity key
+            # resolve ambiguously (and _competitor_ids dedups them into a set).
+            # Flag the repeat — mirrors the artifact-level dup_id loop in check().
+            if cid in seen_ids:
+                findings.append(_f(
+                    "dup_id", "error", brd_carrier,
+                    f"Duplicate competitor id {cid!r} in the BRD competitors: list.",
+                    field="competitors[].id", value=cid,
+                ))
+            seen_ids.add(cid)
     return findings
 
 
@@ -408,6 +426,13 @@ def _check_competitive_parity(node: Dict[str, Any], graph: Dict[str, Any]) -> Li
     cp = node.get("competitive_parity")
     if cp is None:
         return []
+    if node.get("type") not in COMPETITIVE_PARITY_ALLOWED_TYPES:
+        return [_f(
+            "invalid_type", "error", node,
+            f"competitive_parity is only valid on {' or '.join(COMPETITIVE_PARITY_ALLOWED_TYPES)}; "
+            f"{node.get('id')} is a {node.get('type')}.",
+            field="competitive_parity", value=cp,
+        )]
     if not isinstance(cp, dict):
         return [_f(
             "invalid_type", "error", node,
@@ -542,7 +567,9 @@ def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
         return findings
     try:
         patterns = gitignore.read_text(encoding="utf-8").splitlines()
-    except OSError:
+    except (OSError, UnicodeDecodeError):
+        # A non-UTF-8 .gitignore raises UnicodeDecodeError (a ValueError subclass,
+        # NOT an OSError); skip the best-effort warn instead of crashing the gate.
         return findings
     for raw in patterns:
         p = raw.strip()
@@ -682,15 +709,6 @@ def _risk_blindspot(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     return findings
 
 
-def _resolve_ac(node: Dict[str, Any]) -> List[Any]:
-    raw = node.get("acceptance_criteria")
-    if raw is None:
-        return []
-    if isinstance(raw, list):
-        return [x for x in raw if x not in (None, "")]
-    return []
-
-
 def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
@@ -734,17 +752,6 @@ def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     return findings
 
 
-def _f(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:
-    return {
-        "check": check_id,
-        "severity": severity,
-        "artifact_id": node.get("id"),
-        "file": node.get("file"),
-        "detail": detail,
-        "context": context or None,
-    }
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
@@ -752,7 +759,6 @@ def main() -> int:
 
     root = Path(args.root).resolve()
 
-    parsed_node_extras: Dict[str, Any] = {}
     graph = build_graph(root)
 
     # Augment story nodes with their acceptance_criteria from frontmatter

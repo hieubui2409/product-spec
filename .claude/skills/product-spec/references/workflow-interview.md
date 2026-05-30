@@ -11,8 +11,8 @@ End-to-end workflow the LLM follows for the **product / brd / prd / epic / story
 ## Init Flow (no PRODUCT.md yet)
 
 1. Ensure `docs/product/` exists (create if not).
-2. Run the **Vision** interview (`references/interview-vision.md`) — V1 through V8.
-3. After V1–V8, write:
+2. Run the **Vision** interview (`references/interview-vision.md`) — V1 through V7.
+3. After V1–V7, write:
    - `PRODUCT.md` via `generate_templates.py --type product` with the labels from the answers.
    - `vision.md` via `generate_templates.py --type vision` with the narrative.
 4. Append a change-log entry via `generate_templates.py --type change_log_entry --keep-optional detail`.

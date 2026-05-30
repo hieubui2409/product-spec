@@ -101,6 +101,10 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    # NOTE: this --today resolution + malformed-guard block is intentionally
+    # duplicated from time_advisory.py. Extracting a shared time_utils helper
+    # would require a file not in this script's ownership boundary; deferred
+    # pending a future shared time_utils refactor.
     today = _parse_iso_date(args.today) if args.today else dt.date.today()
     if today is None:
         print(f"--today must be an ISO date (YYYY-MM-DD); got {args.today!r}.",

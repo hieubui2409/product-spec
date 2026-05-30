@@ -105,11 +105,11 @@ def _insert_before_closing_fence(text: str, lines: List[str]) -> Optional[str]:
     A minimal text edit on purpose: the body and the existing frontmatter lines
     are preserved verbatim, so the `.bak`/idempotency invariants hold and a
     YAML round-trip never reflows the PO's hand-authored frontmatter."""
-    src = text.lstrip("﻿")
-    # Preserve the file's existing line-ending style: a CRLF (Windows-authored)
-    # spec must not be silently reflowed to LF. Detect from the source and apply
-    # the same terminator to the inserted placeholder lines.
-    newline = "\r\n" if "\r\n" in src else "\n"
+    # Capture and preserve a leading UTF-8 BOM so --apply is byte-for-byte
+    # on BOM-authored files (stripping only for fence-scanning, not for output).
+    had_bom = text.startswith("﻿")
+    src = text[1:] if had_bom else text
+
     src_lines = src.splitlines(keepends=True)
     # Find the opening fence (first line that is exactly `---`) and the matching
     # closing fence (the next `---`). Mirrors frontmatter_parser's FRONTMATTER_RE
@@ -129,9 +129,17 @@ def _insert_before_closing_fence(text: str, lines: List[str]) -> Optional[str]:
     if close_idx is None:
         return None
 
+    # Detect the line-ending style from the CLOSING fence of the frontmatter block
+    # (not from the whole file). A body section may use CRLF for e.g. a code sample
+    # while the frontmatter was authored with LF, or vice versa — using the closing
+    # fence line's own terminator keeps the inserted placeholder lines consistent
+    # with the frontmatter style without being influenced by body newlines.
+    newline = "\r\n" if src_lines[close_idx].endswith("\r\n") else "\n"
+
     insert_block = "".join(ln.rstrip("\r\n") + newline for ln in lines)
     new_lines = src_lines[:close_idx] + [insert_block] + src_lines[close_idx:]
-    return "".join(new_lines)
+    result = "".join(new_lines)
+    return ("﻿" + result) if had_bom else result
 
 
 def plan_file(art_type: str, path: Path, product_dir: Path) -> Optional[Dict[str, Any]]:
@@ -182,6 +190,10 @@ def apply_file(path: Path) -> bool:
         return False
     parsed = parse_file(path)
     if not parsed["ok"]:
+        return False
+    # Defense-in-depth: G-A3 no-auto-edit-approved guard at the apply layer,
+    # independent of migrate()'s control flow (belt-and-suspenders).
+    if (parsed["frontmatter"] or {}).get("status") == "approved":
         return False
     missing = _missing_fields(parsed["frontmatter"] or {}, art_type)
     if not missing:

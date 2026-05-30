@@ -14,7 +14,7 @@ Parent-scoped — globally unique by construction, lineage readable, no central 
 | Story      | `PRD-<SLUG>-E<n>-S<n>` | `PRD-AUTH-E1-S1`                 | `<n>` = next free integer within that epic.                                                |
 | Competitor | `COMP-<SLUG>`          | `COMP-SHOPIFY`, `COMP-BIGCARTEL` | Declared in the BRD's `competitors:` list (the DRY identity home). Same slug rules as PRD. |
 
-**Slug rules:** uppercase ASCII letters and digits only; hyphen permitted but prefer flat (e.g., `AUTH`, `BILLING`, `ONBOARDING`). No spaces, no diacritics. The slug is permanent — renaming a PRD does not update existing epic/story IDs (they keep the original lineage).
+**Slug rules:** must begin with an uppercase ASCII letter; remaining characters may be uppercase ASCII letters, digits, or hyphens; ≤16 characters total (enforced regex: `^[A-Z][A-Z0-9-]{0,15}$`). Prefer flat slugs (e.g., `AUTH`, `BILLING`, `ONBOARDING`). No spaces, no diacritics. The slug is permanent — renaming a PRD does not update existing epic/story IDs (they keep the original lineage).
 
 **Next-`<n>`-within-parent rule:** `generate_templates.py` scans existing siblings (by ID prefix) and assigns `max(siblings) + 1`. On a single `--auto` brain-dump batch the orchestration layer drives a sequence of calls and passes each pre-allocated ID via `--id` (override). The script also accepts an in-process `session_used` list of already-issued IDs in a single batch so it never re-uses one before files are written.
 
@@ -164,9 +164,9 @@ competitive_parity:
 
 ### `assumptions`, `dependencies`, `out_of_scope` (PRD)
 
-Optional lists of free-text bullets. Documented in the PRD's frontmatter when surfaced during interview; otherwise
-omitted. (For structured ordering dependencies, prefer `depends_on` above; `dependencies` here remains the free-text
-narrative bucket.)
+Optional free-text content. These are PRD **body sections** (rendered as optional `<!-- OPTIONAL -->` blocks in the
+`prd.md` template), not frontmatter fields. No script reads them from frontmatter. Surfaced during the PRD interview as
+narrative prose; for structured ordering dependencies use the frontmatter `depends_on` field instead.
 
 ## Approval Block (when `status: approved`)
 
@@ -205,18 +205,26 @@ Stale rule: if `updated > 30 days` OR `answers` reference IDs no longer in the s
 
 ## Snapshot Schema (graph-snapshot JSON)
 
-Persisted on `--validate` under `docs/product/visuals/.snapshots/<ISO>.json`. Used by the delta/diff viz.
+Persisted on `--validate` under `docs/product/visuals/.snapshots/<ISO-second>-<content-hash8>.json` (separators stripped from the ISO timestamp; hash is the first 8 hex digits of the SHA-256 of the JSON body). Used by the delta/diff viz.
 
 ```json
 {
   "snapshot_at": "2026-05-28T10:00:00Z",
+  "version": "1.0",
+  "generated_at": "2026-05-28T10:00:00Z",
+  "product": {
+    "name": "Acme Shop",
+    "core_value": "Help boutique brands sell directly to fans.",
+    "personas": ["shopper", "store-admin"]
+  },
   "nodes": [
     {"id": "BRD-G1", "type": "goal", "status": "approved", "scope": "in", "moscow": "must", "horizon": "now"}
   ],
   "edges": [
     {"from": "PRD-AUTH-E1-S1", "to": "PRD-AUTH-E1", "kind": "epic"}
   ],
-  "personas": ["shopper", "store-admin"]
+  "risks": [],
+  "competitors": []
 }
 ```
 

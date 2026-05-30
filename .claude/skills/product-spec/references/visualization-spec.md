@@ -124,7 +124,7 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
 
 `--lang en|vi` localizes labels in the rendered output (e.g., "now/next/later" → "hiện tại/tiếp theo/sau này"). IDs, edges, and frontmatter values stay English.
 
-`--filter-wont` hides deferred items (frontmatter `moscow: wont` or `scope: out`) from `tree`/`roadmap`/`persona`/`board`/`explorer` (ascii, mermaid, and html alike). **Default keeps them visible** — a trailing `*` marker on the graph views, a card on board/explorer — so nothing is silently dropped; `--filter-wont` is the opt-in to declutter.
+`--filter-wont` hides deferred items (frontmatter `moscow: wont` or `scope: out`) from `tree`/`roadmap`/`time`/`persona`/`board`/`explorer` (ascii, mermaid, and html alike). **Default keeps them visible** — a trailing `*` marker on the graph views, a card on board/explorer — so nothing is silently dropped; `--filter-wont` is the opt-in to declutter.
 
 ## HTML Self-Containment
 
@@ -150,7 +150,7 @@ Change the look in one place → every output updates (DRY). The `explorer` UI i
 
 ## Snapshot & Delta
 
-`spec_graph.py` writes a snapshot JSON to `docs/product/visuals/.snapshots/<ISO>.json` on every `--validate` run. The `delta` view compares two snapshots:
+`spec_graph.py` writes a snapshot JSON to `docs/product/visuals/.snapshots/<ISO-second>-<content-hash8>.json` (separators stripped; hash = first 8 hex digits of SHA-256 of the body) on every `--validate` run. The `delta` view compares two snapshots:
 
 - **Default**: compare the two most-recent snapshots.
 - **Explicit baseline**: `--snapshot <name>` picks a specific older snapshot.

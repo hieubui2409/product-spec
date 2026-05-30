@@ -61,8 +61,9 @@ LABELS: Dict[str, Dict[str, str]] = {
         "threat_low": "low",
         "threat_med": "med",
         "threat_high": "high",
-        # Multi-dim impact view names (page titles / nav labels). Distinct from
-        # the dimension enums above so each localizes independently.
+        # Reserved view-name labels; localized title/nav not yet wired — pinned by
+        # tests for forward compat. No production path currently resolves these via
+        # label(); they are kept so future wiring has a stable key contract.
         "time": "Time",
         "risk": "Risk",
         "dashboard": "Impact Dashboard",
@@ -107,7 +108,7 @@ LABELS: Dict[str, Dict[str, str]] = {
         "threat_low": "thấp",
         "threat_med": "trung bình",
         "threat_high": "cao",
-        # Multi-dim impact view names — VI phrasing native-reviewed for natural wording.
+        # Reserved view-name labels (VI); see EN comment above for wiring status.
         "time": "Thời gian",
         "risk": "Rủi ro",
         "dashboard": "Bảng tổng quan tác động",
@@ -116,6 +117,12 @@ LABELS: Dict[str, Dict[str, str]] = {
 
 
 def label(key: str, lang: str = "en") -> str:
-    """Return the localized label for `key`. Falls back to English on miss."""
-    table = LABELS.get(lang) or LABELS["en"]
-    return table.get(key) or LABELS["en"].get(key) or key
+    """Return the localized label for `key`. Falls back to English on miss.
+
+    Uses explicit `in` membership tests instead of truthiness `or` chains so a
+    label whose value is the empty string is returned as-is rather than being
+    treated as a miss and falling through to the next table."""
+    table = LABELS[lang] if lang in LABELS else LABELS["en"]
+    if key in table:
+        return table[key]
+    return LABELS["en"].get(key, key)

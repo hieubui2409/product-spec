@@ -60,10 +60,25 @@ def _heading(entry: Dict[str, Any]) -> str:
 def _ac_item(a: Any) -> str:
     """Render one acceptance-criteria item as a readable bullet. AC items are
     expected to be strings, but a PO may write a YAML mapping (`- {given: …,
-    then: …}`); stringify that as `key: value` pairs rather than leaking a raw
-    Python dict repr (`{'given': 'A'}`) into the doc."""
+    then: …}`), a nested list, or leave a None placeholder. Shape-aware:
+
+    - dict  → `key: value` pairs (recurse on dict/list values)
+    - list/tuple → '; '.join of each element rendered via _ac_item
+    - None  → '' (placeholder; filtered upstream by resolve_ac but may reach
+               here via a direct _ac_block call on a pre-filtered list)
+    - other → str() (genuine scalar)
+
+    Never leaks a raw Python repr (`{'given': 'A'}`, `[...]`) into the doc."""
+    if a is None:
+        return ""
     if isinstance(a, dict):
-        return " · ".join(f"{k}: {v}" for k, v in a.items())
+        parts = []
+        for k, v in a.items():
+            v_str = _ac_item(v) if isinstance(v, (dict, list, tuple)) else str(v)
+            parts.append(f"{k}: {v_str}")
+        return " · ".join(parts)
+    if isinstance(a, (list, tuple)):
+        return "; ".join(_ac_item(x) for x in a)
     return str(a)
 
 

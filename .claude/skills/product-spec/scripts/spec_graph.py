@@ -16,6 +16,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -67,7 +68,11 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
             continue
         fm = art["frontmatter"]
         rel = Path(art["file"]).resolve().relative_to(product_dir.resolve()).as_posix()
-        node_type = fm.get("type") or art.get("__type_hint")
+        raw_type = fm.get("type")
+        # Coerce a malformed `type:` (a YAML list/dict from a hand-edit) to None
+        # so it falls back to the directory-derived hint instead of later being
+        # used as a dict key (ID_PATTERN_BY_TYPE.get(ntype)) and crashing the gate.
+        node_type = (raw_type if isinstance(raw_type, str) else None) or art.get("__type_hint")
         if node_type == "brd":
             goals = fm.get("goals") or []
             for g in goals:
@@ -81,7 +86,7 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
 
 def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[str]) -> Dict[str, Any]:
     return {
-        "id": fm.get("id") or "<missing-id>",
+        "id": _scalar_id(fm.get("id")),
         "type": node_type,
         "title": fm.get("name") or fm.get("title") or "",
         "status": fm.get("status"),
@@ -96,8 +101,8 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         "lang": fm.get("lang"),
         "file": file_rel,
         "brd_goals": fm.get("brd_goals") or [],
-        "epic": fm.get("epic"),
-        "prd": fm.get("prd"),
+        "epic": _scalar_link(fm.get("epic")),
+        "prd": _scalar_link(fm.get("prd")),
         # TIME dimension: single ISO target_date (PyYAML parses `2026-09-30` to a
         # datetime.date; the JSON CLI coerces via default=str). Optional → None
         # when absent so a v1 artifact stays back-compatible (no churn).
@@ -125,7 +130,7 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
 
 def _node_from_goal(goal: Dict[str, Any], parent_file: str) -> Dict[str, Any]:
     return {
-        "id": goal.get("id") or "<missing-id>",
+        "id": _scalar_id(goal.get("id")),
         "type": "goal",
         "title": goal.get("title") or "",
         "status": goal.get("status"),
@@ -148,8 +153,15 @@ def build_edges(nodes: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         elif ntype == "epic" and n.get("prd"):
             edges.append({"from": n["id"], "to": n["prd"], "kind": "prd"})
         elif ntype == "prd":
-            for g in n.get("brd_goals", []):
-                edges.append({"from": n["id"], "to": g, "kind": "brd_goal"})
+            # Guard the iteration: brd_goals is kept RAW on the node (so the
+            # LIST_FIELDS check can still flag a bare-string `brd_goals: BRD-G1`
+            # as invalid_type). Iterate only when it is a list and emit an edge
+            # only for str elements — never char-split a bare string into phantom
+            # single-char edges, and preserve edge ORDER for parents_of multi-goal.
+            goals = n.get("brd_goals")
+            for g in (goals if isinstance(goals, list) else []):
+                if isinstance(g, str):
+                    edges.append({"from": n["id"], "to": g, "kind": "brd_goal"})
         # Goal nodes have no outbound edge in the graph: there is no `brd`
         # container node, and goals are rendered as direct children of
         # PRODUCT by the tree renderers. An earlier `goal -> "BRD"` edge
@@ -297,9 +309,13 @@ def _competitors(artifacts: List[Dict[str, Any]]) -> List[Any]:
                 competitors.append(c)  # bad shape → invalid_type (check_consistency)
                 continue
             url = c.get("url")
-            # OpSec single chokepoint: a `private:`-prefixed URL is dropped so
+            # Coerce a non-string url (a list/dict from malformed YAML) to None
+            # FIRST so the single chokepoint stores only a clean str-or-None,
+            # then apply the OpSec drop: a `private:`-prefixed URL is dropped so
             # the secret path never reaches the graph or any render (G-E4).
-            if isinstance(url, str) and url.strip().startswith(_PRIVATE_URL_PREFIX):
+            if not isinstance(url, str):
+                url = None
+            elif url.strip().startswith(_PRIVATE_URL_PREFIX):
                 url = None
             competitors.append({
                 "id": c.get("id"),
@@ -456,6 +472,98 @@ def _as_id_list(v: Any) -> List[str]:
     if not isinstance(v, list):
         return []
     return sorted(x for x in v if isinstance(x, str))
+
+
+def _scalar_id(v: Any) -> str:
+    """Coerce a frontmatter `id` to a hashable str so it can NEVER raise when used
+    as a dict key / set element (every checker, the matrix, the renderers, and the
+    digest assembler index nodes by id). Absent → `<missing-id>`; a non-string
+    (list/dict/int from a hand-edit) → `<invalid-id>`, which then fails the
+    ID-grammar regex and surfaces as `invalid_id` instead of crashing the gate."""
+    if isinstance(v, str):
+        return v or "<missing-id>"
+    if v is None:
+        return "<missing-id>"
+    return "<invalid-id>"
+
+
+def _scalar_link(v: Any) -> Optional[str]:
+    """Coerce a scalar parent link (`epic` / `prd`) to str|None at the single
+    source. A non-string (list/dict from malformed YAML) → None, so build_edges
+    and every `nodes_by_id.get(parent_id)` lookup never hash an unhashable value;
+    the now-missing parent surfaces as an orphan/dangling finding (fail-soft)
+    rather than crashing every downstream gate + analytical script."""
+    return v if isinstance(v, str) else None
+
+
+# Canonical horizon section order (the single home; renderers import it instead
+# of repeating the ('now','next','later') tuple). 'unspecified' is appended by
+# each renderer that needs an overflow bucket.
+HORIZON_ORDER = ("now", "next", "later")
+
+# Parent-scoped ID grammar — the single authoritative home. check_consistency and
+# generate_templates both import these instead of re-encoding the same regex with
+# "kept in sync" comments. `<SLUG>` = uppercase ASCII letter start, then up to 15
+# letters/digits/hyphens.
+ID_PATTERN_BY_TYPE = {
+    "goal": re.compile(r"^BRD-G[0-9]+$"),
+    "prd": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$"),
+    "epic": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$"),
+    "story": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+-S[0-9]+$"),
+}
+# Competitor ID grammar: `COMP-<SLUG>` (same parent-scoped discipline).
+COMP_ID_PATTERN = re.compile(r"^COMP-[A-Z][A-Z0-9-]{0,15}$")
+
+
+def make_finding(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:
+    """The single home for the finding-record constructor shared by
+    check_consistency and check_traceability (both previously defined a
+    byte-identical `_f`). Keeps the finding shape in one place so the two
+    checkers cannot drift."""
+    return {
+        "check": check_id,
+        "severity": severity,
+        "artifact_id": node.get("id"),
+        "file": node.get("file"),
+        "detail": detail,
+        "context": context or None,
+    }
+
+
+def resolve_ac(node: Dict[str, Any]) -> List[Any]:
+    """Effective acceptance_criteria for a node: a list with None/'' entries
+    filtered out. The single home for the 'AC count' rule so the validator
+    (check_consistency) and the explorer badge (render_explorer) cannot diverge
+    on whether blank/None entries count."""
+    raw = node.get("acceptance_criteria")
+    if isinstance(raw, list):
+        return [x for x in raw if x not in (None, "")]
+    return []
+
+
+def moscow_story_counts(graph: Dict[str, Any]) -> Dict[str, int]:
+    """Per-bucket story histogram (must/should/could/wont). The single home for
+    the tally the ASCII and Mermaid moscow renderers both need."""
+    counts: Dict[str, int] = {"must": 0, "should": 0, "could": 0, "wont": 0}
+    for n in graph.get("nodes", []):
+        if n.get("type") != "story":
+            continue
+        m = n.get("moscow")
+        if isinstance(m, str) and m in counts:
+            counts[m] += 1
+    return counts
+
+
+def competitor_id_to_name(graph: Dict[str, Any]) -> Dict[str, str]:
+    """Map well-formed BRD competitor id -> name. The DRY home for the
+    'resolvable competitor' rule the consistency check and the drift anchors
+    both need (each previously re-encoded the `isinstance(c, dict) and
+    isinstance(c.get('id'), str)` guard)."""
+    out: Dict[str, str] = {}
+    for c in graph.get("competitors") or []:
+        if isinstance(c, dict) and isinstance(c.get("id"), str):
+            out[c["id"]] = c.get("name") if isinstance(c.get("name"), str) else c["id"]
+    return out
 
 
 def _now() -> str:

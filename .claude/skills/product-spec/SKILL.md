@@ -88,7 +88,7 @@ docs/product/
     └── .snapshots/           # graph-snapshot JSONs for delta/diff
 ```
 
-All HTML outputs (the 9 `--viz` graph views + `board` + `explorer` + `--export --format html`) share **one design
+All HTML outputs — the graph views + `risk`/`competition`/`dashboard` + `board` + `explorer` + `--export --format html` — share **one design
 system** — a single head partial with theme toggle, palette, typography, and print-CSS. Bodies render through one client
 chokepoint (`DOMPurify.sanitize(marked.parse(md))`, both vendored + inlined) and **fail closed** to escaped text if the
 libs are missing.

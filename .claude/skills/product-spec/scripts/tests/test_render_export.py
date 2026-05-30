@@ -226,11 +226,59 @@ def test_strip_frontmatter_is_noop_without_a_block():
     assert render_export._strip_frontmatter(body) == body
 
 
-# ---------- structured (dict) AC items render readable, not Python repr ----------
+# ---------- _ac_item: no Python repr leak for list / None / dict / nested ----------
 
-def test_ac_dict_item_renders_key_value_not_repr():
-    assert render_export._ac_item({"given": "A", "then": "B"}) == "given: A · then: B"
+def test_ac_item_dict_renders_key_value_not_repr():
+    """Dict AC item (YAML mapping) must render as 'key: value' pairs, not {'key': 'value'}."""
+    result = render_export._ac_item({"given": "A", "then": "B"})
+    assert result == "given: A · then: B"
+    assert "{" not in result, "must not leak Python dict repr"
+
+
+def test_ac_item_plain_string_passthrough():
     assert render_export._ac_item("plain string") == "plain string"
+
+
+def test_ac_item_none_returns_empty_string():
+    """None AC placeholder must return '' — never repr 'None'."""
+    result = render_export._ac_item(None)
+    assert result == "", f"expected '' for None, got {result!r}"
+    assert "None" not in result
+
+
+def test_ac_item_list_joins_with_semicolon_not_repr():
+    """A list AC item (nested list in YAML) must join elements, not produce '[...]' repr."""
+    result = render_export._ac_item(["step 1", "step 2"])
+    assert result == "step 1; step 2", f"unexpected: {result!r}"
+    assert "[" not in result, "must not leak Python list repr"
+
+
+def test_ac_item_dict_with_nested_list_value_no_repr():
+    """A dict whose value is itself a list must not produce a list repr inside the output."""
+    result = render_export._ac_item({"given": ["A", "B"], "then": "C"})
+    assert "[" not in result, f"nested list leaked as repr: {result!r}"
+    assert "A" in result and "B" in result and "then: C" in result
+
+
+def test_ac_item_dict_with_nested_dict_value_recurses():
+    """A dict whose value is itself a dict must recurse, not repr."""
+    result = render_export._ac_item({"when": {"event": "login"}})
+    assert "{" not in result, f"nested dict leaked as repr: {result!r}"
+    assert "event: login" in result
+
+
+def test_ac_block_none_placeholder_not_counted():
+    """An AC list with None/'' placeholders must not appear in the AC bullet list."""
+    entry = {
+        "type": "story",
+        "ac": [None, "", "real criterion"],
+    }
+    # _ac_block iterates the raw list; None and '' should render as empty strings,
+    # not 'None'/''None'' bullets — but resolve_ac (used upstream) already filters
+    # them before they reach the export. Verify _ac_item itself does not repr-leak.
+    block = render_export._ac_block(entry)
+    assert "None" not in block
+    assert "real criterion" in block
 
 
 # ---------- CLI: --layers validation + empty-result fail loud ----------

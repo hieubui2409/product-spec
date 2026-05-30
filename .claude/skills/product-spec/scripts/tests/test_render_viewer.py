@@ -15,7 +15,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from spec_graph import build_graph, load_artifacts  # noqa: E402
+from spec_graph import build_graph, load_artifacts, resolve_ac  # noqa: E402
 import render_ascii  # noqa: E402
 import render_board  # noqa: E402
 import render_explorer  # noqa: E402
@@ -360,3 +360,131 @@ def test_cli_viewer_unknown_layer_exits_nonzero(tmp_path):
     r = _run_viz(proj, "--view", "board", "--format", "ascii", "--layers", "stories")
     assert r.returncode != 0
     assert "stories" in r.stderr
+
+
+# ---------- explorer ac_count matches resolve_ac (validator parity) ----------
+
+def test_explorer_ac_count_matches_resolve_ac():
+    """Explorer ac_count badge must equal len(resolve_ac(frontmatter)) — the same
+    rule the consistency validator uses. A list with blank/None entries must NOT
+    inflate the count (the old raw-len(ac) code over-reported vs the validator)."""
+    g, artifacts = _ga()
+    payload = render_explorer.build_payload(g, artifacts)
+    by_id = {i["id"]: i for i in payload["items"]}
+
+    # Build a ground-truth map from the parsed artifacts via resolve_ac.
+    from spec_graph import index_artifacts
+    indexed = index_artifacts(artifacts)
+    for aid, item in by_id.items():
+        fm = (indexed.get(aid) or {}).get("frontmatter") or {}
+        expected = len(resolve_ac(fm))
+        assert item["ac_count"] == expected, (
+            f"{aid}: explorer ac_count={item['ac_count']} "
+            f"but resolve_ac gives {expected}"
+        )
+
+
+def test_explorer_ac_count_blank_placeholders_not_counted():
+    """Blank/None AC placeholders must not inflate the ac_count badge."""
+    graph = {
+        "product": {"name": "Acme"},
+        "nodes": [{"id": "PRD-X-E1-S1", "type": "story", "title": "S"}],
+        "edges": [], "risks": [],
+    }
+    # Artifact with two blank/None placeholders + one real item.
+    artifacts = [{
+        "ok": True, "__type_hint": "story",
+        "frontmatter": {
+            "id": "PRD-X-E1-S1", "type": "story",
+            "acceptance_criteria": [None, "", "real criterion"],
+        },
+        "body": "", "sections": {},
+    }]
+    payload = render_explorer.build_payload(graph, artifacts)
+    item = next(i for i in payload["items"] if i["id"] == "PRD-X-E1-S1")
+    assert item["ac_count"] == 1, (
+        f"expected 1 (only 'real criterion'); got {item['ac_count']}"
+    )
+
+
+# ---------- board/explorer scalar coercion: list/dict horizon is "" ----------
+
+def test_board_list_horizon_coerced_to_empty_string():
+    """A list-valued horizon field (malformed YAML) must be coerced to '' in card
+    data — not passed through as an array which would break the JSON island."""
+    graph = {
+        "product": {"name": "Acme"},
+        "nodes": [{"id": "PRD-X", "type": "prd", "title": "X",
+                   "status": "draft", "horizon": ["now", "next"]}],
+        "edges": [], "risks": [],
+    }
+    payload = render_board.build_payload(graph, [], group_by="status")
+    card = next(c for c in payload["cards"] if c["id"] == "PRD-X")
+    assert card["horizon"] == "", f"expected '', got {card['horizon']!r}"
+
+
+def test_explorer_list_horizon_coerced_to_empty_string():
+    """Same as board: list-valued horizon → '' in explorer item data."""
+    graph = {
+        "product": {"name": "Acme"},
+        "nodes": [{"id": "PRD-X", "type": "prd", "title": "X",
+                   "status": "draft", "horizon": ["now"]}],
+        "edges": [], "risks": [],
+    }
+    payload = render_explorer.build_payload(graph, [])
+    item = next(i for i in payload["items"] if i["id"] == "PRD-X")
+    assert item["horizon"] == "", f"expected '', got {item['horizon']!r}"
+
+
+def test_board_list_status_and_moscow_coerced_to_empty_string():
+    """List-valued status/moscow → '' in board card data."""
+    graph = {
+        "product": {"name": "Acme"},
+        "nodes": [{"id": "PRD-X", "type": "prd", "title": "X",
+                   "status": ["draft"], "moscow": {"must": True}}],
+        "edges": [], "risks": [],
+    }
+    payload = render_board.build_payload(graph, [], group_by="horizon")
+    card = next(c for c in payload["cards"] if c["id"] == "PRD-X")
+    assert card["status"] == "", f"expected '' for list status, got {card['status']!r}"
+    assert card["moscow"] == "", f"expected '' for dict moscow, got {card['moscow']!r}"
+
+
+# ---------- visualize: VIEWER_LAYERS equals _BOARD_CARD_TYPES ----------
+
+def test_viewer_layers_equals_board_card_types():
+    """VIEWER_LAYERS in visualize.py must be derived from render_ascii._BOARD_CARD_TYPES
+    so the two can never silently diverge."""
+    sys.path.insert(0, str(SCRIPTS_DIR))
+    import visualize
+    from render_ascii import _BOARD_CARD_TYPES
+    assert tuple(visualize.VIEWER_LAYERS) == tuple(_BOARD_CARD_TYPES), (
+        f"VIEWER_LAYERS {visualize.VIEWER_LAYERS!r} != _BOARD_CARD_TYPES {_BOARD_CARD_TYPES!r}"
+    )
+
+
+# ---------- _load_baseline: same-second tiebreak is deterministic ----------
+
+def test_load_baseline_same_second_tiebreak_deterministic(tmp_path):
+    """Two snapshots with identical mtime must resolve deterministically by name."""
+    import visualize, time as _time, json as _json
+
+    snap_dir = tmp_path / "docs" / "product" / "visuals" / ".snapshots"
+    snap_dir.mkdir(parents=True)
+    # Write two snapshots with the same mtime.
+    a = snap_dir / "a_snap.json"
+    b = snap_dir / "b_snap.json"
+    a.write_text(_json.dumps({"id": "a"}), encoding="utf-8")
+    b.write_text(_json.dumps({"id": "b"}), encoding="utf-8")
+    # Force identical mtime for both.
+    fixed_mtime = _time.time()
+    import os
+    os.utime(a, (fixed_mtime, fixed_mtime))
+    os.utime(b, (fixed_mtime, fixed_mtime))
+
+    # With 2 snapshots the baseline is snaps[-2] (second-most-recent). With a
+    # name tiebreak, snaps sorted by (mtime, name) → [a, b]; baseline = a.
+    result = visualize._load_baseline(tmp_path, None)
+    assert result == {"id": "a"}, (
+        f"expected 'a' (sorted first by name), got {result!r}"
+    )

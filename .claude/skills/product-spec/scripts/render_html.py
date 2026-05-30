@@ -302,15 +302,17 @@ def _competition_matrix(competitors: list, prds: list, lang: str = "en") -> str:
     PRDs are sorted by id. Parity verdicts localize via i18n_labels (`--lang vi`);
     the enum KEY stays English (it's the cell CLASS), only the displayed word
     localizes. An off-enum value (separately flagged unknown_enum) shows raw."""
-    head_cols = "".join(f"<th scope='col'>{_escape(str(p['id']))}</th>" for p in prds)
+    from render_ascii import _hashable as _h
+    head_cols = "".join(f"<th scope='col'>{_escape(str(p.get('id') or ''))}</th>" for p in prds)
     rows = []
     for c in competitors:
         name = _escape(str(c.get("name") or c.get("id") or "(unnamed)"))
         tds = []
         for p in prds:
             parity = (p.get("competitive_parity") or {})
-            val = parity.get(c.get("id")) if isinstance(parity, dict) else None
-            cls = _PARITY_CELL_CLASS.get(val, "")
+            cid = _h(c.get("id"))
+            val = parity.get(cid) if isinstance(parity, dict) else None
+            cls = _PARITY_CELL_CLASS.get(val, "") if isinstance(val, (str, type(None))) else ""
             text = _escape(_parity_label(val, lang)) if val is not None else ""
             tds.append(f'<td class="cm-cell {cls}">{text}</td>')
         rows.append(f"<tr><th scope='row'>{name}</th>{''.join(tds)}</tr>")
@@ -332,14 +334,18 @@ def _parity_label(val: Any, lang: str) -> str:
     cell CLASS; this only localizes the visible text. EN labels are identity, so
     the EN render still shows the raw enum word; VI translates (best-effort)."""
     known = {"ahead", "parity", "behind", "none"}
-    return label(f"parity_{val}", lang) if val in known else str(val)
+    # `val in known` hashes val; guard against an unhashable spec value (list/dict
+    # from malformed YAML) so the renderer degrades to a raw string, never crashes.
+    return label(f"parity_{val}", lang) if isinstance(val, str) and val in known else str(val)
 
 
 def _threat_label(val: Any, lang: str) -> str:
     """Localize a threat tier for display (EN identity; VI best-effort). Off-enum
     values render raw — they are flagged separately by check_consistency."""
     known = {"low", "med", "high"}
-    return label(f"threat_{val}", lang) if val in known else str(val)
+    # Guard the set membership against an unhashable val (list/dict) — degrade to
+    # a raw string rather than crash; the bad shape is flagged by check_consistency.
+    return label(f"threat_{val}", lang) if isinstance(val, str) and val in known else str(val)
 
 
 def _competition_heatmap(competitors: list, lang: str = "en") -> str:
@@ -350,7 +356,10 @@ def _competition_heatmap(competitors: list, lang: str = "en") -> str:
     for c in competitors:
         name = _escape(str(c.get("name") or c.get("id") or "(unnamed)"))
         threat = c.get("threat")
-        cls = _THREAT_CELL_CLASS.get(threat, "")
+        # Guard the class lookup against an unhashable threat (a list/dict from
+        # malformed YAML would raise TypeError in dict.get); the enum typo is
+        # flagged separately by check_consistency. Visible text degrades safely.
+        cls = _THREAT_CELL_CLASS.get(threat, "") if isinstance(threat, (str, type(None))) else ""
         text = _escape(_threat_label(threat, lang)) if threat is not None else _escape("(unrated)")
         rows.append(
             f"<tr><th scope='row'>{name}</th>"
@@ -442,7 +451,10 @@ def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
     for n in graph.get("nodes", []):
         if n.get("type") not in ("prd", "epic", "story"):
             continue
-        h = n.get("horizon") or "unspecified"
+        # Coerce to a hashable scalar before bucketing: an unhashable horizon
+        # (a list/dict from malformed YAML) would raise TypeError in setdefault.
+        h = n.get("horizon")
+        h = h if isinstance(h, str) else "unspecified"
         groups.setdefault(h, []).append(n)
 
     sections = []
@@ -709,8 +721,8 @@ def assemble(
         "view_body": _render_view_body(view_format, view_text),
         "mermaid_js": mermaid_js_payload,
         "footer_note": footer,
-        # Phase 6: the 9 legacy views adopt the shared design-system head too, so
-        # ALL product-spec HTML (legacy + board/explorer/export) looks identical.
+        # The graph + HTML-native views adopt the shared design-system head too, so
+        # ALL product-spec HTML (graph/native + board/explorer/export) looks identical.
         # EXTEND-only: every prior token + the RAW-footer_note invariant are
         # preserved; legacy views still inline NO SKILL sanitizer — no bodies, so
         # no {{markdown_libs}} block and no psRenderMarkdown chokepoint (H4). NB the

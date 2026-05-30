@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-visualize — dispatcher for the 11 visualization views in 3 formats
+visualize — dispatcher for the 14 visualization views in 3 formats
 (ASCII / Mermaid / inline-vendored HTML). The 9 graph views default to --format
 ascii; the 2 body-bearing viewers (board, explorer) default to --format html and
 have no Mermaid form (a --format mermaid request falls back to their ASCII renderer).
@@ -14,7 +14,7 @@ CLI:
                  [--layers goal,prd,epic,story] [--filter-wont]
                  [--snapshot <snapshot.json>]   # --diff is the legacy alias
 
-Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | time | delta
+Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | competition | time | delta | dashboard
 Body viewers: board | explorer
 """
 
@@ -28,6 +28,7 @@ from encoding_utils import configure_utf8_console
 from spec_graph import build_graph, build_graph_with_artifacts
 
 import render_ascii
+from render_ascii import _BOARD_CARD_TYPES
 import render_mermaid
 import render_html
 import render_board
@@ -40,7 +41,9 @@ VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "ris
 FORMATS = ("ascii", "mermaid", "html")
 # Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
 # help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
-VIEWER_LAYERS = ("goal", "prd", "epic", "story")
+# Single source: render_ascii._BOARD_CARD_TYPES owns this list; mirroring it here
+# kept the two sets in sync only by convention — now derived directly.
+VIEWER_LAYERS = tuple(_BOARD_CARD_TYPES)
 # Body-bearing views render artifact bodies + own their html writer; they default
 # to --format html (the 9 graph views default to ascii) and have NO Mermaid form
 # (a --format mermaid request falls back to their ascii renderer with a note).
@@ -128,7 +131,8 @@ def _load_baseline(root: Path, override: Optional[str]) -> Optional[Dict[str, An
         return None
     # Order by mtime, not filename: snapshot names are <ts-to-second>-<hash>,
     # so same-second snapshots would otherwise sort by content hash (not time).
-    snaps = sorted(snap_dir.glob("*.json"), key=lambda p: p.stat().st_mtime)
+    # Tiebreak by name so same-second snapshots produce a deterministic order.
+    snaps = sorted(snap_dir.glob("*.json"), key=lambda p: (p.stat().st_mtime, p.name))
     if not snaps:
         return None
     # With 1 snapshot, compare against the live graph (current). With 2+, use
@@ -167,11 +171,15 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
         print(f"note: '{view}' has no Mermaid form; showing ascii fallback.", file=sys.stderr)
         fmt = "ascii"
 
+    # Compute selected nodes once: used for the empty-check guard below AND passed
+    # into the HTML builders so they don't run select_cards a second time.
+    selected = render_ascii.select_cards(graph, layers, filter_wont)
+
     # Fail loud (Q1, parity with --export) when a non-empty --layers subset filters
     # every card out: a silently-empty board/explorer is the same silent failure the
     # export empty-after-filter guard closes. No --layers = nothing to fail on (the
     # allowed-empty case, mirroring `--export all` on a fresh spec).
-    if layers and not render_ascii.select_cards(graph, layers, filter_wont):
+    if layers and not selected:
         present = sorted({str(n.get("type")) for n in graph["nodes"] if n.get("type") in VIEWER_LAYERS})
         print(f"--layers {sorted(set(layers))} matched no cards for '{view}'"
               f"{' after --filter-wont' if filter_wont else ''}. "
@@ -181,7 +189,8 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
     if view == "board":
         if fmt == "html":
             out = render_board.write(root, graph, artifacts, group_by=group_by, lang=lang,
-                                     filter_wont=filter_wont, layers=layers)
+                                     filter_wont=filter_wont, layers=layers,
+                                     selected_nodes=selected)
             print(_written_json(out, root))
             return 0
         print(render_ascii.board(graph, group_by=group_by, lang=lang, filter_wont=filter_wont, layers=layers))
@@ -190,7 +199,8 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
     if view == "explorer":
         if fmt == "html":
             out = render_explorer.write(root, graph, artifacts, lang=lang,
-                                        filter_wont=filter_wont, layers=layers)
+                                        filter_wont=filter_wont, layers=layers,
+                                        selected_nodes=selected)
             print(_written_json(out, root))
             return 0
         print(render_ascii.explorer(graph, lang=lang, filter_wont=filter_wont, layers=layers))
@@ -222,7 +232,7 @@ def main() -> int:
     ap.add_argument(
         "--filter-wont", action="store_true",
         help="hide deferred items (moscow=wont or scope=out) from "
-             "tree/roadmap/persona/board/explorer. Default keeps them visible "
+             "tree/roadmap/time/persona/board/explorer. Default keeps them visible "
              "(a `*` marker on graph views; a card on board/explorer).",
     )
     args = ap.parse_args()

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 import render_html
-from spec_graph import index_artifacts, parents_of
+from spec_graph import index_artifacts, parents_of, resolve_ac
 from render_ascii import select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
@@ -38,23 +38,33 @@ def _maps(artifacts: List[Dict[str, Any]]):
     ac_counts: Dict[str, int] = {}
     for aid, a in index_artifacts(artifacts).items():
         bodies[aid] = a.get("body") or ""
-        ac = (a.get("frontmatter") or {}).get("acceptance_criteria")
-        if isinstance(ac, list):
-            ac_counts[aid] = len(ac)
+        fm = a.get("frontmatter") or {}
+        # Use resolve_ac so blank/None entries are excluded — matches the validator
+        # (check_consistency) which also calls resolve_ac; counting raw list length
+        # over-reported when the PO leaves empty AC placeholder items.
+        ac_counts[aid] = len(resolve_ac(fm))
     return bodies, ac_counts
 
 
 def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                   lang: str = "en", filter_wont: bool = False,
-                  layers: Optional[List[str]] = None) -> Dict[str, Any]:
+                  layers: Optional[List[str]] = None,
+                  selected_nodes: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     bodies, ac_counts = _maps(artifacts)
     # ALL parents per child (shared rule, self-edges already dropped → no cyclic
     # self-parent reaches the client). A multi-goal PRD keeps both goals so the
     # Tree renders it under EACH (matching the ASCII tree), not just the first.
     all_parents = parents_of(graph)
 
-    nodes = select_cards(graph, layers, filter_wont)
+    # Accept pre-selected nodes from the dispatcher (avoids a second select_cards
+    # call when _dispatch_body_view already ran it for the empty-check guard).
+    nodes = selected_nodes if selected_nodes is not None else select_cards(graph, layers, filter_wont)
     present_ids = {str(n["id"]) for n in nodes}
+
+    def _scalar(v: Any) -> str:
+        """Coerce a frontmatter scalar to str: lists/dicts (malformed YAML) become
+        "" so a non-string value never lands as array card data in the JSON island."""
+        return v if isinstance(v, str) else ""
 
     items: List[Dict[str, Any]] = []
     for n in sorted(nodes, key=lambda x: (_DEPTH_BY_TYPE.get(x.get("type"), 9), str(x["id"]))):
@@ -66,9 +76,9 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "id": nid,
             "type": n.get("type"),
             "title": n.get("title") or "",
-            "status": n.get("status") or "",
-            "moscow": n.get("moscow") or "",
-            "horizon": n.get("horizon") or "",
+            "status": _scalar(n.get("status")),
+            "moscow": _scalar(n.get("moscow")),
+            "horizon": _scalar(n.get("horizon")),
             "owner": n.get("owner") or "",
             "personas": n.get("personas") if isinstance(n.get("personas"), list) else [],
             # Layer facet/tab key = artifact type (matches CLI help + the type
@@ -112,8 +122,10 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 
 
 def assemble_explorer(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
-                      lang: str, filter_wont: bool, layers: Optional[List[str]]) -> str:
-    payload = build_payload(graph, artifacts, lang, filter_wont, layers)
+                      lang: str, filter_wont: bool, layers: Optional[List[str]],
+                      selected_nodes: Optional[List[Dict[str, Any]]] = None) -> str:
+    payload = build_payload(graph, artifacts, lang, filter_wont, layers,
+                            selected_nodes=selected_nodes)
     shell = EXPLORER_SHELL.read_text(encoding="utf-8")
     title = f"{label('explorer', lang)} — {render_html.product_name(graph)}"
     return render_html.assemble_body_shell(shell, payload, graph, lang, title)
@@ -121,7 +133,9 @@ def assemble_explorer(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           lang: str = "en", filter_wont: bool = False,
-          layers: Optional[List[str]] = None) -> Path:
+          layers: Optional[List[str]] = None,
+          selected_nodes: Optional[List[Dict[str, Any]]] = None) -> Path:
     return render_html._write_visual(
         root, f"explorer-{render_html.file_timestamp()}.html",
-        assemble_explorer(graph, artifacts, lang, filter_wont, layers))
+        assemble_explorer(graph, artifacts, lang, filter_wont, layers,
+                          selected_nodes=selected_nodes))

@@ -34,13 +34,20 @@ def build_matrix(graph: Dict[str, Any]) -> str:
     stories = [n for n in graph["nodes"] if n.get("type") == "story"]
     rows: List[List[str]] = []
     for s in stories:
-        epic = nodes_by_id.get(s.get("epic") or "")
-        prd = nodes_by_id.get(epic.get("prd") if epic else "") if epic else None
+        # epic/prd are coerced to str|None at the graph source, but guard the FK
+        # lookups too so a future raw field can never be used as an unhashable key.
+        ep = s.get("epic")
+        epic = nodes_by_id.get(ep) if isinstance(ep, str) else None
+        pr = epic.get("prd") if epic else None
+        prd = nodes_by_id.get(pr) if isinstance(pr, str) else None
         raw_brd_goals = prd.get("brd_goals", []) if prd else []
-        # Guard against bare-string regressions: a hand-edited `brd_goals: BRD-G1`
-        # iterates per character without this check, producing garbled cells.
-        brd_goals = raw_brd_goals if isinstance(raw_brd_goals, list) else []
-        metric_cell = ", ".join(s.get("metrics") or []) or "—"
+        # Coerce list elements to str (a hand-edit may leave a non-str element) and
+        # guard the bare-string case so the join neither raises (mixed-type list)
+        # nor char-splits (`brd_goals: BRD-G1`) into garbled cells.
+        brd_goals = [str(g) for g in raw_brd_goals if g is not None] if isinstance(raw_brd_goals, list) else []
+        raw_metrics = s.get("metrics")
+        metric_cell = (", ".join(str(m) for m in raw_metrics if m is not None)
+                       if isinstance(raw_metrics, list) else "—") or "—"
         rows.append([
             _cell(s.get("id")),
             _cell(epic.get("id") if epic else None),
@@ -72,7 +79,7 @@ def build_index(graph: Dict[str, Any]) -> List[Dict[str, str]]:
             "status": n.get("status") or "—",
             "file": n.get("file") or "—",
         })
-    out.sort(key=lambda x: (x["type"], x["id"]))
+    out.sort(key=lambda x: (str(x["type"]), str(x["id"])))
     return out
 
 

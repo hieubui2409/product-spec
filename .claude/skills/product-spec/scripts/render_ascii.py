@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-render_ascii — deterministic ASCII renderers for the 9 visualization views.
+render_ascii — deterministic ASCII renderers for the 13 visualization views.
 
 All functions take the graph JSON (per visualization-spec.md) and return a
 plain-text string. Zero dependencies; safe in any terminal.
@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional
 from i18n_labels import label
 from spec_graph import (
     CHILD_TYPE_FOR_PARENT,
+    HORIZON_ORDER,
+    moscow_story_counts,
     matching_child_counts,
     parents_of,
     children_of,
@@ -244,11 +246,14 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
             continue
         if filter_wont and _is_deferred(n):
             continue
-        h = n.get("horizon") or "unspecified"
+        # Coerce to a hashable scalar before bucketing: an unhashable horizon
+        # (a list/dict from malformed YAML) would raise TypeError on groups[h].
+        h = n.get("horizon")
+        h = h if isinstance(h, str) else "unspecified"
         groups[h].append(n["id"])
 
     sections = []
-    for h in ("now", "next", "later", "unspecified"):
+    for h in (*HORIZON_ORDER, "unspecified"):
         items = sorted(groups.get(h, []))
         if not items and h == "unspecified":
             continue
@@ -317,10 +322,11 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
 
     groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for n in timed:
-        groups[n.get("horizon") or "unspecified"].append(n)
+        h = n.get("horizon")
+        groups[h if isinstance(h, str) else "unspecified"].append(n)
 
     sections: List[str] = []
-    for h in ("now", "next", "later", "unspecified"):
+    for h in (*HORIZON_ORDER, "unspecified"):
         items = groups.get(h, [])
         if not items and h == "unspecified":
             continue
@@ -348,7 +354,7 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
     per-character personas. Guard with isinstance(list).
     """
     raw_personas = (graph.get("product") or {}).get("personas")
-    personas = sorted(set(raw_personas)) if isinstance(raw_personas, list) else []
+    personas = sorted({str(p) for p in raw_personas}) if isinstance(raw_personas, list) else []
     if not personas:
         for n in graph["nodes"]:
             n_personas = n.get("personas")
@@ -357,7 +363,7 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
             for p in n_personas:
                 if p not in personas:
                     personas.append(p)
-        personas = sorted(set(personas))
+        personas = sorted({str(p) for p in personas})
 
     visible_prd_ids = [
         n["id"] for n in graph["nodes"]
@@ -403,11 +409,7 @@ def gap(graph: Dict[str, Any]) -> str:
 
 def moscow(graph: Dict[str, Any], lang: str = "en") -> str:
     """MoSCoW quadrant counts among stories. Labels localize via i18n_labels."""
-    counts: Dict[str, int] = defaultdict(int)
-    for n in graph["nodes"]:
-        if n["type"] != "story":
-            continue
-        counts[_hashable(n.get("moscow"))] += 1
+    counts = moscow_story_counts(graph)
     # Width 10 accommodates the longest VI label ("Không làm" = 9 chars).
     rows = [
         f"| {label('must', lang):10}: {counts.get('must', 0):>3} | {label('should', lang):10}: {counts.get('should', 0):>3} |",
@@ -420,11 +422,33 @@ def risk(graph: Dict[str, Any]) -> str:
     """3x3 risk matrix: impact x likelihood."""
     counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for r in graph.get("risks", []):
-        counts[r.get("impact", "?")][r.get("likelihood", "?")] += 1
+        counts[_hashable(r.get("impact", "?"))][_hashable(r.get("likelihood", "?"))] += 1
     rows_order = ["high", "med", "low"]
     cols = ["low", "med", "high"]
     rows = [[r] + [str(counts[r].get(c, 0)) for c in cols] for r in rows_order]
     return _grid("Impact \\ Lik", cols, rows)
+
+
+def resolve_competition(graph: Dict[str, Any]):
+    """Shared competition data resolver: returns (competitors, prds, cell_lookup).
+
+    `cell_lookup(competitor, prd_node) -> str | None` resolves the parity value
+    for one (competitor, PRD) pair, coercing competitor id via `_hashable` so
+    an unhashable id (e.g. a YAML list `[COMP-X]`) can never raise TypeError as
+    a dict key. Both render_ascii.competition and render_html._competition_matrix
+    call this to stay in sync (single home for the resolution rule)."""
+    competitors = [c for c in (graph.get("competitors") or []) if isinstance(c, dict)]
+    prds = sorted(
+        (n for n in graph.get("nodes", []) if n.get("type") == "prd"),
+        key=lambda n: str(n.get("id") or ""),
+    )
+
+    def _cell(c: Dict[str, Any], p: Dict[str, Any]):
+        cid = _hashable(c.get("id"))
+        parity = p.get("competitive_parity")
+        return parity.get(cid) if isinstance(parity, dict) else None
+
+    return competitors, prds, _cell
 
 
 def competition(graph: Dict[str, Any]) -> str:
@@ -436,11 +460,7 @@ def competition(graph: Dict[str, Any]) -> str:
     = competitor names, cols = PRD ids, cells = the parity enum (blank when
     unset); a trailing threat column shows each competitor's threat tier.
     Resolves the BRD's competitor identity against each PRD's parity map."""
-    competitors = [c for c in (graph.get("competitors") or []) if isinstance(c, dict)]
-    prds = sorted(
-        (n for n in graph.get("nodes", []) if n.get("type") == "prd"),
-        key=lambda n: str(n.get("id") or ""),
-    )
+    competitors, prds, _cell = resolve_competition(graph)
     if not competitors:
         return "No competitors recorded in the BRD yet."
     cols = [str(p.get("id") or "") for p in prds] + ["threat"]
@@ -449,8 +469,7 @@ def competition(graph: Dict[str, Any]) -> str:
         name = str(c.get("name") or c.get("id") or "(unnamed)")
         cells = []
         for p in prds:
-            parity = p.get("competitive_parity")
-            val = parity.get(c.get("id")) if isinstance(parity, dict) else None
+            val = _cell(c, p)
             cells.append(str(val) if val is not None else "-")
         cells.append(str(c.get("threat") or "-"))
         rows.append([name] + cells)
@@ -475,11 +494,24 @@ def _filter_by_layers(nodes: List[Dict[str, Any]], layers: Optional[List[str]]) 
 
 _BOARD_GROUP_ORDER = {
     "status": ["draft", "review", "approved"],
-    "horizon": ["now", "next", "later"],
+    "horizon": list(HORIZON_ORDER),
     "moscow": ["must", "should", "could", "wont"],
 }
 _BOARD_CARD_TYPES = ("goal", "prd", "epic", "story")
 _LOCALIZED_COLS = {"now", "next", "later", "must", "should", "could", "wont", "unassigned"}
+
+
+def _board_columns(present_keys: Dict[str, bool], group_by: str) -> List[str]:
+    """Canonical column list for a board/kanban view: known-order columns first,
+    then extra sorted columns, then 'unassigned' last. Single home used by both
+    the ASCII board renderer and the HTML board payload builder so the two surfaces
+    can never diverge on column ordering."""
+    order = _BOARD_GROUP_ORDER.get(group_by, [])
+    cols = list(order)
+    cols += sorted(k for k in present_keys if k not in order and k != "unassigned")
+    if present_keys.get("unassigned"):
+        cols.append("unassigned")
+    return cols
 
 
 def select_cards(graph: Dict[str, Any], layers: Optional[List[str]] = None,
@@ -508,11 +540,8 @@ def board(graph: Dict[str, Any], group_by: str = "status", lang: str = "en",
         key = _hashable(v) if v not in (None, "") else "unassigned"
         groups[key].append(n["id"])
 
-    order = _BOARD_GROUP_ORDER.get(group_by, [])
-    cols = list(order)
-    cols += sorted(k for k in groups if k not in order and k != "unassigned")
-    if "unassigned" in groups:
-        cols.append("unassigned")
+    present_keys = {k: True for k in groups}
+    cols = _board_columns(present_keys, group_by)
 
     lines = [f"## {label('board', lang).upper()} — {group_by}"]
     for c in cols:
@@ -573,6 +602,12 @@ def _orphan_forest(graph: Dict[str, Any], lang: str = "en") -> str:
 
     roots = sorted(nid for nid in nodes_by_id
                    if not any(p in present for p in parents.get(nid, [])))
+    if not roots and nodes_by_id:
+        # Pure cycle: every node has a parent in the set (e.g. A→B→A).
+        # Treat the lowest-id node as a synthetic root so nothing silently vanishes.
+        # The `seen` guard in _render terminates the descent at cycle back-edges.
+        roots = [sorted(nodes_by_id.keys())[0]]
+        lines.append(f"  (cycle detected among: {', '.join(sorted(nodes_by_id.keys()))})")
     for i, r in enumerate(roots):
         _render(r, "", i == len(roots) - 1, True, set())
     return "\n".join(lines)

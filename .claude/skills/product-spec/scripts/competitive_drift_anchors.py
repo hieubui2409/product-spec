@@ -54,7 +54,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, _now
+from spec_graph import build_graph, _now, competitor_id_to_name
 
 configure_utf8_console()
 
@@ -66,16 +66,11 @@ _MIN_COMPETITORS_WITH_DATA = 2
 
 def _competitor_names(graph: Dict[str, Any]) -> Dict[str, str]:
     """id -> display name for every well-formed BRD competitor (the resolve
-    target). Skips non-dict / id-less entries (their bad shape is flagged by
-    check_consistency._check_competitors, never here). The BRD is the single DRY
-    identity home — this feeder reads `graph['competitors']`, never brd.md (F6)."""
-    out: Dict[str, str] = {}
-    for c in graph.get("competitors") or []:
-        if isinstance(c, dict) and isinstance(c.get("id"), str):
-            # Fall back to the id when a competitor has no name, so a resolved row
-            # always has a human label and the LLM never sees a null competitor.
-            out[c["id"]] = c.get("name") or c["id"]
-    return out
+    target). Delegates to spec_graph.competitor_id_to_name — the single DRY home
+    for the `isinstance(c, dict) and isinstance(c.get('id'), str)` guard.
+    The BRD is the single DRY identity home — this feeder reads
+    `graph['competitors']`, never brd.md (F6)."""
+    return competitor_id_to_name(graph)
 
 
 def build_anchors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:

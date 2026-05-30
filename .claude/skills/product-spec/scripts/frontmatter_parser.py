@@ -54,6 +54,12 @@ def parse_file(path: Path) -> Dict[str, Any]:
     except FileNotFoundError:
         result["error"] = f"file not found: {p}"
         return result
+    except UnicodeDecodeError as exc:
+        # A non-UTF-8 file raises UnicodeDecodeError (a ValueError subclass, NOT an
+        # OSError); surface it as a parse_error so the graph build stays fail-soft
+        # instead of crashing on the first byte that is not valid UTF-8.
+        result["error"] = f"encoding error (not valid UTF-8): {exc}"
+        return result
     except OSError as exc:
         result["error"] = f"read error: {exc}"
         return result
@@ -85,7 +91,13 @@ def parse_text(text: str, file_label: str = "<text>") -> Dict[str, Any]:
 
     m = FRONTMATTER_RE.match(text.lstrip())
     if not m:
-        result["error"] = "malformed YAML frontmatter (missing closing '---')"
+        # An empty block (`---\n---`) HAS a closing fence but no inner content, so
+        # the content-requiring regex misses it — report that accurately instead
+        # of the misleading "missing closing '---'".
+        if re.match(r"^---\s*\n---\s*\n?", text.lstrip()):
+            result["error"] = "frontmatter block is empty"
+        else:
+            result["error"] = "malformed YAML frontmatter (missing closing '---')"
         return result
 
     raw_fm, body = m.group(1), m.group(2)
@@ -94,7 +106,11 @@ def parse_text(text: str, file_label: str = "<text>") -> Dict[str, Any]:
         if not isinstance(fm, dict):
             result["error"] = "frontmatter is not a YAML mapping"
             return result
-    except yaml.YAMLError as exc:
+    except (yaml.YAMLError, ValueError) as exc:
+        # PyYAML's timestamp/int constructors raise a bare ValueError (NOT a
+        # yaml.YAMLError) for an out-of-range value like an unquoted
+        # `target_date: 2026-13-99`. Catch it here so the gate emits a
+        # parse_error finding (and strict_gate exits 2) instead of crashing.
         result["error"] = f"YAML parse error: {exc}"
         return result
 
@@ -106,14 +122,26 @@ def parse_text(text: str, file_label: str = "<text>") -> Dict[str, Any]:
 
 
 def extract_sections(body: str) -> Dict[str, str]:
-    """Map heading-text -> section content (until the next heading of any level)."""
+    """Map heading-text -> section content (until the next heading of any level).
+
+    Consumed by the CLI (`main()` dumps the full result); the library callers
+    (spec_graph etc.) read only frontmatter/body. Duplicate heading texts are
+    disambiguated with a numeric suffix so a repeated heading does not silently
+    overwrite an earlier section (the map was last-wins / lossy before)."""
     sections: Dict[str, str] = {}
     matches = list(SECTION_RE.finditer(body))
     for i, m in enumerate(matches):
         heading = m.group(2).strip()
         start = m.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        sections[heading] = body[start:end].strip()
+        content = body[start:end].strip()
+        key = heading
+        if key in sections:
+            n = 2
+            while f"{heading} ({n})" in sections:
+                n += 1
+            key = f"{heading} ({n})"
+        sections[key] = content
     return sections
 
 

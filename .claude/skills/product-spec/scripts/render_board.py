@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from i18n_labels import label
 import render_html
 from spec_graph import index_artifacts
-from render_ascii import _BOARD_GROUP_ORDER, _hashable, select_cards
+from render_ascii import _board_columns, _hashable, select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
@@ -29,9 +29,17 @@ _UI_KEYS = ("search", "status", "moscow", "persona", "layer", "horizon", "unassi
 
 def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                   group_by: str = "status", lang: str = "en",
-                  filter_wont: bool = False, layers: Optional[List[str]] = None) -> Dict[str, Any]:
+                  filter_wont: bool = False, layers: Optional[List[str]] = None,
+                  selected_nodes: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     bodies = {aid: (a.get("body") or "") for aid, a in index_artifacts(artifacts).items()}
-    cards_nodes = select_cards(graph, layers, filter_wont)
+    # Accept pre-selected nodes from the dispatcher (avoids a second select_cards
+    # call when _dispatch_body_view already ran it for the empty-check guard).
+    cards_nodes = selected_nodes if selected_nodes is not None else select_cards(graph, layers, filter_wont)
+
+    def _scalar(v: Any) -> str:
+        """Coerce a frontmatter scalar to str: lists/dicts (malformed YAML) become
+        "" so a non-string value never lands as array card data in the JSON island."""
+        return v if isinstance(v, str) else ""
 
     cards: List[Dict[str, Any]] = []
     present: Dict[str, bool] = {}
@@ -46,9 +54,9 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "id": str(n["id"]),
             "type": n.get("type"),
             "title": n.get("title") or "",
-            "status": n.get("status") or "",
-            "moscow": n.get("moscow") or "",
-            "horizon": n.get("horizon") or "",
+            "status": _scalar(n.get("status")),
+            "moscow": _scalar(n.get("moscow")),
+            "horizon": _scalar(n.get("horizon")),
             "personas": n.get("personas") if isinstance(n.get("personas"), list) else [],
             # Viewer Layer facet = the artifact type (goal/prd/epic/story), so the
             # facet chip + `--layers` agree with the CLI help (not the export bucket
@@ -58,11 +66,10 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
             "body": bodies.get(str(n["id"]), ""),
         })
 
-    order = _BOARD_GROUP_ORDER.get(group_by, [])
-    columns = list(order)
-    columns += sorted(c for c in present if c not in order and c != "unassigned")
-    if present.get("unassigned"):
-        columns.append("unassigned")
+    # Single source for column ordering: render_ascii._board_columns owns the
+    # known-order-first / extra-sorted / unassigned-last logic; importing it
+    # replaces the previously duplicated inline block.
+    columns = _board_columns(present, group_by)
 
     return {
         "group_by": group_by,
@@ -75,8 +82,10 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 
 def assemble_board(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
                    group_by: str, lang: str, filter_wont: bool,
-                   layers: Optional[List[str]]) -> str:
-    payload = build_payload(graph, artifacts, group_by, lang, filter_wont, layers)
+                   layers: Optional[List[str]],
+                   selected_nodes: Optional[List[Dict[str, Any]]] = None) -> str:
+    payload = build_payload(graph, artifacts, group_by, lang, filter_wont, layers,
+                            selected_nodes=selected_nodes)
     shell = BOARD_SHELL.read_text(encoding="utf-8")
     title = f"{label('board', lang)} — {render_html.product_name(graph)}"
     return render_html.assemble_body_shell(shell, payload, graph, lang, title)
@@ -84,7 +93,9 @@ def assemble_board(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
 
 def write(root: Path, graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
           group_by: str = "status", lang: str = "en", filter_wont: bool = False,
-          layers: Optional[List[str]] = None) -> Path:
+          layers: Optional[List[str]] = None,
+          selected_nodes: Optional[List[Dict[str, Any]]] = None) -> Path:
     return render_html._write_visual(
         root, f"board-{render_html.file_timestamp()}.html",
-        assemble_board(graph, artifacts, group_by, lang, filter_wont, layers))
+        assemble_board(graph, artifacts, group_by, lang, filter_wont, layers,
+                       selected_nodes=selected_nodes))

@@ -17,7 +17,7 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 |----|-------|----------|---------|------------------|
 | `orphan_story` | script | error | a story whose `epic` field references an unknown epic ID | "Story {id} references unknown epic {epic}." |
 | `orphan_epic` | script | error | an epic whose `prd` field references an unknown PRD ID | "Epic {id} references unknown PRD {prd}." |
-| `orphan_prd` | script | error | a PRD whose `brd_goals` is empty or all unknown | "PRD {id} has no resolved BRD goals." |
+| `orphan_prd` | script | error | a PRD whose `brd_goals` is empty or missing (not declared). Unresolved IDs in a non-empty `brd_goals` list surface as `dangling_link` instead | "PRD {id} has no BRD goals declared." |
 | `orphan_brd_goal` | script | warn | a BRD goal with no PRDs referencing it | "BRD goal {id} has no PRDs addressing it." |
 | `dangling_link` | script | error | any frontmatter ID reference that doesn't resolve | "{file}: reference {ref} does not resolve." |
 | `unaddressed_parent` | script | warn | a parent (epic/PRD/BRD goal) with zero inbound child edges of the expected type | "{id} has no {child_type} addressing it (gap-analysis input)." |
@@ -26,11 +26,12 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 | `dup_id` | script | error | two artifacts sharing the same `id` | "Duplicate ID {id} in {files}." |
 | `invalid_id` | script | error | an `id` not matching the parent-scoped grammar | "ID {id} does not match expected pattern {pattern}." |
 | `unknown_enum` | script | error | a closed-enum field with a value outside the allowed set (incl. a `risks[]` entry's `impact`/`likelihood` ∈ {low,med,high} or `status` ∈ {open,mitigated,accepted}) | "{file}: field {field} value '{value}' not in {allowed}." |
+| `unknown_ref` | script | error | a `competitive_parity` key that does not resolve to any competitor ID declared in the BRD's `competitors:` list — emitted by `check_consistency._check_competitive_parity` | "{id}: competitive_parity key '{ref}' does not resolve to any BRD competitor." |
 | `parse_error` | script | error | YAML parse failure or missing required field | "{file}: parse error — {detail}." |
 | `status_inconsistency` | script | warn | child `approved` under parent `draft`, or descendant approval newer than ancestor | "{id} status inconsistent with parent {parent_id}." |
 | `version_inconsistency` | script | warn | child semver `version` greater than parent's | "{id} version {v} exceeds parent {pid} version {pv}." |
 | `self_reference` | script | error | an artifact whose `epic`, `prd`, or `brd_goals` reference points at its own ID | "{id} references itself via `{field}`." |
-| `invalid_type` | script | error | a `type` field with a value outside the spec enum (`vision`, `product`, `brd`, `prd`, `epic`, `story`, `goal`, `exec_summary`); also a list-typed field that is not a list, or a `risks[]` entry that is not a mapping (reuse — no separate `invalid_shape`) | "{file}: type '{value}' not in allowed set." |
+| `invalid_type` | script | error | a list-typed field that is not a list, a wrong-shape field (e.g. a `risks[]` entry that is not a mapping, a `competitive_parity` that is not a dict), or a closed-enum sub-field (dates, `depends_on` type) with an invalid value (reuse — no separate `invalid_shape`). The artifact `type` field is **directory-derived and trusted** — `check_consistency` does NOT validate it against an enum | "{file}: field {field} value '{value}' is not a valid {expected}." |
 | `persona_cap_exceeded` | script | warn | `personas` list with > soft-cap entries (sanity check against spec drift) | "{id}: personas list ({count}) exceeds soft cap ({cap})." |
 | `risk_high_ratio` | script | warn | more than `RISK_HIGH_RATIO` (default 0.5) of an artifact's risks are `impact: high` (deterministic ratio) | "{id} has {high}/{total} risks at impact=high (>{pct}%)." |
 | `risk_blindspot` | script | warn | an epic with ≥ `RISK_BLINDSPOT_MIN_STORIES` (default 5) child stories and zero declared risks — child-story count is a deterministic graph traversal, NOT an LLM judgment | "{id} has {story_count} child stories but no declared risks." |

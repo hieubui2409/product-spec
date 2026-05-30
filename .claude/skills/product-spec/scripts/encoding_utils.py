@@ -27,5 +27,9 @@ def read_text_utf8(path: Path) -> str:
 
 
 def write_text_utf8(path: Path, content: str) -> None:
-    """Write file with explicit UTF-8 encoding."""
+    """Write file with explicit UTF-8 encoding.
+
+    Note: normalizes newlines — do NOT use where byte-for-byte CRLF/LF
+    preservation matters (use open(..., newline='') instead).
+    """
     Path(path).write_text(content, encoding="utf-8")
