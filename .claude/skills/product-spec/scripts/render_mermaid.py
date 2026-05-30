@@ -63,6 +63,22 @@ def _safe_label(s: str) -> str:
     return out
 
 
+def _safe_label_lines(*parts: str) -> str:
+    """Build a multi-line Mermaid node label.
+
+    Each part is sanitised independently via `_safe_label`, then joined with a
+    skill-emitted `<br/>`. The `<br/>` must NOT pass through `_safe_label` (which
+    neutralises angle brackets to guillemets for PO-controlled text) — it is a
+    constant separator, never user data, so it reaches Mermaid intact.
+
+    Mermaid 11 splits a flowchart label on `<br/>` into stacked lines even under
+    `securityLevel: strict` (htmlLabels off). A literal ``\\n`` is NOT interpreted
+    there — it renders as the two characters back-slash-n, which is the visible
+    artefact this replaces. Empty parts are dropped so a missing title leaves no
+    trailing blank line."""
+    return "<br/>".join(_safe_label(p) for p in parts if p)
+
+
 def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     # `flowchart BT` (bottom-top) keeps edge semantics child -> parent while
@@ -86,7 +102,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
             continue
         if not _visible(n["id"]):
             continue
-        node_label = _safe_label(f"{n['id']}\\n{n.get('title') or ''}")
+        node_label = _safe_label_lines(n["id"], n.get("title") or "")
         sid = _safe_id(n["id"])
         # Deferred nodes get the `deferred` classDef so the PO can see at a
         # glance which nodes are out-of-scope-but-still-tracked (§15 amendment:
@@ -198,7 +214,7 @@ def gap(graph: Dict[str, Any]) -> str:
             # Route both the node id and the static missing-child text through
             # _safe_label so PO-controlled ids with markup chars cannot inject
             # live HTML when the Mermaid DSL is embedded in the HTML page.
-            node_label = _safe_label(f"{n['id']}\\n(missing {CHILD_TYPE_FOR_PARENT[n['type']].upper()})")
+            node_label = _safe_label_lines(n["id"], f"(missing {CHILD_TYPE_FOR_PARENT[n['type']].upper()})")
             lines.append(f'  {sid}["{node_label}"]:::gap')
     if len(lines) == 2:
         lines.append('  OK["(no structural gaps)"]')

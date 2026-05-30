@@ -254,6 +254,24 @@ def test_mermaid_gap_uses_classdef():
     assert "classDef" in out
 
 
+def test_mermaid_tree_label_breaks_with_br_not_literal_backslash_n():
+    """A node label stacks id over title via a real Mermaid line break (`<br/>`),
+    NOT a literal ``\\n`` — Mermaid does not interpret backslash-n in a flowchart
+    label and would render the two characters verbatim in the HTML output."""
+    out = render_mermaid.tree(_graph())
+    assert "\\n" not in out, "literal backslash-n leaked into a Mermaid label"
+    # at least one id<br/>title label is emitted (every artifact node carries a title)
+    assert "<br/>" in out
+
+
+def test_mermaid_gap_label_breaks_with_br_not_literal_backslash_n():
+    g = {"nodes": [{"id": "PRD-X", "type": "prd", "title": "X", "brd_goals": ["BRD-G1"]}],
+         "edges": []}
+    out = render_mermaid.gap(g)
+    assert "\\n" not in out
+    assert "PRD-X<br/>(missing" in out
+
+
 # ---------- HTML ----------
 
 def test_html_assemble_is_self_contained_string():
