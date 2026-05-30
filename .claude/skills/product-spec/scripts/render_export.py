@@ -53,8 +53,12 @@ def _yaml_scalar(s: Any) -> str:
 
 
 def _heading(entry: Dict[str, Any]) -> str:
-    title = entry.get("title") or ""
-    return f"{entry['id']} — {title}" if title else str(entry["id"])
+    # Collapse CR/LF in both title and id so a multi-line name never injects raw
+    # markdown into the heading or TOC (the product H1 at ~line 159 already guards
+    # this; per-entry was not — now consistent).
+    title = (entry.get("title") or "").replace("\r", " ").replace("\n", " ")
+    entry_id = str(entry["id"]).replace("\r", " ").replace("\n", " ")
+    return f"{entry_id} — {title}" if title else entry_id
 
 
 def _ac_item(a: Any) -> str:

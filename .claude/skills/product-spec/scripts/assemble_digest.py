@@ -27,7 +27,7 @@ import re
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from spec_graph import index_artifacts, parents_of, children_of, _closure
+from spec_graph import index_artifacts, parents_of, children_of, _closure, resolve_ac, ID_SENTINELS
 
 
 # Each artifact type belongs to one --export --layers bucket. Goals live in the
@@ -124,7 +124,9 @@ def _entry(node: Dict[str, Any], role: str, verbosity: str, artifact: Optional[D
     fm = (artifact or {}).get("frontmatter") or {}
     body = (artifact or {}).get("body") or ""
     # Goals carry no narrative body and no AC; their frontmatter is the goal dict.
-    ac = fm.get("acceptance_criteria") if node["type"] == "story" else None
+    # Use resolve_ac (the single DRY home) so None/''-filtered AC count matches the
+    # validator (check_consistency) and no blank/None items leak into export bullets.
+    ac = resolve_ac({"acceptance_criteria": fm.get("acceptance_criteria")}) if node["type"] == "story" else None
     return {
         "id": node["id"],
         "type": node["type"],
@@ -133,7 +135,7 @@ def _entry(node: Dict[str, Any], role: str, verbosity: str, artifact: Optional[D
         "title": node.get("title") or fm.get("name") or fm.get("title") or "",
         "frontmatter": fm or {k: v for k, v in node.items() if k not in ("id", "type")},
         "body": body,
-        "ac": ac if isinstance(ac, list) else None,
+        "ac": ac,
     }
 
 
@@ -197,9 +199,10 @@ def build_digest(
 
     targets, singleton_types, unresolved = _resolve_selection(select, graph)
     if unresolved:
-        # Drop the internal `<missing-id>` sentinel (an artifact with no id:) so
-        # the PO-facing typo-help never suggests it as a selectable target.
-        valid = sorted((set(nodes_by_id) | {"VISION", "BRD", "PRODUCT"}) - {"<missing-id>"})
+        # Subtract BOTH internal sentinels (<missing-id> and <invalid-id>) so the
+        # PO-facing typo-help never suggests an internal coercion value as a
+        # selectable artifact ID. ID_SENTINELS is the single DRY home (spec_graph).
+        valid = sorted((set(nodes_by_id) | {"VISION", "BRD", "PRODUCT"}) - set(ID_SENTINELS))
         raise ValueError(
             f"--export: unresolved selection {sorted(unresolved)} — no such artifact. "
             f"Available IDs: {valid}"

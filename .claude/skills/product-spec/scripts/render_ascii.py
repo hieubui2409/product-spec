@@ -383,7 +383,10 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
             continue
         for p in n_personas:
             if prd_id:
-                cells[p][prd_id] += 1
+                # str-coerce so the cell key matches the row label (personas list
+                # may contain non-str scalars like 5; dict/list would be unhashable).
+                key = str(p)
+                cells[key][prd_id] += 1
     if not personas:
         return "(no personas yet)"
     rows = [[p] + [str(cells[p].get(prd, 0)) for prd in prds] for p in personas]
@@ -421,8 +424,9 @@ def moscow(graph: Dict[str, Any], lang: str = "en") -> str:
 def risk(graph: Dict[str, Any]) -> str:
     """3x3 risk matrix: impact x likelihood."""
     counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    for r in graph.get("risks", []):
-        counts[_hashable(r.get("impact", "?"))][_hashable(r.get("likelihood", "?"))] += 1
+    for r in (graph.get("risks") or []):
+        if isinstance(r, dict):
+            counts[_hashable(r.get("impact", "?"))][_hashable(r.get("likelihood", "?"))] += 1
     rows_order = ["high", "med", "low"]
     cols = ["low", "med", "high"]
     rows = [[r] + [str(counts[r].get(c, 0)) for c in cols] for r in rows_order]
@@ -435,11 +439,13 @@ def resolve_competition(graph: Dict[str, Any]):
     `cell_lookup(competitor, prd_node) -> str | None` resolves the parity value
     for one (competitor, PRD) pair, coercing competitor id via `_hashable` so
     an unhashable id (e.g. a YAML list `[COMP-X]`) can never raise TypeError as
-    a dict key. Both render_ascii.competition and render_html._competition_matrix
-    call this to stay in sync (single home for the resolution rule)."""
+    a dict key. Both render_ascii.competition and render_html.competition call this
+    (render_html passes the returned cell_lookup into _competition_matrix) so the
+    resolution rule has a single home. Non-dict nodes in graph["nodes"] are
+    skipped so a malformed graph never raises AttributeError here."""
     competitors = [c for c in (graph.get("competitors") or []) if isinstance(c, dict)]
     prds = sorted(
-        (n for n in graph.get("nodes", []) if n.get("type") == "prd"),
+        (n for n in graph.get("nodes", []) if isinstance(n, dict) and n.get("type") == "prd"),
         key=lambda n: str(n.get("id") or ""),
     )
 

@@ -10,6 +10,7 @@ hardening:
 - check_consistency: calendar-invalid quoted target_date, duplicate competitor id,
   competitive_parity misplaced on a non-PRD.
 - build_traceability_matrix: mixed-type metrics / non-string brd_goals element.
+- render_ascii.persona: dict/unhashable persona no crash; non-str persona counted.
 """
 
 import datetime as dt
@@ -18,6 +19,7 @@ import frontmatter_parser as fp
 import spec_graph as sg
 import check_consistency as cc
 import build_traceability_matrix as bm
+import render_ascii as ra
 
 
 # ── frontmatter_parser fail-soft ────────────────────────────────────────────
@@ -144,3 +146,63 @@ def test_matrix_no_crash_on_mixed_metrics_and_brd_goals():
     ]
     out = bm.build_matrix(_graph(nodes))  # must not raise
     assert isinstance(out, str) and "PRD-A-E1-S1" in out
+
+
+# ── render_ascii.persona fail-soft (Cycle-10 regression) ────────────────────
+
+def _persona_graph(product_personas, stories):
+    """Minimal graph for persona() tests: one PRD + epic + given stories."""
+    nodes = [
+        {"id": "PRD-A", "type": "prd", "brd_goals": [], "epic": None, "prd": None},
+        {"id": "PRD-A-E1", "type": "epic", "prd": "PRD-A", "brd_goals": [], "epic": None},
+    ] + stories
+    g = _graph(nodes)
+    g["product"] = {"personas": product_personas}
+    return g
+
+
+def test_persona_dict_persona_does_not_crash():
+    """personas:[{role: 'admin'}] is an unhashable value — must not raise TypeError
+    when used as a dict key. The grid still renders (shows a str-coerced row)."""
+    dict_persona = {"role": "admin"}
+    stories = [
+        {"id": "PRD-A-E1-S1", "type": "story", "epic": "PRD-A-E1", "prd": None,
+         "brd_goals": [], "personas": [dict_persona]},
+    ]
+    g = _persona_graph([dict_persona], stories)
+    result = ra.persona(g)  # must not raise
+    assert isinstance(result, str)
+    assert "(no personas yet)" not in result  # row was rendered
+
+
+def test_persona_non_str_scalar_counts_correctly():
+    """personas:[5] — a non-str scalar must be treated as str('5') for both the
+    row label and the cell key so the count is non-zero, not silently zero."""
+    stories = [
+        {"id": "PRD-A-E1-S1", "type": "story", "epic": "PRD-A-E1", "prd": None,
+         "brd_goals": [], "personas": [5]},
+    ]
+    g = _persona_graph([5], stories)
+    result = ra.persona(g)  # must not raise
+    assert isinstance(result, str)
+    # The cell for persona '5' vs PRD-A should be '1', not '0'.
+    # _grid right-aligns numeric cells so the raw cell is '| ... 1 |' with padding.
+    assert "| 5" in result          # row label present
+    lines = [l for l in result.splitlines() if l.startswith("| 5")]
+    assert lines, "row for persona '5' not found"
+    # Extract the count token; right-aligned cell value is the last non-empty token
+    # before the trailing '|'. Strip and check it is '1', not '0'.
+    cells = [t.strip() for t in lines[0].split("|") if t.strip()]
+    # cells[0] = row label, remaining = per-PRD counts
+    count_cells = cells[1:]
+    assert any(c == "1" for c in count_cells), f"expected count '1' but got {count_cells!r}"
+
+
+def test_persona_no_crash_on_non_list_risks():
+    """render_ascii.risk() on non-list / non-dict-entry risks must not crash."""
+    g = _graph([])
+    g["risks"] = [None, "bad", {"impact": "high", "likelihood": "low"}]
+    result = ra.risk(g)  # must not raise
+    assert isinstance(result, str)
+    # The one valid risk should show up in the high-impact/low-likelihood cell.
+    assert "|" in result

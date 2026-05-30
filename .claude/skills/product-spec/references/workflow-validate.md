@@ -17,16 +17,18 @@ Each script emits JSON to stdout. Collect the union of `findings[]` across the t
 
 The structural checkers above now also emit the TIME-dimension findings: `dep_cycle` + `dep_dangling` (errors, from `check_traceability`) and `dep_order` + `time_child_late` (warns, from `check_consistency`). These are pure date/graph comparisons — deterministic, in-gate (G-B1).
 
-**Out-of-gate advisories (run separately, NEVER part of the `--strict` gate — they consume the wall clock):**
+**Out-of-gate advisories (run separately, NEVER part of the `--strict` gate — they consume the wall clock or resolve external references):**
 
 ```bash
 # overdue: target_date strictly before --today (default real today; pin for reproducibility)
 ./.claude/skills/.venv/bin/python3 scripts/time_advisory.py --root <root> [--today YYYY-MM-DD]
 # time_realism anchors: per-epic {size, child_story_count, days_remaining, …} feeder for the LLM check
 ./.claude/skills/.venv/bin/python3 scripts/time_realism_anchors.py --root <root> [--today YYYY-MM-DD]
+# competitive_drift anchors: per-PRD resolved parity map feeder for the LLM check (no --today)
+./.claude/skills/.venv/bin/python3 scripts/competitive_drift_anchors.py --root <root>
 ```
 
-Both ALWAYS exit 0 (advisories, not gates). Surface `overdue` to the PO as information; feed the `time_realism` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
+All three ALWAYS exit 0 (advisories/anchors, not gates). Surface `overdue` to the PO as information; feed the `time_realism` and `competitive_drift` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
 
 For CI (no LLM in the loop), use the shell-runnable strict gate which exits non-zero on any error-severity finding:
 
@@ -44,6 +46,7 @@ For each check in `validation-rules-spec.md` whose **owner = LLM**, run a separa
 - **gold_plating** — scan PRD scope: does any new requirement go beyond the stated problem? Emit finding (warn).
 - **semantic_duplication** — compare every pair of PRDs/epics within the same product for intent overlap. Emit finding (warn) on suspected duplicates.
 - **time_realism** — for each epic, read the SCRIPT-precomputed anchor from `time_realism_anchors.py` (`size`, `child_story_count`, `days_remaining`, …) and apply the FIXED rule in `validation-rules-spec.md → time_realism LLM Scaffold`: flag (warn) ONLY when `eligible` AND `size=="L"` AND `child_story_count>=6` AND `days_remaining<21`; missing anchor → `missing_anchor` (no flag); otherwise no flag. The finding MUST carry `context.cited_data` (verbatim from the anchor). **Do NO date arithmetic** — the script already computed `days_remaining`.
+- **competitive_drift** — for each eligible PRD, read the SCRIPT-resolved anchor from `competitive_drift_anchors.py` and apply the FIXED rule in `validation-rules-spec.md → competitive_drift LLM Scaffold`: flag (warn) ONLY when `eligible` (scope `core-value` AND `competitors_with_data >= 2`) AND every real (non-`none`) parity is `behind`; missing anchor / ineligible / any non-`behind` → no flag. The finding MUST carry `context.cited_data` (verbatim from the anchor). **Never invent a competitor or parity verdict** — use only what the script resolved.
 - **contradiction** — compare every new artifact against `approved`-status artifacts. If contradicted → emit `error`-severity finding + surface to PO via the contradiction protocol (see below). **Never auto-flip.**
 
 ### Step 2.5 — Impact-pass (per-change propagation; runs on `--validate` too)

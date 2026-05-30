@@ -172,7 +172,9 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
         fmt = "ascii"
 
     # Compute selected nodes once: used for the empty-check guard below AND passed
-    # into the HTML builders so they don't run select_cards a second time.
+    # into the HTML builders so they don't run select_cards a second time. The
+    # ascii/mermaid-fallback branch does NOT use this variable — it runs its own
+    # implicit scan inside render_ascii.board/explorer (cheap O(n) list walk).
     selected = render_ascii.select_cards(graph, layers, filter_wont)
 
     # Fail loud (Q1, parity with --export) when a non-empty --layers subset filters
@@ -268,7 +270,11 @@ def main() -> int:
         graph, artifacts = build_graph_with_artifacts(root)
     else:
         graph = build_graph(root)
-    baseline = _load_baseline(root, args.snapshot) if args.view == "delta" else None
+    try:
+        baseline = _load_baseline(root, args.snapshot) if args.view == "delta" else None
+    except (FileNotFoundError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     # Body views own their html writer and have no Mermaid form — dispatch them
     # BEFORE the generic ascii/mermaid/<pre> branches so they never render as a

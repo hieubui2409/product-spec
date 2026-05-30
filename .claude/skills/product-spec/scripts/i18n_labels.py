@@ -121,7 +121,13 @@ def label(key: str, lang: str = "en") -> str:
 
     Uses explicit `in` membership tests instead of truthiness `or` chains so a
     label whose value is the empty string is returned as-is rather than being
-    treated as a miss and falling through to the next table."""
+    treated as a miss and falling through to the next table.
+
+    Unhashable keys (list/dict from malformed frontmatter) can't be dict keys
+    and would raise TypeError. Guard: non-str keys degrade to str(key) so the
+    renderer keeps running and check_consistency flags the bad enum separately."""
+    if not isinstance(key, str):
+        return str(key)
     table = LABELS[lang] if lang in LABELS else LABELS["en"]
     if key in table:
         return table[key]

@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
-from spec_graph import build_graph, ID_PATTERN_BY_TYPE, COMP_ID_PATTERN
+from spec_graph import build_graph, ID_PATTERN_BY_TYPE
 
 configure_utf8_console()
 
@@ -223,6 +223,12 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
     return rendered
 
 
+def _prd_slug_from_id(artifact_id: str) -> str:
+    """Derive the lowercase slug from a PRD-<SLUG> id. The single home for this
+    derivation; both output_path() and _run() call here so they never diverge."""
+    return artifact_id[4:].lower()
+
+
 def output_path(root: Path, target_type: str, artifact_id: str, slug: Optional[str]) -> Optional[Path]:
     """Return the output path for a type that has an OUTPUT_PATH_FOR_TYPE mapping,
     or None for content-only types (sign_off, change_log_entry) that have no file home
@@ -230,9 +236,10 @@ def output_path(root: Path, target_type: str, artifact_id: str, slug: Optional[s
     template = OUTPUT_PATH_FOR_TYPE.get(target_type)
     if template is None:
         return None
-    # PRD: ensure slug is never empty (would produce `prds/.md`)
+    # PRD: ensure slug is never empty (would produce `prds/.md`).
+    # _prd_slug_from_id is the single derivation home — no inline re-derivation.
     if target_type == "prd" and not slug and artifact_id.upper().startswith("PRD-"):
-        slug = artifact_id[4:].lower()  # derive from PRD-<SLUG> → <slug>
+        slug = _prd_slug_from_id(artifact_id)
     out_rel = template.format(id=artifact_id, slug=(slug or "").lower())
     return root / "docs" / "product" / out_rel
 
@@ -243,10 +250,19 @@ def load_values(spec: Optional[str]) -> Dict[str, Any]:
     p = Path(spec)
     try:
         if p.exists():
-            return json.loads(p.read_text(encoding="utf-8"))
-        return json.loads(spec)
+            raw = json.loads(p.read_text(encoding="utf-8"))
+        else:
+            raw = json.loads(spec)
     except json.JSONDecodeError as exc:
         raise ValueError(f"--values: invalid JSON ({exc})") from exc
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ValueError(f"--values: could not read file {spec!r} ({exc})") from exc
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"--values: top-level JSON must be an object (mapping); "
+            f"got {type(raw).__name__} — pass a JSON object like {{\"key\": \"value\"}}."
+        )
+    return raw
 
 
 # List-typed frontmatter fields. If the caller omits them, default to [] so
@@ -368,6 +384,18 @@ def _run(args: argparse.Namespace) -> int:
                 f"--id {args.id!r} does not match expected pattern "
                 f"{pattern.pattern} for type={args.type}"
             )
+        # For type=prd, --id is authoritative: the file is placed at prds/<slug>
+        # where slug = id[4:].lower(). If --slug is also given it MUST agree,
+        # otherwise the file path (based on --slug) diverges from the frontmatter id
+        # (based on --id) → mislocated artifact that validate won't catch.
+        if args.type == "prd" and args.slug:
+            id_slug = args.id[4:].lower() if args.id.upper().startswith("PRD-") else ""
+            if id_slug != args.slug.lower():
+                raise ValueError(
+                    f"--id {args.id!r} and --slug {args.slug!r} are inconsistent: "
+                    f"the slug implied by --id is {id_slug!r}. "
+                    f"Either omit --slug (let --id drive the path) or align them."
+                )
         artifact_id = args.id
     else:
         artifact_id = allocate_id(graph, args.type, args.slug, args.parent, session_used=[])
@@ -376,11 +404,12 @@ def _run(args: argparse.Namespace) -> int:
     # artifact is content-only — no file path is assigned and --write is a no-op.
     has_path_mapping = args.type in OUTPUT_PATH_FOR_TYPE
 
-    # Derive slug from --id when --type prd and --slug omitted, to prevent the
-    # output path from collapsing to `prds/.md`.
+    # Derive slug from --id for type=prd when --slug is omitted, so the output path
+    # never collapses to `prds/.md`. _prd_slug_from_id is the single home used by
+    # both this derivation and output_path() — no duplication.
     effective_slug = args.slug
     if args.type == "prd" and not effective_slug and artifact_id.upper().startswith("PRD-"):
-        effective_slug = artifact_id[4:].lower()
+        effective_slug = _prd_slug_from_id(artifact_id)
 
     # For epic/story: when --id given without --parent, derive the parent ID from
     # the artifact_id so token substitution doesn't leave the parent token as 'TBD'

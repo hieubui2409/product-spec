@@ -91,11 +91,18 @@ Every renderer consumes this shape (produced by `spec_graph.py` and persisted in
   ],
   "risks": [
     {"node": "PRD-AUTH-E1", "description": "OAuth dependency", "impact": "high", "likelihood": "med", "mitigation": "Fallback provider on standby", "status": "open"}
-  ]
+  ],
+  "competitors": [
+    {"id": "COMP-ACME", "name": "Acme Commerce", "url": "https://acme.example", "threat": "high"}
+  ],
+  "parse_errors": [],
+  "root_path": "/absolute/path/to/project"
 }
 ```
 
 `edges[].kind` records the field name used in the child's frontmatter (`epic`, `prd`, `brd_goal`) — keeps the graph self-describing.
+
+When the `docs/product/` directory is absent, `spec_graph.py` emits a minimal stub graph that additionally carries `"missing_product_dir": true` (and has empty `nodes`/`edges`/`risks`/`competitors`).
 
 ## Renderer Inputs / Outputs
 
@@ -158,7 +165,7 @@ Change the look in one place → every output updates (DRY). The `explorer` UI i
 
 Delta detection is purely on the graph JSON (no `git show` archaeology):
 - Added nodes / removed nodes (by ID).
-- Changed status, scope, moscow, horizon.
+- Changed status, scope, moscow, horizon, size.
 - Added / removed edges.
 
 ## Determinism

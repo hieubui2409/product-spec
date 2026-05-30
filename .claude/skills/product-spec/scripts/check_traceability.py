@@ -53,14 +53,11 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             if not brd_goals:
                 findings.append(_f("orphan_prd", "error", n, "PRD has no BRD goals declared."))
             elif not isinstance(brd_goals, list):
-                # A bare string (hand-edit regression) would iterate per character,
-                # producing phantom "unknown BRD goal B/R/D/-/G/1" findings.
-                # Emit one invalid_type finding and skip iteration.
-                findings.append(_f(
-                    "invalid_type", "error", n,
-                    f"Field brd_goals={brd_goals!r} must be a YAML list; got {type(brd_goals).__name__}.",
-                    field="brd_goals", value=brd_goals,
-                ))
+                # A bare string (hand-edit regression) would iterate per character
+                # producing phantom "unknown BRD goal B/R/D/-/G/1" findings. The
+                # invalid_type finding is check_consistency's job (LIST_FIELDS home);
+                # emitting it here too counts it TWICE in strict_gate. Just skip.
+                pass
             else:
                 for g in brd_goals:
                     if g not in node_ids:

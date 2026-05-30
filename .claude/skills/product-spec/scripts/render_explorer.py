@@ -30,7 +30,10 @@ _LAYER_ORDER = ("goal", "prd", "epic", "story")
 _DEPTH_BY_TYPE = {t: i for i, t in enumerate(_LAYER_ORDER)}
 _UI_KEYS = ("search", "status", "moscow", "persona", "layer", "horizon", "unassigned",
             "no_results", "tree", "tabs", "table", "ac_count",
-            "goal", "prd", "epic", "story")
+            "goal", "prd", "epic", "story",
+            # horizon + MoSCoW chip values — localized for --lang vi facet display
+            # (parity with render_board which already included these keys).
+            "now", "next", "later", "must", "should", "could", "wont")
 
 
 def _maps(artifacts: List[Dict[str, Any]]):

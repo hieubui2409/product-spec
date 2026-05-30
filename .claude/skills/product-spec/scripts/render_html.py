@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from spec_graph import _now
+from spec_graph import _now, HORIZON_ORDER
 from i18n_labels import label
 
 
@@ -295,23 +295,30 @@ _PARITY_CELL_CLASS = {
 _THREAT_CELL_CLASS = {"low": "cm-t-low", "med": "cm-t-med", "high": "cm-t-high"}
 
 
-def _competition_matrix(competitors: list, prds: list, lang: str = "en") -> str:
+def _competition_matrix(competitors: list, prds: list, lang: str = "en",
+                        cell_lookup=None) -> str:
     """The parity matrix <table>: competitor NAME rows × PRD id columns, cells =
     the parity enum the PRD declared for that competitor (blank when unset). All
     spec text escaped server-side. Deterministic — competitors keep BRD order,
     PRDs are sorted by id. Parity verdicts localize via i18n_labels (`--lang vi`);
     the enum KEY stays English (it's the cell CLASS), only the displayed word
-    localizes. An off-enum value (separately flagged unknown_enum) shows raw."""
-    from render_ascii import _hashable as _h
+    localizes. An off-enum value (separately flagged unknown_enum) shows raw.
+
+    `cell_lookup` is the resolver from render_ascii.resolve_competition; when
+    provided it is used per cell so the resolution rule has a single home."""
     head_cols = "".join(f"<th scope='col'>{_escape(str(p.get('id') or ''))}</th>" for p in prds)
     rows = []
     for c in competitors:
         name = _escape(str(c.get("name") or c.get("id") or "(unnamed)"))
         tds = []
         for p in prds:
-            parity = (p.get("competitive_parity") or {})
-            cid = _h(c.get("id"))
-            val = parity.get(cid) if isinstance(parity, dict) else None
+            if cell_lookup is not None:
+                val = cell_lookup(c, p)
+            else:
+                from render_ascii import _hashable as _h
+                parity = (p.get("competitive_parity") or {})
+                cid = _h(c.get("id"))
+                val = parity.get(cid) if isinstance(parity, dict) else None
             cls = _PARITY_CELL_CLASS.get(val, "") if isinstance(val, (str, type(None))) else ""
             text = _escape(_parity_label(val, lang)) if val is not None else ""
             tds.append(f'<td class="cm-cell {cls}">{text}</td>')
@@ -377,18 +384,16 @@ def _competition_heatmap(competitors: list, lang: str = "en") -> str:
 def competition(graph: Dict[str, Any], lang: str = "en") -> str:
     """HTML-native competition view: parity matrix + threat heatmap.
 
-    Resolves the BRD's competitor IDENTITY (graph["competitors"]) against each
-    PRD's ID-keyed `competitive_parity` map. Returns a self-contained fragment
-    (scoped <style> + the two tables); deterministic — no timestamp inside the
-    fragment (G-A4). Renders an empty placeholder when no competitors exist so a
-    v1 spec can still request the view (G-A2). Every spec-derived value is
-    escaped server-side (the view inlines no DOMPurify/marked)."""
-    competitors = [c for c in (graph.get("competitors") or []) if isinstance(c, dict)]
-    prds = sorted(
-        (n for n in graph.get("nodes", []) if n.get("type") == "prd"),
-        key=lambda n: str(n.get("id") or ""),
-    )
-    matrix = _competition_matrix(competitors, prds, lang)
+    Delegates resolution of competitors+PRDs+cell_lookup to
+    render_ascii.resolve_competition (single home for the resolution rule; this
+    wires the C9 DRY hoist so render_html no longer re-implements the resolver).
+    Returns a self-contained fragment (scoped <style> + the two tables);
+    deterministic — no timestamp inside the fragment (G-A4). Renders an empty
+    placeholder when no competitors exist so a v1 spec can still request the view
+    (G-A2). Every spec-derived value is escaped server-side (no DOMPurify/marked)."""
+    import render_ascii as _ra
+    competitors, prds, cell_lookup = _ra.resolve_competition(graph)
+    matrix = _competition_matrix(competitors, prds, lang, cell_lookup=cell_lookup)
     heatmap = _competition_heatmap(competitors, lang)
     empty_note = "" if competitors else (
         '<p class="ps-meta">No competitors recorded in the BRD yet. '
@@ -439,16 +444,16 @@ _COMPETITION_CSS = (
 # server-escaped HTML, the SAME chokepoint discipline as the risk/competition
 # grids). Deterministic — no timestamp inside the fragment (G-A4).
 
-_DASHBOARD_HORIZONS = ("now", "next", "later")
-
-
 def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
     """An HTML-native roadmap/deadline table for the dashboard: PRD/Epic/Story
     grouped by horizon (now/next/later/unspecified), each row showing id +
     target_date. Server-escaped + deterministic (sorted by id within horizon).
-    Horizon headers localize via i18n_labels."""
+    Horizon headers localize via i18n_labels. Uses HORIZON_ORDER from spec_graph
+    (single source of truth — eliminates the orphaned _DASHBOARD_HORIZONS copy)."""
     groups: Dict[str, list] = {}
     for n in graph.get("nodes", []):
+        if not isinstance(n, dict):
+            continue
         if n.get("type") not in ("prd", "epic", "story"):
             continue
         # Coerce to a hashable scalar before bucketing: an unhashable horizon
@@ -458,12 +463,12 @@ def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
         groups.setdefault(h, []).append(n)
 
     sections = []
-    order = list(_DASHBOARD_HORIZONS) + ["unspecified"]
+    order = list(HORIZON_ORDER) + ["unspecified"]
     for h in order:
         items = sorted(groups.get(h, []), key=lambda n: str(n.get("id") or ""))
         if not items and h == "unspecified":
             continue
-        head = _escape(label(h, lang).upper() if h in _DASHBOARD_HORIZONS else "UNSPECIFIED")
+        head = _escape(label(h, lang).upper() if h in HORIZON_ORDER else "UNSPECIFIED")
         rows = []
         for n in items:
             nid = _escape(str(n.get("id") or ""))

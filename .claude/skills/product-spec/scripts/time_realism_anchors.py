@@ -7,8 +7,8 @@ is unrealistic for this scope" is a sensory call no regex can make. But to stop 
 LLM hallucinating ("phi thực tế" is the classic over-flag), the design (R2) pins the
 LLM to STRUCTURED, SCRIPT-precomputed anchors and forbids it from doing any date math:
 
-    {artifact_id, type, size, horizon, target_date, today_date,
-     days_remaining, child_story_count, incomplete}
+    {artifact_id, file, type, size, horizon, target_date, today_date,
+     days_remaining, child_story_count, incomplete, eligible}
 
 `days_remaining = (target_date - today).days` is computed HERE, not by the LLM. The
 LLM only applies the fixed AND-rule against these numbers (see the scaffold in

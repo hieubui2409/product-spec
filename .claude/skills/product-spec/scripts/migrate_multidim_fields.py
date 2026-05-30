@@ -39,6 +39,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import yaml
+
 from encoding_utils import configure_utf8_console
 from frontmatter_parser import parse_file
 
@@ -127,6 +129,19 @@ def _insert_before_closing_fence(text: str, lines: List[str]) -> Optional[str]:
             close_idx = i
             break
     if close_idx is None:
+        return None
+
+    # Re-validate the candidate frontmatter slice: a block-scalar value may contain
+    # an indented line that strips to '---', making the scanner stop early and yield
+    # a partial YAML slice. If the slice between open_idx and close_idx does not
+    # parse as a YAML mapping, the close_idx is wrong — do not insert (return None
+    # so the caller skips this file rather than corrupting it).
+    candidate_fm = "".join(src_lines[open_idx + 1:close_idx])
+    try:
+        parsed_candidate = yaml.safe_load(candidate_fm)
+    except yaml.YAMLError:
+        return None
+    if not isinstance(parsed_candidate, dict):
         return None
 
     # Detect the line-ending style from the CLOSING fence of the frontmatter block

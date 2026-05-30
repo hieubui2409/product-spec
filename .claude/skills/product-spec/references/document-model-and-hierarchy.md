@@ -67,7 +67,7 @@ The artifact roles, the DRY "one home per fact" rule, and the BRD(1) ↔ PRD(man
 
 ## BRD(1) ↔ PRD(many)
 
-One BRD per product. Many PRDs per BRD. The PRD lists which BRD goals it advances (via `brd_goals: [BRD-G1, BRD-G3]`). One BRD goal can be addressed by multiple PRDs — that's expected. Validation flags BRD goals with **zero** PRDs as `unaddressed_parent` (structural — sufficiency is a separate LLM judgment).
+One BRD per product. Many PRDs per BRD. The PRD lists which BRD goals it advances (via `brd_goals: [BRD-G1, BRD-G3]`). One BRD goal can be addressed by multiple PRDs — that's expected. Validation flags BRD goals with **zero** PRDs as `orphan_brd_goal` (warn — structural; sufficiency is a separate LLM judgment).
 
 ## Impact-Pass vs Catalog (don't conflate)
 

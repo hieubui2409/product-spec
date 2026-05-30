@@ -15,12 +15,12 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 
 | ID | Owner | Severity | Trigger | Message Template |
 |----|-------|----------|---------|------------------|
-| `orphan_story` | script | error | a story whose `epic` field references an unknown epic ID | "Story {id} references unknown epic {epic}." |
-| `orphan_epic` | script | error | an epic whose `prd` field references an unknown PRD ID | "Epic {id} references unknown PRD {prd}." |
+| `orphan_story` | script | error | a story with a missing or empty `epic` field (no parent reference at all) | "Story {id} has no epic reference." |
+| `orphan_epic` | script | error | an epic with a missing or empty `prd` field (no parent reference at all) | "Epic {id} has no PRD reference." |
 | `orphan_prd` | script | error | a PRD whose `brd_goals` is empty or missing (not declared). Unresolved IDs in a non-empty `brd_goals` list surface as `dangling_link` instead | "PRD {id} has no BRD goals declared." |
 | `orphan_brd_goal` | script | warn | a BRD goal with no PRDs referencing it | "BRD goal {id} has no PRDs addressing it." |
 | `dangling_link` | script | error | any frontmatter ID reference that doesn't resolve | "{file}: reference {ref} does not resolve." |
-| `unaddressed_parent` | script | warn | a parent (epic/PRD/BRD goal) with zero inbound child edges of the expected type | "{id} has no {child_type} addressing it (gap-analysis input)." |
+| `unaddressed_parent` | script | warn | a parent (epic/PRD) with zero inbound child edges of the expected type (BRD goals with zero PRDs use `orphan_brd_goal` instead) | "{id} has no {child_type} addressing it (gap-analysis input)." |
 | `missing_ac` | script | error | a story with empty / missing `acceptance_criteria` | "Story {id} has no acceptance criteria." |
 | `low_ac_count` | script | warn | a story with `len(acceptance_criteria) < 2` | "Story {id} has fewer than 2 acceptance criteria ({count})." |
 | `dup_id` | script | error | two artifacts sharing the same `id` | "Duplicate ID {id} in {files}." |

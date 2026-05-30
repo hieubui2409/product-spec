@@ -20,7 +20,6 @@ from spec_graph import (
     diff_graphs,
 )
 from render_ascii import (
-    tree as ascii_tree,
     heatmap as ascii_heatmap,
     persona as ascii_persona,
     risk as ascii_risk,
@@ -100,7 +99,8 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         if not (_visible(e["from"]) and _visible(e["to"])):
             continue
         lines.append(f"  {_safe_id(e['from'])} --> {_safe_id(e['to'])}")
-    goal_ids = [nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid)]
+    # Sort goal ids for cross-format parity with the ASCII tree (G-A4: byte-deterministic).
+    goal_ids = sorted(nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid))
     for gid in goal_ids:
         lines.append(f"  {_safe_id(gid)} --> PRODUCT")
     return _fence("\n".join(lines))
@@ -129,10 +129,13 @@ def heatmap(graph: Dict[str, Any]) -> str:
 
 def scope(graph: Dict[str, Any]) -> str:
     # quadrantChart: x = moscow (must..wont), y = scope (out..core-value)
-    must = sum(1 for n in graph["nodes"] if n.get("moscow") == "must")
-    should = sum(1 for n in graph["nodes"] if n.get("moscow") == "should")
-    could = sum(1 for n in graph["nodes"] if n.get("moscow") == "could")
-    wont = sum(1 for n in graph["nodes"] if n.get("moscow") == "wont")
+    # Derive counts from spec_graph.moscow_story_counts (stories-only) so the
+    # '%% counts' comment and the moscow view agree — one count home (G-B1).
+    counts_map = moscow_story_counts(graph)
+    must = counts_map.get("must", 0)
+    should = counts_map.get("should", 0)
+    could = counts_map.get("could", 0)
+    wont = counts_map.get("wont", 0)
     body = f"""quadrantChart
   title Scope x MoSCoW
   x-axis Won't --> Must

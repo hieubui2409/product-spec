@@ -9,7 +9,8 @@ to stop the LLM hallucinating ("mất lợi thế" is the classic over-flag), th
 (R2 / report §0.1) pins the LLM to STRUCTURED, SCRIPT-precomputed anchors and
 forbids it from inventing a competitor or a parity verdict:
 
-    {artifact_id, scope, competitive_parity:[{competitor:<resolved name>, parity}],
+    {artifact_id, file, type, scope,
+     competitive_parity:[{competitor_id, competitor:<resolved name>, parity}],
      competitors_with_data, all_behind_competitors, incomplete, eligible}
 
 The script RESOLVES the PRD's ID-keyed `competitive_parity` map against the BRD's
@@ -64,15 +65,6 @@ configure_utf8_console()
 _MIN_COMPETITORS_WITH_DATA = 2
 
 
-def _competitor_names(graph: Dict[str, Any]) -> Dict[str, str]:
-    """id -> display name for every well-formed BRD competitor (the resolve
-    target). Delegates to spec_graph.competitor_id_to_name — the single DRY home
-    for the `isinstance(c, dict) and isinstance(c.get('id'), str)` guard.
-    The BRD is the single DRY identity home — this feeder reads
-    `graph['competitors']`, never brd.md (F6)."""
-    return competitor_id_to_name(graph)
-
-
 def build_anchors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Assemble one anchor record per PRD that declares a `competitive_parity` map.
 
@@ -82,7 +74,7 @@ def build_anchors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     core-value AND competitors_with_data >= 2) is pre-computed so the LLM returns
     `missing_anchor`/no-flag deterministically. Sorted by artifact_id → stable
     order (G-A4). The SCRIPT never decides flag/no-flag — only the numbers."""
-    names = _competitor_names(graph)
+    names = competitor_id_to_name(graph)
     anchors: List[Dict[str, Any]] = []
     for n in graph["nodes"]:
         if n.get("type") != "prd":

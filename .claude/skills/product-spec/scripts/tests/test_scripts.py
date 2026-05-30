@@ -440,23 +440,31 @@ lang: en
 ---
 """)
     g = build_graph(proj)
-    findings = check_trace(g)
+    trace_findings = check_trace(g)
 
     # Must NOT produce per-character dangling_link entries (B, R, D, -, G, 1, …).
     char_dangling = [
-        f for f in findings
+        f for f in trace_findings
         if f["check"] == "dangling_link" and len(f.get("context", {}).get("ref", "")) == 1
     ]
     assert char_dangling == [], (
         f"per-character dangling_link findings detected: {char_dangling}"
     )
 
-    # Must produce exactly one invalid_type finding for brd_goals.
-    invalid_type = [f for f in findings if f["check"] == "invalid_type"]
-    assert len(invalid_type) == 1, (
-        f"expected exactly one invalid_type finding, got: {invalid_type}"
+    # The brd_goals list-shape validation has ONE home: check_consistency's
+    # LIST_FIELDS check. check_traceability no longer emits a duplicate
+    # invalid_type for it (that double-count went through strict_gate before).
+    trace_invalid = [f for f in trace_findings if f["check"] == "invalid_type"]
+    assert trace_invalid == [], (
+        f"check_traceability must not duplicate the brd_goals invalid_type; got {trace_invalid}"
     )
-    assert invalid_type[0]["artifact_id"] == "PRD-AUTH"
+
+    from check_consistency import check as check_cons
+    cons_invalid = [f for f in check_cons(g) if f["check"] == "invalid_type"]
+    assert len(cons_invalid) == 1, (
+        f"expected exactly one invalid_type finding from check_consistency, got: {cons_invalid}"
+    )
+    assert cons_invalid[0]["artifact_id"] == "PRD-AUTH"
 
 
 def test_allocate_id_prd_slug_resembling_epic_is_rejected():

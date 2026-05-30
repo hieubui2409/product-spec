@@ -120,15 +120,21 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     for nid, ns in id_to_nodes.items():
         if len(ns) > 1:
+            # Skip sentinel values: two artifacts with missing/invalid IDs are a
+            # separate invalid_id finding each; reporting them as a "duplicate"
+            # produces a misleading dup_id <missing-id>/<invalid-id> false positive.
+            if nid in ("<missing-id>", "<invalid-id>"):
+                continue
             files = sorted({n.get("file") for n in ns if n.get("file")})
-            findings.append({
-                "check": "dup_id",
-                "severity": "error",
-                "artifact_id": nid,
-                "file": None,
-                "detail": f"Duplicate ID {nid} appears in {files}.",
-                "context": {"files": list(files)},
-            })
+            # Build a carrier node so _f() populates artifact_id/file consistently
+            # with every other finding in this module (previously a raw dict bypassed
+            # _f and produced a slightly different shape).
+            carrier = {"id": nid, "file": files[0] if files else None}
+            findings.append(_f(
+                "dup_id", "error", carrier,
+                f"Duplicate ID {nid} appears in {files}.",
+                files=list(files),
+            ))
 
     for n in graph["nodes"]:
         ntype = n.get("type")
@@ -740,9 +746,14 @@ def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 
         # prd -> brd_goal via list. Originally skipped; an approved PRD whose
         # BRD goals are still draft is a real inconsistency the LLM-judgment
-        # layer cannot see structurally.
+        # layer cannot see structurally. Guard: a bare-string brd_goals (hand-edit
+        # regression) would char-split here — mirror _self_reference's isinstance
+        # guard so a non-list is simply skipped (invalid_type owns the shape error).
         if n.get("type") == "prd":
-            for gid in n.get("brd_goals") or []:
+            brd_goals = n.get("brd_goals")
+            if not isinstance(brd_goals, list):
+                continue
+            for gid in brd_goals:
                 if not isinstance(gid, str):
                     continue
                 goal = nodes_by_id.get(gid)

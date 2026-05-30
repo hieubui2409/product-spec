@@ -111,6 +111,9 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         # in check_consistency flags a non-empty list on any other type). Sorted +
         # uniform empty default on ALL node types: harmless on a story/goal (the
         # list is empty there) and makes the dep adjacency build branch-free.
+        # A bare scalar `depends_on: PRD-X` is silently coerced to [] by
+        # _as_id_list — crash-safety by design; wrong-type placement on a non-empty
+        # list is still flagged by check_consistency._check_depends_on_type.
         "depends_on": _as_id_list(fm.get("depends_on")),
         # Raw `risks:` list preserved on the node (not just aggregated into
         # graph["risks"]) so check_consistency can enum-validate each entry's
@@ -229,14 +232,17 @@ def index_artifacts(artifacts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]
     """Map artifact id -> parsed artifact, for ok top-level files (product/vision/
     brd/prd/epic/story). Goals live inside brd.md and are not indexed here. Shared
     by the digest assembler and the board/explorer viewers (single id->artifact
-    loop instead of one re-implementation per renderer)."""
+    loop instead of one re-implementation per renderer).
+
+    Keys by _scalar_id (same coercion build_nodes uses) so a malformed-id artifact
+    is indexed under '<invalid-id>' rather than dropped — body/AC/export continue
+    to work; check_consistency surfaces the id error separately."""
     out: Dict[str, Dict[str, Any]] = {}
     for a in artifacts:
         if not a.get("ok"):
             continue
-        aid = (a.get("frontmatter") or {}).get("id")
-        if aid:
-            out[str(aid)] = a
+        aid = _scalar_id((a.get("frontmatter") or {}).get("id"))
+        out[aid] = a
     return out
 
 
@@ -425,7 +431,12 @@ def diff_graphs(current: Dict[str, Any], baseline: Dict[str, Any]) -> Dict[str, 
     for field in ("name", "core_value"):
         if cur_p.get(field) != base_p.get(field):
             product_changes.append(field)
-    if sorted(cur_p.get("personas") or []) != sorted(base_p.get("personas") or []):
+    # Coerce each persona to str before sorting: a malformed PRODUCT.md may carry
+    # a non-str persona entry (int/dict from a hand-edit) that would raise TypeError
+    # on a mixed-type sorted() call and crash --viz delta.
+    cur_set = {str(p) for p in (cur_p.get("personas") or [])}
+    base_set = {str(p) for p in (base_p.get("personas") or [])}
+    if cur_set != base_set:
         product_changes.append("personas")
     return {
         "added": sorted(cur_ids - base_ids),
@@ -485,6 +496,13 @@ def _scalar_id(v: Any) -> str:
     if v is None:
         return "<missing-id>"
     return "<invalid-id>"
+
+
+# The two sentinel strings _scalar_id() emits for absent/malformed IDs. Callers
+# that present valid IDs to the PO (e.g. assemble_digest's unresolved-selection
+# help text) subtract these so the PO never sees an internal sentinel as a
+# "selectable" artifact ID. Single authoritative home — import, never re-literal.
+ID_SENTINELS = ("<missing-id>", "<invalid-id>")
 
 
 def _scalar_link(v: Any) -> Optional[str]:
