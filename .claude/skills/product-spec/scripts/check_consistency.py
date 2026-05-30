@@ -16,6 +16,7 @@ CLI:
 """
 
 import argparse
+import datetime as dt
 import json
 import re
 import sys
@@ -85,6 +86,17 @@ RISK_BLINDSPOT_MIN_STORIES = 5
 
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
 
+# `depends_on` (the new TIME edge) is allowed on PRD + Epic ONLY (design Q13/Q64).
+# A non-empty list on any other artifact type reuses the existing `invalid_type`
+# finding — NOT a new check id — keeping the catalog small.
+DEPENDS_ON_ALLOWED_TYPES = ("prd", "epic")
+
+# ISO calendar-date shape (YYYY-MM-DD) for `target_date`. PyYAML auto-parses a
+# valid date to a datetime.date; a malformed/quoted value stays a str and is
+# caught by this shape check (→ invalid_type). Only the SHAPE is structural;
+# overdue-vs-today is advisory and lives in time_advisory.py (out of this gate).
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
 
 def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
@@ -134,6 +146,8 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 ))
 
         findings.extend(_check_risks(n))
+        findings.extend(_check_target_date_shape(n))
+        findings.extend(_check_depends_on_type(n))
 
         # Soft cap on personas — surface as a warn (not blocking). Lives
         # alongside enum checks because the cap shape is closed (count) even
@@ -163,6 +177,124 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings.extend(_session_md_gitignore(graph))
     findings.extend(_risk_high_ratio(graph))
     findings.extend(_risk_blindspot(graph))
+    findings.extend(_time_child_late(graph))
+    findings.extend(_dep_order(graph))
+    return findings
+
+
+# ── TIME-dimension structural checks (pure date comparisons; no wall clock) ──
+#
+# All deterministic — they compare dates already on the graph, never `today`
+# (which would break G-A4 reproducibility). The wall-clock `overdue` advisory is
+# deliberately a SEPARATE script (time_advisory.py), outside this gate.
+
+
+def _parse_iso_date(v: Any):
+    """Coerce a node's target_date to a datetime.date for comparison, or None.
+
+    PyYAML already parses a valid `YYYY-MM-DD` to datetime.date (or datetime —
+    accept its .date()). A str only reaches here if it slipped the shape gate;
+    parse it leniently and return None on failure so a malformed value (already
+    flagged invalid_type) simply drops out of the ordering checks."""
+    if isinstance(v, dt.datetime):
+        return v.date()
+    if isinstance(v, dt.date):
+        return v
+    if isinstance(v, str) and _ISO_DATE_RE.match(v.strip()):
+        try:
+            return dt.date.fromisoformat(v.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def _check_target_date_shape(node: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """target_date must be an ISO calendar date (YYYY-MM-DD). Absent → clean
+    (optional, G-D1). A value PyYAML left as a non-ISO string is invalid_type."""
+    v = node.get("target_date")
+    if v is None:
+        return []
+    if isinstance(v, (dt.date, dt.datetime)):
+        return []
+    if isinstance(v, str) and _ISO_DATE_RE.match(v.strip()):
+        return []
+    return [_f(
+        "invalid_type", "error", node,
+        f"Field target_date={v!r} must be an ISO date (YYYY-MM-DD).",
+        field="target_date", value=v,
+    )]
+
+
+def _check_depends_on_type(node: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """`depends_on` is allowed on PRD + Epic only. A non-empty list on any other
+    artifact type reuses the EXISTING `invalid_type` finding (no new check id).
+    An empty/absent list is always fine (the uniform empty default is harmless)."""
+    deps = node.get("depends_on")
+    if not deps:
+        return []
+    if node.get("type") in DEPENDS_ON_ALLOWED_TYPES:
+        return []
+    return [_f(
+        "invalid_type", "error", node,
+        f"Field depends_on is only valid on {' or '.join(DEPENDS_ON_ALLOWED_TYPES)}; "
+        f"{node['id']} is a {node.get('type')}.",
+        field="depends_on", value=deps,
+    )]
+
+
+def _time_child_late(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Warn when a child's target_date is AFTER its parent's (an epic due after
+    its PRD finishes is incoherent). Only fires when BOTH dates parse."""
+    findings: List[Dict[str, Any]] = []
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    for n in graph["nodes"]:
+        parent_id = n.get("epic") or n.get("prd")
+        if not parent_id:
+            continue
+        parent = nodes_by_id.get(parent_id)
+        if not parent:
+            continue
+        cd = _parse_iso_date(n.get("target_date"))
+        pd = _parse_iso_date(parent.get("target_date"))
+        if cd is None or pd is None:
+            continue
+        if cd > pd:
+            findings.append(_f(
+                "time_child_late", "warn", n,
+                f"{n['id']} target_date {cd} is after parent {parent['id']} "
+                f"target_date {pd}; a child cannot finish after its parent.",
+                parent_id=parent["id"],
+                child_target_date=str(cd),
+                parent_target_date=str(pd),
+            ))
+    return findings
+
+
+def _dep_order(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Warn when A depends_on B but A.target_date < B.target_date — A is due
+    before the prerequisite it waits on. Only fires when BOTH dates parse."""
+    findings: List[Dict[str, Any]] = []
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    for n in graph["nodes"]:
+        ad = _parse_iso_date(n.get("target_date"))
+        if ad is None:
+            continue
+        for dep in n.get("depends_on") or []:
+            target = nodes_by_id.get(dep)
+            if not target:
+                continue  # dep_dangling owns the missing-ID case
+            bd = _parse_iso_date(target.get("target_date"))
+            if bd is None:
+                continue
+            if ad < bd:
+                findings.append(_f(
+                    "dep_order", "warn", n,
+                    f"{n['id']} target_date {ad} is before its prerequisite "
+                    f"{target['id']} target_date {bd}; A cannot complete before B.",
+                    depends_on=dep,
+                    target_date=str(ad),
+                    prerequisite_target_date=str(bd),
+                ))
     return findings
 
 

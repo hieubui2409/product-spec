@@ -98,6 +98,15 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         "brd_goals": fm.get("brd_goals") or [],
         "epic": fm.get("epic"),
         "prd": fm.get("prd"),
+        # TIME dimension: single ISO target_date (PyYAML parses `2026-09-30` to a
+        # datetime.date; the JSON CLI coerces via default=str). Optional → None
+        # when absent so a v1 artifact stays back-compatible (no churn).
+        "target_date": fm.get("target_date"),
+        # depends_on edge — a list of artifact IDs (PRD+Epic only; the type-guard
+        # in check_consistency flags a non-empty list on any other type). Sorted +
+        # uniform empty default on ALL node types: harmless on a story/goal (the
+        # list is empty there) and makes the dep adjacency build branch-free.
+        "depends_on": sorted(fm.get("depends_on") or []),
         # Raw `risks:` list preserved on the node (not just aggregated into
         # graph["risks"]) so check_consistency can enum-validate each entry's
         # impact/likelihood/status and flag a non-dict entry via invalid_type.

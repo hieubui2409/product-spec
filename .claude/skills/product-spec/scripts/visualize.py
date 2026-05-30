@@ -14,7 +14,7 @@ CLI:
                  [--layers goal,prd,epic,story] [--filter-wont]
                  [--snapshot <snapshot.json>]   # --diff is the legacy alias
 
-Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | delta
+Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | time | delta
 Body viewers: board | explorer
 """
 
@@ -36,7 +36,7 @@ import render_explorer
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "delta", "board", "explorer")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "time", "delta", "board", "explorer")
 FORMATS = ("ascii", "mermaid", "html")
 # Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
 # help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
@@ -56,6 +56,7 @@ BODY_VIEWS = ("board", "explorer")
 _VIEW_KWARGS = {
     "tree": ("lang", "filter_wont"),
     "roadmap": ("lang", "filter_wont"),
+    "time": ("lang", "filter_wont"),
     "persona": ("filter_wont",),
     "moscow": ("lang",),
 }

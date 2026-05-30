@@ -7,6 +7,10 @@ Epic ID = PRD-<SLUG>-E<n>. References parent PRD via `prd` and addresses ≥1 BR
     likelihood: med       # enum: low | med | high
     mitigation: "Fallback provider on standby"     # optional free text
     status: open          # enum: open | mitigated | accepted
+
+TIME dimension (both OPTIONAL — omit and the field defaults to empty/none):
+  target_date: 2026-09-30          # ISO YYYY-MM-DD; the deadline for this epic
+  depends_on: [PRD-AUTH-E2]        # epic/PRD IDs this epic waits on (a cycle is a dep_cycle error)
 -->
 ---
 id: {{id}}
@@ -25,6 +29,9 @@ moscow: {{moscow}}
 horizon: {{horizon}}
 metrics: {{metrics}}
 risks: {{risks}}
+# TIME (optional) — uncomment to set; absence parses cleanly as none/empty:
+# target_date: 2026-09-30
+# depends_on: [PRD-AUTH-E2]
 ---
 
 # {{title}} — Epic {{id}}

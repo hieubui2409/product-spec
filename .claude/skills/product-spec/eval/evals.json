@@ -97,6 +97,43 @@
         {"id": "legacy-no-bodyrender-libs", "_gating": "structural", "text": "The tree HTML does NOT contain the marked copyright banner ('marked v18') or psRenderMarkdown (legacy views inline no sanitizer)."},
         {"id": "ascii-fallback-stays-small", "_gating": "structural", "text": "An ASCII-fallback HTML view (heatmap) stays well under the page-size bound and embeds no Mermaid payload."}
       ]
+    },
+    {
+      "id": 8,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-D6 (T2) true-positive. `time_realism` is an LLM-judgment warn anchored to SCRIPT-precomputed numbers (time_realism_anchors.py --today pins the wall clock so the anchor is reproducible). The script half (anchor math, eligibility) is graded deterministically by test_time_realism.py; THIS eval grades only the LLM JUDGMENT — does it flag the over-threshold epic AND cite the anchors? The rule (design R2): flag only if size=='L' AND child_story_count>=6 AND days_remaining<21.",
+      "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Pre-compute anchors via scripts/time_realism_anchors.py, then apply the time_realism scaffold in references/validation-rules-spec.md. Epic PRD-ROADMAP-E1 is size L, has 6 child stories, target_date 2026-06-15 (days_remaining 14).",
+      "expected_output": "A time_realism warn finding for PRD-ROADMAP-E1 whose context.cited_data carries size=L, child_story_count=6, days_remaining=14, target_date, horizon, plus threshold_crossed. No date math performed by the LLM (days_remaining comes from the anchor).",
+      "files": ["fixtures/time-realism-spec"],
+      "assertions": [
+        {"id": "realism-flags-over-threshold", "_gating": "llm_advisory", "text": "The LLM emits a time_realism warn for PRD-ROADMAP-E1 (size L AND child_story_count>=6 AND days_remaining<21 all hold per the pinned anchor)."},
+        {"id": "realism-cites-data", "_gating": "llm_advisory", "text": "The finding's context.cited_data includes size, child_story_count, days_remaining, target_date, and horizon taken verbatim from the script anchor — the LLM does no date arithmetic."},
+        {"id": "realism-anchor-deterministic", "_gating": "structural", "text": "time_realism_anchors.build_anchors(graph, date(2026,6,1)) returns PRD-ROADMAP-E1 with days_remaining==14 and eligible==true, identical across two runs."}
+      ]
+    },
+    {
+      "id": 9,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-D6 (T2) must-not-flag. The conservative default: when the anchors are below the rule on any dimension, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-ROADMAP-E2 is eligible (size + target_date present) but small / far-future.",
+      "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E2 is size S, has 2 child stories, target_date 2026-12-31 (days_remaining 213) — below the rule on every dimension.",
+      "expected_output": "No time_realism finding for PRD-ROADMAP-E2 (the LLM returns {finding: null, reason: 'below_threshold'}).",
+      "files": ["fixtures/time-realism-spec"],
+      "assertions": [
+        {"id": "realism-no-flag-below-threshold", "_gating": "llm_advisory", "text": "The LLM emits NO time_realism finding for PRD-ROADMAP-E2 — size S and days_remaining 213 are below the rule, so the conservative default returns finding:null."},
+        {"id": "realism-below-threshold-anchor", "_gating": "structural", "text": "time_realism_anchors marks PRD-ROADMAP-E2 eligible==true with days_remaining==213 (anchors present; only the rule does not trip)."}
+      ]
+    },
+    {
+      "id": 10,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-D6 (T2) missing-anchor. Without a target_date the script cannot compute days_remaining, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of inventing a date — the explicit anti-hallucination case.",
+      "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E3 is size L with 8 child stories but has NO target_date.",
+      "expected_output": "No time_realism flag for PRD-ROADMAP-E3; the LLM returns {finding: null, reason: 'missing_anchor'} because days_remaining is null. It must NOT fabricate a date or flag on size+stories alone.",
+      "files": ["fixtures/time-realism-spec"],
+      "assertions": [
+        {"id": "realism-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-ROADMAP-E3 — days_remaining is null, so the rule cannot be evaluated; no fabricated date."},
+        {"id": "realism-missing-anchor-eligibility", "_gating": "structural", "text": "time_realism_anchors marks PRD-ROADMAP-E3 eligible==false with target_date==null and days_remaining==null."}
+      ]
     }
   ]
 }

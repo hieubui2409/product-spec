@@ -15,6 +15,19 @@ End-to-end workflow for the **--validate** (+ optional **--strict**), **--approv
 
 Each script emits JSON to stdout. Collect the union of `findings[]` across the three checkers. `spec_graph --snapshot` writes a snapshot JSON to `docs/product/visuals/.snapshots/` for later delta viz.
 
+The structural checkers above now also emit the TIME-dimension findings: `dep_cycle` + `dep_dangling` (errors, from `check_traceability`) and `dep_order` + `time_child_late` (warns, from `check_consistency`). These are pure date/graph comparisons — deterministic, in-gate (G-B1).
+
+**Out-of-gate advisories (run separately, NEVER part of the `--strict` gate — they consume the wall clock):**
+
+```bash
+# overdue: target_date strictly before --today (default real today; pin for reproducibility)
+./.claude/skills/.venv/bin/python3 scripts/time_advisory.py --root <root> [--today YYYY-MM-DD]
+# time_realism anchors: per-epic {size, child_story_count, days_remaining, …} feeder for the LLM check
+./.claude/skills/.venv/bin/python3 scripts/time_realism_anchors.py --root <root> [--today YYYY-MM-DD]
+```
+
+Both ALWAYS exit 0 (advisories, not gates). Surface `overdue` to the PO as information; feed the `time_realism` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
+
 For CI (no LLM in the loop), use the shell-runnable strict gate which exits non-zero on any error-severity finding:
 
 ```bash
@@ -30,6 +43,7 @@ For each check in `validation-rules-spec.md` whose **owner = LLM**, run a separa
 - **core_value_drift** — for each PRD/epic/story, score alignment with `PRODUCT.md.core_value` as `aligned | weak | off` + a 1-line rationale. Emit a finding (warn) when `weak` or `off`.
 - **gold_plating** — scan PRD scope: does any new requirement go beyond the stated problem? Emit finding (warn).
 - **semantic_duplication** — compare every pair of PRDs/epics within the same product for intent overlap. Emit finding (warn) on suspected duplicates.
+- **time_realism** — for each epic, read the SCRIPT-precomputed anchor from `time_realism_anchors.py` (`size`, `child_story_count`, `days_remaining`, …) and apply the FIXED rule in `validation-rules-spec.md → time_realism LLM Scaffold`: flag (warn) ONLY when `eligible` AND `size=="L"` AND `child_story_count>=6` AND `days_remaining<21`; missing anchor → `missing_anchor` (no flag); otherwise no flag. The finding MUST carry `context.cited_data` (verbatim from the anchor). **Do NO date arithmetic** — the script already computed `days_remaining`.
 - **contradiction** — compare every new artifact against `approved`-status artifacts. If contradicted → emit `error`-severity finding + surface to PO via the contradiction protocol (see below). **Never auto-flip.**
 
 ### Step 3 — Compose the human report
@@ -93,6 +107,7 @@ When generating reports or summaries:
    - Roadmap groupings (now/next/later via the `roadmap` view).
    - Persona list.
    - Top 3 risks (highest impact × likelihood).
+   - **TIME line** — horizon spread (count of PRDs/epics per now/next/later) + the nearest upcoming `target_date` across all artifacts (the soonest deadline; "none set" when no artifact carries a `target_date`). Read dates from the graph nodes' `target_date`; this is a one-line roll-up, parallel to the competition line. Do NOT consume the wall clock here — "nearest" is just the minimum ISO date, so the summary stays reproducible (the overdue-vs-today call is `time_advisory.py`'s job, not the summary's).
 3. Call `generate_templates.py --type exec_summary --values <json> --write` to render `docs/product/exec-summary.md`.
 4. Optionally render an HTML version: `visualize.py --view tree --format html --root <root>` and bundle.
 

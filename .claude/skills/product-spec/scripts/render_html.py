@@ -435,6 +435,17 @@ def assemble(
     """Build the full HTML page string."""
     shell = SHELL_PATH.read_text(encoding="utf-8")
     title = f"{view.title()} View"
+
+    # The `time` view (TIME dimension) builds its own body from the graph when no
+    # body text is supplied: a CYCLE-SAFE Mermaid gantt + depends_on annotations
+    # (render_mermaid.time uses a visited-set walk, so a circular depends_on chain
+    # terminates instead of hanging this renderer — trade-off T1 / G-D3). Imported
+    # lazily: render_mermaid imports render_ascii, neither imports render_html, so
+    # there is no import cycle, but the lazy import keeps module-load order simple.
+    if view == "time" and not view_text:
+        import render_mermaid
+        view_text = render_mermaid.time(graph, lang=lang)
+        view_format = "mermaid"
     generated_at = _now()
     footer = (
         "Self-contained HTML. To re-render: "

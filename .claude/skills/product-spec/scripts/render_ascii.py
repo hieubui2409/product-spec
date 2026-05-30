@@ -214,6 +214,84 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
     return "\n".join(sections) or "(no PRDs/epics/stories yet)"
 
 
+def _dep_safe_order(graph: Dict[str, Any]) -> List[str]:
+    """PRD+Epic ids in a deterministic, CYCLE-SAFE order over `depends_on`.
+
+    Iterative post-order with a visited-set guard — the SAME guard as
+    spec_graph._closure (`if x in seen: continue`) — so a circular chain
+    (A→B→A) terminates instead of hanging the renderer (trade-off T1 / G-D3).
+    A cycle simply degrades to sorted order for its nodes. Kept local to
+    render_ascii (not imported from render_mermaid) so the ASCII path stays
+    zero-dependency and the module graph stays acyclic (render_mermaid imports
+    render_ascii, never the reverse)."""
+    dep_adj: Dict[str, List[str]] = {}
+    for n in graph["nodes"]:
+        if n.get("type") in ("prd", "epic"):
+            dep_adj[n["id"]] = sorted(n.get("depends_on") or [])
+    ordered: List[str] = []
+    seen: set = set()
+    for root in sorted(dep_adj):
+        stack = [(root, False)]
+        while stack:
+            node, processed = stack.pop()
+            if processed:
+                if node not in ordered:
+                    ordered.append(node)
+                continue
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.append((node, True))
+            for dep in dep_adj.get(node, []):
+                if dep in dep_adj and dep not in seen:
+                    stack.append((dep, False))
+    return ordered
+
+
+def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
+    """TIME dimension as a zero-dep text summary (the ASCII default for the
+    `time` view). PRD+Epic grouped by horizon (now/next/later); each line carries
+    the `target_date` (or `(no date)`) and any `depends_on` prerequisites.
+
+    Rows are emitted in a CYCLE-SAFE dep order (prerequisites before dependents
+    where acyclic; a circular chain degrades to sorted order, never hangs —
+    trade-off T1 / G-D3). Deferred items keep the `*` marker unless
+    `filter_wont` drops them (parity with roadmap)."""
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    order_index = {nid: i for i, nid in enumerate(_dep_safe_order(graph))}
+
+    timed = [
+        n for n in graph["nodes"]
+        if n.get("type") in ("prd", "epic")
+        and not (filter_wont and _is_deferred(n))
+    ]
+    timed.sort(key=lambda n: (order_index.get(n["id"], len(order_index)), n["id"]))
+
+    groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for n in timed:
+        groups[n.get("horizon") or "unspecified"].append(n)
+
+    sections: List[str] = []
+    for h in ("now", "next", "later", "unspecified"):
+        items = groups.get(h, [])
+        if not items and h == "unspecified":
+            continue
+        header = label(h, lang).upper() if h != "unspecified" else "UNSPECIFIED"
+        sections.append(f"## {header}")
+        if not items:
+            sections.append("  (empty)")
+            continue
+        for n in items:
+            td = n.get("target_date")
+            date_txt = str(td) if td else f"({label('no_date', lang)})"
+            line = f"  - {_mark(n, n['id'])}  [{date_txt}]"
+            deps = sorted(n.get("depends_on") or [])
+            if deps:
+                line += f"  depends_on: {', '.join(deps)}"
+            sections.append(line)
+    return "\n".join(sections) or "(no PRDs/epics with a horizon yet)"
+
+
 def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
     """persona x feature(PRD/epic) coverage (story count).
 

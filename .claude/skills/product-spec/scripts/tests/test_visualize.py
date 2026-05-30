@@ -135,6 +135,72 @@ def test_explorer_view_registered_and_ascii_is_tree():
     assert render_ascii.explorer(g) == render_ascii.tree(g)
 
 
+def _time_graph():
+    """Minimal graph for the TIME view: two dated PRDs (one depends_on the other)
+    plus a deferred PRD, so the renderer's date/dep/filter_wont paths all fire."""
+    return {
+        "product": {"name": "T"},
+        "nodes": [
+            {"id": "PRD-A", "type": "prd", "horizon": "now",
+             "target_date": "2026-06-30", "depends_on": ["PRD-B"]},
+            {"id": "PRD-B", "type": "prd", "horizon": "now",
+             "target_date": "2026-05-31", "depends_on": []},
+            {"id": "PRD-C", "type": "prd", "horizon": "later",
+             "target_date": None, "depends_on": [], "moscow": "wont"},
+        ],
+        "edges": [],
+    }
+
+
+def test_time_view_registered_as_graph_view():
+    """Phase 3: `time` joins VIEWS as a graph view (NOT a body view) so
+    `visualize.py --view time` is reachable through argparse choices=VIEWS."""
+    import visualize
+    assert "time" in visualize.VIEWS
+    assert "time" not in visualize.BODY_VIEWS
+    # It must accept lang + filter_wont in the shared dispatch map.
+    assert visualize._VIEW_KWARGS.get("time") == ("lang", "filter_wont")
+
+
+def test_ascii_time_groups_by_horizon_with_dates_and_deps():
+    g = _time_graph()
+    out = render_ascii.time(g)
+    assert "## NOW" in out and "## LATER" in out
+    assert "PRD-A" in out and "[2026-06-30]" in out
+    assert "depends_on: PRD-B" in out          # dependency surfaced
+    assert "PRD-C" in out and "*" in out        # deferred kept with marker
+    # Prerequisite (PRD-B) ordered before its dependent (PRD-A) — cycle-safe walk.
+    assert out.index("PRD-B") < out.index("PRD-A")
+    assert render_ascii.time(g) == out          # deterministic
+
+
+def test_ascii_time_filter_wont_drops_deferred():
+    g = _time_graph()
+    out = render_ascii.time(g, filter_wont=True)
+    assert "PRD-C" not in out                    # deferred dropped
+    assert "PRD-A" in out
+
+
+def test_mermaid_time_is_gantt_and_filter_wont_aware():
+    g = _time_graph()
+    out = render_mermaid.time(g)
+    assert out.startswith("```mermaid")
+    assert "gantt" in out and "2026-06-30" in out
+    assert "%% PRD-A depends_on PRD-B" in out    # dep annotation (gantt has no arrow)
+    # filter_wont drops the deferred PRD-C from the gantt tasks.
+    assert "PRD-C" in render_mermaid.time(g)
+    assert "PRD-C" not in render_mermaid.time(g, filter_wont=True)
+
+
+def test_html_time_view_embeds_gantt_and_mermaid_runtime(tmp_path):
+    """The HTML `time` view renders the cycle-safe gantt inside a .mermaid wrapper
+    and inlines the Mermaid runtime (view_format == mermaid)."""
+    g = _time_graph()
+    html = render_html.assemble("time", "mermaid", render_mermaid.time(g), g)
+    assert 'class="mermaid"' in html
+    assert "gantt" in html and "PRD-A" in html
+
+
 def test_legacy_html_adopts_shared_design_system_and_no_sanitizer():
     """Phase 6: the 9 legacy views adopt the shared design system (theme toggle +
     .ve-card + palette) yet inline NO marked/DOMPurify (H4 symmetric gating)."""

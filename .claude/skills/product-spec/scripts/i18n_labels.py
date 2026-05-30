@@ -47,6 +47,9 @@ LABELS: Dict[str, Dict[str, str]] = {
         "prd": "PRD",
         "epic": "Epic",
         "story": "Story",
+        # TIME view (gantt title + ASCII header)
+        "roadmap_deadlines": "Roadmap & Deadlines",
+        "no_date": "no date",
     },
     "vi": {
         "now": "Bây giờ",
@@ -76,6 +79,9 @@ LABELS: Dict[str, Dict[str, str]] = {
         "prd": "PRD",
         "epic": "Epic",
         "story": "Story",
+        # TIME view — VI ships best-effort; native-speaker review of phrasing pending.
+        "roadmap_deadlines": "Lộ trình & Hạn chót",
+        "no_date": "chưa có hạn",
     },
 }
 

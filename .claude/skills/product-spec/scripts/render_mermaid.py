@@ -222,6 +222,99 @@ def risk(graph: Dict[str, Any]) -> str:
     return f"```\n{ascii_risk(graph)}\n```"
 
 
+def _dep_safe_order(graph: Dict[str, Any]) -> List[str]:
+    """Return PRD+Epic ids in a deterministic, CYCLE-SAFE walk over depends_on.
+
+    Walks each node's depends_on chain with a visited-set guard — the SAME guard
+    as spec_graph._closure (`if x in seen: continue`) — so a circular chain
+    (A→B→A) terminates instead of hanging the renderer (trade-off T1 / G-D3).
+    Output is every PRD/Epic id, prerequisites emitted before dependents where
+    the ordering is acyclic; a cycle just degrades to sorted order for its nodes.
+    """
+    dep_adj: Dict[str, List[str]] = {}
+    for n in graph["nodes"]:
+        if n.get("type") in ("prd", "epic"):
+            dep_adj[n["id"]] = sorted(n.get("depends_on") or [])
+    ordered: List[str] = []
+    seen: set = set()
+    for root in sorted(dep_adj):
+        # Iterative post-order: push the node, then its (sorted) deps; emit on
+        # the way back up. The visited set makes a back-edge a no-op (no hang).
+        stack = [(root, False)]
+        while stack:
+            node, processed = stack.pop()
+            if processed:
+                if node not in ordered:
+                    ordered.append(node)
+                continue
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.append((node, True))
+            for dep in dep_adj.get(node, []):
+                if dep in dep_adj and dep not in seen:
+                    stack.append((dep, False))
+    return ordered
+
+
+def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
+    """Mermaid `gantt` for the TIME dimension (design Q47): each PRD/Epic is a
+    task, grouped into now/next/later sections, dated by `target_date` when set.
+
+    The depends_on relationships are surfaced as a deterministic, CYCLE-SAFE
+    ordering (visited-set walk) plus a `%%` dependency annotation — gantt has no
+    cross-task arrow, and a circular chain must not hang the renderer (T1/G-D3).
+
+    `filter_wont=True` drops deferred (moscow=wont / scope=out) tasks, parity
+    with roadmap and the ASCII `time` view.
+    """
+    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
+    order = _dep_safe_order(graph)
+    order_index = {nid: i for i, nid in enumerate(order)}
+
+    timed = [
+        n for n in graph["nodes"]
+        if n.get("type") in ("prd", "epic")
+        and not (filter_wont and _is_deferred(n))
+    ]
+    # Sort by the cycle-safe dep order first, then id — stable + deterministic.
+    timed.sort(key=lambda n: (order_index.get(n["id"], len(order)), n["id"]))
+
+    by_horizon: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for n in timed:
+        by_horizon[n.get("horizon") or "unspecified"].append(n)
+
+    lines = ["gantt", f"  title {_safe_label(label('roadmap_deadlines', lang))}", "  dateFormat YYYY-MM-DD"]
+    for h in ("now", "next", "later", "unspecified"):
+        items = by_horizon.get(h, [])
+        if not items:
+            continue
+        section = label(h, lang) if h != "unspecified" else "Unspecified"
+        lines.append(f"  section {_safe_label(section)}")
+        for n in items:
+            td = n.get("target_date")
+            # Task id token must be Mermaid-safe; label is the human id.
+            task_label = _safe_label(n["id"])
+            tid = _safe_id(n["id"])
+            if td:
+                # A milestone on the target date (single-day) keeps the gantt
+                # valid without inventing a duration the spec never declared.
+                lines.append(f"  {task_label} :milestone, {tid}, {_safe_label(str(td))}, 0d")
+            else:
+                lines.append(f"  {task_label} :{tid}, 1d")
+
+    # Dependency annotations (cycle-safe — `order` was built with a visited set).
+    dep_lines = []
+    for n in timed:
+        for dep in sorted(n.get("depends_on") or []):
+            if dep in nodes_by_id:
+                dep_lines.append(f"%% {_safe_label(n['id'])} depends_on {_safe_label(dep)}")
+    if dep_lines:
+        lines.append("")
+        lines.extend(dep_lines)
+    return _fence("\n".join(lines))
+
+
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     """Mermaid delta: node ADD/REMOVE + PRODUCT drift only. A field-only edit (e.g.
     a story's status flip with no add/remove) renders as '(no changes)' here —

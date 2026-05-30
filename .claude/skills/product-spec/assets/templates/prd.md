@@ -8,6 +8,10 @@ Does NOT enumerate stories (that lives in epic/story files).
     likelihood: med       # enum: low | med | high
     mitigation: "Fallback provider on standby"     # optional free text
     status: open          # enum: open | mitigated | accepted
+
+TIME dimension (both OPTIONAL — omit and the field defaults to empty/none):
+  target_date: 2026-09-30      # ISO YYYY-MM-DD; the deadline for this PRD
+  depends_on: [PRD-BILLING]    # IDs this PRD waits on (PRD+Epic only; a cycle is a dep_cycle error)
 -->
 ---
 id: {{id}}
@@ -25,6 +29,9 @@ moscow: {{moscow}}
 horizon: {{horizon}}
 metrics: {{metrics}}
 risks: {{risks}}
+# TIME (optional) — uncomment to set; absence parses cleanly as none/empty:
+# target_date: 2026-09-30
+# depends_on: [PRD-OTHER]
 ---
 
 # {{title}} — PRD {{id}}

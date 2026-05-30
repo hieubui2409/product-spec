@@ -39,10 +39,10 @@ Product-Owner-facing skill for building and maintaining a strictly-traceable spe
 | `--summary` | Generate 1-page exec summary (markdown + optional HTML). |
 | `--approve` | Validate → warn-not-block → record owner+date → flip `status: approved`. |
 | `--update` | Delta-update: ask what changed → compute affected downstream set → flag for PO review (never auto-rewrite prose) → append change-log. |
-| `--viz <view>` | Render visualization. Graph views (default `ascii`): `tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `risk`, `delta`. Body viewers (default `html`): `board` (kanban), `explorer` (Tree/Flat-tabs/Table-tree). |
+| `--viz <view>` | Render visualization. Graph views (default `ascii`): `tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `risk`, `time` (roadmap + deadlines / Mermaid gantt), `delta`. Body viewers (default `html`): `board` (kanban), `explorer` (Tree/Flat-tabs/Table-tree). |
 | `--format <fmt>` | Visualization format: `ascii` · `mermaid` · `html`. Default `ascii` for graph views, `html` for `board`/`explorer` (which fall back to ascii on `--format mermaid`). |
 | `--group-by <field>` | `--viz board` column grouping: `status` (default) · `horizon` · `moscow`. |
-| `--filter-wont` | Hide deferred items (`moscow: wont` or `scope: out`) from `tree`/`roadmap`/`persona`/`board`/`explorer`. Default keeps them visible (`*` marker on graph views; a card on board/explorer). |
+| `--filter-wont` | Hide deferred items (`moscow: wont` or `scope: out`) from `tree`/`roadmap`/`time`/`persona`/`board`/`explorer`. Default keeps them visible (`*` marker on graph views; a card on board/explorer). |
 | `--export <all\|ID\|list>` | F1 read-once Export: assemble a spec slice into ONE self-contained doc under `docs/product/exports/`. Pairs with `--layers`, `--depth`, `--compact-mode`, `--format md\|html`. See `references/workflow-export.md`. |
 | `--layers <types>` | Filter which artifact types appear. `--export` uses doc-layer buckets `vision,brd,prd,epic,story` (goals sit in the `brd` bucket); `--viz board/explorer` filter by artifact TYPE `goal,prd,epic,story`. Each subset is self-consistent with its own surface's help; an unknown token (or one from the other surface's vocab) is **rejected** with a non-zero exit, never silently dropped. |
 | `--depth <preset>` | `--export` verbosity: `context` (default) · `full` · `brief`. |
