@@ -18,6 +18,7 @@
 /out/
 /dist/
 bin/
+.idea
 
 # production
 /build

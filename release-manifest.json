@@ -1,6 +1,6 @@
 {
-  "version": "2.19.1",
-  "generatedAt": "2026-05-25T18:14:17.753Z",
+  "version": "2.19.2-beta.3",
+  "generatedAt": "2026-05-28T10:06:02.347Z",
   "files": [
     {
       "path": ".ck.json",
@@ -418,7 +418,7 @@
     },
     {
       "path": "hooks/.logs/hook-log.jsonl",
-      "checksum": "41a2cf1dd4d0cf0f1a16347000b4c214aac383301d512c03336dcfc36985259a",
+      "checksum": "370e4e0dc8417c332a7da4251477b2ee53374d21ece4aa97b93152769cbc0c72",
       "size": 1760
     },
     {
@@ -669,9 +669,9 @@
     },
     {
       "path": "hooks/__tests__/simplify-gate.test.cjs",
-      "checksum": "5bc0b0bf4b27fff8364eb3603092257a6fc68805804ec8903ad8adce4ebc9327",
-      "size": 7400,
-      "lastModified": "2026-04-18T16:01:34-04:00"
+      "checksum": "f40e689c194a0a0c4f08f584c555ac5cefb1735a9286c1a2ebe4bee3873afcae",
+      "size": 7849,
+      "lastModified": "2026-05-26T13:22:41-04:00"
     },
     {
       "path": "hooks/__tests__/subagent-init.test.cjs",
@@ -1053,9 +1053,9 @@
     },
     {
       "path": "hooks/simplify-gate.cjs",
-      "checksum": "f755b8a136ba0b415c8b21100d21154133a3523307cc2c212674388e6acd46d1",
-      "size": 5975,
-      "lastModified": "2026-04-18T16:01:34-04:00"
+      "checksum": "8d475bad4b78c46c9a6403b9028d3205811a82428915a154c1f9a197e31d29c6",
+      "size": 6586,
+      "lastModified": "2026-05-26T13:22:41-04:00"
     },
     {
       "path": "hooks/subagent-init.cjs",
@@ -1197,9 +1197,9 @@
     },
     {
       "path": "metadata.json",
-      "checksum": "59ad16465625f9c96309014ddf72c9834a8b11e7c22324fb6a0ce44ad56dde31",
-      "size": 4884,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "7e655f518bff4b6a358e9dc1259d39f5b6a51da2c7c86072f6aea36506a8b75f",
+      "size": 4891,
+      "lastModified": "2026-05-28T10:01:29Z"
     },
     {
       "path": "output-styles/coding-level-0-eli5.md",
@@ -1281,9 +1281,9 @@
     },
     {
       "path": "rules/skill-workflow-routing.md",
-      "checksum": "6ecf3f1ffa1169baad7596f237b2abfef1195f3d578f18ebf090b626062f6a1d",
-      "size": 1642,
-      "lastModified": "2026-04-10T16:08:26-04:00"
+      "checksum": "d4eec30d493d5f06c87689f1518b5f8d626cffaf0e2b137bc41cd6ed7239678f",
+      "size": 2383,
+      "lastModified": "2026-05-28T17:05:32+07:00"
     },
     {
       "path": "rules/team-coordination-rules.md",
@@ -7016,6 +7016,24 @@
       "lastModified": "2026-04-02T18:07:38-04:00"
     },
     {
+      "path": "skills/review-pr/SKILL.md",
+      "checksum": "f7ace814fa1299c34898b055c4935fa837ed18a40a405e0762c033c96da8f3dd",
+      "size": 12819,
+      "lastModified": "2026-05-28T17:05:32+07:00"
+    },
+    {
+      "path": "skills/review-pr/references/anti-ai-slop.md",
+      "checksum": "b9594a93271cb4b524639ae48827abd0978abeee943217a94158ad094e43455c",
+      "size": 14483,
+      "lastModified": "2026-05-28T17:05:32+07:00"
+    },
+    {
+      "path": "skills/review-pr/references/project-rules-example.md",
+      "checksum": "cbabfbbfd40ac454138dea73e9d9b413ac33f16ad5462f60dc305fe53c4bfca7",
+      "size": 6388,
+      "lastModified": "2026-05-28T17:05:32+07:00"
+    },
+    {
       "path": "skills/scout/SKILL.md",
       "checksum": "f51582bdab6a8ebbead632a88b4069faa01c8c7758349175eaa899dcc47850f0",
       "size": 3952,
@@ -8865,21 +8883,39 @@
     },
     {
       "path": "skills/watzup/SKILL.md",
-      "checksum": "16088d9b945931e21a258b102811a43b210221a64a4d86bbd5c36552cd56494b",
-      "size": 2355,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "7102a498f9f1610e72e3efeb035f0355262776d8cf97b049188d4da2532a52f1",
+      "size": 3625,
+      "lastModified": "2026-05-28T17:00:36+07:00"
+    },
+    {
+      "path": "skills/watzup/scripts/lib/checkboxes.cjs",
+      "checksum": "9fa7ebd9f31ba8d80d217baed8930bfa5ca6d36a798c657ec3f460b665da4c6e",
+      "size": 2220,
+      "lastModified": "2026-05-28T17:00:36+07:00"
+    },
+    {
+      "path": "skills/watzup/scripts/lib/priority.cjs",
+      "checksum": "19dc70cbb94646e10f302d8ee853cd2357686cd45eb60831527ff9a1b07e521a",
+      "size": 5130,
+      "lastModified": "2026-05-28T17:00:36+07:00"
+    },
+    {
+      "path": "skills/watzup/scripts/lib/roadmap.cjs",
+      "checksum": "35ff2c658634ef4f5f972a3ab5a880528d9df036901652f408a784fac007f74f",
+      "size": 3841,
+      "lastModified": "2026-05-28T17:00:36+07:00"
     },
     {
       "path": "skills/watzup/scripts/watzup-scan.cjs",
-      "checksum": "5f5440c4e09641a5b0f4a2c00cf82eea2596d2e7c6c066aef55c27db6c0251ac",
-      "size": 18874,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "7508101c36788af017a2b6832aca4bd81a3d1d3315f01536c0a47eb222fe3be3",
+      "size": 19786,
+      "lastModified": "2026-05-28T17:00:36+07:00"
     },
     {
       "path": "skills/watzup/scripts/watzup-scan.test.cjs",
-      "checksum": "b9b52c46e3bf97c1500b9264a7e9deef76ae55106dafe0329fe4ab85e25363a3",
-      "size": 8719,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "b0b4d2cdbe0e52d571462edc11338cd5a00ffb27ae5fdb153417c1157934f5a2",
+      "size": 15729,
+      "lastModified": "2026-05-28T17:00:36+07:00"
     },
     {
       "path": "skills/web-design-guidelines/SKILL.md",
