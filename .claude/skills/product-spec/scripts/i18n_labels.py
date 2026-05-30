@@ -43,9 +43,8 @@ LABELS: Dict[str, Dict[str, str]] = {
         "no_results": "No matching artifacts",
         "ac_count": "AC",
         # goal detail panel — goals carry no prose body, so the board/explorer
-        # synthesize one from these structured fields (render_html.goal_detail_md).
+        # synthesize one from the goal's metrics (render_html.goal_detail_md).
         "metrics": "Metrics",
-        "owner": "Owner",
         # artifact-type labels — viewer Layer facet + explorer Flat-tabs tab names
         "goal": "Goal",
         "prd": "PRD",
@@ -97,7 +96,6 @@ LABELS: Dict[str, Dict[str, str]] = {
         "no_results": "Không tìm thấy hạng mục phù hợp",
         "ac_count": "Tiêu chí",
         "metrics": "Chỉ số",
-        "owner": "Phụ trách",
         "goal": "Mục tiêu",
         "prd": "PRD",
         "epic": "Epic",

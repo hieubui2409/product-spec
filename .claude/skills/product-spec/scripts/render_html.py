@@ -636,21 +636,17 @@ def goal_detail_md(node: Dict[str, Any], lang: str = "en") -> str:
     (spec_graph.index_artifacts deliberately does not key them — the BRD prose is the
     container's, not any one goal's). The board/explorer detail panel renders a
     per-card markdown body, so a goal card would otherwise open empty while a PRD/
-    epic/story shows its file body. Surface the goal's own structured fields that no
-    card badge already carries — the metrics it is measured by, and its owner — as
-    markdown that flows through the same client sanitize chokepoint as every body.
-    Returns "" for any non-goal node so callers fall back to the artifact body, and
-    "" for a goal with neither field (nothing truthful to synthesize)."""
+    epic/story shows its file body. Surface the goal's metrics — the one field no
+    card badge or table column in either viewer already shows (status/owner/etc. are
+    columns) — as markdown that flows through the same client sanitize chokepoint as
+    every body. Returns "" for any non-goal node so callers fall back to the artifact
+    body, and "" for a goal with no metrics (nothing additive to synthesize)."""
     if node.get("type") != "goal":
         return ""
-    lines = []
     metrics = [str(m) for m in (node.get("metrics") or []) if m]
-    if metrics:
-        lines.append(f"**{label('metrics', lang)}:** " + ", ".join(metrics))
-    owner = node.get("owner")
-    if isinstance(owner, str) and owner.strip():
-        lines.append(f"**{label('owner', lang)}:** {owner.strip()}")
-    return "\n\n".join(lines)
+    if not metrics:
+        return ""
+    return f"**{label('metrics', lang)}:** " + ", ".join(metrics)
 
 
 def chrome_values(graph: Dict[str, Any], lang: str, title: str) -> Dict[str, str]:

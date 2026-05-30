@@ -104,14 +104,13 @@ def test_board_payload_missing_group_field_buckets_unassigned():
 # ---------- goal cards carry a synthesized detail body (no empty panel) --------
 
 def test_goal_detail_md_synthesizes_metrics_and_skips_non_goal():
-    """A goal has no file body; goal_detail_md surfaces its metrics so the detail
-    panel is not empty. A non-goal node returns "" (caller uses the artifact body)."""
-    goal = {"type": "goal", "metrics": ["arr", "repeat-rate"], "owner": "Jane Doe"}
-    md = render_html.goal_detail_md(goal, "en")
+    """A goal has no file body; goal_detail_md surfaces its metrics (the one field
+    no badge/column already shows) so the detail panel is not empty. A non-goal node
+    returns "" (caller uses the artifact body)."""
+    md = render_html.goal_detail_md({"type": "goal", "metrics": ["arr", "repeat-rate"]}, "en")
     assert "**Metrics:** arr, repeat-rate" in md
-    assert "**Owner:** Jane Doe" in md
     assert render_html.goal_detail_md({"type": "prd"}, "en") == ""
-    # a goal with nothing to surface yields "" rather than a stray empty heading
+    # a goal with no metrics yields "" rather than a stray empty heading
     assert render_html.goal_detail_md({"type": "goal"}, "en") == ""
 
 
