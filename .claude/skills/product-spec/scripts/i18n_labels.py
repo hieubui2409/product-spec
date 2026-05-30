@@ -13,6 +13,16 @@ Frontmatter keys and IDs always stay English regardless of `lang`.
 from typing import Dict
 
 
+# Programmatic native-review-pending caveat (bilingual convention). The VI
+# locale ships best-effort; a native speaker has not yet reviewed phrasing.
+# Renderers surface this once when --lang vi is active so the PO knows the VI
+# labels are provisional — it is a *consumable* string here, not just an inline
+# code comment, so the board/explorer/visualization headers can show it.
+NATIVE_REVIEW_NOTE = (
+    "VI labels ship best-effort — native-speaker review of phrasing is pending."
+)
+
+
 LABELS: Dict[str, Dict[str, str]] = {
     "en": {
         # horizon labels
@@ -61,6 +71,11 @@ LABELS: Dict[str, Dict[str, str]] = {
         "threat_low": "low",
         "threat_med": "med",
         "threat_high": "high",
+        # Multi-dim impact view names (page titles / nav labels). Distinct from
+        # the dimension enums above so each localizes independently.
+        "time": "Time",
+        "risk": "Risk",
+        "dashboard": "Impact Dashboard",
     },
     "vi": {
         "now": "Bây giờ",
@@ -102,6 +117,10 @@ LABELS: Dict[str, Dict[str, str]] = {
         "threat_low": "thấp",
         "threat_med": "trung bình",
         "threat_high": "cao",
+        # Multi-dim impact view names — VI ships best-effort; native review pending.
+        "time": "Thời gian",
+        "risk": "Rủi ro",
+        "dashboard": "Bảng tổng quan tác động",
     },
 }
 

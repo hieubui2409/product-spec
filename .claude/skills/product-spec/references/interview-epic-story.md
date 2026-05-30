@@ -34,11 +34,25 @@ Question bank for decomposing a PRD into epics and stories. Each story has expli
 
 ## E5 — Epic Risks (OPTIONAL)
 
-**target:** `epic.md → OPTIONAL: risks_section` + `risks` frontmatter
+**target:** `epic.md → OPTIONAL: risks_section` + `risks:` frontmatter (each entry `{description, impact, likelihood, status, mitigation}`)
 
-- **EN:** "Any specific risks for this epic — impact and likelihood?"
-- **VI:** "Có rủi ro cụ thể nào cho epic này — mức ảnh hưởng và khả năng xảy ra?"
-- **Mode:** for each risk, ask impact (low/med/high) + likelihood (low/med/high).
+- **EN:** "Any specific risks for this epic? For each: describe it, then **impact** (low/med/high), **likelihood** (low/med/high), **status** (open/mitigated/accepted), and a **mitigation**."
+- **VI:** "Có rủi ro cụ thể nào cho epic này? Mỗi rủi ro: mô tả, rồi **ảnh hưởng** (low/med/high), **khả năng xảy ra** (low/med/high), **trạng thái** (open/mitigated/accepted), và **cách giảm thiểu**."
+- **Mode:** for each risk, capture all five keys.
+- **Enums (closed):** `impact`/`likelihood` ∈ `low | med | high`; `status` ∈ `open | mitigated | accepted`. Only `description` is required; leave an enum unset rather than guessing.
+
+## E6 — Epic Target Date & Dependencies (structured, OPTIONAL)
+
+**target:** `epic.md → target_date` (single ISO date), `depends_on` (list of artifact IDs)
+
+- **EN:**
+  - "Does this epic have a target date? Give me a calendar date (YYYY-MM-DD)."
+  - "Does this epic wait on another PRD or epic before it can start? Name them — I'll record the IDs."
+- **VI:**
+  - "Epic này có ngày mục tiêu không? Cho tôi một ngày lịch (YYYY-MM-DD)."
+  - "Epic này có phải chờ PRD hay epic nào khác trước khi bắt đầu không? Nêu tên — tôi sẽ ghi lại các ID."
+- **target_date:** a single `YYYY-MM-DD`. An epic due after its parent PRD's `target_date` (or before something it depends on) warns at validate (`time_child_late`).
+- **depends_on:** a list of existing PRD/epic IDs (edge targets). Unresolved → `dep_dangling` (error); circular → `dep_cycle` (error).
 
 ---
 
@@ -100,6 +114,7 @@ For each story under the epic:
 ## Adaptivity Rules
 
 - E5 risks: skip silently if PRD already lists epic-level risks.
+- E6 (target date / depends_on): optional; skip if the epic has no schedule constraint and waits on nothing. Only offer existing PRD/epic IDs as `depends_on` targets.
 - After each story, ask "another story under this epic, or move to the next epic?"
 - AC quality check: if any AC contains a vague phrase, the LLM proposes a quantified rewrite for PO accept/edit.
 - Persona inheritance: a story's personas must be a subset of the epic's personas; if PO names a new one, ask whether to add it to the epic too.

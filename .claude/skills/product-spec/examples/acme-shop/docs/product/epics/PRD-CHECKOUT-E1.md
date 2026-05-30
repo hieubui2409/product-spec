@@ -13,23 +13,36 @@ personas: [shopper]
 scope: in
 moscow: must
 horizon: now
+target_date: 2026-08-15
+risks:
+  - description: "Magic-link emails land in spam, blocking sign-in at checkout."
+    impact: med
+    likelihood: med
+    status: open
+    mitigation: "Use an authenticated sending domain (SPF/DKIM) + a fallback resend."
 ---
 
-# Sign-In + Checkout Epic
+# Sign-In + Address Epic
 
 ## Goal
 
-Shoppers can complete a purchase end-to-end from cart to receipt.
+Shoppers can sign in and enter a delivery address, ready to pay.
 
 ## Business Context
 
-- PRD requirement: Single-page checkout form + Stripe payment.
+- PRD requirement: Magic-link sign-in + single-page address entry.
 - BRD goal: BRD-G1 (brands ship orders so we onboard more).
 
 ## Success Criteria
 
-Order count > 0 in the first week post-launch; checkout-completion-rate above 50%.
+Sign-in success rate above 90%; address step completion above 80%.
 
 ## Scope
 
-Sign-in (email magic link), address entry, Stripe payment widget, confirmation email.
+Sign-in (email magic link), address entry. Payment + confirmation are the follow-on Stripe Payment epic
+(PRD-CHECKOUT-E2).
+
+## Risks
+
+- **Magic-link spam** (impact: med, likelihood: med, open) — sign-in emails caught by spam filters. Mitigation:
+  authenticated sending domain + resend fallback.

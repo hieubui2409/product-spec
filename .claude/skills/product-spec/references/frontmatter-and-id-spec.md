@@ -6,12 +6,13 @@ Canonical YAML schema for every artifact under `docs/product/`, plus the parent-
 
 Parent-scoped — globally unique by construction, lineage readable, no central allocator needed.
 
-| Artifact | Pattern | Example | Notes |
-|----------|---------|---------|-------|
-| BRD goal | `BRD-G<n>` | `BRD-G1`, `BRD-G2` | `<n>` = next free integer in BRD. |
-| PRD | `PRD-<SLUG>` | `PRD-AUTH`, `PRD-BILLING` | `<SLUG>` = uppercase, ≤16 chars, derived from feature-area. |
-| Epic | `PRD-<SLUG>-E<n>` | `PRD-AUTH-E1`, `PRD-AUTH-E2` | `<n>` = next free integer within that PRD. |
-| Story | `PRD-<SLUG>-E<n>-S<n>` | `PRD-AUTH-E1-S1` | `<n>` = next free integer within that epic. |
+| Artifact   | Pattern                | Example                          | Notes                                                                                      |
+|------------|------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| BRD goal   | `BRD-G<n>`             | `BRD-G1`, `BRD-G2`               | `<n>` = next free integer in BRD.                                                          |
+| PRD        | `PRD-<SLUG>`           | `PRD-AUTH`, `PRD-BILLING`        | `<SLUG>` = uppercase, ≤16 chars, derived from feature-area.                                |
+| Epic       | `PRD-<SLUG>-E<n>`      | `PRD-AUTH-E1`, `PRD-AUTH-E2`     | `<n>` = next free integer within that PRD.                                                 |
+| Story      | `PRD-<SLUG>-E<n>-S<n>` | `PRD-AUTH-E1-S1`                 | `<n>` = next free integer within that epic.                                                |
+| Competitor | `COMP-<SLUG>`          | `COMP-SHOPIFY`, `COMP-BIGCARTEL` | Declared in the BRD's `competitors:` list (the DRY identity home). Same slug rules as PRD. |
 
 **Slug rules:** uppercase ASCII letters and digits only; hyphen permitted but prefer flat (e.g., `AUTH`, `BILLING`, `ONBOARDING`). No spaces, no diacritics. The slug is permanent — renaming a PRD does not update existing epic/story IDs (they keep the original lineage).
 
@@ -103,11 +104,69 @@ acceptance_criteria:
   - "Given five failed sign-ins, when the user tries again, then the account is rate-limited for 15 minutes."
 ```
 
-### `risks` (epic / PRD only)
-Optional list, each item: `{description: str, impact: low|med|high, likelihood: low|med|high}`. Drives the risk-matrix viz.
+### Multi-dimensional impact fields (RISK / TIME / COMPETITION)
+
+These optional fields carry the multi-dimensional impact data. All are optional, so a spec that omits them parses and
+validates exactly as before (back-compat). **COST is deliberately NOT a field** — it is approximated by the existing
+`size: S|M|L` proxy on stories; the skill stores no money/effort figure.
+
+#### `risks` (epic / PRD only)
+
+Optional list, each item:
+`{description: str, impact: low|med|high, likelihood: low|med|high, status: open|mitigated|accepted, mitigation: str}`.
+`description` is the only required key; `impact`/`likelihood`/`status` are validated against their closed enums (a
+risk's `status` is `open|mitigated|accepted`, distinct from an artifact's `draft|review|approved`). Drives the
+risk-matrix viz; a top-heavy register (>50% `impact: high`) warns, and a sizeable epic with no risks warns (blind spot).
+
+```yaml
+risks:
+  - description: "Stripe onboarding/KYC delays a brand's first payout, blocking launch."
+    impact: high
+    likelihood: med
+    status: open
+    mitigation: "Pre-collect KYC docs during onboarding, before checkout goes live."
+```
+
+#### `target_date` (PRD / epic) and `depends_on` (PRD / epic)
+
+- `target_date` — a single ISO calendar date (`YYYY-MM-DD`). A child due after its parent, or before a prerequisite,
+  warns. Only the SHAPE is structural; overdue-vs-today is advisory (a separate `time_advisory.py`, outside the validate
+  gate, so `--validate` stays reproducible).
+- `depends_on` — a list of artifact IDs this artifact waits on (PRD + Epic only). An unresolved target is `dep_dangling`
+  (error); a circular chain is `dep_cycle` (error).
+
+```yaml
+target_date: 2026-09-30
+depends_on: [ PRD-CHECKOUT-E1 ]
+```
+
+#### `competitors` (BRD only) and `competitive_parity` (PRD)
+
+Competitor IDENTITY lives ONCE in the BRD's `competitors:` list (the DRY home). A PRD references those competitors by ID
+via the ID-keyed `competitive_parity` map.
+
+- `competitors` — list, each item: `{id: COMP-<SLUG>, name: str, url: str, threat: low|med|high}`. A `url` beginning
+  `private:` is dropped before it reaches the graph/render (OpSec chokepoint).
+- `competitive_parity` — mapping `{COMP-ID: ahead|parity|behind|none}`. Each key must resolve to a BRD competitor id
+  (else `unknown_ref` error); each value is a parity enum.
+
+```yaml
+# brd.md
+competitors:
+  - id: COMP-SHOPIFY
+    name: "Shopify"
+    url: "https://www.shopify.com"
+    threat: high
+# prds/checkout.md
+competitive_parity:
+  COMP-SHOPIFY: behind
+```
 
 ### `assumptions`, `dependencies`, `out_of_scope` (PRD)
-Optional lists of free-text bullets. Documented in the PRD's frontmatter when surfaced during interview; otherwise omitted.
+
+Optional lists of free-text bullets. Documented in the PRD's frontmatter when surfaced during interview; otherwise
+omitted. (For structured ordering dependencies, prefer `depends_on` above; `dependencies` here remains the free-text
+narrative bucket.)
 
 ## Approval Block (when `status: approved`)
 

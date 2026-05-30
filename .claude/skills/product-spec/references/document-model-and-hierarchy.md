@@ -40,17 +40,18 @@ The artifact roles, the DRY "one home per fact" rule, and the BRD(1) ↔ PRD(man
 
 ## Content Ownership (the DRY contract)
 
-| Fact | Lives in | Why |
-|------|----------|-----|
-| Product name, one-liner, current state, deployment, roadmap one-liner, core-value sentence | `PRODUCT.md` | thin labels, referenced from every other artifact |
-| Persona definitions (narrative) | `vision.md` | one place to define; labels-only elsewhere |
-| Persona labels | `PRODUCT.md` + each artifact that scopes to specific personas | labels propagate; definitions don't |
-| Business goals + success metrics | `brd.md` | single source for goal IDs (`BRD-G<n>`) |
-| Stakeholders, market, constraints | `brd.md` | top-of-funnel context |
-| Feature-area narrative (problem, use cases, NFRs, scope-in/out, deps, risks) | the PRD | the PRD is the home of feature-level scope |
-| Functional requirements (MoSCoW list) | the PRD | reqs carry the MoSCoW tag, not the stories |
-| Epic goal + business-context links (→ PRD req + BRD goal) | the epic | epics scope a slice of a PRD |
-| Story narrative (As-a/I-want/so-that) + AC + size + personas | the story | only stories carry AC |
+| Fact                                                                                       | Lives in                                                      | Why                                                                                                                                        |
+|--------------------------------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Product name, one-liner, current state, deployment, roadmap one-liner, core-value sentence | `PRODUCT.md`                                                  | thin labels, referenced from every other artifact                                                                                          |
+| Persona definitions (narrative)                                                            | `vision.md`                                                   | one place to define; labels-only elsewhere                                                                                                 |
+| Persona labels                                                                             | `PRODUCT.md` + each artifact that scopes to specific personas | labels propagate; definitions don't                                                                                                        |
+| Business goals + success metrics                                                           | `brd.md`                                                      | single source for goal IDs (`BRD-G<n>`)                                                                                                    |
+| Stakeholders, market, constraints                                                          | `brd.md`                                                      | top-of-funnel context                                                                                                                      |
+| Competitor identity (`id`/`name`/`url`/`threat`)                                           | `brd.md` `competitors:`                                       | single DRY home for competitor IDs (`COMP-<SLUG>`); a PRD's `competitive_parity` only references these IDs, never re-declares a competitor |
+| Feature-area narrative (problem, use cases, NFRs, scope-in/out, deps, risks)               | the PRD                                                       | the PRD is the home of feature-level scope                                                                                                 |
+| Functional requirements (MoSCoW list)                                                      | the PRD                                                       | reqs carry the MoSCoW tag, not the stories                                                                                                 |
+| Epic goal + business-context links (→ PRD req + BRD goal)                                  | the epic                                                      | epics scope a slice of a PRD                                                                                                               |
+| Story narrative (As-a/I-want/so-that) + AC + size + personas                               | the story                                                     | only stories carry AC                                                                                                                      |
 
 ## What Lives Where vs Not
 
@@ -67,6 +68,22 @@ The artifact roles, the DRY "one home per fact" rule, and the BRD(1) ↔ PRD(man
 ## BRD(1) ↔ PRD(many)
 
 One BRD per product. Many PRDs per BRD. The PRD lists which BRD goals it advances (via `brd_goals: [BRD-G1, BRD-G3]`). One BRD goal can be addressed by multiple PRDs — that's expected. Validation flags BRD goals with **zero** PRDs as `unaddressed_parent` (structural — sufficiency is a separate LLM judgment).
+
+## Impact-Pass vs Catalog (don't conflate)
+
+Two distinct ways "what's affected" is computed — keep them separate:
+
+- **Impact-pass** — the per-CHANGE propagation surface used on `--validate` and `--update`. It runs
+  `spec_graph.downstream(<changed-id>)` over the **live** graph for the IDs that actually changed (snapshot-delta), then
+  layers a one-line LLM annotation (`dim_touched · one_liner · action`) per affected node and flags it for PO review.
+  It is dynamic (depends on *what changed*), partially LLM-graded, and never auto-rewrites prose. Reports to
+  `docs/product/impact/<ts>.md` and appends to the existing `affected_set:` change-log field.
+- **Catalog** — a *static* enumeration of the whole spec: every node/edge as it exists right now, independent of any
+  change. The traceability matrix, the `tree`/`explorer` views, and the snapshot JSON are catalogs. Deterministic,
+  no LLM, no notion of "what changed".
+
+Rule of thumb: a **catalog** answers "what exists?"; the **impact-pass** answers "given THIS change, what now needs a
+look?". The graph (`spec_graph.py`) is the single source for both, but only the impact-pass consumes the snapshot delta.
 
 ## DRY Rule — Why It Matters
 

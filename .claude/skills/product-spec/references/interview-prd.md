@@ -66,12 +66,57 @@ For each requirement the PO names, ask:
 - **EN:** "Anything close to this feature that is EXPLICITLY out of scope this round?"
 - **VI:** "Có gì gần với tính năng này CHẮC CHẮN ngoài phạm vi lần này?"
 
-## P8 — Dependencies & Risks (OPTIONAL)
+## P8 — Dependencies & Risks (narrative, OPTIONAL)
 
 **target:** `prd.md → OPTIONAL: dependencies_risks`
 
 - **EN:** "What does this feature depend on (other teams, third-party services, data)? What could go wrong?"
 - **VI:** "Tính năng này phụ thuộc gì (đội khác, dịch vụ ngoài, dữ liệu)? Điều gì có thể sai?"
+
+## P8a — Structured Risks (OPTIONAL)
+
+**target:** `prd.md → risks:` (each entry `{description, impact, likelihood, status, mitigation}`)
+
+For each risk the PO raises in P8, capture the four enums + mitigation (same shape as the epic/BRD risk bank):
+
+- **EN:**
+  - "Describe the risk in one line."
+  - "**Impact** if it happens — low / med / high?"
+  - "**Likelihood** — low / med / high?"
+  - "**Status** — open, mitigated, or accepted?"
+  - "**Mitigation** — what would you do about it?"
+- **VI:**
+  - "Mô tả rủi ro trong một câu."
+  - "**Ảnh hưởng** nếu xảy ra — thấp (low) / trung bình (med) / cao (high)?"
+  - "**Khả năng xảy ra** — thấp (low) / trung bình (med) / cao (high)?"
+  - "**Trạng thái** — chưa xử lý (open), đã giảm thiểu (mitigated), hay chấp nhận (accepted)?"
+  - "**Cách giảm thiểu** — bạn sẽ làm gì với nó?"
+- **Enums (closed):** `impact`/`likelihood` ∈ `low | med | high`; `status` ∈ `open | mitigated | accepted`. Only `description` is required.
+
+## P8b — Target Date & Dependencies (structured, OPTIONAL)
+
+**target:** `prd.md → target_date` (single ISO date), `depends_on` (list of artifact IDs)
+
+- **EN:**
+  - "Is there a target date for this feature-area? Give me a calendar date (YYYY-MM-DD)."
+  - "Does this feature wait on any other PRD or epic before it can ship? Name them — I'll record the IDs."
+- **VI:**
+  - "Mảng tính năng này có ngày mục tiêu không? Cho tôi một ngày lịch (YYYY-MM-DD)."
+  - "Tính năng này có phải chờ PRD hay epic nào khác trước khi ra mắt không? Nêu tên — tôi sẽ ghi lại các ID."
+- **target_date:** a single `YYYY-MM-DD`. A child due after its parent (or before a prerequisite) warns at validate; overdue-vs-today is advisory only (not a validate gate).
+- **depends_on:** a list of existing PRD/epic IDs. An unresolved target is `dep_dangling` (error); a circular chain is `dep_cycle` (error) — so only offer IDs that already exist.
+
+## P8c — Competitive Parity (structured, OPTIONAL)
+
+**target:** `prd.md → competitive_parity:` (mapping `{COMP-ID: ahead|parity|behind|none}`)
+
+Only offered when the BRD declares `competitors:`. For each BRD competitor, ask where this feature-area stands:
+
+- **EN:** "Versus {competitor name}, on this feature-area are we **ahead**, at **parity**, **behind**, or do we **not** play here (none)?"
+- **VI:** "So với {tên đối thủ}, ở mảng tính năng này mình **dẫn trước (ahead)**, **ngang bằng (parity)**, **kém hơn (behind)**, hay **không tham gia (none)**?"
+- **Mode:** per-competitor single-select, pre-populated from the BRD's `competitors:` IDs.
+- **Keys are IDs, not names:** each key must resolve to a BRD `COMP-<SLUG>` (else `unknown_ref` error at validate). Never re-declare a competitor here — identity lives once in `brd.md`.
+- **parity enum (closed):** `ahead | parity | behind | none`.
 
 ## P9 — Open Questions (OPTIONAL)
 
@@ -93,3 +138,5 @@ For each requirement the PO names, ask:
 - After P4 + P5, the LLM offers a structural validation pass before continuing.
 - Persona-related skip: P2 auto-skips if `PRODUCT.md` has only one persona.
 - MoSCoW MoSCoW-gate is mandatory for every PRD (do not let everything be MUST).
+- P8a/P8b are layered onto P8: only ask the structured enums/dates after the PO has described deps/risks in P8 prose; reuse those descriptions and ask only the missing structured pieces.
+- P8c auto-skips when the BRD declares no `competitors:` — there is nothing to score parity against.

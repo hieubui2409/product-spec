@@ -200,6 +200,33 @@
         {"id": "migration-backs-up-and-defers-approved", "_gating": "structural", "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (G-A3 no-auto-edit-approved)."},
         {"id": "migration-idempotent", "_gating": "structural", "text": "A second --apply is a no-op (fields already present) and does not clobber the first-run .bak. Always exits 0 (analytical-script CLI contract)."}
       ]
+    },
+    {
+      "id": 16,
+      "_assertion_type": "structural",
+      "_note": "G-A2 back-compat. A pre-v2 spec — NO risks/target_date/depends_on/competitive_parity node fields and NO BRD competitors: key at all — must still parse, validate clean, and visualize with no error after the 2.0.0 schema additions (the new fields are optional). Proves the major bump is additive, not a hard break. Fixture backcompat-v1-spec is a complete v1 hierarchy (PRODUCT/vision/BRD/PRD/Epic/Story).",
+      "prompt": "Run check_consistency.py and check_traceability.py against fixtures/backcompat-v1-spec (a v1 spec authored before the v2 multi-dimensional schema), then render visualize.py for the tree, risk, competition, dashboard, and time views.",
+      "expected_output": "Both checkers emit zero error-severity findings; the graph carries an empty competitors list and no v2 node fields; every view renders without crashing (the v2 dimension views degrade gracefully on absent data).",
+      "files": [
+        "fixtures/backcompat-v1-spec"
+      ],
+      "assertions": [
+        {
+          "id": "backcompat-validates-clean",
+          "_gating": "structural",
+          "text": "check_consistency.py + check_traceability.py against fixtures/backcompat-v1-spec produce zero findings of severity 'error' (a v1 spec with no v2 fields is structurally valid under the 2.0.0 schema)."
+        },
+        {
+          "id": "backcompat-no-v2-fields",
+          "_gating": "structural",
+          "text": "The graph from spec_graph.build_graph has an empty competitors list and no node carries a truthy risks/target_date/depends_on/competitive_parity — confirming the fixture is a genuine pre-v2 spec, so the new fields are proven optional (G-A2)."
+        },
+        {
+          "id": "backcompat-visualizes",
+          "_gating": "structural",
+          "text": "visualize.py --view {tree,risk,competition,dashboard,time} each exits 0 on fixtures/backcompat-v1-spec; the v2 dimension views handle the absent data without error."
+        }
+      ]
     }
   ]
 }
