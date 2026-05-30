@@ -428,7 +428,12 @@ def write_snapshot(graph: Dict[str, Any], root: Path) -> Path:
     snap_dir = root / "docs" / "product" / "visuals" / ".snapshots"
     snap_dir.mkdir(parents=True, exist_ok=True)
     generated_at = graph.get("generated_at") or _now()
-    body = json.dumps({"snapshot_at": generated_at, **graph}, indent=2, ensure_ascii=False)
+    # `default=str` coerces YAML-typed values such as a `target_date` (which
+    # PyYAML auto-parses to `datetime.date`) into ISO strings — the same
+    # convention the stdout JSON uses. Without it a v2 spec carrying any
+    # `target_date` crashes the snapshot write (and so blocks the --validate
+    # impact-pass that reads the snapshot delta).
+    body = json.dumps({"snapshot_at": generated_at, **graph}, indent=2, ensure_ascii=False, default=str)
     # First 8 hex chars of SHA-256 of the serialized body; content-derived so
     # identical graph states produce the same filename (idempotent writes).
     content_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()[:8]

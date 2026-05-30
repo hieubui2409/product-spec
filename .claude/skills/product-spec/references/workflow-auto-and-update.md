@@ -2,6 +2,8 @@
 
 End-to-end workflow for the **--auto** (brain-dump → spec hierarchy) and **--update** (delta — flag affected nodes, never auto-rewrite prose) flags.
 
+The **impact-pass** (`downstream()` + LLM `{dim_touched, one_liner, action}` per affected node → impact report + change-log `dims`) runs on `--update` (here) AND on `--validate` (`workflow-validate.md`). Its annotation rule lives once in `validation-rules-spec.md → Impact-Pass LLM Scaffold`; both flows reference it. The impact-pass is per-CHANGE propagation — keep it distinct from the per-ARTIFACT validation-catalog checks (`risk_blindspot`/`time_realism`/`competitive_drift`).
+
 ## `--auto` Flow (brain-dump decomposition)
 
 The PO pastes (or refers to) a large free-form text dump. The skill chunks it, proposes a decomposition into BRD goals / PRDs / epics / stories, asks for confirmation on ambiguous splits, then writes the artifacts with full traceability.
@@ -77,31 +79,33 @@ Ask: "Which artifact has changed? (default: the most recently edited)"
 - If PO names a file/ID, use it.
 - If PO describes a change ("the core-value sentence changed"), ask which artifact carries it.
 
-### Step 2 — Compute the affected downstream set
+### Step 2 — Compute the affected downstream set (impact-pass, part 1: deterministic)
 
 ```bash
-python3 scripts/spec_graph.py --root <root> --downstream <changed_id>
+./.claude/skills/.venv/bin/python3 scripts/spec_graph.py --root <root> --downstream <changed_id>
 ```
 
-The script returns the set of node IDs whose frontmatter transitively references `changed_id`. Example: changing `PRD-AUTH` returns `{PRD-AUTH-E1, PRD-AUTH-E1-S1, ...}`.
+The script returns the set of node IDs whose frontmatter transitively references `changed_id` — the iterative `downstream()` closure (cycle-safe via its visited-set; see `spec_graph.downstream`). Example: changing `PRD-AUTH` returns `{PRD-AUTH-E1, PRD-AUTH-E1-S1, ...}`. This is the **deterministic** half of the impact-pass (G-B1): graph traversal only, no judgment.
 
-### Step 3 — Flag for PO review
+### Step 3 — Annotate + flag for PO review (impact-pass, part 2: LLM)
 
-Present the downstream set as a checklist:
+For each affected node, layer the **impact-pass LLM annotation** (the per-CHANGE interpretation, distinct from the per-ARTIFACT validation-catalog checks — see `validation-rules-spec.md → Impact-Pass LLM Scaffold`): tag `{dim_touched, one_liner, action}`. Present the annotated set as a checklist:
 
 ```
 Changed: PRD-AUTH
 Affected downstream (4 items):
-- [ ] PRD-AUTH-E1  — Sign-in epic
-- [ ] PRD-AUTH-E1-S1 — Email + password sign-in
-- [ ] PRD-AUTH-E1-S2 — OAuth Google sign-in
-- [ ] PRD-AUTH-E2  — Password recovery
+- [ ] PRD-AUTH-E1   [scope] Sign-in epic — scope wording changed upstream; check the epic goal still matches. → review
+- [ ] PRD-AUTH-E1-S1 [ac] Email + password sign-in — AC may reference the old scope. → review AC
+- [ ] PRD-AUTH-E1-S2 [time] OAuth Google sign-in — target_date now tighter than parent. → re-estimate
+- [ ] PRD-AUTH-E2   [scope] Password recovery — unaffected on inspection. → no-op
 ```
 
 For each item, the PO chooses:
 - **Review now** — open the file, walk through what may need updating; let the PO edit.
 - **Skip** — leave as-is.
-- **Mark stale** — set `status: draft` on the artifact (was `review` or `approved`) to flag it for later attention.
+- **Mark stale** — set `status: draft` on the artifact (was `review`; for `approved` see Step 5) to flag it for later attention.
+
+The `{node, dim_touched, one_liner, action}` records are also written to the impact report in Step 6.
 
 ### Step 4 — NEVER auto-rewrite prose
 
@@ -111,9 +115,21 @@ Under no circumstances does the skill regenerate the prose of an existing artifa
 
 If a downstream artifact is `approved` AND the change would contradict its content, run the **contradiction protocol** (`workflow-validate.md → Contradiction Protocol`). The PO chooses keep / change / hybrid.
 
-### Step 6 — Append change-log
+### Step 6 — Write the impact report + append change-log
 
-One change-log entry per `--update` invocation, listing `affected_set` and the PO's per-item decisions.
+Two artifacts close every `--update`:
+
+1. **Impact report** → `docs/product/impact/<ts>.md` (skeleton: `assets/templates/impact-report.md`). `<ts>` is an ISO-second UTC stamp, matching the `.snapshots/` convention. Fill:
+   - `trigger: --update`, `changed_set: [<changed_id>]`, `dims:` the union of `dim_touched` across affected nodes.
+   - One **Affected downstream** table row per node from Step 3 (`Node | Dim touched | Interpretation | Suggested action`).
+   - The **Contradictions** section ONLY when Step 5 surfaced one (otherwise drop the optional block).
+   - This is a body document the LLM composes directly (like the human validation report) — it does NOT go through `generate_templates.render` (that path is for single-line frontmatter scalars).
+2. **Change-log entry** (one per invocation) via `generate_templates.py --type change_log_entry`, carrying:
+   - `affected_set:` the downstream IDs (already a template field — do NOT re-add),
+   - `dims:` the same dimension union written to the report (the field this phase added),
+   - `po_decision:` the PO's per-item decisions.
+
+The impact report is the human-readable per-change surface; the change-log `dims`/`affected_set` is the structured, append-only record. Same union of dimensions in both.
 
 ## Cross-Flag Anti-Patterns
 

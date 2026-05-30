@@ -171,6 +171,35 @@
         {"id": "drift-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-REPORTS — scope is `in` and there are <2 real verdicts, so the gate is not met; no flag on the lone behind."},
         {"id": "drift-missing-anchor-eligibility", "_gating": "structural", "text": "competitive_drift_anchors marks PRD-REPORTS eligible==false with scope=='in' and competitors_with_data==1 (COMP-NICHE 'none' is not counted)."}
       ]
+    },
+    {
+      "id": 14,
+      "_assertion_type": "llm_advisory",
+      "_note": "G-F1 + G-A3 impact-pass. The per-CHANGE propagation pass runs on --update AND --validate (distinct from the per-ARTIFACT catalog checks). The DETERMINISTIC half is graded structurally: on --validate the change-set is the delta view's added∪changed nodes between the two most-recent .snapshots/ (spec_graph.diff_graphs + the per-node status/scope/moscow/horizon/size diff in render_ascii.delta), and downstream() gives the affected set — both pure graph functions. The LLM half (graded advisory) tags each affected node {dim_touched∈{scope,risk,time,competition,ac,traceability}, one_liner, action} per references/validation-rules-spec.md → Impact-Pass LLM Scaffold, writes docs/product/impact/<ts>.md, and — for the APPROVED affected node PRD-AUTH-E1 whose content contradicts the change — surfaces the contradiction protocol (keep/change/hybrid) and NEVER auto-flips (the G-A3 approved branch). Fixture: PRD-AUTH was pulled from horizon:next (seeded baseline snapshot) to horizon:now; downstream = {PRD-AUTH-E1 (approved, contradicted), PRD-AUTH-E1-S1 (draft)}.",
+      "prompt": "Run --validate against fixtures/impact-pass-spec, then run the impact-pass. The seeded previous snapshot in docs/product/visuals/.snapshots/ has PRD-AUTH at horizon:next; the live spec has horizon:now — so the snapshot delta change-set is {PRD-AUTH}. Run downstream(PRD-AUTH) and annotate each affected node with {dim_touched, one_liner, action}; write docs/product/impact/<ts>.md; the approved epic PRD-AUTH-E1 (which still mandates email+password, contradicting the PRD's new passwordless scope) must trigger the contradiction protocol.",
+      "expected_output": "An impact report under docs/product/impact/ listing PRD-AUTH-E1 and PRD-AUTH-E1-S1 with a dim_touched, a one-liner, and a suggested action each; a change-log entry carrying affected_set + dims; and the contradiction protocol (keep/change/hybrid) surfaced for the APPROVED PRD-AUTH-E1 — never auto-flipped to draft.",
+      "files": ["fixtures/impact-pass-spec"],
+      "assertions": [
+        {"id": "impact-change-set-from-snapshot-delta", "_gating": "structural", "text": "The change-set on --validate is derived from the snapshot delta: between the live graph and the seeded previous snapshot, the delta view reports PRD-AUTH changed (horizon next->now). spec_graph.diff_graphs(current, previous) added==[] and the per-node field diff flags PRD-AUTH; no previous snapshot would yield an empty change-set (no impact-pass)."},
+        {"id": "impact-downstream-correct", "_gating": "structural", "text": "spec_graph.downstream(graph, 'PRD-AUTH') == {'PRD-AUTH-E1', 'PRD-AUTH-E1-S1'} — the affected set the impact report annotates."},
+        {"id": "impact-report-lists-nodes-dims-action", "_gating": "llm_advisory", "text": "The impact report (docs/product/impact/<ts>.md) lists each affected node with a dim_touched (from the closed enum), a 1-line interpretation, and a suggested action; the change-log entry carries affected_set and a dims union."},
+        {"id": "impact-approved-contradiction-surfaced", "_gating": "llm_advisory", "text": "The APPROVED affected node PRD-AUTH-E1 (content contradicts the new passwordless scope) triggers the contradiction protocol (keep/change/hybrid) — the engine surfaces it and NEVER auto-flips PRD-AUTH-E1 to draft (G-A3). The draft story PRD-AUTH-E1-S1 is flagged for AC review with no contradiction protocol."},
+        {"id": "impact-snapshot-write-no-crash", "_gating": "structural", "text": "spec_graph.py --root fixtures/impact-pass-spec --snapshot writes a snapshot without a JSON-serialization crash even though the spec carries target_date (datetime.date) fields — write_snapshot serializes dates via default=str."}
+      ]
+    },
+    {
+      "id": 15,
+      "_assertion_type": "structural",
+      "_note": "G-F3 migration. migrate_multidim_fields.py lifts a v1 spec to the v2 schema with EMPTY placeholders, backs up each touched original to *.bak, and DEFERS approved artifacts to a confirm_required list (never auto-edited — G-A3). Per-type scoping is strict so the migration never writes a field onto a type whose phase-3/4 guard would reject it: PRD→risks/target_date/depends_on/competitive_parity; Epic→risks/target_date/depends_on (NO competitive_parity); BRD→competitors. Idempotent (2nd --apply is a no-op; first .bak preserved). Fixture: draft PRD/Epic/BRD migrate; approved PRD-BILLING defers.",
+      "prompt": "Run migrate_multidim_fields.py --root fixtures/migration-spec (dry-run, then --apply). The draft PRD-AUTH, epic PRD-AUTH-E1, and the BRD lack the v2 fields; PRD-BILLING is approved.",
+      "expected_output": "Dry-run reports the three draft files in would_migrate and PRD-BILLING in confirm_required, writing nothing. --apply adds empty placeholders to the three draft files (PRD gets all four incl. competitive_parity; Epic gets three, NO competitive_parity; BRD gets competitors) with a *.bak for each, leaves PRD-BILLING byte-unchanged with no .bak, and a 2nd --apply is a no-op.",
+      "files": ["fixtures/migration-spec"],
+      "assertions": [
+        {"id": "migration-dry-run-writes-nothing", "_gating": "structural", "text": "The default (no --apply) run writes no file and creates no .bak; the report lists prds/auth.md, epics/PRD-AUTH-E1.md, and brd.md in would_migrate and PRD-BILLING in confirm_required."},
+        {"id": "migration-apply-scoped-placeholders", "_gating": "structural", "text": "--apply gives prds/auth.md risks:[]/target_date:null/depends_on:[]/competitive_parity:{}; epics/PRD-AUTH-E1.md risks:[]/target_date:null/depends_on:[] and NO competitive_parity; brd.md competitors:[] — the migration never writes a field onto a type whose guard would reject it."},
+        {"id": "migration-backs-up-and-defers-approved", "_gating": "structural", "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (G-A3 no-auto-edit-approved)."},
+        {"id": "migration-idempotent", "_gating": "structural", "text": "A second --apply is a no-op (fields already present) and does not clobber the first-run .bak. Always exits 0 (analytical-script CLI contract)."}
+      ]
     }
   ]
 }

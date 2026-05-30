@@ -139,6 +139,31 @@ This mirrors the Script-vs-LLM split (CLAUDE.md): the structural numbers are det
 
 This mirrors `time_realism` exactly: the structural resolution + counting is deterministic Python; only the "is this drift" judgment is the LLM's, and even that is a fixed rule over script-supplied parity anchors.
 
+## Impact-Pass LLM Scaffold (per-change propagation — distinct from the catalog checks)
+
+The **impact-pass** answers "I changed X — what downstream is affected, and how?" It runs on `--update` (one explicit `changed_id`) AND on `--validate` (change-set derived from the snapshot delta — `workflow-validate.md → Step 2.5`). It is **per-CHANGE propagation**, NOT a per-ARTIFACT quality check — keep it separate from `risk_blindspot`/`time_realism`/`competitive_drift` so neither bloats the other (report §5.4). The split:
+
+- **Script half (deterministic — G-B1)** — `spec_graph.downstream(graph, changed_id)` returns the transitive child closure (iterative, cycle-safe). On `--validate` the change-set itself is deterministic: the `delta` view's added ∪ changed nodes between the two most-recent `.snapshots/` (`spec_graph.diff_graphs` for added/removed + the per-node `status`/`scope`/`moscow`/`horizon`/`size` diff in `render_ascii.delta`); no previous snapshot → empty change-set → no impact-pass. The script NEVER interprets.
+
+- **LLM half (judgment — G-B2)** — for each affected node, emit one annotation record:
+
+  ```json
+  {"node": "PRD-AUTH-E1-S1", "dim_touched": "ac",
+   "one_liner": "AC still references the pre-change scope wording.",
+   "action": "review AC"}
+  ```
+
+  - `dim_touched` ∈ a **closed enum** — `{scope, risk, time, competition, ac, traceability}` — so the annotation stays bounded (an open-vocabulary tag would drift). Pick the single most-affected dimension.
+  - `one_liner` — ONE sentence on HOW the change reaches this node; grounded in the node's actual content, never speculative.
+  - `action` — a concrete suggestion: `review` / `review AC` / `re-estimate` / `split` / `re-approve` / `no-op`.
+  - **Conservative default:** a node reachable but plausibly unaffected → `action: no-op` with a one-liner saying so; do not invent downstream damage.
+
+- **Approved + contradicted** → if an affected node is `status: approved` AND the change contradicts its content, run the **Contradiction Protocol** below (keep/change/hybrid). The impact-pass NEVER auto-flips an approved artifact (G-A3) — this is the deal-breaker the `impact-pass` eval's approved branch gates.
+
+- **Output** — the annotation records become the rows of `docs/product/impact/<ts>.md` (skeleton `assets/templates/impact-report.md`) and the `dims` (the union of `dim_touched`) + `affected_set` of the change-log entry.
+
+This mirrors the Script-vs-LLM split exactly: `downstream()` + the snapshot delta are deterministic Python; only the dimension/interpretation/action is the LLM's.
+
 ## Contradiction Protocol (CRITICAL — never auto-flip)
 
 When the LLM detects a contradiction with an `approved` artifact:
@@ -216,4 +241,5 @@ Detail: No PRDs address this goal. Either drop, defer, or write a PRD.
 - The exact prose template for the human report — that's the LLM's job.
 - The order of script invocations — that's `workflow-validate.md` (Phase 7).
 - The interactive flow on `contradiction` — that's `workflow-validate.md`.
+- The change-set derivation + report-write steps of the impact-pass — those are `workflow-validate.md → Step 2.5` (`--validate`) and `workflow-auto-and-update.md → Steps 2/3/6` (`--update`); this spec defines only the LLM annotation rule.
 - Eval rubric for the LLM judgment checks — that's `eval/evals.json` (Phase 8).

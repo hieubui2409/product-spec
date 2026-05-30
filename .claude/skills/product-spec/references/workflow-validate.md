@@ -46,6 +46,19 @@ For each check in `validation-rules-spec.md` whose **owner = LLM**, run a separa
 - **time_realism** — for each epic, read the SCRIPT-precomputed anchor from `time_realism_anchors.py` (`size`, `child_story_count`, `days_remaining`, …) and apply the FIXED rule in `validation-rules-spec.md → time_realism LLM Scaffold`: flag (warn) ONLY when `eligible` AND `size=="L"` AND `child_story_count>=6` AND `days_remaining<21`; missing anchor → `missing_anchor` (no flag); otherwise no flag. The finding MUST carry `context.cited_data` (verbatim from the anchor). **Do NO date arithmetic** — the script already computed `days_remaining`.
 - **contradiction** — compare every new artifact against `approved`-status artifacts. If contradicted → emit `error`-severity finding + surface to PO via the contradiction protocol (see below). **Never auto-flip.**
 
+### Step 2.5 — Impact-pass (per-change propagation; runs on `--validate` too)
+
+The impact-pass is the per-CHANGE propagation surface — `downstream()` + an LLM `{dim_touched, one_liner, action}` per affected node — and it runs on `--validate` as well as `--update` (it is per-CHANGE, distinct from the per-ARTIFACT catalog checks above). On `--update` there is one explicit `changed_id`; on a whole-spec `--validate` there is none, so **derive the change-set from the snapshot delta**:
+
+1. **Get the change-set from the snapshot delta.** Step 1 already wrote a fresh snapshot to `docs/product/visuals/.snapshots/`. Compare it to the **previous** snapshot (the second-most-recent — the freshly-written one is the current state, not a baseline). The change-set is exactly what the `delta` view already reports between those two graphs (DRY — reuse it, do not re-implement): `spec_graph.diff_graphs(current, previous)` gives `added` node IDs, and the per-node field diff (`status`/`scope`/`moscow`/`horizon`/`size`) in `render_ascii.delta` gives the **changed** node IDs. The union (added ∪ changed) is the change-set. (`removed` nodes have no downstream to propagate to, so they are not change-set roots.)
+   - **First run / no previous snapshot** → there is no baseline, so **nothing changed** → skip the impact-pass entirely (do NOT crash; do NOT treat every node as "changed"). This reuses the same no-baseline rule as `--viz delta` (DRY).
+2. **Run `downstream()` per changed ID** (deterministic) → union the affected sets.
+3. **Annotate** each affected node with the impact-pass LLM scaffold (`validation-rules-spec.md → Impact-Pass LLM Scaffold`): `{node, dim_touched, one_liner, action}`.
+4. **Approved + contradicted** → an affected node that is `status: approved` AND contradicted by the change runs the **Contradiction Protocol** below (keep/change/hybrid). The engine NEVER auto-flips (G-A3).
+5. **Write the impact report** → `docs/product/impact/<ts>.md` (skeleton `assets/templates/impact-report.md`; `trigger: --validate`, `changed_set:` the delta IDs, `dims:` the dimension union, one table row per affected node). This is a body document the LLM composes directly — not a `generate_templates.render` scalar fill.
+
+The impact-pass is deterministic in its graph half (snapshot-delta + `downstream()`) and LLM-only in its interpretation (G-B1/G-B2). When the change-set is empty (a clean re-validate of an unchanged spec), no impact report is written.
+
 ### Step 3 — Compose the human report
 
 Format per `validation-rules-spec.md → Human Report Format`:
@@ -116,4 +129,4 @@ When generating reports or summaries:
 
 - The LLM **must run scripts first**; it must not infer the graph by reading files directly.
 - All script invocations use the repo venv: `./.claude/skills/.venv/bin/python3`.
-- Every flag closes by appending a change-log entry (action = `validated` / `approved` / `summarized`).
+- Every flag closes by appending a change-log entry (action = `validated` / `approved` / `summarized`). When the `--validate` impact-pass (Step 2.5) found a non-empty change-set, that entry also carries `affected_set` + `dims` (mirroring the impact report), alongside the `docs/product/impact/<ts>.md` file.

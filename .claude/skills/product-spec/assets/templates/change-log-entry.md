@@ -10,6 +10,7 @@ Format: one entry per change, append-only, newest at top.
 - **Action | Hành động:** {{action}}
 - **Reason | Lý do:** {{reason}}
 - **Affected downstream | Ảnh hưởng phía dưới:** {{affected_set}}
+- **Dimensions touched | Chiều bị ảnh hưởng:** {{dims}}
 - **Author | Tác giả:** {{author}}
 
 <!-- OPTIONAL: detail -->
