@@ -357,6 +357,25 @@ dist/
 Tarball internal (versioned root dir): `MANIFEST.json` + `INSTALL.md` + `install.sh` + `install.ps1` + `.claude/...`.
 `dist/` is gitignored. Recipient verifies SHA256, extracts, runs installer.
 
+## Release process (tag-triggered CI — do NOT build/publish by hand)
+
+Releasing is **automated**. The release flow is exactly:
+
+1. Bump `version:` in `.claude/pack.manifest.yaml`.
+2. Add the version's entry to `.claude/skills/claude-pack/CHANGELOG.md` (hand-maintained, keepachangelog; this is the bundle changelog covering BOTH skills).
+3. Commit, push `master`.
+4. Push an annotated tag `claude-pack-vX.Y.Z`.
+
+Pushing that tag triggers `.github/workflows/claude-pack-release.yml`, which: checks out (full history), derives the version from the tag (`${GITHUB_REF#refs/tags/claude-pack-v}`), computes `SOURCE_DATE_EPOCH` from the tagged commit time, runs `install.sh --dev`, builds the **reproducible** tarball (`python -m pack --source-date-epoch env`), verifies the `.sha256`, and uploads tarball + sidecar to the GitHub Release via `softprops/action-gh-release@v2`.
+
+**Do NOT run `python -m pack` + `gh release create` manually for a release.** The tag-triggered CI already builds and publishes; a manual build (default `mtime=0`, not `--source-date-epoch`) produces a DIFFERENT sha than CI's reproducible build, and racing `gh release create` against the CI run leaves the release with CI's asset but possibly a hand-typed sha that no longer matches. Let CI own the build + upload.
+
+**Where release notes / changelog come from — two distinct things:**
+- **GitHub Release notes**: CI sets `generate_release_notes: true` → GitHub auto-generates from commits/PRs since the previous tag. It does NOT read `CHANGELOG.md`. Edit notes anytime with `gh release edit <tag> --notes-file <f>` (mutable metadata; does not touch the tag or asset).
+- **`CHANGELOG.md`**: the hand-written human changelog (source of truth for humans), NOT auto-fed into the GitHub release. Keep it per-version.
+
+Other workflows: `claude-pack-ci.yml` (PR gate — 3 OS × 3 Python pytest + dry-run smoke); `claude-pack-integration.yml` (weekly live product-spec dogfood, non-blocking).
+
 ## Failure Handling
 
 - Manifest parse error → `ManifestError` finding; surface to user.
