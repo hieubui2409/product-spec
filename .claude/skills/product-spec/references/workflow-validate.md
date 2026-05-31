@@ -28,7 +28,7 @@ The structural checkers above now also emit the TIME-dimension findings: `dep_cy
 ./.claude/skills/.venv/bin/python3 scripts/competitive_drift_anchors.py --root <root>
 ```
 
-All three ALWAYS exit 0 (advisories/anchors, not gates). Surface `overdue` to the PO as information; feed the `time_realism` and `competitive_drift` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
+All three exit 0 on a valid run regardless of how many overdue/anchor items they surface (advisories/anchors, not gates) — the calendar never blocks. They exit non-zero ONLY on a malformed CLI argument (e.g. a non-ISO `--today`), which is input validation, not a finding. Surface `overdue` to the PO as information; feed the `time_realism` and `competitive_drift` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
 
 For CI (no LLM in the loop), use the shell-runnable strict gate which exits non-zero on any error-severity finding:
 

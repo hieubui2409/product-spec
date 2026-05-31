@@ -36,7 +36,7 @@ python3 .claude/skills/product-spec/scripts/visualize.py \
   --view tree --format ascii
 ```
 
-Self-contained HTML renders (any of the 9 views) regenerate on demand:
+Self-contained HTML renders (any of the views) regenerate on demand:
 
 ```bash
 python3 .claude/skills/product-spec/scripts/visualize.py \

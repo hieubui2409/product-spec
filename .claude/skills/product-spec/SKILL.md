@@ -50,7 +50,7 @@ spec tree in ASCII, Mermaid, and self-contained HTML.
 | `--layers <types>`         | Filter which artifact types appear. `--export` uses doc-layer buckets `vision,brd,prd,epic,story` (goals sit in the `brd` bucket); `--viz board/explorer` filter by artifact TYPE `goal,prd,epic,story`. Each subset is self-consistent with its own surface's help; an unknown token (or one from the other surface's vocab) is **rejected** with a non-zero exit, never silently dropped. |
 | `--depth <preset>`         | `--export` verbosity: `context` (default) · `full` · `brief`.                                                                                                                                                                                                                                                                                                                               |
 | `--compact-mode <m>`       | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). `llm` requires `--format md` — it is rejected with `--format html` (DOMPurify strips the markers and no `.md` is written for the rewrite step).                                                                                       |
-| `--lang <code>`            | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; viewer UI chrome + export headings localize.                                                                                                                                                                                                                                                       |
+| `--lang <code>`            | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; body-view facets/labels + in-view value labels + export headings localize. Graph/HTML-native page chrome (page `<title>`, panel headers) stays English.                                                                                                                                                                                                                                                       |
 
 ## No-Flag Menu
 
@@ -124,7 +124,7 @@ The lean skeleton above stays under ~300 lines; full prose lives in `references/
 - `references/document-model-and-hierarchy.md` — artifact roles, DRY rule, hierarchy diagram, content-ownership table.
 - `references/validation-rules-spec.md` — check catalog (script vs LLM), severities, findings JSON schema, `--strict`
   gate.
-- `references/visualization-spec.md` — views × formats (9 graph + `board`/`explorer`), graph-JSON shape, flag mapping,
+- `references/visualization-spec.md` — views × formats (12 graph + `board`/`explorer`), graph-JSON shape, flag mapping,
   the shared HTML design system.
 - `references/workflow-export.md` — F1 read-once Export: selection model (`--export` + `--layers`), depth presets,
   `--compact-mode llm` workflow, output naming.

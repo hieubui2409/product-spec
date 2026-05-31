@@ -144,7 +144,7 @@ The HTML opens with no server and no network. Vendored libs are pinned + SHA-ver
 
 ## HTML Design System (one source for every view)
 
-All HTML outputs — the 9 `--viz` graph views + `board` + `explorer` + `--export --format html` — share **one** head partial (`assets/templates/_viewer-head.html`), included by every shell via the `{{viewer_head}}` token (single-pass substituted in `render_html`):
+All HTML outputs — every `--viz` graph view (including the HTML-native `risk`/`competition`/`dashboard`) + `board` + `explorer` + `--export --format html` — share **one** head partial (`assets/templates/_viewer-head.html`), included by every shell via the `{{viewer_head}}` token (single-pass substituted in `render_html`):
 
 - **Theme toggle** (sun/moon) persisted to `localStorage`; semantic + status palette (`--green/red/amber/sage/teal/plum` + `-dim`) with a light/dark `[data-theme]` switch.
 - **Typography scale** + `.ve-card` depth tiers (`--elevated/--recessed/--hero`) + stagger fade-in + `min-width:0` overflow guard.
@@ -166,7 +166,6 @@ Change the look in one place → every output updates (DRY). The `explorer` UI i
 Delta detection is purely on the graph JSON (no `git show` archaeology):
 - Added nodes / removed nodes (by ID).
 - Changed status, scope, moscow, horizon, size.
-- Added / removed edges.
 
 ## Determinism
 

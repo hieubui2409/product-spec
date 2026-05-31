@@ -61,7 +61,7 @@ With `--strict`:
 - The skill stops and presents the errors; the PO must resolve before proceeding.
 - `severity: warn` never blocks.
 
-The gate is enforced in the **LLM/orchestration layer** (workflow-validate.md), not in the scripts. Analytical scripts (`check_traceability`, `check_consistency`, `build_traceability_matrix`, `spec_graph`, `visualize`, `generate_templates`) always exit 0 with JSON on stdout; the LLM reads severities and decides. The sole exception is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts, applies the gate, and exits `2` on `error` findings — usable from shell pipelines without an LLM.
+The gate is enforced in the **LLM/orchestration layer** (workflow-validate.md), not in the scripts. The analytical findings-emitters (`check_traceability`, `check_consistency`, `build_traceability_matrix`, `spec_graph`) always exit 0 with JSON on stdout; the LLM reads severities and decides. (`visualize` and `generate_templates` are a renderer and a generator, not findings-emitters: they exit non-zero on a user CLI error — e.g. an empty-after-`--layers` filter or an unresolved template token — by design.) The sole exception in the gate path is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts, applies the gate, and exits `2` on `error` findings — usable from shell pipelines without an LLM.
 
 ## Severity Definitions
 
@@ -88,7 +88,8 @@ Score + 1-line rationale included in the finding. The PO confirms the `scope: co
 - **Script half** — `scripts/time_realism_anchors.py --root <root> [--today YYYY-MM-DD]` pre-computes, per **epic**, the anchor record:
 
   ```json
-  {"artifact_id": "PRD-X-E1", "type": "epic", "size": "L", "horizon": "now",
+  {"artifact_id": "PRD-X-E1", "file": "epics/PRD-X-E1.md", "type": "epic",
+   "size": "L", "horizon": "now",
    "target_date": "2026-06-15", "today_date": "2026-06-01",
    "days_remaining": 14, "child_story_count": 6, "incomplete": true,
    "eligible": true}
