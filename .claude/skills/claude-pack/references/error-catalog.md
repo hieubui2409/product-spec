@@ -24,11 +24,11 @@ Every error code, message template, and remediation surfaced by `cleanmatic:clau
 | `MANIFEST_E050` | `follow_shared must be bool` | `validate` | Use `true` or `false`. |
 | `MANIFEST_E060` | `unknown top-level key: <key>` | `validate` | Remove or check spelling against schema. |
 | `MANIFEST_E070` | `missing skill: <slug>` | `validate` | Verify the skill dir exists under `.claude/skills/`. Case sensitivity follows the host filesystem (case-sensitive on Linux ext4; case-insensitive on macOS APFS/HFS+ and Windows NTFS, where a wrong-case slug may silently resolve). |
-| `MANIFEST_E071` | `missing agents: <slug>` / `ambiguous agents: <slug> matches [<path>, ...]` | `validate` | Missing: verify the agent file exists under `.claude/agents/`. Ambiguous: two+ files share the basename; rename one or pin a unique path. |
-| `MANIFEST_E072` | `missing rules: <slug>` / `ambiguous rules: <slug> matches [<path>, ...]` | `validate` | Same as above (applies to `.claude/rules/`). |
+| `MANIFEST_E071` | `missing agents: <slug>` / `missing agents: <slug> (search root absent)` / `ambiguous agents: <slug> matches [<path>, ...]` | `validate` | Missing: verify the agent file exists under `.claude/agents/` (the `(search root absent)` variant means the `.claude/agents/` dir itself is missing). Ambiguous: two+ files share the basename; rename one or pin a unique path. |
+| `MANIFEST_E072` | `missing rules: <slug>` / `missing rules: <slug> (search root absent)` / `ambiguous rules: <slug> matches [<path>, ...]` | `validate` | Same as above (applies to `.claude/rules/`). |
 | `MANIFEST_E073` | `missing hook: <name>` | `validate` | Provide full filename including extension. |
 | `MANIFEST_E074` | `ambiguous hook: <name> matches <N> files; use a unique name or path` | `validate` | Two+ hook files share the basename; rename one or pin a unique path. Guards against a non-deterministic `rglob` pick. |
-| `MANIFEST_E101` | `unsupported schema_version: <value>` | `validate` | Update claude-pack or migrate the manifest. |
+| `MANIFEST_E101` | `unsupported schema_version: <value>; this builder supports [<versions>]` | `validate` | Update claude-pack or migrate the manifest. |
 | `MANIFEST_E102` | `schema_version must be a string; got <type>` | `validate` | Quote the value: `schema_version: "1.0"` (unquoted `1.0` parses as a float). |
 | (raw parse) | `<path>:<line>:<col>: <yaml-problem>` | `load` | Fix YAML syntax at the indicated position. |
 

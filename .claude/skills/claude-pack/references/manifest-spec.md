@@ -61,7 +61,7 @@ Strict known-keys check. Unknown keys → `MANIFEST_E031`. Non-bool values → `
 
 - If the basename has no extension (`primary-workflow` instead of `primary-workflow.md`), `.md` is appended.
 - If any extension is present, use as-is. `foo.md.bak` is treated literally (no double-append).
-- Multiple disk matches for the same basename → error. Pin the path in `extra` instead.
+- Multiple disk matches for the same basename → error. Disambiguate by pinning a path-qualified slug **within the same category** (e.g. `agents: [<subdir>/<name>]`), matching the `rglob`-on-relative-path resolution; reserve `extra` for non-agent/rule files.
 
 ## Schema Migration (semver)
 

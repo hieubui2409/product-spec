@@ -13,7 +13,7 @@ All boolean flags use `argparse.BooleanOptionalAction` (default `None`). `None` 
 | `--root <dir>` | path | `cwd` | (none) | Repo root for selection + on-disk checks. |
 | `--manifest <path>` | path | `.claude/pack.manifest.yaml` | (none) | Manifest YAML to load. |
 | `--version <semver>` | string | (manifest) | `version` | Override bundle version. SemVer 2.0.0; `0.0.0-dev` requires `--allow-dev-version`. |
-| `--bundle-name <name>` | string | `claude-pack` | `bundle_name` | Output filename stem. Must match `^[a-zA-Z0-9][a-zA-Z0-9._-]*$`. |
+| `--bundle-name <name>` | string | `(manifest)` | `bundle_name` | Output filename stem. Must match `^[a-zA-Z0-9][a-zA-Z0-9._-]*$`. CLI default is unset (falls back to manifest `bundle_name`; the `claude-pack` literal applies only when neither CLI nor manifest sets it). |
 | `--out <dir>` | path | `dist/` | (none, CLI-only) | Output directory. Auto-created. |
 | `--all` | flag | off | (none) | Pack everything under `.claude/` minus always-drop list. **Not implemented in v0.1** — errors (exit 1); list skills/agents/rules explicitly. |
 | `--skills <list>` | csv | (manifest) | `skills` | Comma-separated skill slugs. Deduped. |
