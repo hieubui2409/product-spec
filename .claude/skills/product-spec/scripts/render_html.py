@@ -270,6 +270,115 @@ _RISK_GRID_CSS = (
 )
 
 
+# ── HTML-native count grids (status heatmap + persona coverage) ─────────────
+#
+# heatmap (type × status) and persona (persona × PRD) are plain integer-count
+# grids that Mermaid can't express; they used to fall back to an ASCII <pre>
+# dump inside the HTML page. Render them as real <table>s instead — same scoped-
+# CSS, server-escaped, no-Mermaid discipline as the risk/competition grids. PRD
+# ids in the persona column headers stay plain text so the shared hover-tooltip
+# scanner tags them like every other ID.
+_COUNT_GRID_CSS = (
+    "<style>"
+    ".count-grid{border-collapse:collapse;width:100%;max-width:48rem;}"
+    ".count-grid th,.count-grid td{border:1px solid var(--border);padding:.45rem .6rem;text-align:center;}"
+    ".count-grid thead th,.count-grid tbody th{background:var(--recessed);color:var(--muted);font-weight:600;font-size:.85rem;text-align:left;}"
+    ".cg-caption{caption-side:top;text-align:left;color:var(--muted);font-size:.85rem;margin-bottom:.5rem;}"
+    ".cg-cell{font-variant-numeric:tabular-nums;}"
+    ".cg-0{color:var(--muted);}"
+    ".cg-hit{background:var(--teal-dim);font-weight:600;}"
+    "</style>"
+)
+
+
+def _is_deferred_node(n: Dict[str, Any]) -> bool:
+    """A node is deferred when moscow=wont OR scope=out — mirrors
+    render_ascii._is_deferred so persona's --filter-wont agrees with the ascii view."""
+    return _tip_scalar(n.get("moscow")) == "wont" or _tip_scalar(n.get("scope")) == "out"
+
+
+def _count_grid_html(caption: str, corner: str, col_headers: list, rows: list) -> str:
+    """Generic HTML-native count grid. `rows` = [(row_label, [int, …]), …] aligned
+    to col_headers; cells are tinted when non-zero, muted `·` when zero. Every
+    label is escaped; counts are ints (never spec text), so no further sanitization."""
+    head = "".join(f"<th scope='col'>{_escape(str(h))}</th>" for h in col_headers)
+    body = []
+    for row_label, cells in rows:
+        tds = []
+        for c in cells:
+            cls = "cg-hit" if c else "cg-0"
+            tds.append(f'<td class="cg-cell {cls}">{c if c else "·"}</td>')
+        body.append(f"<tr><th scope='row'>{_escape(str(row_label))}</th>{''.join(tds)}</tr>")
+    return (
+        _COUNT_GRID_CSS
+        + f'<table class="count-grid"><caption class="cg-caption">{_escape(caption)}</caption>'
+        f"<thead><tr><th scope='col'>{_escape(corner)}</th>{head}</tr></thead>"
+        f"<tbody>{''.join(body)}</tbody></table>"
+    )
+
+
+def heatmap(graph: Dict[str, Any], lang: str = "en") -> str:
+    """HTML-native status grid: rows = artifact type, cols = canonical status
+    (+ an `other` column when an off-enum status exists, so nothing is dropped)."""
+    from collections import defaultdict
+    canon = ["draft", "review", "approved"]
+    counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    other: Dict[str, int] = defaultdict(int)
+    for n in graph.get("nodes", []):
+        t = _tip_scalar(n.get("type")) or "?"
+        s = _tip_scalar(n.get("status"))
+        if s in canon:
+            counts[t][s] += 1
+        else:
+            other[t] += 1
+    types = sorted(set(counts) | set(other))
+    if not types:
+        return _COUNT_GRID_CSS + '<p class="ps-meta">No artifacts yet.</p>'
+    cols = list(canon) + (["other"] if any(other.values()) else [])
+    rows = [(t, [counts[t].get(s, 0) for s in canon]
+                + ([other.get(t, 0)] if "other" in cols else [])) for t in types]
+    return _count_grid_html("Status coverage — type (rows) × status (columns).",
+                            "type \\ status", cols, rows)
+
+
+def persona(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
+    """HTML-native persona × PRD coverage grid (story counts), mirroring the ascii
+    persona: personas from PRODUCT (else union of node personas), PRD columns,
+    story counts attributed to the story's epic→PRD."""
+    from collections import defaultdict
+    nodes = graph.get("nodes", [])
+    product = graph.get("product") if isinstance(graph.get("product"), dict) else {}
+    raw = product.get("personas")
+    personas = sorted({str(p) for p in raw}) if isinstance(raw, list) else []
+    if not personas:
+        acc: list = []
+        for n in nodes:
+            np = n.get("personas")
+            if isinstance(np, list):
+                for p in np:
+                    if str(p) not in acc:
+                        acc.append(str(p))
+        personas = sorted(acc)
+    if not personas:
+        return _COUNT_GRID_CSS + '<p class="ps-meta">No personas defined yet.</p>'
+    prds = sorted(n["id"] for n in nodes
+                  if n.get("type") == "prd" and not (filter_wont and _is_deferred_node(n)))
+    epic_to_prd = {n["id"]: n.get("prd") for n in nodes if n.get("type") == "epic"}
+    cells: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for n in nodes:
+        if n.get("type") != "story" or (filter_wont and _is_deferred_node(n)):
+            continue
+        prd_id = epic_to_prd.get(n.get("epic"))
+        np = n.get("personas")
+        if not isinstance(np, list) or not prd_id:
+            continue
+        for p in np:
+            cells[str(p)][prd_id] += 1
+    rows = [(p, [cells[p].get(prd, 0) for prd in prds]) for p in personas]
+    return _count_grid_html("Persona coverage — persona (rows) × PRD (columns), story counts.",
+                            "persona \\ PRD", prds, rows)
+
+
 # ── HTML-native competition view (parity matrix + threat heatmap) ───────────
 #
 # Like the risk grid, the competition view is an HTML-native <table> Mermaid
@@ -609,6 +718,130 @@ def embed_spec_data(payload: Any) -> str:
     return f'<script type="application/json" id="ps-spec-data">{blob}</script>'
 
 
+def _tip_scalar(v: Any) -> str:
+    """Coerce a node field that may arrive as a 1-element list (a hand-edited
+    `status: [draft]`) to a plain string for the tooltip meta line."""
+    if isinstance(v, list):
+        v = v[0] if v else ""
+    return str(v) if v not in (None, "") else ""
+
+
+def tooltip_index(graph: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+    """Map every node id → {t: title, d: one-line metadata} for the hover tooltip.
+    Pure node data (title + closed-enum metadata + owner/date) — NO body text, so
+    nothing here needs HTML sanitization beyond the JSON island's `<`-escape."""
+    out: Dict[str, Dict[str, str]] = {}
+    for n in graph.get("nodes", []):
+        nid = n.get("id")
+        if not nid:
+            continue
+        meta = [p for p in (
+            _tip_scalar(n.get("type")), _tip_scalar(n.get("status")),
+            _tip_scalar(n.get("horizon")), _tip_scalar(n.get("moscow")),
+            _tip_scalar(n.get("scope")),
+        ) if p]
+        td = _tip_scalar(n.get("target_date"))
+        if td:
+            meta.append("⏱ " + td)
+        owner = _tip_scalar(n.get("owner"))
+        if owner:
+            meta.append("@ " + owner)
+        out[str(nid)] = {"t": _tip_scalar(n.get("title")), "d": " · ".join(meta)}
+    return out
+
+
+def tooltip_island(graph: Dict[str, Any]) -> str:
+    """The tooltip data as an inert JSON island (id=ps-tip-data), `<`-escaped via
+    the same script-data-hazard neutralizer as embed_spec_data."""
+    blob = json.dumps(tooltip_index(graph), ensure_ascii=False, sort_keys=True).replace("<", "\\u003c")
+    return f'<script type="application/json" id="ps-tip-data">{blob}</script>'
+
+
+# Client tooltip: read the inert id→{title,meta} island, then (a) tag SVG text
+# labels (Mermaid gantt/flowchart — can't wrap a span inside <text>) and (b) wrap
+# bare IDs in non-SVG text (HTML-native matrices, the ascii <pre> text-summary) so
+# hovering any artifact ID surfaces its title + metadata. Mermaid renders async, so
+# the scan re-runs a couple of times after load. Tooltip content is built with
+# textContent (never innerHTML) so a PO title can never inject markup.
+_TOOLTIP_JS = """
+<script>
+(function(){
+  var island=document.getElementById("ps-tip-data"); if(!island) return;
+  var TIP; try{ TIP=JSON.parse(island.textContent); }catch(e){ return; }
+  var ids=Object.keys(TIP).filter(Boolean); if(!ids.length) return;
+  ids.sort(function(a,b){return b.length-a.length;});          // longest-first: PRD-X-E1 before PRD-X
+  function esc(s){return s.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\\\$&");}
+  var alt="(?<![A-Za-z0-9-])("+ids.map(esc).join("|")+")(?![A-Za-z0-9-])";
+  // SVG label variant WITHOUT the trailing boundary: a Mermaid flowchart node
+  // label concatenates "ID" + title into one textContent ("BRD-G1Onboard…"), so
+  // the trailing boundary would reject every multi-line node. longest-first
+  // ordering still makes PRD-X-E1 win over PRD-X at the same position.
+  var altSvg="(?<![A-Za-z0-9-])("+ids.map(esc).join("|")+")";
+  var reTest=new RegExp(alt);
+  var box=document.createElement("div"); box.id="ps-tip"; box.setAttribute("role","tooltip");
+  document.body.appendChild(box);
+  function show(id,x,y){
+    var d=TIP[id]; if(!d){box.style.display="none";return;}
+    box.textContent="";
+    var h=document.createElement("div"); h.className="ps-tip-h";
+    var s=document.createElement("strong"); s.textContent=id; h.appendChild(s);
+    if(d.t){var t=document.createElement("span"); t.className="ps-tip-t"; t.textContent=" "+d.t; h.appendChild(t);}
+    box.appendChild(h);
+    if(d.d){var m=document.createElement("div"); m.className="ps-tip-m"; m.textContent=d.d; box.appendChild(m);}
+    box.style.display="block";
+    var px=Math.min(x+14, window.innerWidth-box.offsetWidth-8);
+    var py=Math.min(y+16, window.innerHeight-box.offsetHeight-8);
+    box.style.left=Math.max(8,px)+"px"; box.style.top=Math.max(8,py)+"px";
+  }
+  function hide(){box.style.display="none";}
+  function tagSvg(){
+    // SVG text labels (gantt/flowchart): tag the whole <text> AFTER Mermaid has
+    // rendered (skip already-tagged so re-scans are idempotent and late renders
+    // still get picked up). A span can't live inside SVG <text>, so wrapText must
+    // NOT touch this subtree (see acceptNode) — it is handled here exclusively.
+    document.querySelectorAll("svg text, svg .nodeLabel").forEach(function(t){
+      if(t.getAttribute("data-psid")) return;
+      var m=(t.textContent||"").match(new RegExp(altSvg));
+      if(m){ t.setAttribute("data-psid",m[1]); t.classList.add("ps-tipword"); }
+    });
+  }
+  function wrapText(){
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(node){
+      if(!node.nodeValue||!reTest.test(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+      var p=node.parentNode;
+      while(p&&p!==document.body){
+        var tag=(p.tagName||"").toLowerCase();
+        // Reject the ENTIRE Mermaid container: wrapping a span into its raw source
+        // text (a race with Mermaid's async render) corrupts the diagram — the
+        // span markup renders as literal text or breaks parsing. Mermaid labels go
+        // through tagSvg instead.
+        if(tag==="script"||tag==="style"||tag==="svg"||p.id==="ps-tip"||(p.classList&&(p.classList.contains("ps-tipword")||p.classList.contains("mermaid")))) return NodeFilter.FILTER_REJECT;
+        p=p.parentNode;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    var nodes=[],n; while((n=walker.nextNode())) nodes.push(n);
+    nodes.forEach(function(node){
+      var txt=node.nodeValue, frag=document.createDocumentFragment(), last=0, mm, r=new RegExp(alt,"g");
+      while((mm=r.exec(txt))){
+        if(mm.index>last) frag.appendChild(document.createTextNode(txt.slice(last,mm.index)));
+        var sp=document.createElement("span"); sp.className="ps-tipword"; sp.setAttribute("data-psid",mm[1]); sp.textContent=mm[0];
+        frag.appendChild(sp); last=mm.index+mm[0].length;
+      }
+      if(last<txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+      node.parentNode.replaceChild(frag,node);
+    });
+  }
+  function scan(){ try{tagSvg();wrapText();}catch(e){} }
+  function idOf(t){ if(!t) return null; if(t.getAttribute){var d=t.getAttribute("data-psid"); if(d) return d;} if(t.closest){var c=t.closest("[data-psid]"); if(c) return c.getAttribute("data-psid");} return null; }
+  document.addEventListener("mouseover",function(e){ var id=idOf(e.target); if(id) show(id,e.clientX,e.clientY); });
+  document.addEventListener("mouseout",function(e){ if(idOf(e.target)) hide(); });
+  scan(); setTimeout(scan,400); setTimeout(scan,1200);
+})();
+</script>
+"""
+
+
 def file_timestamp() -> str:
     """Compact UTC stamp (`%Y%m%dT%H%M%SZ`, no colons) for output filenames — one
     source for every writer (export / board / explorer / the 12 graph views). The
@@ -757,6 +990,11 @@ def assemble(
         # exempt from H4 — the contract is "no skill body-sanitizer", not "no
         # vendor lib named DOMPurify".
         "viewer_head": viewer_head(),
+        # Hover-on-ID: an inert id→{title,meta} island + the client scanner that
+        # tags Mermaid SVG labels / wraps bare IDs in text so every artifact ID in
+        # any graph or HTML-native view surfaces its title + metadata on hover.
+        "tooltip_data": tooltip_island(graph),
+        "tooltip_js": _TOOLTIP_JS,
     }
     return substitute(shell, values)
 

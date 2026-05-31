@@ -327,6 +327,22 @@ def main() -> int:
         print(_written_json(out, root))
         return 0
 
+    # heatmap (type×status) and persona (persona×PRD) are integer-count grids
+    # Mermaid can't express; in HTML they used to fall back to an ASCII <pre> dump.
+    # Render them HTML-native (real <table>s) like risk/competition. ASCII/mermaid
+    # formats keep the existing render_ascii/_pre path (handled above / below).
+    if args.view == "heatmap":
+        frag = render_html.heatmap(graph, lang=args.lang)
+        out = render_html.write(root, "heatmap", "html", frag, graph, lang=args.lang)
+        print(_written_json(out, root))
+        return 0
+
+    if args.view == "persona":
+        frag = render_html.persona(graph, lang=args.lang, filter_wont=args.filter_wont)
+        out = render_html.write(root, "persona", "html", frag, graph, lang=args.lang)
+        print(_written_json(out, root))
+        return 0
+
     mermaid_text = _render_mermaid(args.view, graph, baseline, lang=args.lang, filter_wont=args.filter_wont)
     # Mermaid renderers return either a ```mermaid fenced block (true Mermaid
     # DSL) or a plain ``` fenced block (ASCII fallback for views Mermaid can't

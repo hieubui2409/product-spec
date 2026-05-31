@@ -7,13 +7,32 @@
   {{viewer_head}}
   <style>
     /* Legacy graph-view specifics layered on the shared design system. */
-    .diagram { overflow: auto; }
+    /* Graph views use the full window width (the shared 1100px wrap is meant for
+       reading prose, too cramped for a zoomed graph/gantt). */
+    .ps-wrap { max-width: none; }
+    /* The diagram is a fixed full-height scroll viewport, NOT an auto-sized box:
+       a CSS `transform: scale()` grows the content visually but leaves its layout
+       box unchanged, so without a tall viewport a zoomed-in diagram is clipped to
+       its original size with no room to pan. `calc(100vh - …)` reserves space for
+       the title + meta + zoom controls above and the footer note below, so the
+       footer stays on screen while the diagram fills the rest. */
+    .diagram { overflow: auto; height: calc(100vh - 12rem); }
     .controls { margin-bottom: 0.75rem; }
     .controls button { padding: 4px 10px; margin-right: 6px; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
-    /* Make Mermaid diagram text follow the light/dark theme (it hardcodes dark
-       ink otherwise, illegible in dark mode). */
-    .mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid span, .mermaid text { color: var(--text) !important; fill: var(--text) !important; }
+    /* Mermaid text legibility is handled by matching the Mermaid THEME to the
+       page theme at render time (see the init script below) — NOT by force-
+       setting `fill: var(--text)`, which painted light text onto the light
+       section backgrounds of gantt/quadrant charts (light-on-light → invisible).
+       Only the flowchart edge-label chip keeps a surface background so the edge
+       text never sits on a graph line. */
     .mermaid .edgeLabel { background: var(--surface) !important; }
+    /* Hover-on-ID tooltip: floating box + the hover affordance on tagged IDs. */
+    #ps-tip { position: fixed; z-index: 80; display: none; max-width: 22rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: .5rem .7rem; font-size: .82rem; line-height: 1.4; pointer-events: none; }
+    #ps-tip .ps-tip-h strong { color: var(--accent); }
+    #ps-tip .ps-tip-t { font-weight: 600; }
+    #ps-tip .ps-tip-m { margin-top: .25rem; color: var(--muted); font-size: .76rem; }
+    .ps-tipword { cursor: help; }
+    span.ps-tipword { text-decoration: underline dotted var(--border); text-underline-offset: 2px; }
   </style>
 </head>
 <body>
@@ -29,12 +48,18 @@
     <div class="diagram ve-card ve-card--recessed" id="diagram"><div id="diagram-scale">{{view_body}}</div></div>
     <p class="ps-meta">{{footer_note}}</p>
   </div>
+  {{tooltip_data}}
   <script>
 {{mermaid_js}}
   </script>
+  {{tooltip_js}}
   <script>
     if (window.mermaid) {
-      window.mermaid.initialize({ startOnLoad: true, securityLevel: "strict" });
+      // Match the Mermaid theme to the page theme so diagram text/background
+      // stay legible in dark mode (a "default"-theme chart has light section
+      // fills that hide light text on a dark page).
+      var psDark = document.documentElement.getAttribute("data-theme") === "dark";
+      window.mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: psDark ? "dark" : "default" });
     }
     let scale = 1;
     function applyScale() {

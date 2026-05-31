@@ -60,6 +60,27 @@ def load_artifacts(product_dir: Path) -> List[Dict[str, Any]]:
     return artifacts
 
 
+def _title_from_h1(body: str, node_id: Optional[str]) -> str:
+    """Pull a human title from the artifact's first H1 — the templates put the
+    title ONLY in the `# {{title}} — <TYPE> <id>` heading, never in frontmatter, so
+    without this every PRD/epic/story node carries an empty title (the graph views
+    show bare IDs and the board/explorer cards have no heading). Strip a trailing
+    ` — …<id>` qualifier the templates append; a hand-written heading with no such
+    suffix (e.g. `# Automated Payouts Epic`) is kept verbatim."""
+    if not body:
+        return ""
+    for line in body.splitlines():
+        line = line.strip()
+        if line.startswith("# "):
+            h = line[2:].strip()
+            if node_id and "—" in h:
+                head, _, tail = h.rpartition("—")
+                if node_id in tail:
+                    h = head.strip() or h
+            return h
+    return ""
+
+
 def _node_type(art: Dict[str, Any]) -> Optional[str]:
     """Resolve an artifact's type identically everywhere: a malformed `type:`
     (a YAML list/dict from a hand-edit) coerces to None so it falls back to the
@@ -85,15 +106,19 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
                     continue
                 nodes.append(_node_from_goal(g, parent_file=rel))
         else:
-            nodes.append(_node_from_artifact(fm, rel, node_type))
+            nodes.append(_node_from_artifact(fm, rel, node_type, art.get("body") or ""))
     return nodes
 
 
-def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[str]) -> Dict[str, Any]:
+def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[str],
+                        body: str = "") -> Dict[str, Any]:
+    nid = _scalar_id(fm.get("id"))
     return {
-        "id": _scalar_id(fm.get("id")),
+        "id": nid,
         "type": node_type,
-        "title": fm.get("name") or fm.get("title") or "",
+        # Frontmatter `name`/`title` win when present; otherwise fall back to the
+        # body H1 so the title is never empty (see _title_from_h1).
+        "title": fm.get("name") or fm.get("title") or _title_from_h1(body, nid) or "",
         "status": fm.get("status"),
         "scope": fm.get("scope"),
         "moscow": fm.get("moscow"),

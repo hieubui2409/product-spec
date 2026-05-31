@@ -53,6 +53,7 @@ LABELS: Dict[str, Dict[str, str]] = {
         # TIME view (gantt title + ASCII header)
         "roadmap_deadlines": "Roadmap & Deadlines",
         "no_date": "no date",
+        "time_no_dated": "No dated items yet — nothing to schedule on a timeline. Set a target_date on a PRD or epic.",
         # COMPETITION view — parity-matrix cell verdicts + threat-heatmap tiers.
         # EN labels are the enum identity (the matrix renders the raw enum word);
         # VI translates. Keys are distinct from the risk tiers to avoid clashes.
@@ -103,6 +104,7 @@ LABELS: Dict[str, Dict[str, str]] = {
         # TIME view — VI phrasing native-reviewed for natural wording.
         "roadmap_deadlines": "Lộ trình & Hạn chót",
         "no_date": "chưa có hạn",
+        "time_no_dated": "Chưa có mục nào đặt ngày — không có gì để xếp lịch. Hãy đặt target_date cho một PRD hoặc epic.",
         # COMPETITION view — VI phrasing native-reviewed for natural wording.
         "competition": "Cạnh tranh",
         "parity_ahead": "dẫn trước",

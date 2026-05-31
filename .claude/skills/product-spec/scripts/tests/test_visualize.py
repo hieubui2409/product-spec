@@ -312,13 +312,13 @@ def test_html_escapes_pre_content_when_format_is_pre():
     assert "<script>alert(1)" not in html
 
 
-# ---------- HTML dispatch (ascii-fallback views must NOT be wrapped as Mermaid) ----------
+# ---------- HTML dispatch (heatmap renders HTML-native, NOT Mermaid) ----------
 
-def test_html_dispatch_routes_ascii_fallback_view_as_pre_not_mermaid(tmp_path):
-    """heatmap/persona/risk views have no clean Mermaid expression; the
-    mermaid renderer returns a `<pre>` ASCII fallback. visualize.py MUST
-    detect that and pass view_format="pre" — otherwise Mermaid tries to
-    parse the <pre> body as DSL and the rendered page is broken/blank.
+def test_html_dispatch_routes_heatmap_html_native_not_mermaid(tmp_path):
+    """heatmap/persona have no clean Mermaid expression; in HTML they now render
+    as HTML-native count-grid <table>s (like risk/competition), NOT a Mermaid
+    diagram and NOT the old ASCII-in-<pre> fallback. visualize.py MUST route them
+    through the HTML-native fragment path so Mermaid never tries to parse them.
     """
     import subprocess
     import shutil
@@ -340,13 +340,13 @@ def test_html_dispatch_routes_ascii_fallback_view_as_pre_not_mermaid(tmp_path):
     assert htmls, "expected an HTML file written"
     body = htmls[-1].read_text()
 
-    # The diagram must be wrapped as <pre>, NOT <div class="mermaid">.
+    # Must NOT route through the Mermaid wrapper, and no longer through the old
+    # ASCII <pre> fallback — it is an HTML-native <table class="count-grid">.
     assert '<div class="mermaid">' not in body, (
-        "heatmap view must NOT route through the Mermaid wrapper — "
-        "Mermaid cannot parse <pre> ASCII as DSL."
+        "heatmap view must NOT route through the Mermaid wrapper."
     )
-    assert "<pre>" in body
-    # ASCII heatmap content must be HTML-escaped inside the <pre>.
+    assert '<table class="count-grid">' in body, "heatmap must render HTML-native"
+    # The status columns appear as real table headers.
     assert "draft" in body and "approved" in body
 
 
@@ -432,8 +432,11 @@ def test_html_ascii_fallback_view_skips_mermaid_js(tmp_path):
     body = sorted((proj / "docs" / "product" / "visuals").glob("heatmap-*.html"))[-1].read_text()
     # The vendored signature must NOT appear in ASCII-fallback HTML.
     assert "__esbuild_esm_mermaid" not in body
-    # The file should be small (< 10 KB), not 2.5 MB.
-    assert len(body) < 10_000, f"heatmap HTML unexpectedly large: {len(body)} bytes"
+    # The file should stay small — no 2.5 MB Mermaid runtime. The ceiling allows
+    # for the shared hover-tooltip scanner + its id→{title,meta} data island
+    # (a few KB), which every graph/native view now carries; the real guard is the
+    # mermaid-signature assert above.
+    assert len(body) < 80_000, f"heatmap HTML unexpectedly large: {len(body)} bytes"
 
 
 def test_safe_label_escapes_mermaid_special_chars():

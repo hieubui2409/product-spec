@@ -26,6 +26,7 @@ from render_ascii import (
     competition as ascii_competition,
     _dep_safe_order,
     _is_deferred,
+    _scalar,
     is_visible,
 )
 
@@ -144,28 +145,36 @@ def heatmap(graph: Dict[str, Any]) -> str:
 
 
 def scope(graph: Dict[str, Any]) -> str:
-    # quadrantChart: x = moscow (must..wont), y = scope (out..core-value)
-    # Derive counts from spec_graph.moscow_story_counts (stories-only) so the
-    # '%% counts' comment and the moscow view agree — one count home (G-B1).
-    counts_map = moscow_story_counts(graph)
-    must = counts_map.get("must", 0)
-    should = counts_map.get("should", 0)
-    could = counts_map.get("could", 0)
-    wont = counts_map.get("wont", 0)
-    body = """quadrantChart
-  title Scope x MoSCoW
-  x-axis Won't --> Must
-  y-axis Out --> Core-Value
-  quadrant-1 Must / Core
-  quadrant-2 Won't / Core
-  quadrant-3 Won't / Out
-  quadrant-4 Must / Out
-  Must-stories: [0.85, 0.5]
-  Should-stories: [0.65, 0.5]
-  Could-stories: [0.35, 0.5]
-  Won't-stories: [0.15, 0.5]"""
-    counts = f"\n%% counts — must:{must} should:{should} could:{could} wont:{wont}"
-    return _fence(body + counts)
+    # TRUE 2D scatter: x = moscow (wont→must), y = scope (out→core-value, with the
+    # neutral `in` bucket at mid-height). One point per POPULATED (moscow, scope)
+    # cell at its real coordinates, count in the (quoted) label — the old fixed
+    # `*-stories: [_, 0.5]` row collapsed everything onto one horizontal line with
+    # overlapping labels and ignored scope entirely (same bug class as moscow).
+    xpos = {"wont": 0.15, "could": 0.4, "should": 0.6, "must": 0.85}
+    ypos = {"out": 0.18, "in": 0.5, "core-value": 0.82}
+    cells: Dict[tuple, int] = {}
+    for n in graph["nodes"]:
+        if n.get("type") != "story":
+            continue
+        mo = _scalar(n.get("moscow"))
+        sc = _scalar(n.get("scope"))
+        if mo in xpos and sc in ypos:
+            cells[(mo, sc)] = cells.get((mo, sc), 0) + 1
+    lines = [
+        "quadrantChart",
+        "  title Scope x MoSCoW",
+        "  x-axis Won't --> Must",
+        "  y-axis Out --> Core-Value",
+        "  quadrant-1 Must / Core",
+        "  quadrant-2 Won't / Core",
+        "  quadrant-3 Won't / Out",
+        "  quadrant-4 Must / Out",
+    ]
+    for (mo, sc), c in sorted(cells.items()):
+        lines.append(f'  "{mo} / {sc} ({c})": [{xpos[mo]}, {ypos[sc]}]')
+    if len(lines) == 8:  # no story cells → quadrantChart needs ≥1 point
+        return "```\nScope x MoSCoW: 0\n```"
+    return _fence("\n".join(lines))
 
 
 def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
@@ -186,11 +195,14 @@ def roadmap(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
         section = label(h, lang) if h != "unspecified" else "Unspecified"
         lines.append(f"  section {section}")
         for it in items:
-            marker = " *" if _is_deferred(nodes_by_id.get(it, {})) else ""
-            # Route item id through _safe_label: PO-controlled ids may contain
-            # markup characters that would inject live HTML in the rendered page.
-            safe_it = _safe_label(it)
-            lines.append(f"    {safe_it}{marker} : {_safe_label(section)}")
+            node = nodes_by_id.get(it, {})
+            marker = " *" if _is_deferred(node) else ""
+            # Show the human title next to the ID (the timeline used to print bare
+            # IDs). Route the whole event text through _safe_label: PO-controlled
+            # ids/titles may contain markup chars that would inject live HTML.
+            title = node.get("title") or ""
+            event = f"{it} — {title}" if title else it
+            lines.append(f"    {_safe_label(event)}{marker} : {_safe_label(section)}")
     return _fence("\n".join(lines))
 
 
@@ -227,17 +239,39 @@ def moscow(graph: Dict[str, Any], lang: str = "en") -> str:
     should_l = label("should", lang)
     could_l = label("could", lang)
     wont_l = label("wont", lang)
-    body = f"""quadrantChart
-  title Stories — MoSCoW
-  x-axis {wont_l} --> {must_l}
-  y-axis {could_l} --> {should_l}
-  quadrant-1 {must_l}
-  quadrant-2 {should_l}
-  quadrant-3 {could_l}
-  quadrant-4 {wont_l}
-  Stories: [0.5, 0.5]
-%% counts: must={counts.get('must',0)} should={counts.get('should',0)} could={counts.get('could',0)} wont={counts.get('wont',0)}"""
-    return _fence(body)
+    # One plotted point PER MoSCoW bucket, placed at its quadrant centre — not a
+    # single dot pinned to [0.5, 0.5] (that collapsed every story onto the origin
+    # and read as "everything is uncategorised"). Axes: x = wont→must, y =
+    # could→should, so the quadrant centres are: must=top-right, should=top-left,
+    # could=bottom-left, wont=bottom-right (matching the quadrant-N labels below).
+    # Empty buckets are omitted so the chart shows only the buckets in play; the
+    # count rides in the (quoted) label — bare "(n)" parens are a lexer error, so
+    # every point label is double-quoted (also covers spaces in localized labels).
+    centre = {"must": (0.75, 0.75), "should": (0.25, 0.75),
+              "could": (0.25, 0.25), "wont": (0.75, 0.25)}
+    bucket_label = {"must": must_l, "should": should_l, "could": could_l, "wont": wont_l}
+    lines = [
+        "quadrantChart",
+        "  title Stories — MoSCoW",
+        f"  x-axis {wont_l} --> {must_l}",
+        f"  y-axis {could_l} --> {should_l}",
+        f"  quadrant-1 {must_l}",
+        f"  quadrant-2 {should_l}",
+        f"  quadrant-3 {could_l}",
+        f"  quadrant-4 {wont_l}",
+    ]
+    points = 0
+    for bucket in ("must", "should", "could", "wont"):
+        c = counts.get(bucket, 0)
+        if not c:
+            continue
+        x, y = centre[bucket]
+        lines.append(f'  "{bucket_label[bucket]} ({c})": [{x}, {y}]')
+        points += 1
+    # quadrantChart needs ≥1 point to render; an all-empty spec degrades to a note.
+    if not points:
+        return f"```\n{label('moscow', lang)}: 0\n```"
+    return _fence("\n".join(lines))
 
 
 def risk(graph: Dict[str, Any]) -> str:
@@ -282,7 +316,20 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         h = n.get("horizon")
         by_horizon[h if isinstance(h, str) else "unspecified"].append(n)
 
+    # A Mermaid gantt has no "undated" slot: a task line ":id, 1d" is mis-parsed
+    # (Mermaid reads the leading token AS a start date → "Invalid date") and a
+    # leading undated task crashes the renderer outright ("...reading 'endTime'").
+    # So every undated task is anchored on the timeline: chained `after` its
+    # predecessor, or — when it sorts first — pinned to the earliest known date.
+    # If NOTHING carries a date there is no timeline to draw at all → emit a
+    # plain note instead of a structurally-broken gantt.
+    dated = [_safe_label(str(n["target_date"])) for n in timed if n.get("target_date")]
+    if not dated:
+        return f"```\n{label('time_no_dated', lang)}\n```"
+    min_date = min(dated)
+
     lines = ["gantt", f"  title {_safe_label(label('roadmap_deadlines', lang))}", "  dateFormat YYYY-MM-DD"]
+    prev_tid = None
     for h in (*HORIZON_ORDER, "unspecified"):
         items = by_horizon.get(h, [])
         if not items:
@@ -298,8 +345,14 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
                 # A milestone on the target date (single-day) keeps the gantt
                 # valid without inventing a duration the spec never declared.
                 lines.append(f"  {task_label} :milestone, {tid}, {_safe_label(str(td))}, 0d")
+            elif prev_tid:
+                # Undated: trail the previous task (1d placeholder bar) so it still
+                # shows, without the id being mistaken for a start date.
+                lines.append(f"  {task_label} :{tid}, after {prev_tid}, 1d")
             else:
-                lines.append(f"  {task_label} :{tid}, 1d")
+                # Undated AND sorts first → anchor at the earliest known date.
+                lines.append(f"  {task_label} :{tid}, {min_date}, 1d")
+            prev_tid = tid
 
     # Dependency annotations (cycle-safe — `order` was built with a visited set).
     dep_lines = []
@@ -326,12 +379,16 @@ def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
         "  classDef removed fill:#ffd1d1",
         "  classDef changed fill:#fff3a3",
     ]
+    # Prefix markers are bracketed — NOT a bare "+ " / "- ". Mermaid 11 parses a
+    # flowchart htmlLabel as markdown, and a label STARTING with "+ "/"- "/"* " is
+    # read as a list item → every node renders "Unsupported markdown: list". "(+)"
+    # / "(-)" carry the same add/removed meaning without tripping the list parser.
     for a in d["added"]:
         # Route node ids through _safe_label: PO-controlled ids may contain
         # markup characters that would inject live HTML in the rendered page.
-        lines.append(f'  {_safe_id(a)}["+ {_safe_label(a)}"]:::added')
+        lines.append(f'  {_safe_id(a)}["(+) {_safe_label(a)}"]:::added')
     for r in d["removed"]:
-        lines.append(f'  {_safe_id(r)}["- {_safe_label(r)}"]:::removed')
+        lines.append(f'  {_safe_id(r)}["(-) {_safe_label(r)}"]:::removed')
 
     # Product-level changes — emit a single annotated node when name/core_value/personas drifted.
     if d["product_changes"]:
