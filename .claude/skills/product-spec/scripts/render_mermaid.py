@@ -219,7 +219,9 @@ def gap(graph: Dict[str, Any]) -> str:
     spec_graph.matching_child_counts (counts only EXPECTED-child-type inbound
     edges, so a wrong-type edge on a malformed graph cannot mask a gap)."""
     counts = matching_child_counts(graph)
-    lines = ["flowchart LR", "  classDef gap fill:#fce4e4,stroke:#cc0000"]
+    # Dark ink pinned in the classDef: the pastel fill is theme-independent, so a
+    # theme-driven label color would wash out (light text on light pink in dark mode).
+    lines = ["flowchart LR", "  classDef gap fill:#fce4e4,stroke:#cc0000,color:#1f2328"]
     for n in graph["nodes"]:
         if n["type"] in CHILD_TYPE_FOR_PARENT and counts.get(n["id"], 0) == 0:
             sid = _safe_id(n["id"])
@@ -375,9 +377,12 @@ def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     d = diff_graphs(current, baseline)  # shared added/removed + product-change set-math
     lines = [
         "flowchart TB",
-        "  classDef added fill:#dcedc1",
-        "  classDef removed fill:#ffd1d1",
-        "  classDef changed fill:#fff3a3",
+        # Pin a DARK text color in each classDef: the fills are fixed light pastels
+        # in BOTH themes, so theme-driven label color (light in dark mode) would
+        # vanish on them. Dark ink on a light pastel reads in light AND dark mode.
+        "  classDef added fill:#dcedc1,color:#1f2328",
+        "  classDef removed fill:#ffd1d1,color:#1f2328",
+        "  classDef changed fill:#fff3a3,color:#1f2328",
     ]
     # Prefix markers are bracketed — NOT a bare "+ " / "- ". Mermaid 11 parses a
     # flowchart htmlLabel as markdown, and a label STARTING with "+ "/"- "/"* " is

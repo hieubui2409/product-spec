@@ -26,6 +26,15 @@
        Only the flowchart edge-label chip keeps a surface background so the edge
        text never sits on a graph line. */
     .mermaid .edgeLabel { background: var(--surface) !important; }
+    /* Chart-label SVG <text> (gantt task/section/title, quadrant title + axis,
+       timeline) defaults to a faint Mermaid gray that washes out on the light
+       page. Force it to the theme text colour — safe in BOTH modes because the
+       Mermaid theme is matched to the page (so the diagram background contrasts
+       var(--text)). Scoped to <text> ONLY: flowchart node labels are HTML
+       <span class="nodeLabel"> (styled via `color`, not `fill`), so classDef-
+       tinted nodes keep their own ink and are untouched. */
+    .mermaid text { fill: var(--text) !important; }
+    .mermaid .grid .tick text { fill: var(--muted) !important; }
     /* Hover-on-ID tooltip: floating box + the hover affordance on tagged IDs. */
     #ps-tip { position: fixed; z-index: 80; display: none; max-width: 22rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: .5rem .7rem; font-size: .82rem; line-height: 1.4; pointer-events: none; }
     #ps-tip .ps-tip-h strong { color: var(--accent); }
@@ -54,13 +63,30 @@
   </script>
   {{tooltip_js}}
   <script>
-    if (window.mermaid) {
-      // Match the Mermaid theme to the page theme so diagram text/background
-      // stay legible in dark mode (a "default"-theme chart has light section
-      // fills that hide light text on a dark page).
-      var psDark = document.documentElement.getAttribute("data-theme") === "dark";
-      window.mermaid.initialize({ startOnLoad: true, securityLevel: "strict", theme: psDark ? "dark" : "default" });
-    }
+    (function () {
+      if (!window.mermaid) return;
+      // A Mermaid SVG is baked once at render with whatever theme was active then.
+      // The theme toggle only swaps CSS vars, so a diagram rendered light would go
+      // stale (dark text/lines) on a dark page and vice-versa. Capture the DSL
+      // source up-front, then (re)render in the CURRENT theme on load AND on every
+      // theme flip — keeping the diagram theme in lock-step with the page.
+      var scaleEl = document.getElementById("diagram-scale");
+      var mermaidDiv = scaleEl ? scaleEl.querySelector(".mermaid") : null;
+      var src = mermaidDiv ? mermaidDiv.textContent : null;
+      function render() {
+        if (!mermaidDiv || src === null) return;
+        var dark = document.documentElement.getAttribute("data-theme") === "dark";
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: dark ? "dark" : "default" });
+        mermaidDiv.removeAttribute("data-processed");
+        mermaidDiv.textContent = src;
+        try { window.mermaid.run({ nodes: [mermaidDiv] }); } catch (e) {}
+        // Re-tag hover targets on the freshly rendered SVG.
+        if (window.psRescanTooltips) setTimeout(window.psRescanTooltips, 150);
+      }
+      var orig = window.psToggleTheme;
+      window.psToggleTheme = function () { if (orig) orig(); render(); };
+      window.addEventListener("load", render);
+    })();
     let scale = 1;
     function applyScale() {
       // Scale the inner wrapper, NOT #diagram itself: #diagram carries the

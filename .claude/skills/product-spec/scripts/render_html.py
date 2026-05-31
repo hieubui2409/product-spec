@@ -833,6 +833,9 @@ _TOOLTIP_JS = """
     });
   }
   function scan(){ try{tagSvg();wrapText();}catch(e){} }
+  // Exposed so the shell can re-tag SVG labels after it re-renders Mermaid on a
+  // theme toggle (the old SVG + its data-psid tags are replaced wholesale).
+  window.psRescanTooltips=scan;
   function idOf(t){ if(!t) return null; if(t.getAttribute){var d=t.getAttribute("data-psid"); if(d) return d;} if(t.closest){var c=t.closest("[data-psid]"); if(c) return c.getAttribute("data-psid");} return null; }
   document.addEventListener("mouseover",function(e){ var id=idOf(e.target); if(id) show(id,e.clientX,e.clientY); });
   document.addEventListener("mouseout",function(e){ if(idOf(e.target)) hide(); });
