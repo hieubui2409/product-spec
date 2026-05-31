@@ -1,6 +1,6 @@
 {
-  "version": "2.19.2-beta.3",
-  "generatedAt": "2026-05-28T10:06:02.347Z",
+  "version": "2.19.2-beta.4",
+  "generatedAt": "2026-05-30T18:05:51.074Z",
   "files": [
     {
       "path": ".ck.json",
@@ -40,9 +40,9 @@
     },
     {
       "path": "agents/code-reviewer.md",
-      "checksum": "21708a3f98e03ccc0ec6a2a4050c1008621fe1622d4fcff5fb74975617829369",
-      "size": 6271,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "70a359f4598a35f5462c6ef7dd5b3c015ee87161b6b0898916653f3d218f9ba4",
+      "size": 7416,
+      "lastModified": "2026-05-30T14:05:22-04:00"
     },
     {
       "path": "agents/code-simplifier.md",
@@ -418,7 +418,7 @@
     },
     {
       "path": "hooks/.logs/hook-log.jsonl",
-      "checksum": "370e4e0dc8417c332a7da4251477b2ee53374d21ece4aa97b93152769cbc0c72",
+      "checksum": "1f68c2c317afa0cc3baea03c600ccd01d29673d1b7c59cf6e10e739e719904fa",
       "size": 1760
     },
     {
@@ -1197,9 +1197,9 @@
     },
     {
       "path": "metadata.json",
-      "checksum": "7e655f518bff4b6a358e9dc1259d39f5b6a51da2c7c86072f6aea36506a8b75f",
+      "checksum": "9d7e1e5d48180cedda06ddd84c1a9d32882be586c648f12388a8616a2c784120",
       "size": 4891,
-      "lastModified": "2026-05-28T10:01:29Z"
+      "lastModified": "2026-05-28T10:06:26Z"
     },
     {
       "path": "output-styles/coding-level-0-eli5.md",
@@ -2079,9 +2079,9 @@
     },
     {
       "path": "skills/ck-code-review/SKILL.md",
-      "checksum": "f4da5ca777e26163ed1f3a3574c2d2ff8230640fb5f9d587f610179b386afd90",
-      "size": 9042,
-      "lastModified": "2026-05-25T18:46:12+07:00"
+      "checksum": "8f119c2bc03026b43a6f6fb7eb3618d2b76a3513b21d0841aaa1bcfec3cc3730",
+      "size": 9451,
+      "lastModified": "2026-05-30T14:05:22-04:00"
     },
     {
       "path": "skills/ck-code-review/references/checklist-workflow.md",
