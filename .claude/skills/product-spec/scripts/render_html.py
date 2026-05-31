@@ -285,7 +285,6 @@ _RISK_GRID_CSS = (
 # matrix cols = PRD ids, cells = the parity enum the PRD declared for that
 # competitor. A `private:`-stripped url never reaches here (dropped at parse).
 
-_PARITY_COLS = ("ahead", "parity", "behind", "none")  # legend order
 # Each parity verdict + threat tier maps to a shared design-system *-dim tint so
 # the matrix/heatmap follow the light/dark theme like every other surface. An
 # off-enum value (separately flagged unknown_enum) falls back to no tint class.
@@ -295,8 +294,7 @@ _PARITY_CELL_CLASS = {
 _THREAT_CELL_CLASS = {"low": "cm-t-low", "med": "cm-t-med", "high": "cm-t-high"}
 
 
-def _competition_matrix(competitors: list, prds: list, lang: str = "en",
-                        cell_lookup=None) -> str:
+def _competition_matrix(competitors: list, prds: list, lang: str, cell_lookup) -> str:
     """The parity matrix <table>: competitor NAME rows × PRD id columns, cells =
     the parity enum the PRD declared for that competitor (blank when unset). All
     spec text escaped server-side. Deterministic — competitors keep BRD order,
@@ -304,21 +302,15 @@ def _competition_matrix(competitors: list, prds: list, lang: str = "en",
     the enum KEY stays English (it's the cell CLASS), only the displayed word
     localizes. An off-enum value (separately flagged unknown_enum) shows raw.
 
-    `cell_lookup` is the resolver from render_ascii.resolve_competition; when
-    provided it is used per cell so the resolution rule has a single home."""
+    `cell_lookup` is the resolver from render_ascii.resolve_competition — the
+    single home for the per-cell resolution rule (required, no inline fallback)."""
     head_cols = "".join(f"<th scope='col'>{_escape(str(p.get('id') or ''))}</th>" for p in prds)
     rows = []
     for c in competitors:
         name = _escape(str(c.get("name") or c.get("id") or "(unnamed)"))
         tds = []
         for p in prds:
-            if cell_lookup is not None:
-                val = cell_lookup(c, p)
-            else:
-                from render_ascii import _hashable as _h
-                parity = (p.get("competitive_parity") or {})
-                cid = _h(c.get("id"))
-                val = parity.get(cid) if isinstance(parity, dict) else None
+            val = cell_lookup(c, p)
             cls = _PARITY_CELL_CLASS.get(val, "") if isinstance(val, (str, type(None))) else ""
             text = _escape(_parity_label(val, lang)) if val is not None else ""
             tds.append(f'<td class="cm-cell {cls}">{text}</td>')
@@ -619,14 +611,18 @@ def embed_spec_data(payload: Any) -> str:
 
 def file_timestamp() -> str:
     """Compact UTC stamp (`%Y%m%dT%H%M%SZ`, no colons) for output filenames — one
-    source for every writer (export / board / explorer / the 9 graph views). The
+    source for every writer (export / board / explorer / the 12 graph views). The
     colon-bearing ISO body stamp is `spec_graph._now`; this is its filename twin."""
     return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def product_name(graph: Dict[str, Any]) -> str:
-    """The product display name, or `(unnamed)` — one source for every renderer."""
-    return (graph.get("product") or {}).get("name") or "(unnamed)"
+    """The product display name, or `(unnamed)` — one source for every renderer.
+    Coerces a non-str name (and a non-dict product block from a poisoned graph
+    JSON) to str so chrome/heading callers never crash in _escape / .replace."""
+    product = graph.get("product")
+    name = product.get("name") if isinstance(product, dict) else None
+    return str(name) if name else "(unnamed)"
 
 
 def goal_detail_md(node: Dict[str, Any], lang: str = "en") -> str:
@@ -643,7 +639,12 @@ def goal_detail_md(node: Dict[str, Any], lang: str = "en") -> str:
     body, and "" for a goal with no metrics (nothing additive to synthesize)."""
     if node.get("type") != "goal":
         return ""
-    metrics = [str(m) for m in (node.get("metrics") or []) if m]
+    raw = node.get("metrics")
+    if not isinstance(raw, list):
+        # A bare-scalar `metrics:` would char-split into phantom items; the
+        # risk/competition renderers in this file apply the same isinstance gate.
+        raw = [raw] if raw else []
+    metrics = [str(m) for m in raw if m]
     if not metrics:
         return ""
     return f"**{label('metrics', lang)}:** " + ", ".join(metrics)
@@ -776,7 +777,7 @@ def substitute(shell: str, values: Dict[str, str]) -> str:
 
 def _write_visual(root: Path, filename: str, html: str) -> Path:
     """Write a self-contained visual to docs/product/visuals/<filename>. One home for
-    the out_dir + mkdir + write_text + return that the 9 graph views and the board /
+    the out_dir + mkdir + write_text + return that the 12 graph views and the board /
     explorer writers otherwise copy verbatim."""
     out_dir = root / "docs" / "product" / "visuals"
     out_dir.mkdir(parents=True, exist_ok=True)

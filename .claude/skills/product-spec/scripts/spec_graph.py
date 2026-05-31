@@ -60,6 +60,15 @@ def load_artifacts(product_dir: Path) -> List[Dict[str, Any]]:
     return artifacts
 
 
+def _node_type(art: Dict[str, Any]) -> Optional[str]:
+    """Resolve an artifact's type identically everywhere: a malformed `type:`
+    (a YAML list/dict from a hand-edit) coerces to None so it falls back to the
+    directory-derived hint instead of short-circuiting an `or` with a truthy
+    non-string and poisoning a downstream `== "brd"` / dict-key test."""
+    raw = art.get("frontmatter", {}).get("type")
+    return (raw if isinstance(raw, str) else None) or art.get("__type_hint")
+
+
 def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict[str, Any]]:
     """Convert parsed artifacts to graph nodes. BRD goals are expanded from brd.md.goals."""
     nodes: List[Dict[str, Any]] = []
@@ -68,11 +77,7 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
             continue
         fm = art["frontmatter"]
         rel = Path(art["file"]).resolve().relative_to(product_dir.resolve()).as_posix()
-        raw_type = fm.get("type")
-        # Coerce a malformed `type:` (a YAML list/dict from a hand-edit) to None
-        # so it falls back to the directory-derived hint instead of later being
-        # used as a dict key (ID_PATTERN_BY_TYPE.get(ntype)) and crashing the gate.
-        node_type = (raw_type if isinstance(raw_type, str) else None) or art.get("__type_hint")
+        node_type = _node_type(art)
         if node_type == "brd":
             goals = fm.get("goals") or []
             for g in goals:
@@ -248,7 +253,7 @@ def index_artifacts(artifacts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]
 
 def _product_meta(artifacts: List[Dict[str, Any]]) -> Dict[str, Any]:
     for a in artifacts:
-        if a["ok"] and (a["frontmatter"].get("type") == "product" or a.get("__type_hint") == "product"):
+        if a["ok"] and _node_type(a) == "product":
             fm = a["frontmatter"]
             return {
                 "name": fm.get("name"),
@@ -307,8 +312,7 @@ def _competitors(artifacts: List[Dict[str, Any]]) -> List[Any]:
         if not a["ok"]:
             continue
         fm = a["frontmatter"]
-        ntype = fm.get("type") or a.get("__type_hint")
-        if ntype != "brd":
+        if _node_type(a) != "brd":
             continue
         for c in fm.get("competitors") or []:
             if not isinstance(c, dict):

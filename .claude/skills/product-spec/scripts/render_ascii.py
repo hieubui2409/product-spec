@@ -38,11 +38,19 @@ def is_visible(node: Optional[Dict[str, Any]], filter_wont: bool) -> bool:
     return node is None or not (filter_wont and _is_deferred(node))
 
 
+def _product(graph: Dict[str, Any]) -> Dict[str, Any]:
+    """The product block as a dict, or {} — guards a truthy non-dict `product`
+    (e.g. a bare string in a hand-poisoned graph JSON) that `(x or {})` would
+    pass through to a crashing `.get(...)`."""
+    product = graph.get("product")
+    return product if isinstance(product, dict) else {}
+
+
 def _ascii_product_name(graph: Dict[str, Any]) -> str:
     """The PRODUCT header name for the ASCII tree/forest, or `(no PRODUCT.md)`.
     One home for the ASCII fallback string (render_html.product_name uses a
     different `(unnamed)` fallback for the HTML chrome — intentionally distinct)."""
-    return _inline((graph.get("product") or {}).get("name") or "(no PRODUCT.md)")
+    return _inline(_product(graph).get("name") or "(no PRODUCT.md)")
 
 
 def _mark(node: Dict[str, Any], text: str) -> str:
@@ -168,6 +176,13 @@ def _hashable(v: Any) -> str:
     if isinstance(v, (list, dict, set)):
         return f"?{v!r}"
     return str(v)
+
+
+def _scalar(v: Any) -> str:
+    """Coerce a frontmatter scalar to str for the body-view JSON islands:
+    lists/dicts (malformed YAML) become "" so a non-string value never lands as
+    array card data. Shared single home for render_board + render_explorer."""
+    return v if isinstance(v, str) else ""
 
 
 def _grid(corner: str, cols: List[str], rows: List[List[str]]) -> str:
@@ -319,7 +334,6 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     where acyclic; a circular chain degrades to sorted order, never hangs —
     trade-off T1 / G-D3). Deferred items keep the `*` marker unless
     `filter_wont` drops them (parity with roadmap)."""
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
     order_index = {nid: i for i, nid in enumerate(_dep_safe_order(graph))}
 
     timed = [
@@ -362,7 +376,7 @@ def persona(graph: Dict[str, Any], filter_wont: bool = False) -> str:
     bare string (e.g. "TBD" from a missing token), iterating it would emit
     per-character personas. Guard with isinstance(list).
     """
-    raw_personas = (graph.get("product") or {}).get("personas")
+    raw_personas = _product(graph).get("personas")
     personas = sorted({str(p) for p in raw_personas}) if isinstance(raw_personas, list) else []
     if not personas:
         for n in graph["nodes"]:

@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from i18n_labels import label
 import render_html
 from spec_graph import index_artifacts
-from render_ascii import _board_columns, _hashable, select_cards
+from render_ascii import _board_columns, _hashable, _scalar, select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 BOARD_SHELL = SKILL_ROOT / "assets" / "templates" / "board-shell.html"
@@ -35,11 +35,6 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
     # Accept pre-selected nodes from the dispatcher (avoids a second select_cards
     # call when _dispatch_body_view already ran it for the empty-check guard).
     cards_nodes = selected_nodes if selected_nodes is not None else select_cards(graph, layers, filter_wont)
-
-    def _scalar(v: Any) -> str:
-        """Coerce a frontmatter scalar to str: lists/dicts (malformed YAML) become
-        "" so a non-string value never lands as array card data in the JSON island."""
-        return v if isinstance(v, str) else ""
 
     cards: List[Dict[str, Any]] = []
     present: Dict[str, bool] = {}

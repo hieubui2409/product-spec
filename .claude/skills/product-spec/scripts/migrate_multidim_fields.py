@@ -192,15 +192,20 @@ def plan_file(art_type: str, path: Path, product_dir: Path) -> Optional[Dict[str
     }
 
 
-def apply_file(path: Path) -> bool:
+def apply_file(path: Path, art_type: Optional[str] = None) -> bool:
     """Apply the migration to one file: back up the original to `<file>.bak`, then
     rewrite with the missing placeholder lines inserted. Returns True on success.
 
     Re-derives the missing set from the CURRENT on-disk content (not a stale plan)
     so the edit is idempotent even if the file changed between plan and apply.
     The `.bak` is written ONLY when there is real work to do, and never clobbered
-    on a no-op re-run (the early-return below)."""
-    art_type = _type_for_path(path)
+    on a no-op re-run (the early-return below).
+
+    `art_type` is the authoritative glob-derived type from migrate(); when omitted
+    (standalone call) it falls back to _type_for_path so plan and apply resolve the
+    type via the SAME rule — no divergence on an edge file like prds/brd.md."""
+    if art_type is None:
+        art_type = _type_for_path(path)
     if art_type is None:
         return False
     parsed = parse_file(path)
@@ -238,7 +243,10 @@ def _type_for_path(path: Path) -> Optional[str]:
     """Infer the migratable type from a file's location under docs/product/."""
     name = path.name
     parent = path.parent.name
-    if name == "brd.md":
+    # brd.md only at the product-dir root — a file literally named brd.md under
+    # prds/ is a PRD (matches the glob in _iter_migratable_files), so scope the
+    # name check to parent == "product" before the directory-based branches.
+    if name == "brd.md" and parent == "product":
         return "brd"
     if parent == "prds":
         return "prd"
@@ -280,7 +288,7 @@ def migrate(root: Path, apply: bool) -> Dict[str, Any]:
             continue
         would_migrate.append(public_plan)
         if apply:
-            if apply_file(path):
+            if apply_file(path, art_type):
                 migrated.append(plan["file"])
 
     return {

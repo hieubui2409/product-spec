@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 visualize — dispatcher for the 14 visualization views in 3 formats
-(ASCII / Mermaid / inline-vendored HTML). The 9 graph views default to --format
-ascii; the 2 body-bearing viewers (board, explorer) default to --format html and
-have no Mermaid form (a --format mermaid request falls back to their ASCII renderer).
+(ASCII / Mermaid / inline-vendored HTML). 9 graph views default to --format ascii;
+the risk/competition/dashboard graph views and the 2 body-bearing viewers
+(board, explorer) default to --format html. The body viewers have no Mermaid form
+(a --format mermaid request falls back to their ASCII renderer).
 
 Reads the graph JSON from spec_graph and routes the chosen view through the
 matching renderer.

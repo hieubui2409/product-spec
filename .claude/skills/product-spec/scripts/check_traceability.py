@@ -60,6 +60,12 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 pass
             else:
                 for g in brd_goals:
+                    # A non-string element (dict/list from a hand-edit) is
+                    # unhashable; `g not in node_ids` would raise TypeError and
+                    # crash the gate. invalid_type owns the shape error
+                    # (check_consistency); skip so membership never hashes it.
+                    if not isinstance(g, str):
+                        continue
                     if g not in node_ids:
                         findings.append(_f("dangling_link", "error", n, f"PRD references unknown BRD goal {g}.", ref=g))
 

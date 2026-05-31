@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-render_mermaid — emit Mermaid v11 blocks for the 9 visualization views.
+render_mermaid — emit Mermaid v11 blocks for the 11 graph visualization views.
 
 Each function returns a string containing a fenced ```mermaid block ready
 to paste into markdown. Where a view cannot be expressed cleanly in Mermaid,
@@ -152,7 +152,7 @@ def scope(graph: Dict[str, Any]) -> str:
     should = counts_map.get("should", 0)
     could = counts_map.get("could", 0)
     wont = counts_map.get("wont", 0)
-    body = f"""quadrantChart
+    body = """quadrantChart
   title Scope x MoSCoW
   x-axis Won't --> Must
   y-axis Out --> Core-Value

@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from i18n_labels import label
 import render_html
 from spec_graph import index_artifacts, parents_of, resolve_ac
-from render_ascii import select_cards
+from render_ascii import _scalar, select_cards
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 EXPLORER_SHELL = SKILL_ROOT / "assets" / "templates" / "explorer-shell.html"
@@ -63,11 +63,6 @@ def build_payload(graph: Dict[str, Any], artifacts: List[Dict[str, Any]],
     # call when _dispatch_body_view already ran it for the empty-check guard).
     nodes = selected_nodes if selected_nodes is not None else select_cards(graph, layers, filter_wont)
     present_ids = {str(n["id"]) for n in nodes}
-
-    def _scalar(v: Any) -> str:
-        """Coerce a frontmatter scalar to str: lists/dicts (malformed YAML) become
-        "" so a non-string value never lands as array card data in the JSON island."""
-        return v if isinstance(v, str) else ""
 
     items: List[Dict[str, Any]] = []
     for n in sorted(nodes, key=lambda x: (_DEPTH_BY_TYPE.get(x.get("type"), 9), str(x["id"]))):

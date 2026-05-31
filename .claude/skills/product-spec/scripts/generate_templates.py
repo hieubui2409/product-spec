@@ -206,6 +206,11 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
 
     rendered = TOKEN_RE.sub(tok, rendered)
 
+    # Strip the leading template comment (everything between first '<!--' and '-->\n')
+    # BEFORE the residual-token check, so an illustrative {{example-token}} inside
+    # the soon-to-be-discarded header comment can't spuriously trip the guard.
+    rendered = re.sub(r"\A\s*<!--.*?-->\s*\n", "", rendered, count=1, flags=re.DOTALL)
+
     # TOKEN_RE only matches [a-zA-Z0-9_]+ tokens, so keys containing hyphens,
     # spaces, or dots (e.g. {{bad-key}}, {{ spaced }}) are left literally in
     # the output. Detect and reject them so a malformed template fails loudly
@@ -218,8 +223,6 @@ def render(template_text: str, values: Dict[str, Any], keep_optional: List[str])
             f"token keys must match [a-zA-Z0-9_]+ — hyphens, spaces, and dots are not allowed"
         )
 
-    # Strip the leading template comment (everything between first '<!--' and '-->\n')
-    rendered = re.sub(r"\A\s*<!--.*?-->\s*\n", "", rendered, count=1, flags=re.DOTALL)
     return rendered
 
 
