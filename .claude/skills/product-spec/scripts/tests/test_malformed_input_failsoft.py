@@ -20,6 +20,10 @@ import spec_graph as sg
 import check_consistency as cc
 import build_traceability_matrix as bm
 import render_ascii as ra
+import render_html as rh
+import check_traceability as ct
+import generate_templates as gt
+import migrate_multidim_fields as mm
 
 
 # ── frontmatter_parser fail-soft ────────────────────────────────────────────
@@ -206,3 +210,89 @@ def test_persona_no_crash_on_non_list_risks():
     assert isinstance(result, str)
     # The one valid risk should show up in the high-impact/low-likelihood cell.
     assert "|" in result
+
+
+# ── _node_type: malformed `type:` resolves identically everywhere ───────────
+
+def test_node_type_coerces_malformed_type():
+    assert sg._node_type({"frontmatter": {"type": "brd"}}) == "brd"
+    # truthy non-string `type:` (hand-edit) falls back to the directory hint,
+    # never short-circuits the `or` with the raw list.
+    assert sg._node_type({"frontmatter": {"type": ["brd"]}, "__type_hint": "brd"}) == "brd"
+    assert sg._node_type({"frontmatter": {}, "__type_hint": "prd"}) == "prd"
+
+
+def test_competitors_survive_malformed_brd_type():
+    """A brd.md with a malformed `type: [brd]` still yields its competitors — the
+    same coercion build_nodes applies to its goals (no asymmetric vanish)."""
+    arts = [{
+        "ok": True, "file": "brd.md", "__type_hint": "brd",
+        "frontmatter": {"type": ["brd"], "competitors": [
+            {"id": "COMP-ACME", "name": "Acme", "url": "https://acme"},
+        ]},
+    }]
+    comps = sg._competitors(arts)
+    assert [c["id"] for c in comps] == ["COMP-ACME"]
+
+
+# ── check_traceability: unhashable brd_goals element must not crash ─────────
+
+def test_check_traceability_unhashable_brd_goal_element_no_crash():
+    """A dict element inside a PRD's brd_goals list is unhashable; the membership
+    test must skip it rather than raise TypeError and crash the gate."""
+    nodes = [
+        {"id": "BRD-G1", "type": "goal", "brd_goals": [], "epic": None, "prd": None},
+        {"id": "PRD-A", "type": "prd", "brd_goals": [{"nested": "dict"}, "BRD-G1"],
+         "epic": None, "prd": None},
+    ]
+    findings = ct.check(_graph(nodes))  # must not raise
+    # the valid "BRD-G1" element still resolves (no dangling_link for it)
+    assert not any(f["check"] == "dangling_link" and f.get("context", {}).get("ref") == "BRD-G1"
+                   for f in findings)
+
+
+# ── render_html: bare-scalar metrics + non-str/non-dict product ─────────────
+
+def test_goal_detail_md_bare_scalar_metrics_no_charsplit():
+    node = {"type": "goal", "metrics": "single-metric"}
+    out = rh.goal_detail_md(node, "en")
+    assert "single-metric" in out
+    # a char-split would have produced "s, i, n, g, ..." — assert it did not
+    assert "s, i, n" not in out
+
+
+def test_product_name_coerces_non_str_and_non_dict():
+    assert rh.product_name({"product": {"name": ["Acme"]}}) == "['Acme']"
+    assert rh.product_name({"product": "notadict"}) == "(unnamed)"
+    assert rh.product_name({"product": {"name": "Acme"}}) == "Acme"
+    assert rh.product_name({}) == "(unnamed)"
+
+
+# ── render_ascii: non-dict product block must not crash ─────────────────────
+
+def test_ascii_product_helpers_no_crash_on_non_dict_product():
+    g = _graph([])
+    g["product"] = "notadict"
+    assert ra._ascii_product_name(g) == "(no PRODUCT.md)"  # must not raise
+    assert isinstance(ra.persona(g), str)                  # must not raise
+
+
+# ── generate_templates: residual check runs AFTER comment strip ─────────────
+
+def test_residual_token_check_ignores_leading_comment_tokens():
+    """An illustrative {{example-token}} inside the leading header comment (which
+    is stripped) must NOT trip the residual-token guard."""
+    out = gt.render("<!-- see {{example-token}} for usage -->\nid: {{id}}\n",
+                    {"id": "PRD-A"}, [])
+    assert "id: PRD-A" in out
+    assert "example-token" not in out  # the whole comment was stripped
+
+
+# ── migrate: brd.md type resolution scoped to product-dir root ──────────────
+
+def test_type_for_path_brd_only_at_product_root(tmp_path):
+    root = tmp_path / "docs" / "product"
+    assert mm._type_for_path(root / "brd.md") == "brd"
+    # a file literally named brd.md under prds/ is a PRD (matches the glob), not brd
+    assert mm._type_for_path(root / "prds" / "brd.md") == "prd"
+    assert mm._type_for_path(root / "epics" / "X.md") == "epic"
