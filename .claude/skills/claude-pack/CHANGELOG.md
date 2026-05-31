@@ -5,6 +5,23 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-05-31
+
+### Fixed
+- `product-spec` graph-view HTML: **Zoom +/− and Reset now work.** The zoom transform was applied to `#diagram`,
+  which carries the shared `.ve-card` entrance animation (`ps-fade`, `animation-fill-mode: both`) — and an animated
+  property's computed value wins over inline style, so the scale was silently clobbered. The transform now targets a
+  non-animated inner `#diagram-scale` wrapper; `#diagram` keeps `overflow: auto` so a zoomed diagram scrolls instead of
+  clipping. Verified live in headless Chrome (3× zoom → `matrix(1.3,…)`, reset → `matrix(1,…)`).
+
+### Changed
+- `product-spec` worked example (`examples/acme-shop`): enriched from a thin fixture into a **mature ~2-year product
+  spec** — 44 nodes (1 PRODUCT, 1 Vision, 6 BRD goals, 7 PRDs, 11 epics, 18 stories), 5 personas, 4 competitors, risk
+  registers, target dates (incl. shipped/past), `depends_on` chains, and full MoSCoW (Must/Should/Could/Won't) +
+  Now/Next/Later coverage. Generated via the skill's own `generate_templates.py` (no hand-authoring). Validates clean:
+  0 errors on `check_consistency` / `check_traceability`. Gives the board/explorer/risk/competition/MoSCoW views real
+  data to render.
+
 ## [0.2.1] — 2026-05-31
 
 ### Changed

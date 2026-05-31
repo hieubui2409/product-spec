@@ -2,7 +2,7 @@
 # Edit freely; this is the source-of-truth for pack/cli.py.
 # Schema: .claude/skills/claude-pack/references/manifest-spec.md
 schema_version: '1.0'
-version: 0.2.1
+version: 0.2.2
 bundle_name: claude-pack
 skills:
 - product-spec
