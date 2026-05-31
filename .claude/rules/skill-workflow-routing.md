@@ -42,8 +42,7 @@ When orchestrating multi-step tasks, consider these workflow sequences. Skills a
 
 After completing implementation work, consider:
 - `/ck:code-review` — review changes before merging
-- `/ck:review-pr` — review a PR thoroughly (auto-flags AI-slop patterns); add `--fix` to auto-remediate, `--reply` to
-  post the review to GitHub
+- `/ck:review-pr` — review a PR thoroughly (auto-flags AI-slop patterns); add `--fix` to auto-remediate, `--reply` to post the review to GitHub
 - `/ck:ship` — run full shipping pipeline (tests, review, version, PR)
 - `/ck:journal` — document decisions and lessons learned
 
@@ -56,11 +55,11 @@ After completing implementation work, consider:
 /ck:review-pr <PR> --fix --reply → fix loop, post final re-review when converged
 ```
 
-| User Intent                         | Suggested Start             |
-|-------------------------------------|-----------------------------|
-| "review PR #123", "look at this PR" | `/ck:review-pr 123`         |
-| "fix the issues in PR 123"          | `/ck:review-pr 123 --fix`   |
-| "review and comment on PR 123"      | `/ck:review-pr 123 --reply` |
+| User Intent | Suggested Start |
+|-------------|----------------|
+| "review PR #123", "look at this PR" | `/ck:review-pr 123` |
+| "fix the issues in PR 123" | `/ck:review-pr 123 --fix` |
+| "review and comment on PR 123" | `/ck:review-pr 123 --reply` |
 
 ## Setup Skills
 
