@@ -409,3 +409,64 @@ def test_userinfo_scrub_strips_password_with_at_in_it():
     assert _sub("https://user:plain@host/repo") == "https://host/repo"
     # scp-style origin must be unchanged (no ://)
     assert _sub("git@github.com:org/repo") == "git@github.com:org/repo"
+
+
+# ---------------------------------------------------------------------------
+# _include_shared type guard — a hand-edited scalar must not char-split
+# ---------------------------------------------------------------------------
+
+def test_validate_rejects_non_list_include_shared(tmp_root):
+    """A scalar `_include_shared: foo` must be flagged E010, not char-split into
+    {'f','o','o'} downstream (validate gates cli.py/selection before they read it)."""
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "skills": [], "_include_shared": "foo"}, tmp_root,
+    )
+    assert any("MANIFEST_E010" in e and "_include_shared" in e for e in errors)
+
+
+def test_validate_accepts_list_include_shared(tmp_root):
+    errors = manifest_loader.validate(
+        {"version": "1.0.0", "skills": [], "_include_shared": ["util"]}, tmp_root,
+    )
+    assert not any("_include_shared" in e for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# selection arcname — trailing-slash `extra` must not double-slash
+# ---------------------------------------------------------------------------
+
+def test_selection_strips_trailing_slash_in_extra_arcname(tmp_path):
+    """`extra: ["docs/"]` (trailing slash) must yield "docs/<file>", not
+    "docs//<file>" — the canonical arcname must equal the no-slash form."""
+    from pack.selection import resolve_selection
+    (tmp_path / ".claude").mkdir()
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "guide.md").write_text("x", encoding="utf-8")
+    arcs = [arc for _, arc in resolve_selection({"extra": ["docs/"], "skills": []}, tmp_path)]
+    assert "docs/guide.md" in arcs
+    assert not any("//" in a for a in arcs)
+
+
+# ---------------------------------------------------------------------------
+# build_manifest — malformed scalar category passes through to E010 (no crash)
+# ---------------------------------------------------------------------------
+
+def test_assemble_manifest_scalar_category_not_charsplit_then_e010(tmp_root):
+    """A scalar `skills: "foo"` in stdin answers must be stored UNCHANGED (not
+    list()-ed into ['f','o','o']), then rejected by validate() as E010."""
+    import build_manifest
+    manifest = build_manifest._assemble_manifest({"skills": "foo", "version": "1.0.0"})
+    assert manifest["skills"] == "foo"  # passed through, not char-split
+    errors = manifest_loader.validate(manifest, tmp_root)
+    assert any("MANIFEST_E010" in e and "skills" in e for e in errors)
+
+
+def test_assemble_manifest_int_category_no_typeerror(tmp_root):
+    """An int `agents: 5` must not raise TypeError at list(5); it is passed
+    through for validate() to flag."""
+    import build_manifest
+    manifest = build_manifest._assemble_manifest({"agents": 5, "version": "1.0.0"})
+    assert manifest["agents"] == 5
+    errors = manifest_loader.validate(manifest, tmp_root)  # must not raise
+    assert any("MANIFEST_E010" in e and "agents" in e for e in errors)

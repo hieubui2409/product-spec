@@ -216,6 +216,42 @@ def test_resolve_epoch_env_empty_returns_zero(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# resolve_epoch upper bound — an over-range epoch would OverflowError deep in
+# manifest_io's datetime.fromtimestamp; reject it at the boundary instead.
+# ---------------------------------------------------------------------------
+
+def test_resolve_epoch_over_max_raises_systemexit():
+    """An epoch beyond year 9999 must be rejected (SystemExit), not crash later."""
+    with pytest.raises(SystemExit):
+        resolve_epoch(_ns(source_date_epoch=str(10 ** 20)))
+
+
+def test_resolve_epoch_max_boundary_allowed():
+    """The exact ceiling (9999-12-31T23:59:59Z) is accepted."""
+    assert resolve_epoch(_ns(source_date_epoch="253402300799")) == 253402300799
+
+
+def test_resolve_epoch_env_over_max_returns_zero(monkeypatch):
+    """An out-of-range env SOURCE_DATE_EPOCH falls back to 0 (ambient provenance)."""
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", str(10 ** 20))
+    assert resolve_epoch(_ns(source_date_epoch="env")) == 0
+
+
+# ---------------------------------------------------------------------------
+# templates.render_template — undecodable bytes become TemplateError
+# ---------------------------------------------------------------------------
+
+def test_render_template_undecodable_raises_template_error(tmp_path):
+    """A non-UTF-8 template file must surface as TemplateError, not a bare
+    UnicodeDecodeError leaking past the documented single-exception contract."""
+    from pack.templates import render_template, TemplateError
+    p = tmp_path / "bad.tmpl"
+    p.write_bytes(b"\xff\xfe not utf-8")
+    with pytest.raises(TemplateError):
+        render_template(p, {})
+
+
+# ---------------------------------------------------------------------------
 # dry-run reports the max-size gate (over_max_size field)
 # ---------------------------------------------------------------------------
 
