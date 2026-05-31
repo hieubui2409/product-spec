@@ -204,11 +204,16 @@ def _assemble_manifest(answers: dict) -> dict:
     manifest["version"] = answers.get("version", "0.1.0")
     manifest["bundle_name"] = answers.get("bundle_name", "claude-pack")
     for cat in ("skills", "agents", "hooks", "rules"):
-        manifest[cat] = list(answers.get(cat, []))
+        # Coerce only a genuine list/tuple. A malformed scalar (str/int from a
+        # hand-authored stdin payload) is passed through UNCHANGED so
+        # manifest_loader.validate() reports it as E010 — never list()-ed here
+        # (which would char-split a string or raise TypeError on an int).
+        val = answers.get(cat, [])
+        manifest[cat] = list(val) if isinstance(val, (list, tuple)) else val
     extra = answers.get("extra", [])
     if isinstance(extra, str):
         extra = [s.strip() for s in extra.split(",") if s.strip()]
-    manifest["extra"] = list(extra)
+    manifest["extra"] = list(extra) if isinstance(extra, (list, tuple)) else extra
     manifest["top_level"] = {
         "include_readme": bool(answers.get("include_readme", False)),
         "include_claudemd": bool(answers.get("include_claudemd", False)),

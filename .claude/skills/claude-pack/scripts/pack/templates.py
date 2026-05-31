@@ -45,6 +45,6 @@ def render_template(template_path: Path, tokens: dict[str, str]) -> bytes:
     """
     try:
         text = template_path.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         raise TemplateError(f"template not readable: {template_path}: {e}") from e
     return render(text, tokens).encode("utf-8")

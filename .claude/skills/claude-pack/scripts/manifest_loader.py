@@ -109,6 +109,13 @@ def _split_list(value: Any) -> list[str]:
     return list(dict.fromkeys(items))
 
 
+def _as_list(value: Any) -> list:
+    """A list as-is, anything else as []. A malformed scalar category (already
+    flagged E010) must never be iterated — that would TypeError on an int or
+    char-split a bare string into phantom single-char slugs."""
+    return value if isinstance(value, list) else []
+
+
 def merge_cli(manifest: dict, cli: argparse.Namespace) -> dict:
     """Merge CLI overrides into manifest. ``None`` = no override (manifest wins).
 
@@ -187,8 +194,13 @@ def _check_path_safety(entries: list, label: str, errors: list[str]) -> None:
     Emits ``MANIFEST_E020`` (absolute) or ``MANIFEST_E021`` (traversal) into
     ``errors``.  Non-string entries are skipped (caught upstream by E011).
     Called for each path-bearing category so the check is defined once.
+
+    A non-list ``entries`` (a malformed scalar category — already flagged E010)
+    is a no-op: never iterate an int (TypeError) or char-split a bare string.
     """
-    for path_entry in entries or []:
+    if not isinstance(entries, list):
+        return
+    for path_entry in entries:
         if not isinstance(path_entry, str):
             continue
         if _is_absolute_or_drive(path_entry):
@@ -258,7 +270,14 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
 
     # _include_shared is a `_`-prefixed key exempt from the unknown-key check, but
     # traversal in shared slugs would produce arcnames outside the extraction dir.
-    _check_path_safety(manifest.get("_include_shared", []) or [], "_include_shared", errors)
+    # A non-list value (hand-edited scalar) would char-split downstream — flag it
+    # E010 like the public list categories and treat as [] for the rest of this
+    # pass so neither path-safety here nor the _shared resolution below char-splits.
+    shared_val = manifest.get("_include_shared", []) or []
+    if not isinstance(shared_val, list):
+        errors.append(f"[MANIFEST_E010] _include_shared must be a list, got {type(shared_val).__name__}")
+        shared_val = []
+    _check_path_safety(shared_val, "_include_shared", errors)
 
     top_level = manifest.get("top_level", {}) or {}
     if not isinstance(top_level, dict):
@@ -313,7 +332,7 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
     # on Windows builders where Path.__str__ uses '\\').
     claude_dir = root / ".claude"
     skills_base = (claude_dir / "skills").resolve()
-    for slug in manifest.get("skills", []) or []:
+    for slug in _as_list(manifest.get("skills")):
         if not isinstance(slug, str):
             continue
         skill_dir = claude_dir / "skills" / slug
@@ -330,7 +349,7 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
             except OSError:
                 pass  # broken symlink; E070 will catch missing dir
 
-    for slug in manifest.get("agents", []) or []:
+    for slug in _as_list(manifest.get("agents")):
         if isinstance(slug, str):
             try:
                 resolved_agent = _resolve_extension(slug, claude_dir / "agents", "agents")
@@ -344,7 +363,7 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
             except ManifestError as e:
                 errors.append(f"[MANIFEST_E071] {e}")
 
-    for slug in manifest.get("rules", []) or []:
+    for slug in _as_list(manifest.get("rules")):
         if isinstance(slug, str):
             try:
                 resolved_rule = _resolve_extension(slug, claude_dir / "rules", "rules")
@@ -358,7 +377,7 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
             except ManifestError as e:
                 errors.append(f"[MANIFEST_E072] {e}")
 
-    for slug in manifest.get("hooks", []) or []:
+    for slug in _as_list(manifest.get("hooks")):
         if isinstance(slug, str):
             # Must match a FILE (a slug naming a directory would pass a bare
             # rglob existence test yet bundle nothing). >1 match is ambiguous:
@@ -387,9 +406,11 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
                 except OSError:
                     pass
 
-    # _include_shared: verify each slug stays within .claude/skills/_shared/
+    # _include_shared: verify each slug stays within .claude/skills/_shared/.
+    # `shared_val` was already type-checked (E010) + coerced to a list above, so a
+    # hand-edited scalar can't char-split here.
     shared_base = (claude_dir / "skills" / "_shared").resolve()
-    for slug in manifest.get("_include_shared", []) or []:
+    for slug in shared_val:
         if not isinstance(slug, str):
             continue
         shared_dir = claude_dir / "skills" / "_shared" / slug

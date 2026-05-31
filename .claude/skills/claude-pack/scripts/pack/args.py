@@ -73,6 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+# 9999-12-31T23:59:59Z — the ceiling datetime.fromtimestamp(.., utc) accepts.
+# A larger epoch raises OverflowError/OSError deep in manifest_io; bound it here.
+_MAX_EPOCH = 253402300799
+
+
 def resolve_epoch(args: argparse.Namespace) -> int:
     val = args.source_date_epoch
     if val is None:
@@ -81,11 +86,17 @@ def resolve_epoch(args: argparse.Namespace) -> int:
         env = os.environ.get("SOURCE_DATE_EPOCH")
         # Guard against unicode-digit strings: str.isdigit() returns True for
         # chars like '²' but int() raises ValueError on them.  Require ASCII.
-        return int(env) if env and env.isascii() and env.isdigit() else 0
+        # An out-of-range value falls back to 0 (env is ambient provenance).
+        if env and env.isascii() and env.isdigit():
+            n = int(env)
+            return n if 0 <= n <= _MAX_EPOCH else 0
+        return 0
     try:
         n = int(val)
     except ValueError:
         raise SystemExit(f"--source-date-epoch must be int or 'env'; got {val!r}")
     if n < 0:
         raise SystemExit("--source-date-epoch must be >= 0")
+    if n > _MAX_EPOCH:
+        raise SystemExit(f"--source-date-epoch must be <= {_MAX_EPOCH} (year 9999); got {n}")
     return n

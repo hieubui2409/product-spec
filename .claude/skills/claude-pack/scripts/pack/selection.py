@@ -24,6 +24,9 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
     def _walk_dir(src_dir: Path, arc_prefix: str) -> None:
         if not src_dir.is_dir():
             return
+        # Strip slashes so a trailing-slash `extra` entry (e.g. "docs/") can't
+        # compose a "docs//file" double-slash arcname that diverges from "docs".
+        arc_prefix = arc_prefix.strip("/")
         for f in src_dir.rglob("*"):
             if f.is_file():
                 rel = f.relative_to(src_dir).as_posix()
@@ -78,7 +81,6 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
     if top.get("include_ck_config") and (claude_dir / ".ck.json").is_file():
         entries.append((claude_dir / ".ck.json", ".claude/.ck.json"))
 
-    claude_dir_resolved = claude_dir.resolve()
     root_resolved = root.resolve()
 
     safe: list[tuple[Path, str]] = []
