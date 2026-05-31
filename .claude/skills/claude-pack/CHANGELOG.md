@@ -5,6 +5,45 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-05-31
+
+First stable release. Bundles `cleanmatic:product-spec` + `cleanmatic:claude-pack`.
+This release is dominated by a deep pass over the product-spec **visualization**
+layer — every graph/HTML view now renders correctly and legibly in light AND dark
+mode, hover surfaces artifact context, and the worked example is a mature spec.
+
+### Fixed (product-spec visualizations)
+- **Mermaid re-renders on theme toggle.** A diagram was baked once at load; the
+  light/dark toggle only swapped CSS vars, leaving stale light-on-dark (or dark-on-
+  light) charts (scope/moscow quadrants, roadmap timeline). The DSL is now captured
+  and re-rendered in the current theme on load and on every toggle.
+- **Dark-mode legibility.** Chart-label text (gantt, quadrant title/axis, timeline)
+  no longer washes out; delta/gap classDef nodes pin a dark label colour against
+  their light pastel fills so they read in both themes.
+- **`time` gantt** no longer errors on undated PRDs/epics (was "Invalid date");
+  undated tasks anchor via `after`/earliest-date, all-undated shows a note.
+- **`moscow` / `scope`** quadrant charts plot one point per bucket / per
+  (moscow,scope) cell at real coordinates instead of a single dot pinned to centre.
+- **`delta`** flowchart no longer renders "Unsupported markdown: list" (the `+ `/`- `
+  prefixes parsed as markdown lists; now `(+)`/`(-)`), and the example ships a
+  pre-enrichment baseline so the view shows real added/removed nodes.
+- Graph-view **zoom** works (scales an inner wrapper, not the animated card) and the
+  diagram viewport fills the window height minus chrome.
+
+### Added (product-spec visualizations)
+- **Hover-on-ID tooltips** across every graph + HTML-native view (including the
+  dashboard): hovering any artifact ID surfaces its title + metadata.
+- **`tree` + `roadmap`** show artifact titles next to IDs (titles now populate from
+  the body H1; frontmatter carries none).
+- **`persona` + `heatmap`** render as HTML-native count-grid tables in `--format html`
+  instead of an ASCII `<pre>` dump.
+
+### Changed
+- The `examples/acme-shop` worked example is a mature ~2-year product spec: 44 nodes
+  (1 PRODUCT, 1 Vision, 6 BRD goals, 7 PRDs, 11 epics, 18 stories), 5 personas, 4
+  competitors, risk registers, due dates, `depends_on` chains, full MoSCoW +
+  Now/Next/Later. Generated via `generate_templates.py`; validates clean.
+
 ## [0.2.2] — 2026-05-31
 
 ### Fixed
