@@ -45,24 +45,36 @@ authoring, previews, then packs:
 This is the recommended path because the LLM owns the UI layer (AskUserQuestion) while the script owns the
 structural layer — consistent with the Script-vs-LLM split.
 
-### Way 2 (equivalent): Call `python -m pack` directly
+### Way 2 (equivalent): Invoke the skill with flags
 
-Once you have a manifest and want to automate (e.g. CI), invoke the script directly via the venv:
+Once you're comfortable, invoke the skill with "flags" — the same way you call any other user-invocable skill:
 
-```bash
-.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --dry-run
 ```
 
-Both ways yield the same result. The CLI is the automation/CI path; the LLM is the interactive path.
+Both ways yield the same result. Flags are just a shortcut for people who already know the ropes.
+
+> 🔧 **Because this is a developer skill — note the command that actually runs.** Each skill flag maps 1-to-1
+> to a `python -m pack` invocation that the LLM runs under the hood. In every scenario below, alongside the
+> skill flag, this guide also lists the **underlying command** — use it directly when automating in CI or
+> calling without the LLM:
+> ```bash
+> .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --dry-run
+> ```
 
 > ⚠️ **Boundary note:** Python scripts **never** call `AskUserQuestion`. The LLM is the UI layer, the script
 > is the structural layer. The LLM **never** edits the tarball directly.
+
+> 💡 Not sure what to do? Just type `/cleanmatic:claude-pack` (no flag): if no manifest exists, the skill runs
+> the interactive interview; if one exists, it asks reuse / overwrite / cancel.
 
 ---
 
 ## 3. Every use case — ordered by priority
 
-Each scenario includes: when to use it, a **sample conversation**, and the equivalent CLI command.
+Each scenario includes: when to use it, a **sample conversation**, the **equivalent skill flag**, and the
+**underlying command** that runs under the hood.
 
 ---
 
@@ -97,10 +109,15 @@ prompt** before writing the manifest.
 >
 > **Skill:** Manifest written. Build preview: N files, total size X. Want me to pack it now?
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack            # no flag → interactive interview flow
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
-# The LLM runs this sequence under the hood:
 .claude/skills/.venv/bin/python3 -m build_manifest --discover --root .
 .claude/skills/.venv/bin/python3 -m build_manifest --list-questions --root .
 # (after collecting answers + confirmation)
@@ -124,7 +141,13 @@ echo "$answers_json" | .claude/skills/.venv/bin/python3 -m build_manifest --writ
 > then write `dist/claude-pack-1.0.0.tar.gz` plus the `.sha256` sidecar. The build is deterministic — the
 > same input produces byte-identical output.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml
@@ -146,7 +169,14 @@ the would-be SHA256.
 >
 > **You:** Yes.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --dry-run
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --dry-run --compute-sha
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --dry-run
@@ -169,7 +199,14 @@ the would-be SHA256.
 > **Skill:** Override `version=0.2.0-rc1` for this build; the manifest is untouched. Output:
 > `dist/claude-pack-0.2.0-rc1.tar.gz`.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --version 0.2.0-rc1
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --bundle-name my-pack
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --version 0.2.0-rc1
@@ -178,11 +215,11 @@ the would-be SHA256.
 
 ---
 
-### Priority 5 — Override content via CLI (without editing the manifest)
+### Priority 5 — Override content via flags (without editing the manifest)
 
 **When to use:** Add/remove skills, agents, hooks, rules, or extra paths for one build.
 
-> CLI overrides **win** over the manifest value for that category. `--extra` forbids absolute paths and `..`.
+> Flag overrides **win** over the manifest value for that category. `--extra` forbids absolute paths and `..`.
 
 #### Conversation
 
@@ -190,7 +227,14 @@ the would-be SHA256.
 >
 > **Skill:** Override `--skills product-spec --extra docs/onboarding.md`. Other categories follow the manifest.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --skills product-spec --extra docs/onboarding.md
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --agents planner,researcher --rules primary-workflow.md,development-rules.md
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
@@ -216,7 +260,14 @@ the would-be SHA256.
 > **Skill:** Enabling `--include-readme --include-claudemd --include-settings`. Note `settings.json` is a
 > sensitive opt-in — added per your explicit request. `.env`/secrets stay dropped regardless.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --include-readme --include-claudemd --include-settings
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --include-scripts --include-schemas
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
@@ -240,7 +291,15 @@ inside example code fences, not real dependencies — the skill strips fenced bl
 > **Skill:** Opt-in `--include-shared lib,utils`. If you want un-included `_shared/` refs to be treated as
 > **errors** (blocking the build), add `--strict` (exit 2).
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --include-shared lib,utils
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --follow-shared
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --strict
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --include-shared lib,utils
@@ -264,12 +323,21 @@ inside example code fences, not real dependencies — the skill strips fenced bl
 > **Skill:** Set `SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)` then pass `--source-date-epoch env`. The
 > tarball stays deterministic on the same commit.
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --source-date-epoch env
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
   .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --source-date-epoch env
 ```
+
+> Note: setting the `SOURCE_DATE_EPOCH` env var is a shell operation — when automating in CI you use the
+> underlying command above directly. This is exactly what the release workflow (`claude-pack-release.yml`) does.
 
 ---
 
@@ -281,10 +349,16 @@ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
 
 > **You:** Build and return JSON for the next CI step to parse.
 >
-> **Skill:** Add `--json` to `python -m pack` → JSON status on stdout. (Note: `manifest_loader.py`,
+> **Skill:** Add `--json` to the pack command → JSON status on stdout. (Note: `manifest_loader.py`,
 > `safety_check.py`, `build_manifest.py` always emit JSON and have no `--json` flag.)
 
-#### Equivalent CLI
+#### Equivalent skill flag
+
+```
+/cleanmatic:claude-pack --manifest .claude/pack.manifest.yaml --json
+```
+
+#### Underlying command (runs under the hood)
 
 ```bash
 .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --json
@@ -299,6 +373,9 @@ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
 Every bundle ships **both** installers. The recipient verifies SHA256 → extracts → runs the installer. The
 installer is **version-aware** (detects STALE / NEWER / OK SAME per skill) and defaults to **skip-existing**;
 overwrite via `FORCE_OVERWRITE=1` (backs up first).
+
+> ℹ️ This step is **outside** the `claude-pack` skill — it's a recipient-side operation run by hand, not via a
+> skill flag. Hence this section only lists the executed commands.
 
 #### Conversation
 
@@ -315,7 +392,7 @@ overwrite via `FORCE_OVERWRITE=1` (backs up first).
 > On POSIX, use the matching `install.sh`. The installer skips existing skills; to overwrite, set
 > `FORCE_OVERWRITE=1`.
 
-#### Equivalent commands (POSIX)
+#### Executed commands (POSIX)
 
 ```bash
 sha256sum -c claude-pack-1.0.0.tar.gz.sha256

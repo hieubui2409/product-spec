@@ -5,6 +5,13 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-05-31
+
+### Changed
+- `claude-pack` usage guides (`GUIDE-VI.md` + `GUIDE-EN.md`): present the **skill flag** form
+  (`/cleanmatic:claude-pack --flag`) as the second way to run each use case — matching the product-spec guide
+  pattern — and keep the underlying `python -m pack` invocation as a dev-facing "runs under the hood" note.
+
 ## [0.2.0] — 2026-05-31
 
 Documentation + onboarding release. No change to the pack builder core or the determinism contract.
