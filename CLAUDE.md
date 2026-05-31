@@ -107,6 +107,10 @@ All scripts live under `.claude/skills/product-spec/scripts/` and accept:
 <script>.py --root <project-dir> [--lang en|vi] [other flags]
 ```
 
+`--lang` is accepted by the prose/visual scripts whose output localizes (`visualize.py`, `render_export.py`,
+`generate_templates.py`); the analytical JSON feeders (`check_*`, `*_anchors.py`, `time_advisory.py`,
+`build_traceability_matrix.py`) emit lang-agnostic JSON with English keys and ignore it.
+
 `--root` defaults to CWD. Scripts emit JSON to stdout. Analytical scripts always exit 0; `--strict` gating is your job,
 not the script's. The single exception is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts and
 exits `2` on `error` findings — usable from shell pipelines without an LLM.
@@ -140,8 +144,8 @@ Scripts available:
   `docs/product/exports/`.
 - `render_board.py` / `render_explorer.py` — F2 viewer HTML writers (kanban / tri-mode explorer).
 - `time_advisory.py` — wall-clock TIME advisory (`overdue` = `target_date < today`), deliberately OUTSIDE the
-  `--validate` gate so the gate stays reproducible. Takes a pinnable `--today <ISO>`; pure date math, no LLM; ALWAYS
-  exits 0 (never blocks CI on the calendar).
+  `--validate` gate so the gate stays reproducible. Takes a pinnable `--today <ISO>`; pure date math, no LLM; exits 0 on
+  every valid run (never blocks CI on the calendar), exits non-zero only on a malformed `--today` (input validation).
 - `time_realism_anchors.py` — SCRIPT half of the `time_realism` LLM check: emits ONLY structured anchors
   (`days_remaining`, `size`, `child_story_count`, …) computed deterministically; the LLM applies the fixed rule, never
   does date math. Never decides flag/no-flag (Script-vs-LLM split, G-B2).
