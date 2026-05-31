@@ -1,0 +1,388 @@
+# `claude-pack` Guide for Developers
+
+> This guide is for **developers** who want to bundle a curated subset of the `.claude/` tree (skills,
+> agents, hooks, rules…) into a **versioned, deterministic** `tar.gz` for sharing or installing on another
+> machine. The language here is technical.
+>
+> Vietnamese version: [`GUIDE-VI.md`](./GUIDE-VI.md).
+
+---
+
+## 1. What does this skill do?
+
+`claude-pack` gathers a **curated subset** of `.claude/` (plus a few optional top-level files like
+`README.md`, `CLAUDE.md`) into a version-stamped `tar.gz`. Each bundle ships:
+
+- `MANIFEST.json` — per-file SHA256 listing.
+- `INSTALL.md` — install instructions for the recipient.
+- `install.sh` (POSIX) + `install.ps1` (Windows) — multiplatform, version-aware installers.
+
+Two core guarantees:
+
+1. **Manifest is the source-of-truth.** `.claude/pack.manifest.yaml` declares build inputs. CLI flags
+   override per-build; interactive mode regenerates the manifest.
+2. **Determinism is a contract.** Same source + manifest → **byte-identical** `tar.gz`. Achieved via PAX
+   format, sorted walk (file-granular), `mtime=0`, `uid=gid=0`, gzip header `mtime=0`.
+
+The safety filter is **non-removable**: `.env`/secrets/keys, `.git/`, runtime caches, session state are
+always dropped. `settings.json` and `.ck.json` enter the bundle only when explicitly opted in.
+
+---
+
+## 2. Two ways to give instructions — and which to prefer
+
+### Way 1 (preferred): Describe your intent in words
+
+Tell the skill what you want to bundle; it runs `build_manifest` in discover mode, walks you through manifest
+authoring, previews, then packs:
+
+> *"Pack the product-spec skill with the planner and researcher agents to send to a teammate."*
+>
+> *"Build a bundle from the existing manifest, version 0.2.0."*
+>
+> *"Preview the file list that would go into the bundle — don't create a tarball yet."*
+
+This is the recommended path because the LLM owns the UI layer (AskUserQuestion) while the script owns the
+structural layer — consistent with the Script-vs-LLM split.
+
+### Way 2 (equivalent): Call `python -m pack` directly
+
+Once you have a manifest and want to automate (e.g. CI), invoke the script directly via the venv:
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml
+```
+
+Both ways yield the same result. The CLI is the automation/CI path; the LLM is the interactive path.
+
+> ⚠️ **Boundary note:** Python scripts **never** call `AskUserQuestion`. The LLM is the UI layer, the script
+> is the structural layer. The LLM **never** edits the tarball directly.
+
+---
+
+## 3. Every use case — ordered by priority
+
+Each scenario includes: when to use it, a **sample conversation**, and the equivalent CLI command.
+
+---
+
+### Priority 1 — Interactive build from scratch (no manifest yet)
+
+**When to use:** No `.claude/pack.manifest.yaml` exists, or you want to author a new one via interview.
+
+The skill runs `build_manifest --discover` to list available skills/agents/hooks/rules, then walks you
+through **4 question batches**: (1) version + bundle name, (2) select skills/agents/hooks/rules, (3)
+top-level files, (4) extras + `_shared/` handling. Finally it previews and **confirms via a hard-locked
+prompt** before writing the manifest.
+
+#### Conversation
+
+> **You:** Create a bundle with the product-spec skill, the planner and researcher agents, and the two rules
+> primary-workflow and development-rules.
+>
+> **Skill:** I've discovered the repo. Let's walk the batches.
+> - *Bundle version* (SemVer)? Default `0.1.0`. *Bundle name*? Default `claude-pack`.
+> - **Available skills:** product-spec, claude-pack. You pick `product-spec`.
+> - **Agents:** planner, researcher, … → you pick `planner`, `researcher`.
+> - **Rules:** you pick `primary-workflow.md`, `development-rules.md`.
+> - Top-level: include `README.md` / `CLAUDE.md`? (default no)
+> - `_shared/`: auto-include refs? (default false = warn-only)
+>
+> **You:** Version 1.0.0, no top-level, keep `_shared` warn-only.
+>
+> **Skill:** Summary: `version=1.0.0, skills=1, agents=2, rules=2`.
+> > **Ready to write .claude/pack.manifest.yaml with 1 skills, 2 agents, 2 rules? [y/N]**
+>
+> **You:** y
+>
+> **Skill:** Manifest written. Build preview: N files, total size X. Want me to pack it now?
+
+#### Equivalent CLI
+
+```bash
+# The LLM runs this sequence under the hood:
+.claude/skills/.venv/bin/python3 -m build_manifest --discover --root .
+.claude/skills/.venv/bin/python3 -m build_manifest --list-questions --root .
+# (after collecting answers + confirmation)
+echo "$answers_json" | .claude/skills/.venv/bin/python3 -m build_manifest --write --root .
+```
+
+> If a manifest already exists, `--write` exits 2 (collision) unless `--force`. The skill must surface the
+> collision and re-prompt.
+
+---
+
+### Priority 2 — Build from an existing manifest
+
+**When to use:** `.claude/pack.manifest.yaml` already exists; you just want to produce the tarball.
+
+#### Conversation
+
+> **You:** Build the bundle from the current manifest.
+>
+> **Skill:** I load `.claude/pack.manifest.yaml`, run safety_check (drops always-drop entries), walk sorted,
+> then write `dist/claude-pack-1.0.0.tar.gz` plus the `.sha256` sidecar. The build is deterministic — the
+> same input produces byte-identical output.
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml
+```
+
+---
+
+### Priority 3 — Preview before packing (Dry-run)
+
+**When to use:** You want to see the **file list + total size** without producing a tarball. Optionally with
+the would-be SHA256.
+
+#### Conversation
+
+> **You:** Preview what would go into the bundle — don't create the real file.
+>
+> **Skill:** Dry-run done: 47 files, 312 KB compressed total. No always-drop file slipped through. Want me to
+> also compute the would-be tarball SHA256? (single pass, no double cost)
+>
+> **You:** Yes.
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --dry-run
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --dry-run --compute-sha
+```
+
+---
+
+### Priority 4 — Override version / bundle name for ad-hoc builds
+
+**When to use:** Test builds with a different version without editing the manifest.
+
+> ⚠️ The skill refuses the `0.0.0-dev` placeholder for real builds (needs `--allow-dev-version`). The version
+> labels the *distribution*, decoupled from the skill's own version.
+
+#### Conversation
+
+> **You:** Build an rc, version 0.2.0-rc1.
+>
+> **Skill:** Override `version=0.2.0-rc1` for this build; the manifest is untouched. Output:
+> `dist/claude-pack-0.2.0-rc1.tar.gz`.
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --version 0.2.0-rc1
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --bundle-name my-pack
+```
+
+---
+
+### Priority 5 — Override content via CLI (without editing the manifest)
+
+**When to use:** Add/remove skills, agents, hooks, rules, or extra paths for one build.
+
+> CLI overrides **win** over the manifest value for that category. `--extra` forbids absolute paths and `..`.
+
+#### Conversation
+
+> **You:** Build like the manifest but take only the product-spec skill and add docs/onboarding.md.
+>
+> **Skill:** Override `--skills product-spec --extra docs/onboarding.md`. Other categories follow the manifest.
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
+  --skills product-spec --extra docs/onboarding.md
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
+  --agents planner,researcher --rules primary-workflow.md,development-rules.md
+```
+
+---
+
+### Priority 6 — Opt-in sensitive / internal files
+
+**When to use:** You need to include `settings.json`, `.ck.json`, top-level README/CLAUDE.md, or the
+`scripts/`/`schemas/` internals. All are **off by default** and must be enabled explicitly.
+
+> `settings.json` and `.ck.json` belong to the safety filter's opt-in catalog — they enter the bundle only
+> via the matching flag. Secrets/keys/`.env` are **always dropped**; no flag can pull them back.
+
+#### Conversation
+
+> **You:** Also include the top-level README and CLAUDE.md, plus settings.json.
+>
+> **Skill:** Enabling `--include-readme --include-claudemd --include-settings`. Note `settings.json` is a
+> sensitive opt-in — added per your explicit request. `.env`/secrets stay dropped regardless.
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
+  --include-readme --include-claudemd --include-settings
+# CK-framework internals (off by default):
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml \
+  --include-scripts --include-schemas
+```
+
+---
+
+### Priority 7 — Handle `_shared/` dependencies
+
+**When to use:** A packed skill references `skills/_shared/<name>`. Default is **warn-only** (many refs live
+inside example code fences, not real dependencies — the skill strips fenced blocks, then warns).
+
+#### Conversation
+
+> **You:** My skill uses _shared/lib and _shared/utils, pull them in too.
+>
+> **Skill:** Opt-in `--include-shared lib,utils`. If you want un-included `_shared/` refs to be treated as
+> **errors** (blocking the build), add `--strict` (exit 2).
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --include-shared lib,utils
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --follow-shared
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --strict
+```
+
+---
+
+### Priority 8 — Reproducible build for CI (`SOURCE_DATE_EPOCH`)
+
+**When to use:** You want a reproducible build pinned to the commit date in CI.
+
+> Default `mtime=0` (fully deterministic). `--source-date-epoch env` honors the `SOURCE_DATE_EPOCH` variable;
+> if the var is empty/non-numeric it falls back silently to 0.
+
+#### Conversation
+
+> **You:** In CI, pin mtime to the last commit.
+>
+> **Skill:** Set `SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)` then pass `--source-date-epoch env`. The
+> tarball stays deterministic on the same commit.
+
+#### Equivalent CLI
+
+```bash
+SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
+  .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --source-date-epoch env
+```
+
+---
+
+### Priority 9 — JSON output for CI pipelines
+
+**When to use:** You need machine-readable status for a pipeline to parse.
+
+#### Conversation
+
+> **You:** Build and return JSON for the next CI step to parse.
+>
+> **Skill:** Add `--json` to `python -m pack` → JSON status on stdout. (Note: `manifest_loader.py`,
+> `safety_check.py`, `build_manifest.py` always emit JSON and have no `--json` flag.)
+
+#### Equivalent CLI
+
+```bash
+.claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --json
+```
+
+---
+
+### Priority 10 — Recipient side: install the bundle (including Windows)
+
+**When to use:** The recipient has `claude-pack-{version}.tar.gz`.
+
+Every bundle ships **both** installers. The recipient verifies SHA256 → extracts → runs the installer. The
+installer is **version-aware** (detects STALE / NEWER / OK SAME per skill) and defaults to **skip-existing**;
+overwrite via `FORCE_OVERWRITE=1` (backs up first).
+
+#### Conversation
+
+> **You (recipient, Windows machine):** I got the tar.gz, how do I install on Windows?
+>
+> **Skill:** Verify the checksum, extract, then run `install.ps1`:
+> ```powershell
+> # PowerShell
+> (Get-FileHash claude-pack-1.0.0.tar.gz -Algorithm SHA256).Hash
+> tar -xzf claude-pack-1.0.0.tar.gz
+> cd claude-pack-1.0.0
+> powershell -ExecutionPolicy Bypass -File .\install.ps1
+> ```
+> On POSIX, use the matching `install.sh`. The installer skips existing skills; to overwrite, set
+> `FORCE_OVERWRITE=1`.
+
+#### Equivalent commands (POSIX)
+
+```bash
+sha256sum -c claude-pack-1.0.0.tar.gz.sha256
+tar -xzf claude-pack-1.0.0.tar.gz
+cd claude-pack-1.0.0 && ./install.sh
+FORCE_OVERWRITE=1 ./install.sh      # overwrite existing skills (backs up first)
+```
+
+---
+
+## 4. Output Contract
+
+```
+dist/
+├── claude-pack-{version}.tar.gz          # the bundle
+└── claude-pack-{version}.tar.gz.sha256   # coreutils-format sidecar
+```
+
+Tarball internal layout (versioned root dir):
+
+```
+claude-pack-{version}/
+├── MANIFEST.json     # schema_version "1.0", per-file SHA256
+├── INSTALL.md        # rendered from INSTALL.md.template
+├── install.sh        # POSIX installer
+├── install.ps1       # Windows installer
+└── .claude/          # the selected subtree
+```
+
+`dist/` is gitignored — tarballs are reproducible build artifacts, not source.
+
+---
+
+## 5. Exit Codes (for automation)
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Validation / manifest error |
+| 2 | Strict-gate finding (`--strict`) |
+| 3 | Output collision (no `--force`) |
+| 4 | Write error (disk full, permission, cross-fs replace) |
+| 5 | Empty selection / over max-size |
+| 130 | Interrupted (SIGINT) |
+
+> `build_manifest.py --write` uses its own codes: 0 ok · 1 validation · 2 **collision** (different meaning
+> from the strict-gate at the `python -m pack` entry point).
+
+---
+
+## 6. What this skill does NOT do
+
+- **No remote upload.** Use `gh release upload` manually.
+- **No GPG signing in v1.** SHA256 sidecar only.
+- **No `claude-unpack` companion.** The contract is `tar -xzf` + the bundled installer.
+- **No merge-resolver.** The recipient `install.sh` skips existing skills; `FORCE_OVERWRITE=1` opts in.
+- **No multi-project packing.** One `.claude/` root per bundle.
+- **No zip / tar.zst.** Tar.gz only in v1.
+
+---
+
+## 7. Further reading
+
+- `SKILL.md` — the full operating contract (flag table, output contract, workflow map).
+- `references/manifest-spec.md` — manifest schema.
+- `references/flag-reference.md` — per-CLI-flag detail + exit codes.
+- `references/safety-rules.md` — always-drop + opt-in catalog.
+- `references/error-catalog.md` — `MANIFEST_E###` lookups.
+- `references/troubleshooting.md` — recipient-side issues.
+- Root `CLAUDE.md` → "Claude Pack — LLM Operating Guide" — the five operating principles (source-of-truth).

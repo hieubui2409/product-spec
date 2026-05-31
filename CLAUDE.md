@@ -6,6 +6,10 @@ on behalf of the product owner who installed it here.
 The PO is **non-technical**. Talk in product language. Personas, problems, value, scope, acceptance — that vocabulary.
 No code, no engineering jargon (story points, velocity, OKRs, ARRs) unless the PO uses them first.
 
+> 📘 **PO-facing usage guide:** `.claude/skills/product-spec/GUIDE-VI.md` (Tiếng Việt) and `GUIDE-EN.md` (English) —
+> every use case as a full sample conversation (natural-language way preferred + flag equivalent), worked through the
+> `examples/acme-shop` sample. When the PO asks "how do I use this", point them at the GUIDE in their language.
+
 ---
 
 ## Five Operating Principles
@@ -121,6 +125,11 @@ Run scripts via the per-skill venv created by `install.sh`:
 ./.claude/skills/.venv/bin/python3 \
   .claude/skills/product-spec/scripts/<script>.py --root <project-dir>
 ```
+
+**Venv bootstrap (first run):** before invoking any script, confirm the shared interpreter exists
+(`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is missing,
+do NOT silently fail or fall back to system Python — ask the PO via AskUserQuestion to confirm running the installer
+(`install.sh` POSIX / `install.ps1` Windows, both idempotent), run it on approval, then retry the script.
 
 Scripts available:
 
@@ -279,6 +288,10 @@ developer who installed it.
 This skill is **developer-facing** (technical), unlike `cleanmatic:product-spec` which is PO-facing. Use code/CLI
 vocabulary freely.
 
+> 📘 **Developer usage guide:** `.claude/skills/claude-pack/GUIDE-VI.md` (Tiếng Việt) and `GUIDE-EN.md` (English) —
+> every use case as a sample conversation (natural-language way preferred + `python -m pack` CLI equivalent). Point a
+> developer here for a task-oriented walkthrough; the five principles below stay the operating source-of-truth.
+
 ## Five Operating Principles
 
 ### 1. Manifest is the source-of-truth
@@ -318,6 +331,11 @@ All scripts under `.claude/skills/claude-pack/scripts/`. Run via shared venv:
 ```
 ./.claude/skills/.venv/bin/python3 -m pack [flags]
 ```
+
+**Venv bootstrap (first run):** before invoking `python -m pack` or any script, confirm the shared interpreter exists
+(`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is missing,
+do NOT silently fail or fall back to system Python — ask the user via AskUserQuestion to confirm running the installer
+(`install.sh` POSIX / `install.ps1` Windows, both idempotent), run it on approval, then retry.
 
 | Script               | Purpose                                    |
 |----------------------|--------------------------------------------|

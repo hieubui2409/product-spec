@@ -1,12 +1,27 @@
-# cleanmatic:product-spec
+# cleanmatic skills
 
-A Claude Code skill for product owners. It runs an interview, captures your product spec as a strictly-traceable hierarchy (**Vision → 1 BRD → many PRDs → Epics → Stories with AC**), validates the spec, and visualizes it — all in plain language, no code required from you.
+A small collection of **Claude Code skills** by cleanmatic. Two skills ship here, each self-contained under
+`.claude/skills/`:
 
-Bilingual: English and Vietnamese.
+| Skill | For whom | What it does |
+|---|---|---|
+| **[`product-spec`](.claude/skills/product-spec/)** | Non-technical **Product Owners** | Interview-driven product spec hierarchy (**Vision → 1 BRD → many PRDs → Epics → Stories with AC**) with strict traceability, validation, and visualization — in plain language, no code required. Bilingual EN/VI. |
+| **[`claude-pack`](.claude/skills/claude-pack/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
+
+> 📘 **Usage guides (every use case as a sample conversation):**
+> - product-spec — [`GUIDE-VI.md`](.claude/skills/product-spec/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec/GUIDE-EN.md) (English)
+> - claude-pack — [`GUIDE-VI.md`](.claude/skills/claude-pack/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/claude-pack/GUIDE-EN.md) (English)
+
+The two skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by either installer).
 
 ---
 
-## What it does for you
+## `product-spec` — for Product Owners
+
+Runs an interview, captures your product spec as a strictly-traceable hierarchy, validates it, and visualizes it — all
+in plain language, no code required from you. Bilingual: English and Vietnamese.
+
+### What it does for you
 
 | You want to… | Run |
 |---|---|
@@ -19,123 +34,106 @@ Bilingual: English and Vietnamese.
 | Draw the spec tree / roadmap / coverage map | `/cleanmatic:product-spec --viz <view>` |
 | Apply a change without losing prior decisions | `/cleanmatic:product-spec --update` |
 
-Output lives in `docs/product/` inside your project — markdown files with rich YAML metadata.
+Output lives in `docs/product/` inside your project — markdown files with rich YAML metadata. The skill never writes
+outside `docs/product/`.
 
----
-
-## Install (one-time, ~3 minutes)
-
-### Prerequisites
-
-- **Python 3.11 or newer.** Check with `python3 --version`. Get it at [python.org/downloads](https://www.python.org/downloads/).
-- **Claude Code** (the official CLI or VS Code extension).
-- **A terminal** (Terminal on macOS, PowerShell or WSL on Windows, any shell on Linux).
-- One of `curl` or `wget` (usually preinstalled).
-
-### Steps
-
-**1. Copy this folder into your project.**
-
-After extracting the ZIP you received, you should have this layout at the root of your project:
-
-```
-your-project/
-├── .claude/
-│   └── skills/
-│       └── product-spec/        ← the skill
-├── CLAUDE.md                    ← LLM operating guide (auto-loaded)
-└── README.md                    ← this file
-```
-
-If your project already has a `.claude/` folder, merge the contents — don't overwrite.
-
-**2. Run the installer.**
-
-From your project root, in a terminal:
+### Install
 
 ```bash
+# POSIX (macOS / Linux / WSL)
 bash .claude/skills/product-spec/install.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\.claude\skills\product-spec\install.ps1
 ```
 
-It creates a Python virtual environment, installs the two libraries the skill needs (`pyyaml`, `pytest`), and downloads the Mermaid diagram engine for offline visualizations. The script is **idempotent** — re-running it is safe.
+Requires **Python 3.11+** and (on first run only, if the vendored JS is absent) `curl`/`wget`. The installer creates the
+shared venv, installs `pyyaml`, and vendors the Mermaid + marked + DOMPurify runtimes for offline HTML. Idempotent —
+re-running is safe.
 
-You should see:
-
-```
-✓ python3 = 3.x
-✓ venv created
-✓ pyyaml + pytest installed
-product-spec vendor: ... mermaid.min.js ... (sha256 OK)
-43 passed
-```
-
-**3. Invoke the skill in Claude Code.**
-
-Open Claude Code in your project folder and type:
+Then invoke from Claude Code:
 
 ```
 /cleanmatic:product-spec
 ```
 
-The skill detects whether `docs/product/PRODUCT.md` exists and either offers to initialize it (guided interview) or shows you a menu of actions.
+### Deep links
 
-That's it.
+- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/product-spec/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/product-spec/GUIDE-EN.md)
+- **README:** [`.claude/skills/product-spec/README.md`](.claude/skills/product-spec/README.md)
+- **Operating contract:** [`.claude/skills/product-spec/SKILL.md`](.claude/skills/product-spec/SKILL.md)
+- **Worked sample:** [`examples/acme-shop`](.claude/skills/product-spec/examples/acme-shop)
+
+### What it does NOT do
+
+- No production code — output is product specs; your engineering team writes the code.
+- No story-point / hour estimation — stories carry only `size: S | M | L`.
+- No overwriting your manual edits — on `--update` it flags affected items and asks first.
+- No auto-flipping an `approved` decision — contradictions are surfaced for you to resolve (Keep / Change / Hybrid).
+- No internet at runtime — after install, everything runs on your machine.
 
 ---
 
-## What gets created in your project
+## `claude-pack` — for Developers
 
-After your first session:
+Bundles a curated subset of `.claude/` (skills, agents, hooks, rules) plus optional top-level files into a versioned,
+deterministic `tar.gz`. Each bundle ships a `MANIFEST.json` (per-file SHA256), an `INSTALL.md`, and multiplatform
+installers (`install.sh` + `install.ps1`) so the recipient extracts once and runs.
+
+### What it does for you
+
+| You want to… | Run |
+|---|---|
+| Author a manifest interactively, then pack | `/cleanmatic:claude-pack` (no flag → interview) |
+| Build from an existing manifest | `… -m pack --manifest .claude/pack.manifest.yaml` |
+| Preview the file list + size, no tarball | `… -m pack --manifest … --dry-run` |
+| Override version for an ad-hoc build | `… -m pack --manifest … --version 0.2.0-rc1` |
+| Reproducible CI build pinned to commit date | `SOURCE_DATE_EPOCH=… … -m pack … --source-date-epoch env` |
+
+Output lands in `dist/claude-pack-{version}.tar.gz` + a `.sha256` sidecar (`dist/` is gitignored — tarballs are
+reproducible artifacts, not source).
+
+### Install
+
+```bash
+# POSIX (macOS / Linux / WSL)
+bash .claude/skills/claude-pack/install.sh            # add --dev for pytest
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\.claude\skills\claude-pack\install.ps1
+```
+
+Requires **Python 3.11+**. Then invoke from Claude Code:
 
 ```
-docs/product/
-├── PRODUCT.md            (one-line product facts: name, value, personas)
-├── vision.md             (narrative: problem, north-star, principles)
-├── brd.md                (single Business Requirements Doc + goals)
-├── prds/<feature>.md     (one PRD per feature area)
-├── epics/<id>.md         (epics under each PRD)
-├── stories/<id>.md       (user stories with acceptance criteria)
-├── exec-summary.md       (generated 1-page summary)
-├── change-log.md         (dated record of every delta-update)
-├── .session.md           (interview state — committed for resume)
-└── visuals/              (generated visualizations)
-    └── .snapshots/       (graph snapshots for delta/diff views)
+/cleanmatic:claude-pack
 ```
 
-You commit this folder to git like any other doc. The skill never writes outside `docs/product/`.
+### Deep links
+
+- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/claude-pack/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/claude-pack/GUIDE-EN.md)
+- **README:** [`.claude/skills/claude-pack/README.md`](.claude/skills/claude-pack/README.md)
+- **Operating contract:** [`.claude/skills/claude-pack/SKILL.md`](.claude/skills/claude-pack/SKILL.md)
+
+### What it does NOT do
+
+- No remote upload — use `gh release upload` manually.
+- No GPG signing in v1 — SHA256 sidecar only.
+- No merge-resolver — the recipient installer skips existing skills; `FORCE_OVERWRITE=1` opts in.
+- No multi-project packing — one `.claude/` root per bundle.
+- No zip / tar.zst — tar.gz only in v1.
 
 ---
 
-## Flag reference
-
-| Flag | Purpose |
-|------|---------|
-| (no flag) | Detect state → present a menu of next actions. |
-| `--product` | Init or refresh `PRODUCT.md` (the thin product-facts file). |
-| `--brd` | Create or refine the single BRD. |
-| `--prd [feature]` | Create or refine a PRD for one feature area. |
-| `--epic [prd]` | Create or refine an epic under a PRD. |
-| `--story [epic]` | Create or refine a story under an epic. |
-| `--auto` | Paste a brain-dump → skill decomposes into BRD/PRD/Epic/Story. |
-| `--validate` | Run structural checks + LLM judgment → human report. |
-| `--strict` | (with `--validate`) errors block the action; warnings don't. |
-| `--summary` | Generate a 1-page exec summary. |
-| `--approve` | Sign-off: record owner + date, flip `status: approved`. |
-| `--update` | Apply a change; flag affected downstream items for review. |
-| `--viz <view>` | Render: `tree`, `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `risk`, `delta`. |
-| `--format <fmt>` | `ascii` (default) · `mermaid` · `html`. |
-| `--lang <code>` | `en` (default) · `vi`. |
-
----
-
-## Bilingual
+## Bilingual (product-spec)
 
 - The interview asks questions in your chosen language (`--lang en` or `--lang vi`).
 - LLM-generated prose (vision narrative, story descriptions, AC) is written in your chosen language.
-- IDs (`BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1-S1`) and frontmatter keys (`personas`, `scope`, `moscow`, …) stay English so the structure is stable.
+- IDs (`BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1-S1`) and frontmatter keys (`personas`, `scope`, `moscow`, …) stay English so
+  the structure is stable.
 - Visualization labels (`Now/Next/Later`, `Must/Should/Could/Won't`) localize when you pass `--lang vi`.
 
-Vietnamese ships best-effort in v1. If something reads awkwardly, the skill flags it for a native-speaker review.
+Vietnamese phrasing is native-reviewed for natural wording.
 
 ---
 
@@ -144,39 +142,26 @@ Vietnamese ships best-effort in v1. If something reads awkwardly, the skill flag
 | Symptom | Fix |
 |---|---|
 | `python3: command not found` | Install Python 3.11+ from [python.org](https://www.python.org/downloads/). |
-| `bash: install.sh: Permission denied` | `chmod +x .claude/skills/product-spec/install.sh` then re-run. |
-| `pip install` hangs | Check your internet connection; the install needs one-time access to PyPI + the Mermaid CDN. After install, the skill runs offline. |
-| HTML visualization shows a blank diagram | Re-run `bash .claude/skills/product-spec/install.sh` to re-vendor the Mermaid engine. |
-| Claude Code doesn't see the skill | Make sure you opened Claude Code in your project folder (the one containing `.claude/`), then restart it. |
-| `--validate` keeps flagging a parent you removed | The frontmatter `parent`/`epic`/`prd`/`brd_goals` field on a child still points to it. Edit the child to update its parent link, or delete the child. |
-| Running scripts from a workspace under `/tmp/...` can't see the `.venv` binary | Some sub-agent / sandbox harnesses block `/tmp/...` reads from outside the workspace. Run the scripts from your project root (or any subdir inside the repo), or install `pyyaml` against the system `python3` and invoke that interpreter explicitly. |
-
----
-
-## What this skill does NOT do
-
-- It doesn't write production code. Output is product specs — your engineering team writes the code.
-- It doesn't estimate in story points or hours — stories carry only `size: S | M | L`.
-- It doesn't overwrite your manual edits. On `--update`, it flags affected items and asks before regenerating.
-- It doesn't auto-flip a decision marked `approved`. If a new answer contradicts an approved fact, it surfaces the conflict for you to resolve.
-- It doesn't need the internet at runtime. After install, everything runs from your machine.
+| `bash: install.sh: Permission denied` | `chmod +x .claude/skills/<skill>/install.sh` then re-run. |
+| Windows: scripts blocked | Run installers with `powershell -ExecutionPolicy Bypass -File .\…\install.ps1`. |
+| `pip install` hangs | Check your connection; install needs one-time PyPI + (product-spec) CDN access. After install, the skills run offline. |
+| product-spec: HTML visualization shows a blank diagram | Re-run the product-spec installer to re-vendor the Mermaid engine. |
+| Claude Code doesn't see a skill | Make sure you opened Claude Code in your project folder (the one containing `.claude/`), then restart it. |
+| Running scripts from a workspace under `/tmp/...` can't see the `.venv` binary | Some sandbox harnesses block `/tmp/...` reads from outside the workspace. Run scripts from your project root, or install deps against the system `python3` and invoke that interpreter explicitly. |
 
 ---
 
 ## Privacy
 
-Your spec lives in `docs/product/` inside your project. The skill makes no network calls at runtime. The one-time installer downloads `mermaid.min.js` from the public CDN (`cdn.jsdelivr.net`); the file is then stored locally and verified against a pinned SHA-256 hash.
-
----
-
-## Versions
-
-- Skill: `v1.0.0`
-- Tested on: Python 3.11–3.14, macOS / Linux / Windows (WSL).
-- Mermaid runtime: `11.4.1` (vendored, SHA-256 pinned).
+Both skills make **no network calls at runtime**. product-spec's one-time installer downloads `mermaid.min.js`,
+`marked.umd.js`, and `purify.min.js` from the public CDN (`cdn.jsdelivr.net`); each is then stored locally and verified
+against a pinned SHA-256 hash. claude-pack's safety filter **always drops** `.env`/secrets/keys, `.git/`, runtime
+caches, and session state from any bundle — non-removable via any flag.
 
 ---
 
 ## Need help?
 
-The skill itself can answer most "how do I…" questions — invoke it and ask. For installer issues, re-run with `bash -x .claude/skills/product-spec/install.sh` to see each step.
+Each skill can answer most "how do I…" questions — invoke it and ask. For installer issues, re-run the POSIX installer
+with `bash -x .claude/skills/<skill>/install.sh` to see each step. For deeper detail, start from the skill's `GUIDE-*.md`
+and `SKILL.md`.

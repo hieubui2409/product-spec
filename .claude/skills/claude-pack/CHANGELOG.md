@@ -5,6 +5,19 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-31
+
+Documentation + onboarding release. No change to the pack builder core or the determinism contract.
+
+### Added
+- Per-skill **usage guides** (`GUIDE-VI.md` + `GUIDE-EN.md`) for both bundled skills: every use case as a full sample conversation, covering the natural-language way (preferred) and the flag/CLI equivalent. product-spec guides use the `examples/acme-shop` worked sample.
+- `cleanmatic:product-spec/install.ps1` — Windows-native installer (parity with `claude-pack`): creates the shared venv, installs `pyyaml`, and vendors Mermaid + marked + DOMPurify with sha256 verification.
+- **Venv-bootstrap operating instruction** in both `SKILL.md` files + repo-root `CLAUDE.md`: when the shared venv is missing, the LLM asks (AskUserQuestion) to run the installer instead of silently failing or falling back to system Python.
+
+### Changed
+- Repo-root `README.md` now covers **both** skills (product-spec + claude-pack) as an umbrella, with per-skill install (POSIX + Windows) and deep links.
+- Cross-references to the new guides added to both `SKILL.md` + `README.md` files and the two `CLAUDE.md` operating-guide sections.
+
 ## [0.1.0] — 2026-05-29 (dogfood release)
 
 First internal release. Used to pack `cleanmatic:product-spec` + `cleanmatic:claude-pack` from this repo.

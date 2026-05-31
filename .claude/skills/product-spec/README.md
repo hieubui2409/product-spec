@@ -37,6 +37,7 @@ With no flag, the skill detects the state of `docs/product/` and presents a menu
 
 ## Further reading
 
+- **[`GUIDE-VI.md`](./GUIDE-VI.md) / [`GUIDE-EN.md`](./GUIDE-EN.md)** — end-user guide for the non-technical PO: every use case as a full sample conversation (natural-language way preferred + flag equivalent), with worked examples from `examples/acme-shop`.
 - Top of `SKILL.md` — flags table + no-flag menu + output contract.
 - `../../../CLAUDE.md` (repo-root) — operating principles loaded automatically by Claude Code.
 - `references/frontmatter-and-id-spec.md` — canonical YAML schema and parent-scoped ID grammar (`BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1`, `PRD-AUTH-E1-S1`).

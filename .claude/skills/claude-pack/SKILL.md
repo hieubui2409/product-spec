@@ -15,6 +15,10 @@ metadata:
 
 Developer-facing skill that bundles a curated subset of this repo's `.claude/` tree (skills, agents, hooks, rules, scripts, schemas) + optional top-level files (`README.md`, `CLAUDE.md`) into a **versioned, deterministic** `tar.gz`. Each bundle ships a `MANIFEST.json` (per-file SHA256), an `INSTALL.md`, and bundled multiplatform installers (`install.sh` POSIX + `install.ps1` Windows) so the recipient extracts once and runs.
 
+> 📘 **Developer usage guide:** [`GUIDE-VI.md`](./GUIDE-VI.md) (Tiếng Việt) / [`GUIDE-EN.md`](./GUIDE-EN.md) (English) —
+> every use case as a sample conversation, covering both the natural-language way (preferred) and the CLI-equivalent
+> (`python -m pack`). Read this for a task-oriented walkthrough; this `SKILL.md` is the operating contract.
+
 ## When to Use
 
 - A developer wants to share a curated set of skills/agents/rules with a teammate.
@@ -140,6 +144,12 @@ Run via the per-skill venv created by `install.sh`:
 .claude/skills/.venv/bin/python3 -m pack \
   --root <repo-root> [flags]
 ```
+
+> ⚙️ **Venv bootstrap (first run):** before invoking `python -m pack` (or any script), check the shared interpreter
+> exists (`.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is
+> **missing**, do NOT silently fail or fall back to system Python — pause and ask the user via **AskUserQuestion** to
+> confirm running the installer (`./install.sh` POSIX / `install.ps1` Windows, both idempotent). Run it only on approval,
+> then retry.
 
 The pack builder (`python -m pack`) emits JSON on `--json`. The other scripts (`manifest_loader.py`, `safety_check.py`, `build_manifest.py`) emit JSON to stdout unconditionally — they have no `--json` flag. Analytical scripts exit 0; the `--strict` gate is the LLM's job. Determinism is the script's job: byte-identical tar.gz for the same input + `SOURCE_DATE_EPOCH`.
 

@@ -18,6 +18,10 @@ PRDs → Epics → Stories (+AC)**. Drives a phased PO interview (bilingual EN/V
 YAML frontmatter under `docs/product/`, validates structure deterministically and judgment via LLM, and visualizes the
 spec tree in ASCII, Mermaid, and self-contained HTML.
 
+> 📘 **End-user guide (non-technical PO):** [`GUIDE-VI.md`](./GUIDE-VI.md) (Tiếng Việt) / [`GUIDE-EN.md`](./GUIDE-EN.md)
+> (English) — every use case as a full sample conversation, covering both the natural-language way (preferred) and the
+> flag-equivalent, with worked examples from the `examples/acme-shop` sample. Point the PO here first.
+
 ## When to Use
 
 - A product owner needs to capture a new product (vision → stories) without writing code.
@@ -140,6 +144,12 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 
 - `scripts/` — Python (stdlib + pyyaml). Run via repo venv `./.claude/skills/.venv/bin/python3`. Each script accepts
   `--root <project-dir>` (default CWD) and emits JSON. All judgment lives in the LLM layer; scripts are structural-only.
+
+> ⚙️ **Venv bootstrap (first run):** before invoking any script, check the shared interpreter exists
+> (`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is
+> **missing**, do NOT silently fail or fall back to system Python — pause and ask the user via **AskUserQuestion** to
+> confirm running the installer (`./install.sh` POSIX / `install.ps1 -ExecutionPolicy Bypass` Windows, both idempotent).
+> Run it only on approval, then retry the script.
 - `assets/templates/` — markdown templates with `{{token}}` substitution, the shared `_viewer-head.html` design-system
   partial, and the export/board/explorer HTML shells.
 - `assets/vendor/` — vendored JS for self-contained offline HTML: `mermaid.min.js` (graph views) + `marked.min.js` +

@@ -58,6 +58,7 @@ Output lands in `dist/claude-pack-{version}.tar.gz` + `.sha256` sidecar.
 └── assets/templates/ # manifest.example.yaml + INSTALL.md/install.sh/install.ps1 templates
 ```
 
+Usage guide (task-oriented, all use cases as sample conversations): **[`GUIDE-VI.md`](./GUIDE-VI.md) / [`GUIDE-EN.md`](./GUIDE-EN.md)**.
 Full architecture: `references/maintainers-guide.md` (added in Phase 6).
 Reference index: see `SKILL.md` "Load-on-Demand References" table.
 
