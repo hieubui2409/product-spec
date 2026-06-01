@@ -92,7 +92,13 @@ from pathlib import Path
 target = Path(os.environ["SETTINGS_TARGET"])
 
 PROJ = '"$CLAUDE_PROJECT_DIR"'
-PY = f'{PROJ}/.claude/skills/.venv/bin/python3'
+# The shared skill venv lays its interpreter at a different relative path per OS:
+# Scripts/python.exe on Windows, bin/python3 on POSIX. Derive it from os.name so
+# the hook command written into settings runs on the host this installer is on
+# (settings.json tolerates forward slashes on Windows).
+interp = '.claude/skills/.venv/Scripts/python.exe' if os.name == 'nt' \
+    else '.claude/skills/.venv/bin/python3'
+PY = f'{PROJ}/{interp}'
 HOOK = f'{PROJ}/.claude/hooks/memory_gap_hook.py'
 STOP_CMD = f'{PY} {HOOK}'
 POST_CMD = f'{PY} {HOOK} --post-tool-use'

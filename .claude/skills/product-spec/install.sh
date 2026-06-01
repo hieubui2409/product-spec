@@ -59,7 +59,7 @@ for arg in "$@"; do
         --check-memory-hook) CHECK_MEMORY_HOOK=1 ;;
         --memory-hook-optout) MEMORY_HOOK_OPTOUT=1 ;;
         -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) echo "unknown arg: $arg (use --dev, --memory-hook, --check-memory-hook, or --help)" >&2; exit 2 ;;
+        *) echo "unknown arg: $arg (use --dev, --memory-hook, --memory-hook-shared, --check-memory-hook, --memory-hook-optout, or --help)" >&2; exit 2 ;;
     esac
 done
 
