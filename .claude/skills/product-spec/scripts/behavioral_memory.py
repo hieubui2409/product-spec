@@ -342,19 +342,74 @@ def _write_self_corrections(root, data: Dict[str, Any]) -> Path:
 
 
 # ----------------------------------------------------------------------------
-# CLI — read-only inspection (writes are driven by the LLM via the helpers)
+# CLI — read (`--dump`) + the explicit 3D voice WRITE entry point (`--voice`)
 # ----------------------------------------------------------------------------
+
+def _split_csv(value: Optional[str]) -> Optional[List[str]]:
+    """Parse a comma-separated CLI value into a trimmed, non-empty list. `None`
+    (flag absent) stays `None` so `record_po_style` skips that field; an empty/
+    whitespace-only value resolves to `[]` (no items to add)."""
+    if value is None:
+        return None
+    return [tok.strip() for tok in value.split(",") if tok.strip()]
+
+
+def _run_voice(args) -> int:
+    """`--voice`: the explicit PO entry point to record 3D voice. A thin CLI over
+    `record_po_style` — it parses the writable fields and delegates; union-merge,
+    lang-key, shape-validate and the DRY guard all live in that one writer (no
+    second write/validate home). At least one writable field is required; an empty
+    invocation is a clear-message no-op, not a crash."""
+    fields: Dict[str, Any] = {
+        "vocabulary": _split_csv(args.vocabulary),
+        "recurring_asks": _split_csv(args.recurring_asks),
+        "do": _split_csv(args.do),
+        "dont": _split_csv(args.dont),
+        "register": args.register,
+    }
+    if all(v is None for v in fields.values()):
+        print(
+            "--voice: nothing to record — pass at least one writable field "
+            "(--register, --vocabulary, --recurring-asks, --do, --dont).",
+            file=sys.stderr,
+        )
+        return 0
+
+    try:
+        path = record_po_style(args.root, args.lang, **fields)
+    except BehavioralError as exc:
+        print(f"BehavioralError: {exc}", file=sys.stderr)
+        return 1
+    print(f"recorded voice ({args.lang}) → {path}")
+    return 0
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     ap.add_argument("--lang", default="en", choices=sorted(LANGS),
-                    help="which po-style language partition to read")
+                    help="po-style language partition to read (--dump) or write (--voice)")
     ap.add_argument("--dump", choices=["po-style", "self-corrections"],
                     default="po-style",
                     help="which store to READ and print as JSON (read-only; writes go "
-                         "through record_po_style / record_self_correction)")
+                         "through --voice / record_self_correction)")
+    ap.add_argument("--voice", action="store_true",
+                    help="WRITE the PO's 3D voice into the --lang partition via "
+                         "record_po_style (union-merge lists, latest --register wins)")
+    ap.add_argument("--register",
+                    help="--voice: the PO's register/tone (scalar; latest-wins)")
+    ap.add_argument("--vocabulary",
+                    help="--voice: comma-separated PO domain terms (union-merged)")
+    ap.add_argument("--recurring-asks", dest="recurring_asks",
+                    help="--voice: comma-separated recurring PO asks (union-merged)")
+    ap.add_argument("--do",
+                    help="--voice: comma-separated do-phrasings (union-merged)")
+    ap.add_argument("--dont",
+                    help="--voice: comma-separated dont-phrasings (union-merged)")
     args = ap.parse_args()
+
+    if args.voice:
+        return _run_voice(args)
 
     if args.dump == "po-style":
         print(json.dumps(load_po_style(args.root, lang=args.lang),

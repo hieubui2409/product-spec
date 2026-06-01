@@ -27,6 +27,7 @@ escape `docs/product/`.
 """
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -37,6 +38,19 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 
 import behavioral_memory as bm  # noqa: E402
 from fs_guard import FenceError  # noqa: E402
+
+BM_SCRIPT = SCRIPTS_DIR / "behavioral_memory.py"
+
+
+def _run_cli(root, *args):
+    """Invoke the behavioral_memory CLI as a subprocess (exercises the real
+    `main()` arg-parse + branch wiring, not just the helper). Returns the
+    completed process; the same venv interpreter runs the child so its imports
+    resolve."""
+    return subprocess.run(
+        [sys.executable, str(BM_SCRIPT), "--root", str(root), *args],
+        capture_output=True, text=True,
+    )
 
 
 # ---------- Test 1: 3D po-style is lang-keyed ----------
@@ -239,3 +253,98 @@ def test_self_correction_write_honours_fence(tmp_path, monkeypatch):
         bm.record_self_correction(
             tmp_path, slip="some slip", violated_rule="dry", reminder="fix it")
     assert not escape.exists()
+
+
+# ---------------------------------------------------------------------------
+# --voice WRITE branch (explicit PO entry point to record 3D voice).
+#
+# `--voice` is a THIN CLI surface over the already-present `record_po_style`
+# helper — it parses the writable fields and delegates. It is deliberately NOT a
+# second write/validate home: union-merge, lang-key, shape-validate, and the DRY
+# guard all live in `record_po_style` and are reused verbatim (DRY). These tests
+# drive the real CLI via subprocess so the arg-parse + branch wiring is proven.
+# ---------------------------------------------------------------------------
+
+def test_voice_records_vocabulary(tmp_path):
+    """`--voice --vocabulary shopper` persists into the `en` (default-lang) voice
+    block — the explicit PO-stated term is captured deterministically, not left to
+    the LLM noticing a correction."""
+    proc = _run_cli(tmp_path, "--voice", "--vocabulary", "shopper")
+    assert proc.returncode == 0, proc.stderr
+
+    en = bm.load_po_style(tmp_path, lang="en")
+    assert "shopper" in en["vocabulary"]
+
+
+def test_voice_lang_keyed(tmp_path):
+    """`--voice --lang vi` writes into the vi partition ONLY; the en block stays
+    empty. Voice is strictly lang-partitioned, so a vi observation never leaks into
+    en-generated prose."""
+    proc = _run_cli(tmp_path, "--voice", "--lang", "vi", "--vocabulary", "người mua")
+    assert proc.returncode == 0, proc.stderr
+
+    vi = bm.load_po_style(tmp_path, lang="vi")
+    en = bm.load_po_style(tmp_path, lang="en")
+    assert "người mua" in vi["vocabulary"]
+    assert en["vocabulary"] == []
+
+
+def test_voice_dry_guard(tmp_path):
+    """A `--voice` field that copies a CLOSED-ENUM structural value
+    (`must` → moscow) is refused by the reused DRY guard: the CLI exits non-zero and
+    NOTHING is written. The guard is `record_po_style`'s, not a CLI re-implementation."""
+    proc = _run_cli(tmp_path, "--voice", "--vocabulary", "must")
+    assert proc.returncode != 0
+    assert "BehavioralError" in proc.stderr or "closes" in proc.stderr.lower() \
+        or "copies" in proc.stderr.lower()
+
+    # Nothing written: the store file does not exist (validate-before-write).
+    assert not bm._po_style_path(tmp_path).exists()
+
+
+def test_voice_union_merge(tmp_path):
+    """Two `--voice` calls accrue into the same lang block: list fields
+    union-merge (dedup, order-preserving) and `--register` is latest-wins. This is
+    `record_po_style`'s merge semantics, surfaced unchanged through the CLI."""
+    p1 = _run_cli(tmp_path, "--voice",
+                  "--vocabulary", "shopper,store admin",
+                  "--register", "warm")
+    assert p1.returncode == 0, p1.stderr
+    p2 = _run_cli(tmp_path, "--voice",
+                  "--vocabulary", "shopper,store admin,merchant",
+                  "--register", "warm but concise")
+    assert p2.returncode == 0, p2.stderr
+
+    en = bm.load_po_style(tmp_path, lang="en")
+    # Deduped + order-preserving: 'shopper'/'store admin' kept once, 'merchant' added.
+    assert en["vocabulary"] == ["shopper", "store admin", "merchant"]
+    # register: the latest call wins.
+    assert en["register"] == "warm but concise"
+
+
+def test_voice_empty_noop(tmp_path):
+    """`--voice` with NO writable field is a no-op, not a crash: the CLI prints a
+    clear message and exits cleanly (non-crash), and nothing is written. At least one
+    writable field is required to record voice."""
+    proc = _run_cli(tmp_path, "--voice")
+    # Non-crash: a clean exit (not a traceback) with a clear guidance message.
+    assert proc.returncode == 0, proc.stderr
+    assert "Traceback" not in proc.stderr
+    combined = (proc.stdout + proc.stderr).lower()
+    assert "field" in combined or "nothing" in combined or "no-op" in combined
+
+    # Nothing written.
+    assert not bm._po_style_path(tmp_path).exists()
+
+
+def test_dump_still_reads(tmp_path):
+    """Regression: the `--dump po-style` READ path is unaffected by adding the
+    `--voice` write branch. After a voice write, `--dump po-style` returns the same
+    block `load_po_style` resolves."""
+    _run_cli(tmp_path, "--voice", "--vocabulary", "shopper", "--do", "use 'shopper'")
+
+    proc = _run_cli(tmp_path, "--dump", "po-style")
+    assert proc.returncode == 0, proc.stderr
+    dumped = json.loads(proc.stdout)
+    assert dumped == bm.load_po_style(tmp_path, lang="en")
+    assert "shopper" in dumped["vocabulary"]
