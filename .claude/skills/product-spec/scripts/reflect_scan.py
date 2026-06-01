@@ -63,12 +63,12 @@ import behavioral_memory as bm
 # status owns the single home for loading the last-validated marker; reuse it rather
 # than re-deriving the marker path (one home for the "what was validated" fact).
 from status import _load_last_validated
+# check_fence is the single home for the spec-boundary path prefix. A reflect harvest
+# only cares about commits that touched the spec tree, so it reuses that constant
+# rather than re-declaring it.
+from check_fence import FENCE_PREFIX
 
 configure_utf8_console()
-
-# The spec boundary, as a POSIX path prefix relative to the project root. A reflect
-# harvest only cares about commits that touched the spec tree.
-FENCE_PREFIX = "docs/product/"
 
 # A commit subject reads as a self-correction candidate when it begins with a
 # conventional revert/fix marker. Anchored so a "fixture" body word never matches;
