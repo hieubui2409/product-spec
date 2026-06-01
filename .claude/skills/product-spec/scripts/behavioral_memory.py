@@ -350,11 +350,13 @@ def main() -> int:
     ap.add_argument("--root", default=".")
     ap.add_argument("--lang", default="en", choices=sorted(LANGS),
                     help="which po-style language partition to read")
-    ap.add_argument("--store", choices=["po-style", "self-corrections"],
-                    default="po-style", help="which store to dump")
+    ap.add_argument("--dump", choices=["po-style", "self-corrections"],
+                    default="po-style",
+                    help="which store to READ and print as JSON (read-only; writes go "
+                         "through record_po_style / record_self_correction)")
     args = ap.parse_args()
 
-    if args.store == "po-style":
+    if args.dump == "po-style":
         print(json.dumps(load_po_style(args.root, lang=args.lang),
                          indent=2, ensure_ascii=False))
     else:

@@ -132,7 +132,7 @@ Before composing any prose for the PO — the vision narrative, a story descript
 `AskUserQuestion` — read the PO's voice store for the **active session lang** and let it shape the wording:
 
 ```bash
-./.claude/skills/.venv/bin/python3 scripts/behavioral_memory.py --root <root> --lang <en|vi> --store po-style
+./.claude/skills/.venv/bin/python3 scripts/behavioral_memory.py --root <root> --lang <en|vi> --dump po-style
 ```
 
 Use the returned `vocabulary` (the PO's own terms — prefer these over synonyms), `register` (tone), `recurring_asks`,
