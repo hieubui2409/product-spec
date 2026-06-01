@@ -2,13 +2,15 @@
 # Edit freely; this is the source-of-truth for pack/cli.py.
 # Schema: .claude/skills/claude-pack/references/manifest-spec.md
 schema_version: '1.0'
-version: 1.0.0
+version: 1.1.0
 bundle_name: claude-pack
 skills:
 - product-spec
 - claude-pack
-agents: []
-hooks: []
+agents:
+- memory-harvester.md
+hooks:
+- memory_gap_hook.py
 rules:
 - primary-workflow.md
 - development-rules.md

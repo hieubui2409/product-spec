@@ -42,6 +42,8 @@ To also run per-skill setup hooks (e.g. venv creation):
 cd {{BUNDLE_NAME}}-{{VERSION}}/ && RUN_HOOKS=1 bash install.sh
 ```
 
+Optional (opt-in, off by default): enable the product-spec memory hook with `bash .claude/skills/product-spec/install.sh --memory-hook`.
+
 ## Install (Windows)
 
 > **Security notice:** Same as above — `install.ps1` installs the bundle contents into your repo.
