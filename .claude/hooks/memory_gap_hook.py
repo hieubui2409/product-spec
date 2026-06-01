@@ -45,6 +45,7 @@ existing writers (`--decision`, `--validate`, `--ack-no-dec`). The only file it
 itself creates is the ephemeral touched-flag.
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -132,8 +133,9 @@ def _temp_dir() -> Path:
 
 
 def _flag_path(session_id: str) -> Path:
-    safe = "".join(c if (c.isalnum() or c in "-_") else "_" for c in (session_id or "_"))
-    return _temp_dir() / f"product-spec-touched-{safe}"
+    # `safe_id` is the single sanitization home (resolved at call time, so its
+    # definition below this function is fine) — never re-inline the char filter.
+    return _temp_dir() / f"product-spec-touched-{safe_id(session_id)}"
 
 
 def set_touched_flag(session_id: str) -> Path:
@@ -173,6 +175,41 @@ def _bump_fence_block_count(session_id: str) -> int:
     except OSError:
         pass
     return n
+
+
+def _nudge_signal_hash(nudge: List[Dict[str, Any]]) -> str:
+    """A stable 8-hex fingerprint of the nudge signal SET, keyed on the sorted
+    (type, subject) pairs. Same set of nudge signals → same marker, so "we already
+    nudged for exactly this gap" is decidable across turns. A new/changed gap (a
+    different type or subject) yields a fresh marker and re-arms the one-time block."""
+    pairs = sorted(
+        (str(s.get("type") or ""), str(s.get("subject") or "")) for s in nudge
+    )
+    blob = "\n".join(f"{t}\x1f{subj}" for t, subj in pairs)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:8]
+
+
+def _nudge_marker_path(session_id: str, nudge: List[Dict[str, Any]]) -> Path:
+    """Per-session + per-nudge-signal-set "already nudged once" marker in $TMPDIR
+    (ephemeral, mirrors the touched-flag / fence-block-counter scheme)."""
+    return _temp_dir() / (
+        f"product-spec-nudged-{safe_id(session_id)}-{_nudge_signal_hash(nudge)}"
+    )
+
+
+def _nudge_already_shown(session_id: str, nudge: List[Dict[str, Any]]) -> bool:
+    """True if this exact nudge signal set was already blocked once this session."""
+    return _nudge_marker_path(session_id, nudge).exists()
+
+
+def _mark_nudge_shown(session_id: str, nudge: List[Dict[str, Any]]) -> None:
+    """Record that we blocked once for this nudge signal set. Best-effort: an IO
+    error must never break the turn (worst case we nudge once more, never a loop
+    of indefinite re-blocks — the marker, not stop_hook_active, is the backstop)."""
+    try:
+        _nudge_marker_path(session_id, nudge).write_text("1", encoding="utf-8")
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +272,14 @@ def _decide(signals: List[Dict[str, Any]],
         return (True, _build_reason(persist, [] if stop_hook_active else nudge), blocking)
 
     if nudge and not stop_hook_active:
+        # Nudge-once with a backstop that does NOT rely on stop_hook_active flipping
+        # true on the continuation (that host field is documentation-only on the
+        # target CC version). An ephemeral per-session + per-signal-set marker
+        # self-limits the nudge: block exactly once for this gap, then allow — so a
+        # stuck-false stop_hook_active can never make a nudge re-block every turn.
+        if _nudge_already_shown(session_id, nudge):
+            return (False, "", [])  # already nudged once for this gap → allow
+        _mark_nudge_shown(session_id, nudge)
         return (True, _build_reason([], nudge), nudge)
 
     # No persist signal, and either no nudge or this is the continuation → allow.

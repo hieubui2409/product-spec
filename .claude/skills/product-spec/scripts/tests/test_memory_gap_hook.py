@@ -413,3 +413,51 @@ def test_cli_stop_mode_noop_exit_zero(tmp_path, monkeypatch):
     rc, out, err = _run_hook("stop", _stop_stdin(proj), proj,
                              env_extra={"TMPDIR": str(tdir)})
     assert rc == 0, (out, err)
+
+
+# ---------------------------------------------------------------------------
+# Loop-safety backstops — neither nudge nor fence can re-block forever even if
+# the host's stop_hook_active field never flips true.
+# ---------------------------------------------------------------------------
+
+def test_fence_persist_loop_backstop(tmp_path, monkeypatch):
+    """A PERSISTENT fence breach blocks up to the internal cap, then DOWNGRADES TO
+    ALLOW — proving the backstop is the internal consecutive-block counter, not
+    stop_hook_active (kept false on every call here)."""
+    _isolate_tmp(tmp_path, monkeypatch)
+    mod = _load_hook()
+    fence = [{"type": "fence_breach", "severity": "warn", "subject": "src/app.py",
+              "evidence": "src/app.py touched outside docs/product/.",
+              "suggested_writer": "move under docs/product/"}]
+
+    # Drive the decision one more time than the cap, all with stop_hook_active False.
+    blocks = 0
+    for _ in range(mod._FENCE_BLOCK_CAP + 1):
+        block, _reason, _sigs = mod._decide(fence, stop_hook_active=False,
+                                            session_id="sess-fence")
+        if block:
+            blocks += 1
+    # Blocks for the cap count, then the (cap+1)-th call downgrades to allow.
+    assert blocks == mod._FENCE_BLOCK_CAP
+    final, _r, _s = mod._decide(fence, stop_hook_active=False,
+                                session_id="sess-fence")
+    assert final is False  # backstop tripped: never strands the user
+
+
+def test_nudge_once_loop_backstop(tmp_path, monkeypatch):
+    """With stop_hook_active False on BOTH calls and an unchanged nudge signal, the
+    ephemeral per-session+per-signal marker self-limits: BLOCK on the first stop,
+    ALLOW on the second — robust to stop_hook_active never flipping true."""
+    _isolate_tmp(tmp_path, monkeypatch)
+    mod = _load_hook()
+    nudge = [{"type": "approved_changed_no_dec", "severity": "warn",
+              "subject": "PRD-AUTH",
+              "evidence": "approved artifact PRD-AUTH body changed; no DEC.",
+              "suggested_writer": "record the ruling with --decision, or --ack-no-dec"}]
+
+    first, _r1, _s1 = mod._decide(nudge, stop_hook_active=False,
+                                  session_id="sess-nudge")
+    second, _r2, _s2 = mod._decide(nudge, stop_hook_active=False,
+                                   session_id="sess-nudge")
+    assert first is True   # blocks once
+    assert second is False  # marker self-limits even though stop_hook_active never flips
