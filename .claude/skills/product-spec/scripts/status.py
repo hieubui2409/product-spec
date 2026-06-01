@@ -28,17 +28,30 @@ What it reports (all deterministic — Script-vs-LLM split):
                      under (no-silent-reversal — surface, never re-flip).
   - `overdue`      — reuses `time_advisory.check_overdue` (shared date math, pinnable
                      `--today`); the calendar half of the nudge.
+  - `unrecorded_signals` — the `memory_gap.collect` signals (what looks like it
+                     should have been written to the memory layer but the persisted
+                     markers say it wasn't). `memory_gap` is the SINGLE detection
+                     home (Script-vs-LLM split); status only IMPORTS and reports it —
+                     no second detector lives here. Degrades to `[]` when there is
+                     nothing to flag (incl. an absent `.memory/`).
+  - `reflect_suggestion` — a soft, one-line advisory string pointing at `--reflect`,
+                     present ONLY when drift-since-last-validate is high (the
+                     existing `unvalidated` metric crosses `HIGH_DRIFT_THRESHOLD`);
+                     `None` otherwise. Derived advisory text, never a gate.
 
 The snapshot delta degrades safely: a missing/corrupt marker, or a referenced
 snapshot file that no longer exists, yields `baseline: false` with empty deltas —
-never a crash, never an over-report.
+never a crash, never an over-report. `memory_gap.collect` is likewise advisory and
+degrades on an absent `.memory/`, so wiring it in keeps `--status` read-only and
+crash-free.
 
 CLI:
     status.py --root <project-dir> [--today YYYY-MM-DD]
         Prints {schema_version, root, baseline, checked_at, today, unvalidated,
-        added, removed, drafts, stale_approvals, overdue} to stdout. Exits 0,
-        EXCEPT on a malformed --today (the one input error, mirroring
-        time_advisory) → exit 1. The nudge itself never gates.
+        added, removed, drafts, stale_approvals, overdue, unrecorded_signals,
+        reflect_suggestion} to stdout. Exits 0, EXCEPT on a malformed --today (the
+        one input error, mirroring time_advisory) → exit 1. The nudge itself never
+        gates.
 """
 
 import argparse
@@ -55,6 +68,12 @@ from time_advisory import check_overdue
 from judgment_cache import _last_validated_path
 
 configure_utf8_console()
+
+# How many unvalidated (drifted-since-last-validate) nodes count as "high drift" —
+# the point past which a retroactive `--reflect` harvest is worth suggesting. A soft
+# line: below it the per-node `unvalidated` list already tells the story; at/above it
+# the volume of un-harvested change is the signal. Advisory only, never a gate.
+HIGH_DRIFT_THRESHOLD = 5
 
 
 def _snapshots_dir(root: Path) -> Path:
@@ -102,6 +121,36 @@ def _approved_ids(graph: Dict[str, Any]) -> set:
     return {n["id"] for n in graph.get("nodes", []) if n.get("status") == "approved"}
 
 
+def _unrecorded_signals(root: Path) -> List[Dict[str, Any]]:
+    """The memory-gap signals for `root`, via the single detection home.
+
+    DRY: `memory_gap.collect` owns ALL "this looks unrecorded" detection (fence
+    breach, no validate marker, approved-changed-no-DEC, judged-not-stored). Status
+    only imports and surfaces it — it adds NO detection logic of its own. The import
+    is function-local on purpose: `memory_gap` imports this module's marker/snapshot
+    readers, so a module-level import here would be a cycle. Lazy import keeps both
+    modules importable in any order and the read-only contract intact (`collect` is
+    advisory and never writes)."""
+    import memory_gap  # local: breaks the status<->memory_gap import cycle
+    return memory_gap.collect(root)
+
+
+def _reflect_suggestion(unvalidated: List[str]) -> Optional[str]:
+    """A soft one-line `--reflect` hint when drift-since-last-validate is high.
+
+    Keyed off the EXISTING `unvalidated` drift metric (no new measure) — at/above
+    `HIGH_DRIFT_THRESHOLD` un-harvested nodes a retroactive harvest is worth a
+    nudge. Returns None below the line. Advisory text only; the LLM may localize it
+    per `references/workflow-status.md`."""
+    if len(unvalidated) < HIGH_DRIFT_THRESHOLD:
+        return None
+    return (
+        f"{len(unvalidated)} nodes have drifted since the last validate — consider "
+        "--reflect to retroactively harvest any rulings/observations that were never "
+        "recorded."
+    )
+
+
 def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
     """Compose the deterministic status facts for `root`.
 
@@ -128,6 +177,8 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
     if baseline_snapshot is None:
         # No trustworthy baseline → degrade. We do NOT mark every node unvalidated;
         # a never-validated (or marker-lost) spec has nothing to compare against.
+        # memory_gap still has something to say here (a `validate_no_marker` gap),
+        # and `unvalidated == []` means no high-drift reflect hint.
         return {
             "schema_version": "1.0",
             "root": str(root),
@@ -140,6 +191,8 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
             "drafts": drafts,
             "stale_approvals": [],
             "overdue": overdue,
+            "unrecorded_signals": _unrecorded_signals(root),
+            "reflect_suggestion": _reflect_suggestion([]),
         }
 
     diff = diff_graphs(graph, baseline_snapshot)
@@ -169,6 +222,8 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
         "drafts": drafts,
         "stale_approvals": stale_approvals,
         "overdue": overdue,
+        "unrecorded_signals": _unrecorded_signals(root),
+        "reflect_suggestion": _reflect_suggestion(unvalidated),
     }
 
 

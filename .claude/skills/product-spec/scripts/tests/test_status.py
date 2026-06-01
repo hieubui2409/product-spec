@@ -240,3 +240,118 @@ def test_status_never_writes_marker(tmp_path):
     marker = proj / "docs" / "product" / ".memory" / "last_validated.json"
     status.build_status(proj)
     assert not marker.exists(), "--status must not create the validate marker"
+
+
+# ---------- unrecorded_signals (memory_gap wiring) + reflect suggestion ----------
+
+_STORY_TMPL = """---
+id: {sid}
+type: story
+epic: PRD-AUTH-E1
+status: draft
+lang: en
+scope: in
+moscow: should
+size: S
+horizon: now
+acceptance_criteria:
+  - "Given a user, when X, then Y."
+---
+
+# {sid}
+
+A story added after the validate baseline.
+"""
+
+
+def _add_story(proj: Path, sid: str) -> None:
+    """Add a brand-new story under the existing epic (drift the live graph)."""
+    (proj / "docs" / "product" / "stories" / f"{sid}.md").write_text(
+        _STORY_TMPL.format(sid=sid), encoding="utf-8")
+
+
+def _memory_snapshot(proj: Path):
+    """Map every file under .memory/ to (size, mtime_ns, bytes) so a single byte or
+    a new file is detectable — the read-only invariant guard."""
+    mem = proj / "docs" / "product" / ".memory"
+    if not mem.exists():
+        return {}
+    out = {}
+    for p in sorted(mem.rglob("*")):
+        if p.is_file():
+            st = p.stat()
+            out[str(p.relative_to(proj))] = (st.st_size, st.st_mtime_ns,
+                                             p.read_bytes())
+    return out
+
+
+def test_status_includes_unrecorded_signals(tmp_path):
+    """A seeded memory gap surfaces in `unrecorded_signals`. A fresh spec with no
+    validate baseline has a `validate_no_marker` gap (the single home is memory_gap;
+    status only imports + reports it)."""
+    proj = _proj(tmp_path)
+    report = status.build_status(proj)
+    assert "unrecorded_signals" in report
+    types = [s["type"] for s in report["unrecorded_signals"]]
+    assert "validate_no_marker" in types
+    # The section carries memory_gap's structured shape, not a re-derived one.
+    for sig in report["unrecorded_signals"]:
+        assert {"type", "severity", "subject", "evidence",
+                "suggested_writer"} <= set(sig)
+
+
+def test_status_clean_empty_signals(tmp_path):
+    """A recorded spec (validate baseline, no drift, no fence breach) has no memory
+    gaps → `unrecorded_signals: []`."""
+    proj = _proj(tmp_path)
+    _validate_baseline(proj)
+    report = status.build_status(proj)
+    assert report["unrecorded_signals"] == []
+
+
+def test_status_reflect_suggestion_on_high_drift(tmp_path):
+    """High drift-since-last-validate adds a soft one-line `--reflect` suggestion;
+    a clean (low-drift) baseline carries none. The suggestion is advisory text, not
+    a gate."""
+    # Low drift: clean baseline → no reflect suggestion.
+    low = _proj(tmp_path / "low")
+    _validate_baseline(low)
+    low_report = status.build_status(low)
+    assert low_report["unvalidated"] == []
+    assert low_report.get("reflect_suggestion") in (None, "")
+
+    # High drift: many nodes changed since the baseline → suggestion present.
+    high = _proj(tmp_path / "high")
+    _validate_baseline(high)
+    for n in range(2, 8):  # add six new stories → well past the high-drift line
+        _add_story(high, f"PRD-AUTH-E1-S{n}")
+    high_report = status.build_status(high)
+    assert len(high_report["unvalidated"]) >= 5
+    assert high_report.get("reflect_suggestion")
+    assert "--reflect" in high_report["reflect_suggestion"]
+
+
+def test_status_still_readonly(tmp_path):
+    """Wiring memory_gap into --status must NOT make it write under .memory/.
+    Snapshot every .memory/ byte before and after — running --status (including the
+    new unrecorded_signals pass) changes nothing on disk."""
+    proj = _proj(tmp_path)
+    _validate_baseline(proj)  # creates .memory/ with a marker + snapshot ref
+    before = _memory_snapshot(proj)
+    status.build_status(proj)
+    after = _memory_snapshot(proj)
+    assert before == after, "--status must not write or mutate anything under .memory/"
+
+
+def test_status_no_memory_dir_graceful(tmp_path):
+    """Absent `.memory/` (never validated, no acks) → no crash, empty-ish report.
+    memory_gap degrades, and status surfaces its signals without touching disk."""
+    proj = _proj(tmp_path)
+    mem = proj / "docs" / "product" / ".memory"
+    if mem.exists():
+        shutil.rmtree(mem)
+    assert not mem.exists()
+    report = status.build_status(proj)  # must not raise
+    assert "unrecorded_signals" in report
+    # Degraded cleanly and never created the directory.
+    assert not mem.exists(), "--status must not create .memory/"
