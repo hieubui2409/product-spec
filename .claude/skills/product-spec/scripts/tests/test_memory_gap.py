@@ -210,8 +210,9 @@ def test_judged_not_stored(tmp_path):
     # No last_judged marker yet → SKIPPED (degrade).
     assert "judged_not_stored" not in _types(memory_gap.collect(proj))
 
-    # Write the marker recording the current (0) verdict count vs the live graph.
-    memory_gap.write_last_judged(proj)
+    # Write the marker recording the current (0) verdict count vs the live graph
+    # (no cache has been stored yet) using the production batch-store marker writer.
+    jc.write_last_judged(proj, 0, build_graph(proj))
     # Drift the graph AGAIN, past the marker, with no new judgments stored.
     _append_to(proj, "stories/PRD-AUTH-E1-S1.md", "\nMore drift, unjudged.\n")
     assert "judged_not_stored" in _types(memory_gap.collect(proj))

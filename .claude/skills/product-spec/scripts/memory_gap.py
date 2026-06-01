@@ -58,7 +58,7 @@ from fs_guard import assert_under_docs_product
 import check_fence
 import decision_register as dr
 from spec_graph import build_graph, changed_nodes, diff_graphs
-from judgment_cache import load_cache
+from judgment_cache import load_cache, _last_judged_path, write_last_judged
 # status owns the single home for loading the last-validated marker + the snapshot
 # graph it points at. Reuse those readers rather than re-deriving the marker/
 # snapshot IO (one home for the "what was validated" fact).
@@ -69,10 +69,6 @@ configure_utf8_console()
 
 def _acks_path(root) -> Path:
     return Path(root) / "docs" / "product" / ".memory" / "no-dec-acks.json"
-
-
-def _last_judged_path(root) -> Path:
-    return Path(root) / "docs" / "product" / ".memory" / "last_judged.json"
 
 
 # ----------------------------------------------------------------------------
@@ -110,24 +106,6 @@ def _verdict_count(root) -> int:
         return 0
     entries = cache.get("entries")
     return len(entries) if isinstance(entries, dict) else 0
-
-
-def write_last_judged(root) -> Path:
-    """Record the current verdict count for the live graph in
-    `.memory/last_judged.json`, through the soft fence. The judgment-cache
-    batch-store owns this in production; exposed here so the detector (and its
-    tests) can establish the "last judged" baseline `judged_not_stored` reads.
-
-    Stored fields: `verdict_count` (cache size at marker time) so a later drift
-    with NO new verdict can be detected as `judged_not_stored`."""
-    payload = {"verdict_count": _verdict_count(root)}
-    path = _last_judged_path(root)
-    assert_under_docs_product(path, root)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as fh:
-        json.dump(payload, fh, indent=2, ensure_ascii=False, sort_keys=True)
-        fh.write("\n")
-    return path
 
 
 def ack_no_dec(root, node_id: str) -> Path:
@@ -268,7 +246,7 @@ def _judged_not_stored_signal(root, graph, baseline_snapshot,
         f"the graph drifted ({', '.join(sorted(drifted))}) but the verdict cache "
         f"did not grow past the last batch-store count ({recorded}) — judgments "
         "may have been made in chat without being persisted.",
-        "batch-store the verdicts (judgment_cache --store)",
+        "batch-store the verdicts (judgment_cache --store-batch)",
     )
 
 
