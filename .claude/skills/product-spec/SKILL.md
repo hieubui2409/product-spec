@@ -46,6 +46,8 @@ spec tree in ASCII, Mermaid, and self-contained HTML.
 | `--summary`                | Generate 1-page exec summary (markdown + optional HTML).                                                                                                                                                                                                                                                                                                                                    |
 | `--approve`                | Validate → warn-not-block → record owner+date → flip `status: approved`.                                                                                                                                                                                                                                                                                                                    |
 | `--update`                 | Delta-update: ask what changed → compute affected downstream set → flag for PO review (never auto-rewrite prose) → append change-log.                                                                                                                                                                                                                                                       |
+| `--decision [list\|ID]`    | Decision Register: view or record an explicit PO decision (`DEC-<n>`) in `docs/product/decisions.md`. A contradiction with an `approved` artifact auto-opens a decision; `--decision` lets the PO record one directly. The register is the authoritative home for ruled drift (`po_ruling_ref: DEC-<n>`).                                                                                    |
+| `--status`                 | Spec health nudge: report the last-validated state (errors/warns at the last `--validate`) and surface a soft fence reminder when the spec has drifted since. Read-only — never edits artifacts.                                                                                                                                                                                            |
 | `--viz <view>`             | Render visualization. ASCII-default graph views: `tree` (text-summary), `heatmap`, `scope`, `roadmap`, `persona`, `gap`, `moscow`, `time` (roadmap + deadlines / Mermaid gantt), `delta`. HTML-native default: `risk`, `competition`, `dashboard` (HTML-only multi-dim). Body viewers (default `html`): `board` (kanban), `explorer` (Tree/Flat-tabs/Table-tree).                           |
 | `--format <fmt>`           | Visualization format: `ascii` · `mermaid` · `html`. Default is per-view: `html` for `risk`/`competition`/`dashboard` + `board`/`explorer`, `ascii` for the rest. ASCII is downgraded, not removed (§0.2) — `tree` keeps a deterministic text-summary; `board`/`explorer` fall back to ascii on `--format mermaid`; `dashboard` is HTML-only (other formats → html + stderr note).           |
 | `--group-by <field>`       | `--viz board` column grouping: `status` (default) · `horizon` · `moscow`.                                                                                                                                                                                                                                                                                                                   |
@@ -132,10 +134,14 @@ The lean skeleton above stays under ~300 lines; full prose lives in `references/
   the shared HTML design system.
 - `references/workflow-export.md` — F1 read-once Export: selection model (`--export` + `--layers`), depth presets,
   `--compact-mode llm` workflow, output naming.
-- `references/interview-vision.md`, `interview-brd.md`, `interview-prd.md`, `interview-epic-story.md`,
-  `interview-frameworks.md` — bilingual EN/VI question banks + 5-Why / MoSCoW / story-mapping prompts.
-- `references/workflow-interview.md`, `workflow-validate.md`, `workflow-auto-and-update.md` — end-to-end workflows the
-  LLM executes (deep prose).
+- `references/interview-vision.md`, `interview-brd.md`, `interview-prd.md`, `interview-epic.md`, `interview-story.md`,
+  `interview-frameworks.md` — bilingual EN/VI question banks + 5-Why / MoSCoW / story-mapping prompts. `--epic` loads
+  `interview-epic.md`; `--story` loads `interview-story.md` (progressive disclosure — load only the one the flag needs).
+- `references/workflow-interview.md`, `workflow-validate.md`, `workflow-auto.md`, `workflow-update.md`,
+  `workflow-status.md` — end-to-end workflows the LLM executes (deep prose). `--auto` loads `workflow-auto.md`;
+  `--update` loads `workflow-update.md`; `--status` loads `workflow-status.md`.
+- `references/behavioral-memory.md` — loaded transitively: the interview and validate final-writer hooks
+  (`workflow-interview.md`, `workflow-validate.md`) point at it for the self-correction store's spec + privacy posture.
 
 Load only the references relevant to the active flag. Skill resources (`scripts/`, `assets/templates/`,
 `assets/vendor/`) sit alongside.

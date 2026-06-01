@@ -16,12 +16,14 @@ from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
 from spec_graph import (
+    CHANGED_FIELDS,
     CHILD_TYPE_FOR_PARENT,
     HORIZON_ORDER,
     moscow_story_counts,
     matching_child_counts,
     parents_of,
     children_of,
+    changed_nodes,
     diff_graphs,
 )
 
@@ -678,10 +680,19 @@ def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     cur_ids = {n["id"]: n for n in current.get("nodes", [])}
     base_ids = {n["id"]: n for n in baseline.get("nodes", [])}
     changed: List[str] = []
-    for nid in sorted(set(cur_ids) & set(base_ids)):
-        for field in ("status", "scope", "moscow", "horizon", "size"):
-            if cur_ids[nid].get(field) != base_ids[nid].get(field):
-                changed.append(f"  ~ {nid}.{field}: {base_ids[nid].get(field)} -> {cur_ids[nid].get(field)}")
+    # Drive both the changed-node set and the per-field diff from the single
+    # shared rule (spec_graph.CHANGED_FIELDS / changed_nodes) so this surface and
+    # the --validate impact-pass can never disagree on what "changed" means.
+    for nid in changed_nodes(current, baseline):
+        for field in CHANGED_FIELDS:
+            cv, bv = cur_ids[nid].get(field), base_ids[nid].get(field)
+            # Mirror changed_nodes' present-on-both rule: a field absent on one
+            # side (e.g. body_hash on a pre-upgrade baseline) is unknown, not a
+            # diff line.
+            if field not in cur_ids[nid] or field not in base_ids[nid]:
+                continue
+            if cv != bv:
+                changed.append(f"  ~ {nid}.{field}: {bv} -> {cv}")
 
     # Product-level diff: format the fields diff_graphs flagged as changed.
     cur_p = current.get("product") or {}

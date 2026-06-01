@@ -145,7 +145,7 @@ This mirrors `time_realism` exactly: the structural resolution + counting is det
 
 The **impact-pass** answers "I changed X — what downstream is affected, and how?" It runs on `--update` (one explicit `changed_id`) AND on `--validate` (change-set derived from the snapshot delta — `workflow-validate.md → Step 2.5`). It is **per-CHANGE propagation**, NOT a per-ARTIFACT quality check — keep it separate from `risk_blindspot`/`time_realism`/`competitive_drift` so neither bloats the other (report §5.4). The split:
 
-- **Script half (deterministic — G-B1)** — `spec_graph.downstream(graph, changed_id)` returns the transitive child closure (iterative, cycle-safe). On `--validate` the change-set itself is deterministic: the `delta` view's added ∪ changed nodes between the two most-recent `.snapshots/` (`spec_graph.diff_graphs` for added/removed + the per-node `status`/`scope`/`moscow`/`horizon`/`size` diff in `render_ascii.delta`); no previous snapshot → empty change-set → no impact-pass. The script NEVER interprets.
+- **Script half (deterministic — G-B1)** — `spec_graph.downstream(graph, changed_id)` returns the transitive child closure (iterative, cycle-safe). On `--validate` the change-set itself is deterministic: the `delta` view's added ∪ changed nodes between the two most-recent `.snapshots/` (`spec_graph.diff_graphs` for added/removed + `spec_graph.changed_nodes` for the per-node field diff — the single home for the tracked-field set `spec_graph.CHANGED_FIELDS`, the same rule `render_ascii.delta` displays); no previous snapshot → empty change-set → no impact-pass. The script NEVER interprets.
 
 - **LLM half (judgment — G-B2)** — for each affected node, emit one annotation record:
 
@@ -181,26 +181,7 @@ This mirrors the global "No silent reversals" rule in CLAUDE.md.
 
 ## Findings JSON Schema (script output)
 
-```json
-{
-  "schema_version": "1.0",
-  "root": "<absolute project root>",
-  "checked_at": "<ISO 8601>",
-  "findings": [
-    {
-      "check": "<check_id>",
-      "severity": "error" | "warn" | "advisory",
-      "artifact_id": "<id-or-null>",
-      "file": "<path-relative-to-root-or-null>",
-      "detail": "<short message>",
-      "context": { /* optional structured detail (e.g. {ref, expected, found}) */ }
-    }
-  ],
-  "graph": { /* see frontmatter-and-id-spec.md → Snapshot Schema */ }
-}
-```
-
-Multiple scripts run during `--validate`. The orchestrator merges findings (preserves order: traceability → consistency → matrix).
+→ `frontmatter-and-id-spec.md` § Findings JSON Schema (single authoritative home for the script-output JSON shape).
 
 ## Human Report Format (LLM layer)
 
@@ -243,5 +224,5 @@ Detail: No PRDs address this goal. Either drop, defer, or write a PRD.
 - The exact prose template for the human report — that's the LLM's job.
 - The order of script invocations — that's `workflow-validate.md` (Phase 7).
 - The interactive flow on `contradiction` — that's `workflow-validate.md`.
-- The change-set derivation + report-write steps of the impact-pass — those are `workflow-validate.md → Step 2.5` (`--validate`) and `workflow-auto-and-update.md → Steps 2/3/6` (`--update`); this spec defines only the LLM annotation rule.
+- The change-set derivation + report-write steps of the impact-pass — those are `workflow-validate.md → Step 2.5` (`--validate`) and `workflow-update.md → Steps 2/3/6` (`--update`); this spec defines only the LLM annotation rule.
 - Eval rubric for the LLM judgment checks — that's `eval/evals.json` (Phase 8).

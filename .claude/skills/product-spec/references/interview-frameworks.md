@@ -24,6 +24,28 @@ VI vagueness: "dễ", "nhanh", "tốt hơn", "hiệu quả hơn", "tuyệt vời
 
 Stop after Round 3 OR when the PO provides a measurable, specific answer. On stop, the LLM proposes a quantified rewrite the PO can accept or edit.
 
+## Engineering-Jargon → Product Reframe
+
+Use when the PO slips into **engineering framing** — describing the solution's mechanics instead of the user's problem and value. The PO is non-technical; when they reach for build-language it usually means they have a real need underneath that hasn't been said in product terms yet. Reframe it back to persona / problem / value — don't follow them into the engineering layer.
+
+### Trigger Phrases (EN/VI)
+
+EN engineering-speak: "database", "schema", "table", "API", "endpoint", "microservice", "cache", "story points", "sprint", "velocity", "tech stack", "framework", "CI/CD", "deploy", "refactor".
+VI engineering-speak: "cơ sở dữ liệu", "bảng dữ liệu", "API", "điểm story", "sprint", "triển khai", "khung lập trình".
+
+### Reframe Template
+
+- **Round 1 — recover the user (EN):** "Let's hold the build details for the team — who is this for, and what are they trying to get done?"
+- **Round 1 (VI):** "Khoan bàn phần kỹ thuật để đội phát triển lo — cái này dành cho ai, và họ đang muốn làm được điều gì?"
+- **Round 2 — recover the value (EN):** "And what changes for them when it works — what's the outcome they'd notice?"
+- **Round 2 (VI):** "Và khi nó chạy được thì điều gì thay đổi với họ — kết quả họ nhận ra là gì?"
+- **Story-points / sizing slip (EN):** "We don't size in points here. Is this slice something the team could ship in about a week, or does it feel bigger? Small / Medium / Large." *(maps to the story `size: S | M | L` enum — never points, never hours.)*
+- **Story-points / sizing slip (VI):** "Ở đây ta không tính theo điểm. Lát này đội làm xong trong khoảng một tuần được không, hay lớn hơn? Nhỏ / Vừa / Lớn."
+
+### Stop Rule
+
+Stop once the PO has restated the item as **persona + problem + value** (or chosen a `size` for a sizing slip). The LLM then captures it in product terms and continues; the engineering detail the PO mentioned is **not** recorded in the spec — this skill writes stories + AC, the engineering team owns the build (CLAUDE.md → "What This Skill Does NOT Do"). If the PO insists the technical constraint is a real product requirement (e.g. "must work offline"), record it as an acceptance criterion in user-observable terms, not as an implementation note.
+
 ## MoSCoW Gate
 
 Use during PRD functional-requirements interview.

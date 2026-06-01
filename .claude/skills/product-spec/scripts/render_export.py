@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from encoding_utils import configure_utf8_console
+from fs_guard import FenceError, assert_under_docs_product
 from spec_graph import build_graph_with_artifacts, _now
 from assemble_digest import build_digest, compact_fields
 from i18n_labels import label
@@ -255,9 +256,12 @@ def write_export(root: Path, select: str, layers, depth: str, compact_mode: str,
     content_hash = hashlib.sha256(stable.encode("utf-8")).hexdigest()[:8]
 
     out_dir = root / "docs" / "product" / "exports"
-    out_dir.mkdir(parents=True, exist_ok=True)
     ext = "html" if fmt == "html" else "md"
     target = out_dir / f"{_stem(select)}-{render_html.file_timestamp()}-{content_hash}.{ext}"
+    # Soft-fence: resolve + contain BEFORE mkdir/write so the export target can
+    # never land outside docs/product/.
+    assert_under_docs_product(target, root)
+    out_dir.mkdir(parents=True, exist_ok=True)
     payload = render_html_doc(md_doc, graph, generated_at, lang) if fmt == "html" else md_doc
     target.write_text(payload, encoding="utf-8")
     return target
@@ -278,9 +282,10 @@ def main() -> int:
     root = Path(args.root).resolve()
     try:
         out = write_export(root, args.select, layers, args.depth, args.compact_mode, args.format, args.lang)
-    except ValueError as exc:
-        # Unresolved/empty selection or an incompatible flag combo. Surface the
-        # message to stderr and exit non-zero instead of writing a degraded doc.
+    except (ValueError, FenceError) as exc:
+        # Unresolved/empty selection, an incompatible flag combo, or a write blocked
+        # outside the spec boundary (FenceError). Surface the message to stderr and
+        # exit non-zero instead of writing a degraded doc.
         print(str(exc), file=sys.stderr)
         return 2
     print(json.dumps({"written": str(out.relative_to(root)) if out.is_relative_to(root) else str(out)}, indent=2))

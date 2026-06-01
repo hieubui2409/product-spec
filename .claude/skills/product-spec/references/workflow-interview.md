@@ -44,11 +44,102 @@ The interview is **phased** (vision → brd → prd → epic → story) and **re
 - After every PO answer, the LLM scans for vagueness triggers (`interview-frameworks.md → trigger phrases`). If found → run 5-Why up to 3 rounds, then propose a quantified rewrite.
 - During the PRD interview's `P4` step, the MoSCoW gate is **mandatory**. If >60% of requirements end up as `must`, iterate the "delay by a month" test until at most ~60% remain MUST.
 
+## Scope Challenge (always-on, once per PRD, BEFORE decomposition)
+
+Before breaking a PRD into epics/stories, ask the PO **one coarse boundary question** and **lock the answer**. This sets the high-level intent for the whole feature-area so later additions are deliberate, not creep. It runs once per PRD — the first time that PRD is decomposed — and the lock is recorded so it is never re-asked.
+
+This is the **coarse** boundary lock. It is NOT the per-requirement MoSCoW gate (that runs later, at `P4`, and assigns each requirement Must/Should/Could/Won't). Division of labour:
+
+- **Scope Challenge** owns the *boundary*: how much of this feature-area are we building this round — the trimmed core, the whole thing, or just enough to test the idea? Answered once, locked.
+- **MoSCoW gate** then *operationalizes* that boundary per requirement, and must stay **consistent** with it. The MUST set must not exceed the locked scope.
+
+**Never re-ask "what's the MVP"** — the Scope Challenge owns the boundary; MoSCoW derives the per-requirement detail from it. Asking both would double-ask the PO (no double-ask).
+
+### Ask (EN | VI)
+
+- **EN:** "Before we break '{PRD title}' into pieces — how much of it are we building this round? **MVP** (the trimmed must-have core), **Full** (the complete feature as you picture it), or **Strip** (a bare slice just to test whether anyone wants it)?"
+- **VI:** "Trước khi chia '{tên PRD}' thành các phần — đợt này ta làm tới đâu? **MVP** (phần lõi bắt buộc, tối giản), **Full** (toàn bộ tính năng như bạn hình dung), hay **Strip** (lát mỏng nhất để thử xem có ai cần không)?"
+
+Present this as a 3-option `AskUserQuestion` (MVP / Full / Strip). Keep it terse — one question, one answer.
+
+### Complexity-smell follow-up
+
+If the PRD already looks heavy (the PO has named many sub-features, or the brain-dump for this area is large), add one sentence after the choice: *"This looks like a lot for one round — anything here you'd be comfortable pushing to a later round?"* Record any deferral; do not push the PO.
+
+### Lock + record
+
+- Record the choice on the PRD as `scope_intent: mvp | full | strip` (frontmatter is the source-of-truth). Once set, the Scope Challenge does **not** re-ask on later edits of that PRD.
+- A PO who explicitly says "skip the scope question, just decompose" may bypass it — record `scope_intent` as unset and note the bypass in the session log; do not nag.
+
+### Surface out-of-mode additions (never silently add)
+
+After the lock, if the PO (or the brain-dump) adds something clearly **beyond** the locked intent — e.g. a gold-plated extra under a `strip` or `mvp` lock — do not silently fold it in. Surface it: *"You locked '{PRD}' as {scope_intent} this round, but '{addition}' looks like it goes past that. Add it anyway (and widen the lock), defer it to a later round, or drop it?"* The PO decides. The MoSCoW gate also flags when the MUST set exceeds the locked scope (consistency check), so the two gates reinforce — they never duplicate the question.
+
+## Scout-First, Ask-Second
+
+Before interrupting the PO with a question, **resolve it from the existing spec first** — the PO has often already answered it in a prior artifact, in `PRODUCT.md`, or in `.session.md`.
+
+1. **Scout the live spec first.** For anything answerable from existing artifacts (a persona label, a core-value sentence, a parent ID, a prior MoSCoW call, a locked `scope_intent`), read the artifact and use the answer — **cite it by ID** so the PO sees where it came from ("PRODUCT.md lists the shopper + store-admin personas; reusing those").
+2. **Ask the PO only when the spec is genuinely silent**, or when:
+   - two **approved** artifacts conflict (surface both — never pick one silently; see the contradiction protocol in `validation-rules-spec.md`),
+   - it is a **business judgement** the spec cannot answer (pricing, timing, scope boundary, a brand-new persona identity),
+   - the answer would **reverse a PO-confirmed decision** (see no-silent-reversal in `workflow-update.md`).
+3. Never ask the PO for something a quick read of the spec already answers. A wrong cited assumption is cheap for the PO to correct; an unnecessary question is friction.
+
+This mirrors DRY (one authoritative home per fact) and the Script-vs-LLM split: structure comes from the artifacts; only genuine judgement goes to the PO.
+
+## Validation Log (record every PO decision verbatim)
+
+Every batch of PO answers that resolves an open question — a Scope Challenge lock, a MoSCoW call, a 5-Why quantified rewrite, an ambiguous-split decision — is recorded **verbatim** so the decision trail survives across sessions and the no-silent-reversal protections (`workflow-update.md`) have something to protect.
+
+Append to a `## Validation Log` section in the session notes body of `docs/product/.session.md` (the `.session.md` frontmatter schema itself lives in `frontmatter-and-id-spec.md`; this is a prose section in its body). Schema:
+
+```markdown
+## Validation Log
+
+### Session {N} — {YYYY-MM-DD}
+**Trigger:** {what prompted this batch — e.g. "PRD-AUTH Scope Challenge", "MoSCoW gate on PRD-BILLING"}
+
+1. **[{Category — Scope | Assumptions | Tradeoffs | Risks | Architecture}]** {full question text, verbatim — not a summary}
+   - Options: {every option presented, verbatim} | Other
+   - **Answer:** {the PO's choice, verbatim}
+   - **Custom input:** {verbatim "Other" free-text if the PO typed one; omit if none}
+   - **Rationale:** {one line — why this decision matters / what it locks}
+
+#### Confirmed Decisions
+- {decision}: {choice} — {brief why}
+```
+
+Recording rules:
+
+- **Full question text** — the exact question, never a paraphrase.
+- **All options** — every option presented, including the automatic "Other".
+- **Verbatim custom input** — record any "Other" free-text exactly as the PO typed it.
+- **Session numbering** — increment from the last `### Session N` in the log.
+- **Rationale** — state what the decision locks (e.g. "locks PRD-AUTH at MVP this round").
+
+The Validation Log is the verbatim source the no-silent-reversal protocol reads back to the PO before any regeneration — see `workflow-update.md → No Silent Reversal`.
+
 ## Bilingual Handling
 
 - `.session.md.lang` carries the active language (`en` or `vi`).
 - `AskUserQuestion` text + options use the active language; IDs and frontmatter keys stay English.
 - VI ships best-effort. If the PO writes mixed EN/VI, accept both, normalize whitespace, but keep the answer in whatever language the PO used.
+
+### PO-style read (behavioral memory 3D)
+
+Before composing any prose for the PO — the vision narrative, a story description, or the text/options of an
+`AskUserQuestion` — read the PO's voice store for the **active session lang** and let it shape the wording:
+
+```bash
+./.claude/skills/.venv/bin/python3 scripts/behavioral_memory.py --root <root> --lang <en|vi> --store po-style
+```
+
+Use the returned `vocabulary` (the PO's own terms — prefer these over synonyms), `register` (tone), `recurring_asks`,
+and `do`/`dont` to tune *how* the prose reads. It is lang-partitioned: a `vi` read never returns `en` voice. This shapes
+PHRASING only — it never re-homes a structural fact (DRY). When the PO corrects generated wording (e.g. "call them
+shoppers, not customers"), record it back via `behavioral_memory.record_po_style`. Full spec + the DRY guard (incl. the
+LLM-side persona-label check) in `references/behavioral-memory.md`.
 
 ## Generation Flow — `--brd`, `--prd`, `--epic`, `--story`
 

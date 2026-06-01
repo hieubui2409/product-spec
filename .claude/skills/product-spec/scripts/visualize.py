@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from encoding_utils import configure_utf8_console
+from fs_guard import FenceError
 from spec_graph import build_graph, build_graph_with_artifacts
 
 import render_ascii
@@ -277,6 +278,19 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 2
 
+    # The HTML/body write paths route through the soft fence (render_html.write,
+    # render_board, render_explorer). A blocked target raises FenceError BEFORE any
+    # bytes land; surface it as the same stderr message + non-zero exit used for a
+    # bad --root / baseline above, never a bare traceback.
+    try:
+        return _dispatch(args, fmt, root, graph, baseline,
+                         artifacts if args.view in BODY_VIEWS else None, layers)
+    except FenceError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+
+def _dispatch(args, fmt, root, graph, baseline, artifacts, layers) -> int:
     # Body views own their html writer and have no Mermaid form — dispatch them
     # BEFORE the generic ascii/mermaid/<pre> branches so they never render as a
     # <pre> dump or AttributeError on getattr(render_mermaid, "board").

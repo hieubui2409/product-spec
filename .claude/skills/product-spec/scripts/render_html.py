@@ -23,6 +23,7 @@ from typing import Any, Dict, Optional
 
 from spec_graph import _now, HORIZON_ORDER
 from i18n_labels import label
+from fs_guard import assert_under_docs_product
 
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
@@ -1021,8 +1022,11 @@ def _write_visual(root: Path, filename: str, html: str) -> Path:
     the out_dir + mkdir + write_text + return that the 12 graph views and the board /
     explorer writers otherwise copy verbatim."""
     out_dir = root / "docs" / "product" / "visuals"
-    out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / filename
+    # Soft-fence: resolve + contain BEFORE mkdir/write so a filename carrying
+    # traversal cannot escape docs/product/ (and never creates stray dirs).
+    assert_under_docs_product(target, root)
+    out_dir.mkdir(parents=True, exist_ok=True)
     target.write_text(html, encoding="utf-8")
     return target
 

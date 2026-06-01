@@ -165,7 +165,8 @@ Change the look in one place → every output updates (DRY). The `explorer` UI i
 
 Delta detection is purely on the graph JSON (no `git show` archaeology):
 - Added nodes / removed nodes (by ID).
-- Changed status, scope, moscow, horizon, size.
+- Changed nodes per the single home `spec_graph.CHANGED_FIELDS` (status/scope/moscow/horizon/size + body_hash); a
+  body-only edit shows a `body_hash` diff line.
 
 ## Determinism
 

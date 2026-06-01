@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from encoding_utils import configure_utf8_console
+from fs_guard import FenceError, assert_under_docs_product
 from spec_graph import build_graph, ID_PATTERN_BY_TYPE
 
 configure_utf8_console()
@@ -354,9 +355,10 @@ def main() -> int:
 
     try:
         return _run(args)
-    except ValueError as exc:
-        # Analytical script contract: any ValueError surfaces as a JSON finding
-        # on stdout + exit 0 — never a bare traceback (validation-rules-spec.md:63).
+    except (ValueError, FenceError) as exc:
+        # Analytical script contract: a ValueError (bad input) or a FenceError (a
+        # write blocked outside the spec boundary) surfaces as a JSON finding on
+        # stdout — never a bare traceback (validation-rules-spec.md:63).
         response = {
             "type": args.type,
             "id": args.id or "",
@@ -456,6 +458,9 @@ def _run(args: argparse.Namespace) -> int:
             )
             print(json.dumps(response, indent=2, ensure_ascii=False))
             return 0
+        # Soft-fence: resolve + contain BEFORE mkdir/write so a crafted slug/parent
+        # cannot place an artifact outside docs/product/.
+        assert_under_docs_product(out_path, root)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         # Write with newline translation DISABLED so the generated file is
         # byte-identical across platforms (LF as authored), not os.linesep-

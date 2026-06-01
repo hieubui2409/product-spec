@@ -228,9 +228,9 @@ Persisted on `--validate` under `docs/product/visuals/.snapshots/<ISO-second>-<c
 }
 ```
 
-## Findings Schema (script output)
+## Findings JSON Schema (script output)
 
-Every structural checker emits a JSON document with this shape:
+Every structural checker emits a JSON document with this shape (the single authoritative schema home — `validation-rules-spec.md` links here):
 
 ```json
 {
@@ -240,15 +240,18 @@ Every structural checker emits a JSON document with this shape:
   "findings": [
     {
       "check": "<check_id, e.g. orphan_story>",
-      "severity": "error" | "warn",
+      "severity": "error" | "warn" | "advisory",
       "artifact_id": "<id-or-null>",
       "file": "<path-relative-to-root-or-null>",
-      "detail": "<short message>"
+      "detail": "<short message>",
+      "context": { /* optional structured detail (e.g. {ref, expected, found}) */ }
     }
   ],
-  "graph": { /* graph JSON shape — see snapshot above */ }
+  "graph": { /* graph JSON shape — see Snapshot Schema above */ }
 }
 ```
+
+`advisory` severity is emitted ONLY by the out-of-gate `time_advisory.py` (`overdue`); the in-gate checkers emit `error`/`warn` only. Multiple scripts run during `--validate`; the orchestrator merges findings preserving order (traceability → consistency → matrix).
 
 Scripts ALWAYS exit 0. The LLM (orchestration layer) decides what to do with severities; `--strict` gating is the LLM's job, not the script's.
 

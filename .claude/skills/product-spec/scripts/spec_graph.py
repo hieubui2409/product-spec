@@ -116,6 +116,12 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
     return {
         "id": nid,
         "type": node_type,
+        # Content fingerprint of the artifact body (sha256, first 8 hex). It is
+        # the cache key the memory layer keys off AND the signal that lets the
+        # impact-pass detect a body-only edit (frontmatter unchanged) — which the
+        # frontmatter-only fields below would otherwise miss. Deterministic: same
+        # body bytes → same hash. See CHANGED_FIELDS / changed_nodes.
+        "body_hash": hashlib.sha256(body.encode("utf-8")).hexdigest()[:8],
         # Frontmatter `name`/`title` win when present; otherwise fall back to the
         # body H1 so the title is never empty (see _title_from_h1).
         "title": fm.get("name") or fm.get("title") or _title_from_h1(body, nid) or "",
@@ -170,6 +176,10 @@ def _node_from_goal(goal: Dict[str, Any], parent_file: str) -> Dict[str, Any]:
         "metrics": goal.get("metrics") or [],
         "owner": goal.get("owner"),
         "file": parent_file,
+        # Goals are expanded from brd.md.goals and have no standalone body to
+        # fingerprint, so body_hash is None. changed_nodes treats a None/absent
+        # body_hash as "unknown" → never a body-change signal (back-compat).
+        "body_hash": None,
         # No `parent` edge field: goals attach to PRODUCT directly in the rendered
         # tree (build_edges emits no goal->BRD edge — see its comment). A stored
         # `parent: BRD` here would be an inert field no consumer reads.
@@ -445,6 +455,38 @@ def parents_of(graph: Dict[str, Any]) -> Dict[str, List[str]]:
         if par != child and par not in out[child]:
             out[child].append(par)
     return dict(out)
+
+
+# The single authoritative tuple of node fields whose change between two
+# snapshots makes a node "changed" for delta/impact purposes. Hoisting it here
+# (instead of repeating the literal tuple in render_ascii.delta + the validate
+# prose + the rules spec) keeps one home: add/remove a tracked field once and
+# both the `--viz delta` surface and the `--validate` impact-pass move together.
+# `body_hash` is the body-content signal; the rest are frontmatter facts.
+CHANGED_FIELDS = ("status", "scope", "moscow", "horizon", "size", "body_hash")
+
+
+def changed_nodes(current: Dict[str, Any], previous: Dict[str, Any]) -> List[str]:
+    """Node ids present in BOTH snapshots whose any CHANGED_FIELDS value differs.
+
+    A field counts as changed only when it is PRESENT on both sides and the
+    values differ. A field ABSENT on one side (e.g. body_hash on a pre-upgrade
+    snapshot that predates this field) is treated as UNKNOWN, not as a change —
+    so the first post-upgrade `--validate` does not mark every node as changed
+    (no impact-flood). Returns ids sorted for deterministic output.
+    """
+    cur = {n["id"]: n for n in current.get("nodes", [])}
+    prev = {n["id"]: n for n in previous.get("nodes", [])}
+    out: List[str] = []
+    for nid in cur.keys() & prev.keys():
+        c, p = cur[nid], prev[nid]
+        for field in CHANGED_FIELDS:
+            if field not in c or field not in p:
+                continue  # unknown on one side → not a change signal
+            if c[field] != p[field]:
+                out.append(nid)
+                break
+    return sorted(out)
 
 
 def diff_graphs(current: Dict[str, Any], baseline: Dict[str, Any]) -> Dict[str, Any]:
