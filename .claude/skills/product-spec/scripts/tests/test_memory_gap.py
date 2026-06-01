@@ -33,7 +33,6 @@ last-validated marker path is `judgment_cache._last_validated_path` — never co
 """
 
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -41,14 +40,19 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from spec_graph import build_graph, write_snapshot  # noqa: E402
+from spec_graph import build_graph  # noqa: E402
 import judgment_cache as jc  # noqa: E402
 import decision_register as dr  # noqa: E402
 import check_fence  # noqa: E402
 import memory_gap  # noqa: E402
 
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
-VALID = FIXTURES / "valid-spec"
+# Shared scaffolding (single home in conftest); thin local aliases keep call sites
+# unchanged.
+from conftest import VALID, make_proj, validate_baseline, append_to  # noqa: E402,F401
+
+_proj = make_proj
+_validate_baseline = validate_baseline
+_append_to = append_to
 
 
 # ---------------------------------------------------------------------------
@@ -60,40 +64,12 @@ def _git(root: Path, *args):
                    capture_output=True, text=True)
 
 
-def _proj(tmp_path: Path, git: bool = True) -> Path:
-    """A writable copy of the valid-spec fixture, optionally a committed git repo
-    so the fence scan has a clean working-tree baseline (only NEW touches show)."""
-    proj = tmp_path / "proj"
-    shutil.copytree(VALID, proj)
-    if git:
-        _git(proj, "init", "-q")
-        _git(proj, "config", "user.email", "t@t.t")
-        _git(proj, "config", "user.name", "t")
-        _git(proj, "add", "-A")
-        _git(proj, "commit", "-q", "-m", "base")
-    return proj
-
-
-def _validate_baseline(proj: Path) -> Path:
-    """Simulate a `--validate`: snapshot the current graph + write the
-    `last_validated.json` marker pointing at it (what the validate hub does)."""
-    graph = build_graph(proj)
-    snap = write_snapshot(graph, proj)
-    jc.write_last_validated(proj, snap)
-    return snap
-
-
 def _types(signals):
     return {s["type"] for s in signals}
 
 
 def _by_type(signals, t):
     return [s for s in signals if s["type"] == t]
-
-
-def _append_to(proj: Path, rel: str, line: str):
-    p = proj / "docs" / "product" / rel
-    p.write_text(p.read_text(encoding="utf-8") + line, encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

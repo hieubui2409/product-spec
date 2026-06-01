@@ -35,7 +35,6 @@ handler via importlib from its top-level path with a fixture
 
 import importlib.util
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -44,9 +43,6 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from spec_graph import build_graph, write_snapshot  # noqa: E402
-import judgment_cache as jc  # noqa: E402
-
 # The hook lives at the repo top level, NOT under the skill scripts/. Resolve it
 # relative to this test: scripts/tests/ -> scripts/ -> product-spec/ -> skills/
 # -> .claude/ -> hooks/memory_gap_hook.py.
@@ -54,8 +50,13 @@ HOOK_PATH = (
     SCRIPTS_DIR.parent.parent.parent / "hooks" / "memory_gap_hook.py"
 )
 
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
-VALID = FIXTURES / "valid-spec"
+# Shared scaffolding (single home in conftest); thin local aliases keep call sites
+# unchanged.
+from conftest import VALID, make_proj, validate_baseline, append_to  # noqa: E402,F401
+
+_proj = make_proj
+_validate_baseline = validate_baseline
+_append_to = append_to
 
 
 # ---------------------------------------------------------------------------
@@ -78,30 +79,6 @@ def _load_hook():
 def _git(root: Path, *args):
     subprocess.run(["git", *args], cwd=root, check=True,
                    capture_output=True, text=True)
-
-
-def _proj(tmp_path: Path, git: bool = True) -> Path:
-    proj = tmp_path / "proj"
-    shutil.copytree(VALID, proj)
-    if git:
-        _git(proj, "init", "-q")
-        _git(proj, "config", "user.email", "t@t.t")
-        _git(proj, "config", "user.name", "t")
-        _git(proj, "add", "-A")
-        _git(proj, "commit", "-q", "-m", "base")
-    return proj
-
-
-def _validate_baseline(proj: Path):
-    graph = build_graph(proj)
-    snap = write_snapshot(graph, proj)
-    jc.write_last_validated(proj, snap)
-    return snap
-
-
-def _append_to(proj: Path, rel: str, line: str):
-    p = proj / "docs" / "product" / rel
-    p.write_text(p.read_text(encoding="utf-8") + line, encoding="utf-8")
 
 
 def _stop_stdin(proj: Path, *, session_id="sess-1", stop_hook_active=False):

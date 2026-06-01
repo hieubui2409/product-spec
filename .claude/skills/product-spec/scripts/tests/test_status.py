@@ -25,29 +25,19 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from spec_graph import build_graph, write_snapshot  # noqa: E402
-import judgment_cache as jc  # noqa: E402
 import status  # noqa: E402
 
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
-VALID = FIXTURES / "valid-spec"
+# Shared scaffolding (single home in conftest). `--status` never needs a git repo,
+# so `_proj` pins git=False to keep this file's plain copytree-only behavior.
+from conftest import VALID, make_proj, validate_baseline  # noqa: E402,F401
+
+_validate_baseline = validate_baseline
 
 
 def _proj(tmp_path: Path) -> Path:
-    """A writable copy of the valid-spec fixture."""
-    proj = tmp_path / "proj"
-    shutil.copytree(VALID, proj)
-    return proj
-
-
-def _validate_baseline(proj: Path) -> Path:
-    """Simulate a `--validate`: write a snapshot of the current state and the
-    `last_validated.json` marker pointing at it (exactly what the validate hub
-    does via judgment_cache.write_last_validated)."""
-    graph = build_graph(proj)
-    snap = write_snapshot(graph, proj)
-    jc.write_last_validated(proj, snap)
-    return snap
+    """A writable copy of the valid-spec fixture (no git repo — --status never
+    reads working-tree state)."""
+    return make_proj(tmp_path, git=False)
 
 
 # ---------- API: build_status() ----------
