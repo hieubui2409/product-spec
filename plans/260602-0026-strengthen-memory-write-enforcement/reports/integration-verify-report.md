@@ -21,7 +21,7 @@ Both suites run via `./.claude/skills/.venv/bin/python3 -m pytest`. Re-ran produ
 | 1 | product-spec pytest green, ≥477 + new | **PASS** | 527 passed (477 baseline + 50 from P2/3/4/5/7/9). |
 | 2 | claude-pack pytest green | **PASS** | 130 passed. |
 | 3 | CLAUDE.md `cleanmatic:claude-pack` block byte-unchanged | **PASS** | awk-extract block (`<!-- BEGIN/END: cleanmatic:claude-pack operating guide -->`) HEAD vs working = 107 lines each, `diff -q` IDENTICAL. |
-| 4 | `pack` lists harvester **and** hook; bundle deterministic | **PASS (local) / FAIL (CI clean checkout)** — see Routed regression | `selection.resolve_selection` includes `.claude/agents/memory-harvester.md` + `.claude/hooks/memory_gap_hook.py` (297 members, deterministic). Tarball SHA256 byte-identical across two builds. **BUT** the hook is gitignored → absent on a clean checkout (CI release). |
+| 4 | `pack` lists harvester **and** hook; bundle deterministic | **PASS** | `selection.resolve_selection` includes `.claude/agents/memory-harvester.md` + `.claude/hooks/memory_gap_hook.py` (297 members, deterministic). Tarball SHA256 byte-identical across two builds. The earlier gitignored-hook gap is **RESOLVED**: a `.gitignore` re-include (`!/.claude/hooks/` + `/.claude/hooks/*` + `!/.claude/hooks/memory_gap_hook.py`) landed in commit `79491c4`, so the hook is now git-tracked (`git ls-files .claude/hooks/` lists it; the ck-managed `*.cjs` stay ignored) and ships in the CI clean-checkout bundle. |
 | 5 | check_fence clean — no unexpected writes outside docs/product/ | **PASS** | All 43 advisory `fence_breach` findings map 1:1 to the plan's file-ownership matrix (P2–P11 scripts/refs/docs/agent/hook/manifest/installer + this plan's own markdown). NO writes to forbidden paths: `git status` shows zero `.claude/rules/*` and zero `*.cjs` changes. |
 | 6 | Cross-ref sweep — every new flag/script/agent/ref resolves | **PASS** | `memory_gap.py`, `reflect_scan.py`, `memory-enforcement.md`, `workflow-reflect.md`, `memory-harvester.md`, `memory_gap_hook.py` all exist on disk. CLAUDE.md product-spec ref-pointers (`memory-enforcement.md`, `guardrails-and-boundaries.md`) resolve; `error-catalog.md` resolves under claude-pack (full path). New artifacts referenced across CLAUDE.md / SKILL.md / GUIDE-EN / GUIDE-VI / README / references. |
 | 7 | CLAUDE.md size delta = pointers-only | **PASS** | +12 lines (466→478): 2 workflow-table rows, 1 "Memory hygiene" bullet, 2 scripts-list entries, 1 hook note — every line points to `references/memory-enforcement.md` or is a terse scripts-list entry. No operative detail inlined (honors locked doc-placement). Entire diff sits above the marker block. |
@@ -57,13 +57,19 @@ Run product-spec against `.claude/skills/product-spec/examples/acme-shop` and co
 - [ ] `--status` → surfaces `unrecorded_signals` + the soft `--reflect` suggestion.
 - [ ] `--reflect` → `reflect_scan.py` produces git-degrade-safe anchors → read-only harvester agent proposes candidates → persist-after-PO-confirm.
 
-## Routed regression (NOT patched — outside Phase 12 ownership)
+## Routed regression — RESOLVED
 
-**`.claude/hooks/memory_gap_hook.py` is gitignored → it will not be committed, and the CI release build (clean checkout) cannot bundle it.**
+**`.claude/hooks/memory_gap_hook.py` was gitignored → would not commit, and the CI release build (clean checkout) could not bundle it. This is now FIXED.**
 
-- Root cause: `.gitignore` line 76 `/.claude/*` ignores everything under `.claude/`; the re-includes cover `!/.claude/agents/**` (line 88) so `memory-harvester.md` commits, and `!/.claude/skills/product-spec/**`, but there is **NO** `!/.claude/hooks/**` re-include. `git check-ignore` confirms: `memory_gap_hook.py` → ignored (will NOT commit); `memory-harvester.md` → not ignored (will commit). `git ls-files .claude/hooks/` is empty (whole dir untracked).
-- Impact: a fresh `git clone --depth 1` of this repo has no `.claude/hooks/` directory at all. The release workflow (`.github/workflows/claude-pack-release.yml`) uses `actions/checkout@v4` (git-tracked files only) then runs `python -m pack`, which resolves the hook via the manifest off the **filesystem** — on CI that file is absent, so the reproducible release bundle will miss the hook (or error). Local builds pass only because the file exists on disk here. This breaks plan success-criterion #4 under CI conditions.
-- **Owning phase: P7** (created `memory_gap_hook.py` at the top-level `.claude/hooks/`) and/or **P8** (installer/registration wiring). The fix is a one-line `.gitignore` re-include — e.g. `!/.claude/hooks/` + `!/.claude/hooks/memory_gap_hook.py` (mirroring the existing agents re-include) so the skill-owned hook is tracked while the ck-managed `*.cjs` infra stays ignored if intended. `.gitignore` is in NO phase's ownership matrix, so this needs the lead to assign it (likely fold into P7/P8). Not patched here — out of Phase 12 ownership (`eval/evals.json` + this report only).
+- Original root cause: `.gitignore` `/.claude/*` ignored everything under `.claude/`; the re-includes covered `!/.claude/agents/**` (so `memory-harvester.md` committed) and `!/.claude/skills/product-spec/**`, but there was **NO** `!/.claude/hooks/**` re-include — so the hook stayed untracked.
+- **Resolution:** a `.gitignore` re-include landed in commit `79491c4`:
+  ```
+  !/.claude/hooks/
+  /.claude/hooks/*
+  !/.claude/hooks/memory_gap_hook.py
+  ```
+  This tracks only the skill-owned hook while keeping the ck-managed `*.cjs` handlers ignored (verified: `git check-ignore` reports `memory_gap_hook.py` → tracked, the `*.cjs` → ignored). `git ls-files .claude/hooks/` now lists `memory_gap_hook.py`.
+- Impact after fix: a fresh `actions/checkout@v4` (git-tracked files only) now contains the hook, so `python -m pack` resolves it off the filesystem on CI and the reproducible release bundle ships it. Plan success-criterion #4 holds under CI conditions — check #4 is now full **PASS**.
 
 ## Whole-plan consistency
 
@@ -72,4 +78,4 @@ Run product-spec against `.claude/skills/product-spec/examples/acme-shop` and co
 
 ## Unresolved questions
 
-1. **`.gitignore` hook re-include (blocking for CI release, NOT for local/PR merge).** Needs lead to assign the one-line `.gitignore` fix to P7 or P8. Until then, the hook ships in local bundles but vanishes on a clean CI checkout. Everything else is fully green.
+None. The one open blocker — the gitignored Stop hook — is **RESOLVED** by the `.gitignore` re-include in commit `79491c4` (the hook is now git-tracked and ships in the CI clean-checkout bundle; the ck-managed `*.cjs` stay ignored). All gate checks are green.
