@@ -6,6 +6,38 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-06-02
+
+Adds the **memory-write enforcement layer** to product-spec — the spec skill now
+detects and nudges when a judgment or ruling that belongs in the committed memory
+layer looks unrecorded. claude-pack ships the supporting agent + hook handler.
+
+### Added — product-spec
+
+- **Deterministic `memory_gap` detector** — the single SCRIPT home for the four
+  "memory that looks unrecorded" signals (`fence_breach`, `validate_no_marker`,
+  `approved_changed_no_dec`, `judged_not_stored`); correlates persisted disk/graph
+  state, emits structured signals, makes no judgment (Script-vs-LLM split).
+- **Judgment-cache atomic batch-write (`--store-batch`)** — one validate-all-then-
+  write-once persist of a whole verdict batch, collapsing the per-verdict `--store`
+  loop and its "stored some, forgot others" surface; also writes the
+  `.memory/last_judged.json` marker the gap detector reads.
+- **`behavioral_memory --voice`** — surfaces the PO-style voice observations.
+- **`status` unrecorded-memory signals** — `--status` now folds in the memory-gap
+  signals (unvalidated drift, approved edits with no DEC, unstored judgments).
+- **Tier-0 forcing-functions + `references/memory-enforcement.md`** — the operating
+  guide for when each memory write is owed and which writer owns it.
+- **Opt-in Stop hook** `.claude/hooks/memory_gap_hook.py` + `install.sh --memory-hook`
+  — a thin policy wrapper that blocks turn-end on a fence breach (persist) or nudges
+  once on an unrecorded judgment/ruling; loop-safe via internal backstops.
+- **`--reflect` retroactive harvest** + a read-only `memory-harvester` agent that
+  scans for memory that should already have been recorded.
+
+### Added — claude-pack
+
+- Bundles the `memory-harvester` agent and the `memory_gap_hook.py` handler so a
+  packed install carries the full memory-enforcement surface.
+
 ## [1.0.0] — 2026-05-31
 
 First **stable** release. This entry is the consolidated **full changelog** for the
