@@ -20,6 +20,18 @@
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Dev
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -MemoryHook
+#       opt-in: register the Tier-1 memory Stop hook into
+#       .claude\settings.local.json (gitignored)
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -MemoryHookShared
+#       same, but target the committed .claude\settings.json
+#   powershell -ExecutionPolicy Bypass -File .\install.ps1 -CheckMemoryHook
+#       passive <=1/day recommend-nudge (no writes to settings)
+#
+# The memory hook is OPT-IN ONLY and NEVER auto-registered. A plain install
+# (or the bundled recipient installer) does NOT touch your hooks. To remove the
+# hook later, delete the two memory_gap_hook.py entries from the Stop and
+# PostToolUse arrays of the settings file you registered into.
 #
 # After install, invoke the skill from Claude Code:
 #   /cleanmatic:product-spec
@@ -27,18 +39,25 @@
 [CmdletBinding()]
 param(
     [switch]$Dev,
+    [switch]$MemoryHook,
+    [switch]$MemoryHookShared,
+    [switch]$CheckMemoryHook,
+    [switch]$MemoryHookOptout,
     [switch]$Help
 )
 
 $ErrorActionPreference = "Stop"
 
 if ($Help) {
-    Get-Content $PSCommandPath | Select-Object -First 24 | ForEach-Object { $_ -replace '^# ?', '' }
+    Get-Content $PSCommandPath | Select-Object -First 38 | ForEach-Object { $_ -replace '^# ?', '' }
     exit 0
 }
 
 $ScriptDir       = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SkillsDir       = Split-Path -Parent $ScriptDir
+# Project root hosts the .claude\ tree (settings + hooks). The skill lives at
+# .claude\skills\product-spec\ -> two levels up from SkillsDir (.claude\skills).
+$ProjectDir      = Split-Path -Parent (Split-Path -Parent $SkillsDir)
 $VenvDir         = Join-Path $SkillsDir ".venv"
 $Requirements    = Join-Path $ScriptDir "scripts/requirements.txt"
 $RequirementsDev = Join-Path $ScriptDir "scripts/requirements-dev.txt"
@@ -47,6 +66,178 @@ $VendorDir       = Join-Path $ScriptDir "assets/vendor"
 function Step($msg) { Write-Host ""; Write-Host "▸ $msg" }
 function Ok($msg)   { Write-Host "  ✓ $msg" }
 function Fail($msg) { Write-Host "  ✗ $msg" -ForegroundColor Red; exit 1 }
+
+# Pick an interpreter for the JSON merge. The merge is pure stdlib (json), so any
+# python works; prefer the skill venv when present, fall back to system python.
+function Get-MergePython {
+    $venvPy = Join-Path $VenvDir "Scripts/python.exe"
+    if (Test-Path $venvPy) { return $venvPy }
+    foreach ($candidate in @("python", "python3", "py")) {
+        if (Get-Command $candidate -ErrorAction SilentlyContinue) { return $candidate }
+    }
+    return $null
+}
+
+# The Python merge body, shared by the .sh twin (same semantics). Idempotent,
+# non-destructive: parses the target settings file, adds the Stop +
+# PostToolUse(Write|Edit) memory_gap_hook entries only when absent, writes back.
+# NEVER string-replaces; surfaces malformed JSON loudly. Reads SETTINGS_TARGET
+# from the environment.
+$MemoryHookMergePy = @'
+import json
+import os
+import sys
+from pathlib import Path
+
+target = Path(os.environ["SETTINGS_TARGET"])
+
+PROJ = '"$CLAUDE_PROJECT_DIR"'
+PY = f'{PROJ}/.claude/skills/.venv/bin/python3'
+HOOK = f'{PROJ}/.claude/hooks/memory_gap_hook.py'
+STOP_CMD = f'{PY} {HOOK}'
+POST_CMD = f'{PY} {HOOK} --post-tool-use'
+POST_MATCHER = 'Write|Edit'
+MARK = 'memory_gap_hook.py'
+
+
+def load(path):
+    if not path.exists():
+        return {}
+    raw = path.read_text(encoding='utf-8').strip()
+    if not raw:
+        return {}
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise ValueError(f'{path} is not a JSON object')
+    return data
+
+
+def has_memory_hook(event_arr, *, want_post):
+    for group in event_arr:
+        for h in (group.get('hooks') or []):
+            cmd = h.get('command', '')
+            if MARK in cmd and (('--post-tool-use' in cmd) == want_post):
+                return True
+    return False
+
+
+settings = load(target)
+hooks = settings.setdefault('hooks', {})
+if not isinstance(hooks, dict):
+    raise ValueError(f'{target}: "hooks" is not an object')
+
+stop_arr = hooks.setdefault('Stop', [])
+post_arr = hooks.setdefault('PostToolUse', [])
+
+added = []
+if not has_memory_hook(stop_arr, want_post=False):
+    stop_arr.append({'hooks': [{'type': 'command', 'command': STOP_CMD}]})
+    added.append('Stop')
+if not has_memory_hook(post_arr, want_post=True):
+    post_arr.append({
+        'matcher': POST_MATCHER,
+        'hooks': [{'type': 'command', 'command': POST_CMD}],
+    })
+    added.append('PostToolUse(Write|Edit)')
+
+if added:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(settings, indent=2, ensure_ascii=False) + '\n',
+        encoding='utf-8',
+    )
+    print('ADDED ' + ', '.join(added))
+else:
+    print('PRESENT')
+'@
+
+# Probe: True when either settings file already carries the Stop memory hook.
+$MemoryHookProbePy = @'
+import json, os, sys
+from pathlib import Path
+p = Path(os.environ["SETTINGS_TARGET"])
+try:
+    data = json.loads(p.read_text(encoding="utf-8") or "{}")
+except Exception:
+    sys.exit(1)
+stop = (data.get("hooks") or {}).get("Stop") or []
+for group in stop:
+    for h in (group.get("hooks") or []):
+        cmd = h.get("command", "")
+        if "memory_gap_hook.py" in cmd and "--post-tool-use" not in cmd:
+            sys.exit(0)
+sys.exit(1)
+'@
+
+$MemoryMarkerDir   = Join-Path $ProjectDir "docs/product/.memory"
+$HookPromptedLast  = Join-Path $MemoryMarkerDir "hook-prompted-last"
+$HookOptout        = Join-Path $MemoryMarkerDir "hook-optout"
+
+# Register the opt-in memory Stop hook (idempotent, non-destructive merge).
+function Invoke-MemoryHook {
+    $rel = if ($MemoryHookShared) { ".claude/settings.json" } else { ".claude/settings.local.json" }
+    $target = Join-Path $ProjectDir $rel
+    Step "Registering the opt-in memory Stop hook -> $rel"
+    $py = Get-MergePython
+    if (-not $py) { Fail "python not found; cannot safely merge JSON settings" }
+    $env:SETTINGS_TARGET = $target
+    $out = ($MemoryHookMergePy | & $py -)
+    if ($LASTEXITCODE -ne 0) { Fail "settings merge failed (is $rel valid JSON?)" }
+    if ($out -eq "PRESENT") {
+        Ok "memory hook already registered in $rel (no change)"
+    } else {
+        Ok "memory hook registered in $rel ($($out -replace '^ADDED ', ''))"
+    }
+    Write-Host ""
+    Write-Host "  To remove later: delete the two memory_gap_hook.py entries from the"
+    Write-Host "  Stop and PostToolUse arrays of $rel."
+}
+
+# True when either settings file already carries the Stop memory hook.
+function Test-MemoryHookRegistered {
+    $py = Get-MergePython
+    if (-not $py) { return $false }
+    foreach ($f in @(
+        (Join-Path $ProjectDir ".claude/settings.local.json"),
+        (Join-Path $ProjectDir ".claude/settings.json")
+    )) {
+        if (-not (Test-Path $f)) { continue }
+        $env:SETTINGS_TARGET = $f
+        $MemoryHookProbePy | & $py - | Out-Null
+        if ($LASTEXITCODE -eq 0) { return $true }
+    }
+    return $false
+}
+
+# Passive <=1/day recommend-nudge. Emits ONE line iff the hook is absent AND the
+# user has not opted out AND we have not already prompted today. Stamps the date.
+# Never writes settings, never blocks, never nags more than once per day.
+function Invoke-CheckMemoryHook {
+    if (Test-Path $HookOptout) { return }
+    if (Test-MemoryHookRegistered) { return }
+    $today = Get-Date -Format "yyyy-MM-dd"
+    $last = ""
+    if (Test-Path $HookPromptedLast) { $last = (Get-Content $HookPromptedLast -Raw).Trim() }
+    if ($last -eq $today) { return }
+    New-Item -ItemType Directory -Force -Path $MemoryMarkerDir | Out-Null
+    Set-Content -Path $HookPromptedLast -Value $today -NoNewline
+    Write-Host 'Tip: memory-write enforcement is OFF (Tier-0). To opt in, run:  install.ps1 -MemoryHook  (say "stop asking" to silence this).'
+}
+
+# Record the "stop asking" opt-out: drop the optout marker so the nudge is silent
+# forever. Project-scoped; reversible by deleting the marker file.
+function Invoke-MemoryHookOptout {
+    New-Item -ItemType Directory -Force -Path $MemoryMarkerDir | Out-Null
+    Set-Content -Path $HookOptout -Value "opted-out"
+    Ok "memory-hook recommend-nudge silenced (delete $HookOptout to re-enable)"
+}
+
+# Dispatch the standalone opt-in actions BEFORE the full venv/vendor install.
+# Registering the hook (or checking it) does not require — and does not trigger —
+# the dependency install.
+if ($MemoryHookOptout) { Invoke-MemoryHookOptout; exit 0 }
+if ($CheckMemoryHook)  { Invoke-CheckMemoryHook; exit 0 }
+if ($MemoryHook -or $MemoryHookShared) { Invoke-MemoryHook; exit 0 }
 
 # Fetch + sha256-verify one vendored library. Idempotent: skips when the target
 # is present and its hash matches. Mirrors scripts/install-vendor-*.sh.
