@@ -227,6 +227,32 @@
           "text": "visualize.py --view {tree,risk,competition,dashboard,time} each exits 0 on fixtures/backcompat-v1-spec; the v2 dimension views handle the absent data without error."
         }
       ]
+    },
+    {
+      "id": 17,
+      "_assertion_type": "llm_advisory",
+      "_note": "Memory-write reliability OUTCOME (end-to-end): a contradiction surfaced against an approved artifact must end in a recorded DEC ruling, never a silent flip. The DETERMINISTIC halves are graded structurally — memory_gap.py emits the approved_changed_no_dec signal (closed enum {fence_breach,validate_no_marker,approved_changed_no_dec,judged_not_stored}) once the approved body_hash goes stale with no DEC, and decision_register.py allocates the next DEC-<n> + appends a valid record. The LLM half (advisory, the honest ceiling: write-rate is LLM-behavioral) is whether the engine actually surfaces keep/change/hybrid and persists the chosen ruling to docs/product/decisions.md rather than rubber-stamping. Fixture impact-pass-spec carries the approved PRD-AUTH-E1 whose email+password mandate contradicts the PRD's new passwordless scope.",
+      "prompt": "Run --validate against fixtures/impact-pass-spec where the approved epic PRD-AUTH-E1 contradicts the PRD's new passwordless scope. The Memory pass must detect the unrecorded ruling, surface the keep/change/hybrid contradiction protocol, and — on a PO Change choice — record a DEC-<n> in docs/product/decisions.md so the ruling is not re-litigated. Confirm no approved artifact is silently flipped.",
+      "expected_output": "memory_gap.py reports an approved_changed_no_dec signal for PRD-AUTH-E1; the contradiction protocol (keep/change/hybrid) is surfaced; a DEC-<n> record is appended to docs/product/decisions.md with affects=PRD-AUTH-E1 + owner + date; PRD-AUTH-E1 keeps status: approved (never auto-flipped to draft).",
+      "files": ["fixtures/impact-pass-spec"],
+      "assertions": [
+        {"id": "memory-gap-flags-unrecorded-ruling", "_gating": "structural", "text": "memory_gap.collect() over a state where the approved PRD-AUTH-E1 body_hash is stale with no matching DEC emits a signal of type 'approved_changed_no_dec' for PRD-AUTH-E1 (closed-enum signal, exit 0) — the deterministic trigger for the Memory pass."},
+        {"id": "dec-allocated-and-appended", "_gating": "structural", "text": "decision_register.py --alloc-id returns the next monotonic DEC-<n> and --append writes a valid '## DEC-<n> — <title>' record (id grammar ^DEC-\\d+$, append-only) to docs/product/decisions.md — the authoritative home for the ruled contradiction."},
+        {"id": "contradiction-surfaced-not-flipped", "_gating": "llm_advisory", "text": "The engine surfaces the keep/change/hybrid protocol for the approved contradicted PRD-AUTH-E1 and, on the PO's Change ruling, persists a DEC-<n> (affects PRD-AUTH-E1, owner + date) — it NEVER silently flips PRD-AUTH-E1 from approved to draft (GATE-NO-SILENT-REVERSAL). Advisory: the write itself is LLM-behavioral; this grades whether the outcome — a recorded ruling, no silent reversal — actually lands."}
+      ]
+    },
+    {
+      "id": 18,
+      "_assertion_type": "llm_advisory",
+      "_note": "Memory-write reliability OUTCOME (end-to-end), two faces of the cost/benefit ceiling: (a) a fence breach — a write that landed OUTSIDE docs/product/ — should end in a recorded 3E self-correction so the lesson is not forgotten; (b) re-validating an UNCHANGED spec should reuse cached verdicts and produce ZERO re-judges (the batch-store/key reuse path that collapses the forgetting surface). The DETERMINISTIC halves are graded structurally: memory_gap.py emits a fence_breach signal for an out-of-boundary write (reusing check_fence), and judgment_cache --check returns fresh:true for every unchanged node (body_hash key), so no new verdict is written. The LLM half (advisory) is whether the engine records the 3E slip rather than ignoring the fence nudge. Uses the clean valid-spec for the unchanged-revalidate anchor.",
+      "prompt": "Two end-to-end memory outcomes on fixtures/valid-spec. (1) Simulate a write outside docs/product/ (a fence breach): the Memory pass must surface the fence_breach signal and record a 3E self-correction so the slip is captured. (2) Run --validate, then re-run --validate with the spec UNCHANGED: every LLM verdict must be reused from the judgment cache (body_hash key), producing ZERO re-judges.",
+      "expected_output": "memory_gap.py reports a fence_breach signal for the out-of-boundary file; a 3E self-correction is recorded in .memory/self-corrections.json; and on the second --validate of the unchanged spec, judgment_cache --check returns fresh:true for every node so no new verdict is stored (0 re-judges).",
+      "files": ["fixtures/valid-spec"],
+      "assertions": [
+        {"id": "fence-breach-signal-emitted", "_gating": "structural", "text": "memory_gap.collect() emits a signal of type 'fence_breach' (reusing check_fence.scan) for a file touched outside docs/product/ — the deterministic trigger; the signal carries the offending file path and exits 0."},
+        {"id": "revalidate-unchanged-zero-rejudge", "_gating": "structural", "text": "After a first --validate populates .memory/judgments.json, judgment_cache --check for each node of the UNCHANGED valid-spec returns fresh:true (the body_hash key matches), so the second --validate writes no new verdict — 0 re-judges (the batch-store/key-reuse path)."},
+        {"id": "fence-slip-recorded-3e", "_gating": "llm_advisory", "text": "The engine records a 3E self-correction (behavioral_memory → .memory/self-corrections.json) for the surfaced fence breach so the slip is not forgotten. Advisory: the write is LLM-behavioral (the honest ceiling — enforcement raises the consideration-rate, not the write-quality); this grades whether the slip actually gets captured rather than waved off."}
+      ]
     }
   ]
 }
