@@ -49,11 +49,28 @@ rather than silently re-flagging (no-silent-reversal; DRY against decisions.md).
 All writes go through the shared soft fence (``fs_guard``) so a cache/marker write
 can never escape the spec boundary.
 
+Batch store (``--store-batch``): the orchestration emits ONE structured payload
+(a JSON list of ``{key, verdict, po_ruling_ref?}``) and the script validates EVERY
+entry first, then performs a SINGLE read-modify-write. This collapses the per-
+verdict ``--store`` loop (N writes) into one, removing the "forgetting surface"
+where the LLM stores some verdicts and forgets others mid-loop. The batch is
+ATOMIC: a single bad entry (a ``contradiction`` key, never cacheable) raises and
+NOTHING is written — validate-all-then-write-once, mirroring the
+``decision_register`` validate-before-write ordering. Every single-store semantic
+is preserved (model-mismatch reset, ``po_ruling_ref`` passthrough, deleted-node
+GC). On a batch store the script also persists ``.memory/last_judged.json``
+(verdict count + a deterministic content fingerprint of the graph) through the
+fence, so the memory-gap detector can spot "the graph drifted since the last
+judged batch but the cache didn't grow". The cache stays an OPTIMIZATION, never
+authoritative — there is no chat-time write path; a content change self-heals via
+the ``body_hash`` key.
+
 CLI:
     judgment_cache.py --root <dir> --check  --check-name <c> --node-ids A[,B] \
         --model-id <id> [--no-cache]
     judgment_cache.py --root <dir> --store  --key <k> --model-id <id> \
         --verdict <json> [--po-ruling-ref DEC-n] [--no-cache]
+    judgment_cache.py --root <dir> --store-batch <file|-> --model-id <id> [--no-cache]
     judgment_cache.py --root <dir> --gc     # evict entries for deleted node ids
 """
 
@@ -96,6 +113,10 @@ def _cache_path(root) -> Path:
 
 def _last_validated_path(root) -> Path:
     return Path(root) / "docs" / "product" / ".memory" / "last_validated.json"
+
+
+def _last_judged_path(root) -> Path:
+    return Path(root) / "docs" / "product" / ".memory" / "last_judged.json"
 
 
 def _now() -> str:
@@ -177,6 +198,22 @@ def compute_key(check: str, node_ids: List[str], graph: Dict[str, Any]) -> str:
     return f"{check}|{scope_key}|{hashes}|{lang}|{dep_hash}"
 
 
+def graph_content_hash(graph: Dict[str, Any]) -> str:
+    """A deterministic 8-hex content fingerprint of the graph's judged surface.
+
+    Computed over the sorted `id\\x1fbody_hash` pairs of every node — so it is
+    STABLE for identical content (no embedded timestamp, unlike a snapshot file's
+    hash) and CHANGES on any node-body edit, add, or delete. The memory-gap
+    detector recomputes this on the live graph and compares it to the
+    `last_judged.json` marker to spot "drift since the last judged batch". Using
+    the same `body_hash` the cache keys on keeps a single content-fingerprint home
+    (spec_graph computes `body_hash`; we never recompute a body digest here)."""
+    pairs = sorted(
+        f"{n.get('id', '')}\x1f{_body_hash(n)}" for n in graph.get("nodes", [])
+    )
+    return hashlib.sha256("\n".join(pairs).encode("utf-8")).hexdigest()[:8]
+
+
 # ----------------------------------------------------------------------------
 # Cache file IO + stamp
 # ----------------------------------------------------------------------------
@@ -249,6 +286,117 @@ def store(root, key: str, verdict: Any, model_id: str,
         entry["po_ruling_ref"] = po_ruling_ref
     cache["entries"][key] = entry
     return _write_cache(root, cache)
+
+
+def _validate_batch_entry(idx: int, entry: Any) -> Tuple[str, Any, Optional[str]]:
+    """Validate ONE batch entry and return `(key, verdict, po_ruling_ref)`.
+
+    Raises `ValueError` (with the entry index, so a failing batch is diagnosable)
+    when the entry is malformed or names a never-cached check. Called for EVERY
+    entry before any write, so a single bad entry aborts the whole batch — the
+    atomicity contract: validate-all-then-write-once."""
+    if not isinstance(entry, dict):
+        raise ValueError(f"batch entry {idx} is not an object")
+    key = entry.get("key")
+    if not isinstance(key, str) or not key:
+        raise ValueError(f"batch entry {idx} is missing a string 'key'")
+    if key.split("|", 1)[0] in NEVER_CACHED:
+        raise ValueError(f"batch entry {idx} ({key!r}): contradiction is never cached")
+    po_ruling_ref = entry.get("po_ruling_ref")
+    if po_ruling_ref is not None and not isinstance(po_ruling_ref, str):
+        raise ValueError(f"batch entry {idx} has a non-string 'po_ruling_ref'")
+    return key, entry.get("verdict"), po_ruling_ref
+
+
+def store_batch(root, entries: List[Any], model_id: str,
+                no_cache: bool = False, graph: Optional[Dict[str, Any]] = None
+                ) -> Optional[Path]:
+    """Persist a whole batch of verdicts in ONE read-modify-write. No-op (None)
+    under `no_cache`.
+
+    Validate-all-then-write-once: EVERY entry is validated first (shape +
+    never-cached refusal). A single bad entry raises `ValueError` and NOTHING is
+    written — no partial cache, no `last_judged` marker. This mirrors the
+    decision_register validate-before-write ordering and removes the "stored some,
+    forgot others" surface of the per-verdict `--store` loop.
+
+    Preserves every single-store semantic: a stamp mismatch RESETS the cache to the
+    caller's model/version before storing; `po_ruling_ref` passes through per entry;
+    deleted-node entries are GC'd in the same write (set-diff vs the live graph).
+    On success also persists `.memory/last_judged.json` (verdict count + a
+    deterministic content fingerprint) so the memory-gap detector can spot drift
+    since the last judged batch."""
+    if no_cache:
+        return None
+
+    # Phase 1 — validate the ENTIRE batch before touching disk (atomicity). A bad
+    # entry raises here, before any write, so the cache is left byte-unchanged.
+    validated: List[Tuple[str, Any, Optional[str]]] = []
+    for i, entry in enumerate(entries):
+        validated.append(_validate_batch_entry(i, entry))
+
+    # Fence-check BOTH write targets up front (resolve + contain, no disk I/O) so a
+    # redirected path aborts the batch before any write — the cache and the
+    # last_judged marker stay byte-unchanged on a fence rejection too, not just on a
+    # bad entry.
+    assert_under_docs_product(_cache_path(root), root)
+    assert_under_docs_product(_last_judged_path(root), root)
+
+    if graph is None:
+        graph = build_graph(root)
+
+    # Phase 2 — single read-modify-write. Reset on a stamp mismatch (same as store),
+    # apply every validated entry, GC entries whose nodes left the graph.
+    cache = load_cache(root)
+    if not _stamp_valid(cache, model_id):
+        cache = _empty_cache(model_id)
+    stored_at = _now()
+    for key, verdict, po_ruling_ref in validated:
+        e: Dict[str, Any] = {"verdict": verdict, "stored_at": stored_at}
+        if po_ruling_ref:
+            e["po_ruling_ref"] = po_ruling_ref
+        cache["entries"][key] = e
+
+    # Fold the deleted-node GC into the same write (no second pass): drop any entry
+    # naming a node id no longer in the graph.
+    live = {n["id"] for n in graph.get("nodes", [])}
+    cache["entries"] = {
+        k: e for k, e in cache["entries"].items()
+        if all(i in live for i in _key_node_ids(k))
+    }
+
+    path = _write_cache(root, cache)
+
+    # Persist the last-judged marker (verdict count + content fingerprint) through
+    # the fence so the gap detector can compare drift. Written only after the cache
+    # write succeeds, so the two markers never disagree.
+    write_last_judged(root, len(cache["entries"]), graph)
+    return path
+
+
+def write_last_judged(root, verdict_count: int, graph: Dict[str, Any]) -> Path:
+    """Write `docs/product/.memory/last_judged.json` (verdict count + a deterministic
+    graph content fingerprint), through the soft fence.
+
+    The memory-gap detector reads this marker to spot "the graph drifted since the
+    last judged batch but `judgments.json` didn't grow" — a hint the LLM judged but
+    forgot to store. The fingerprint is content-derived (stable for identical
+    content) so the detector can recompute + compare it. Marker absent → the
+    detector skips that signal (degrade), never a false fire."""
+    payload = {
+        "verdict_count": verdict_count,
+        "snapshot_hash": graph_content_hash(graph),
+        "judged_at": _now(),
+    }
+    path = _last_judged_path(root)
+    # Soft fence: resolve + contain BEFORE any mkdir/write — same chokepoint as
+    # every other memory write.
+    assert_under_docs_product(path, root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        json.dump(payload, fh, indent=2, ensure_ascii=False, sort_keys=True)
+        fh.write("\n")
+    return path
 
 
 def check(root, check_name: str, node_ids: List[str], graph: Dict[str, Any],
@@ -439,6 +587,9 @@ def main() -> int:
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true", help="emit fresh/stale for a check")
     mode.add_argument("--store", action="store_true", help="store a verdict under --key")
+    mode.add_argument("--store-batch", metavar="FILE",
+                      help="store a JSON list of {key, verdict, po_ruling_ref?} from a "
+                           "file or '-' for stdin (one atomic write)")
     mode.add_argument("--gc", action="store_true", help="evict deleted-node entries")
     ap.add_argument("--check-name", help="the LLM check id (with --check)")
     ap.add_argument("--node-ids", help="comma-separated node id(s) (with --check)")
@@ -469,6 +620,21 @@ def main() -> int:
             res = check(root, args.check_name, ids, graph, args.model_id,
                         no_cache=args.no_cache)
             print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
+
+        if args.store_batch:
+            raw = sys.stdin.read() if args.store_batch == "-" \
+                else Path(args.store_batch).read_text(encoding="utf-8")
+            entries = json.loads(raw)
+            if not isinstance(entries, list):
+                raise ValueError("--store-batch payload must be a JSON list of entries")
+            path = store_batch(root, entries, args.model_id,
+                               no_cache=args.no_cache, graph=graph)
+            print(json.dumps(
+                {"stored": path is not None,
+                 "count": 0 if path is None else len(entries),
+                 "path": str(path.relative_to(root)) if path else None},
+                ensure_ascii=False))
             return 0
 
         # --store
