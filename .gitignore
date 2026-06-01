@@ -90,6 +90,11 @@ ck.md
 !/.claude/scripts/**
 !/.claude/schemas/
 !/.claude/schemas/**
+# /.claude/hooks/ holds ck-managed *.cjs (NOT this repo's) — keep them ignored,
+# but track the one skill-owned hook so it commits and ships in the CI bundle.
+!/.claude/hooks/
+/.claude/hooks/*
+!/.claude/hooks/memory_gap_hook.py
 # Re-ignore Python cache + build artifacts inside tracked skills
 /.claude/skills/product-spec/**/__pycache__/
 /.claude/skills/product-spec/**/*.pyc
