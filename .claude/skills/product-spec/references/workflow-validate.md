@@ -73,17 +73,32 @@ For each check in `validation-rules-spec.md` whose **owner = LLM**, run a separa
 
 #### Step 2.9 — Store the new verdicts + GC the cache (after the LLM pass)
 
-Once the LLM has judged the **stale** set, persist each new verdict so the next re-validate reuses it. Store under the key the consult returned (`--store` is a no-op under `--no-cache`):
+Once the LLM has judged the **stale** set, persist each new verdict so the next re-validate reuses it. **Collect all
+new verdicts into ONE batch payload and write them in a single call** — do NOT issue N separate `--store` calls across
+the loop. Batching removes the "forgetting surface" where the LLM stores some verdicts and forgets others mid-pass, and
+it persists the `.memory/last_judged.json` marker the `judged_not_stored` signal reads (see § Memory pass below and
+`references/memory-enforcement.md`). Build a JSON list of `{key, verdict, po_ruling_ref?}` — one entry per judged stale
+node, under the key its consult returned — and call `--store-batch` once (a no-op under `--no-cache`):
 
 ```bash
+# verdicts.json = [ {"key": "<key-from-consult>", "verdict": {…},
+#                    "po_ruling_ref": "DEC-n"   # optional, only on confirmed ruled-drift
+#                   }, … ]    ('-' reads the same JSON list from stdin)
 ./.claude/skills/.venv/bin/python3 scripts/judgment_cache.py --root <root> \
-  --store --key "<key-from-consult>" --verdict '<verdict-json>' --model-id <current-model-id> \
-  [--po-ruling-ref DEC-n]
+  --store-batch verdicts.json --model-id <current-model-id>
 ```
 
-- Store the SAME caller-supplied `--model-id` used for the consult — a stamp mismatch resets the cache, so consult and store must agree on the model.
-- `--po-ruling-ref DEC-n` attaches the active ruling reference to the verdict when the PO confirmed a drift (the reference points at `decisions.md`; never copy the rationale — DRY). On the next clean re-validate the fresh hit surfaces `po_ruling_ref` so the drift is not re-nagged.
-- **`contradiction` is never stored** (the script refuses a contradiction key).
+- The batch is **atomic + validate-before-write**: a bad entry (e.g. a `contradiction` key) fails the WHOLE batch and
+  nothing is written — no partial cache. So a single payload either lands completely or not at all.
+- Use the SAME caller-supplied `--model-id` as the consult — a stamp mismatch resets the cache, so consult and store
+  must agree on the model.
+- `po_ruling_ref: DEC-n` on an entry attaches the active ruling reference when the PO confirmed a drift (the reference
+  points at `decisions.md`; never copy the rationale — DRY). On the next clean re-validate the fresh hit surfaces
+  `po_ruling_ref` so the drift is not re-nagged.
+- **`contradiction` is never stored** (the script refuses a contradiction key — and so fails the batch atomically if one
+  slips in).
+- The single-node `--store` form still exists for the one-off case, but the batch payload is the default for a validate
+  pass that judged more than one node.
 - **Garbage-collect deleted nodes.** A node removed from the spec must not leave a dead single-node or pair entry behind (and a reused id must not collide with a stale verdict). Evict by set-difference vs the current graph node ids — run once per `--validate`:
 
   ```bash
@@ -140,9 +155,42 @@ Write `docs/product/.memory/last_validated.json` recording the validated snapsho
 - Write it **only on `--validate`** — a bare `--viz --snapshot` writes the snapshot but NOT this marker, so the snapshot timeline and the validate timeline stay distinct (the marker is "I validated", not "I snapshotted").
 - The write goes through the shared soft fence (`fs_guard`) — it can never escape `docs/product/`. The marker lives under `.memory/` (committed, per the locked folder-split decision).
 
+### Step 2.7 — Memory pass (REQUIRED — the report MUST answer these three)
+
+Before composing the report, run the memory forcing-function: surface what looks unrecorded and decide whether to write
+it. This is the portable Tier-0 reliability gate — it makes the *consideration* deterministic, never the write itself
+(honest ceiling + the full model: `references/memory-enforcement.md`). Run the deterministic detector first:
+
+```bash
+./.claude/skills/.venv/bin/python3 scripts/memory_gap.py --root <root>
+# → {"signals": [ {type, severity, subject, evidence, suggested_writer}, … ]}
+```
+
+`memory_gap` is the SINGLE detection home (`references/memory-enforcement.md` § signal catalogue) — it reuses
+`check_fence`/`spec_graph`/`decision_register`/`judgment_cache` and emits the four signals
+(`fence_breach` / `validate_no_marker` / `approved_changed_no_dec` / `judged_not_stored`). Do not re-detect any of this
+inline.
+
+The validate report **MUST include a "Memory pass" section that explicitly answers all three questions — even "none"**
+(an empty answer is a deliberate, recorded decision, not a skip):
+
+1. **Contradiction → a `DEC-<n>`?** Did any `contradiction` finding (Step 2) get resolved? If so, the resolution is
+   recorded in the Decision Register — see the **Decision Register wiring** below (the authoritative home for the
+   allocate/append steps). Answer with the `DEC-<n>` id(s) written, or "none" if no contradiction arose.
+2. **Structural slip → a 3E self-correction?** Did the fence scan or the Contradiction Protocol catch a slip? If so it
+   is recorded via `behavioral_memory.record_self_correction` — see **Step 2.5 → Self-correction write** (the
+   authoritative home for that write). Answer with the slip recorded, or "none".
+3. **`memory_gap` candidates?** List the signals the detector surfaced and what was done with each — ran the
+   `suggested_writer`, deferred it, or acked an `approved_changed_no_dec` false positive once via
+   `memory_gap.py --ack-no-dec <id>`. Answer "none" only when `signals` is empty.
+
+**Honesty:** answering "none" is allowed and sometimes correct — enforcement raises the consideration-rate, not the
+write-quality (`references/memory-enforcement.md` § honest ceiling). The required section guarantees the questions are
+*asked*; it cannot guarantee a write is *warranted*.
+
 ### Step 3 — Compose the human report
 
-Format per `validation-rules-spec.md` § Human Report Format (single authoritative home for the report skeleton: Summary / Errors / Warnings / Suggested Next Steps).
+Format per `validation-rules-spec.md` § Human Report Format (single authoritative home for the report skeleton: Summary / Errors / Warnings / Suggested Next Steps). Append the **Memory pass** section (Step 2.7) — the three answers (contradiction→DEC / slip→3E / `memory_gap` candidates), each explicit even when "none".
 
 Write the report to stdout (and optionally to `docs/product/validation-report-<ts>.md` if the PO asks).
 

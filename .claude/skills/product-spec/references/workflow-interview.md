@@ -137,9 +137,27 @@ Before composing any prose for the PO — the vision narrative, a story descript
 
 Use the returned `vocabulary` (the PO's own terms — prefer these over synonyms), `register` (tone), `recurring_asks`,
 and `do`/`dont` to tune *how* the prose reads. It is lang-partitioned: a `vi` read never returns `en` voice. This shapes
-PHRASING only — it never re-homes a structural fact (DRY). When the PO corrects generated wording (e.g. "call them
-shoppers, not customers"), record it back via `behavioral_memory.record_po_style`. Full spec + the DRY guard (incl. the
-LLM-side persona-label check) in `references/behavioral-memory.md`.
+PHRASING only — it never re-homes a structural fact (DRY). Full spec + the DRY guard (incl. the LLM-side persona-label
+check) in `references/behavioral-memory.md`.
+
+#### Per-prose-turn forcing-function (3D write)
+
+On **every prose-bearing turn**, before moving on, run one deterministic consideration: **did the PO correct my wording
+this turn?** (e.g. "call them shoppers, not customers", "drop the jargon", "always lead with a one-line summary"). If
+yes, record it back so the same correction is not needed twice:
+
+```bash
+# explicit / PO-stated voice — the deterministic entry point
+./.claude/skills/.venv/bin/python3 scripts/behavioral_memory.py --root <root> --lang <en|vi> --voice \
+  [--vocabulary <a,b>] [--do <...>] [--dont <...>] [--recurring-asks <...>] [--register <s>]
+```
+
+`--voice` is a thin CLI over `record_po_style` (the LLM may also call `record_po_style` directly when it merely
+*observes* the voice mid-composition) — same shape-validate, lang-key, union-merge, and DRY guard; no second writer
+home. This is the portable Tier-0 forcing-function for 3D; it raises the consideration-rate, **not** the write-quality —
+3D stays nudge-only because a wording correction is conversational, with no structural signal to key on (honest ceiling
++ the full enforcement model in `references/memory-enforcement.md`; 3D write-trigger detail in
+`references/behavioral-memory.md`).
 
 ## Generation Flow — `--brd`, `--prd`, `--epic`, `--story`
 
@@ -173,7 +191,13 @@ Loop with a clear termination question — never go more than ~6 stories without
 When the PO ends the session:
 
 1. Save `.session.md` with `phase: done` and the last `updated` timestamp.
-2. Offer a quick `--validate` and `--viz tree` to summarize what was built.
+2. **End-of-interview validate nudge (forcing-function).** If the session changed N items since the spec was last
+   validated, nudge before closing: *"you changed N items since your last `--validate` — run it now to re-gate them?"*
+   This is the portable Tier-0 reminder that pairs with the per-turn 3D forcing-function above; the same drift is what
+   `--status` surfaces read-only later (`workflow-status.md`), and `--validate` is where the required **Memory pass**
+   records any unrecorded ruling/slip (`workflow-validate.md`; full model in `references/memory-enforcement.md`). It is
+   a nudge, never a block — the PO may decline.
+3. Offer a quick `--validate` and `--viz tree` to summarize what was built.
 
 ## Examples (snippets the LLM emits)
 

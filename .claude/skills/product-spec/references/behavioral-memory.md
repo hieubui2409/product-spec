@@ -62,12 +62,26 @@ shape the wording. The read hook-line lives in `references/workflow-interview.md
 
 ### Write trigger (keeps the store from staying empty — but soft, not guaranteed)
 
-- After interview rounds, when the LLM has observed enough of the PO's voice to register a term or a recurring ask.
-- On an **explicit PO wording-correction** ("don't call them customers, they're shoppers") → record the do/dont.
+Two entry points, both writing through `record_po_style` (one writer home — no parallel write path):
 
-> **Honesty caveat (do NOT over-claim):** these triggers are **LLM-discretionary prose**, not a deterministic guarantee.
-> The store *reduces* the chance the same wording correction is needed twice; it does NOT *always accrue* on every turn.
-> "Reduced recurrence", never "the store actually fills itself".
+- **Per-prose-turn forcing-function (the portable Tier-0 reminder).** On every prose-bearing turn the interview flow
+  asks one deterministic question — *did the PO correct my wording this turn?* — and records the do/dont/vocabulary if
+  so. The forcing-function line + its placement live in `references/workflow-interview.md` (§ PO-style read → Per-prose-turn
+  forcing-function); the whole enforcement model (why it is a forcing-function, the honest ceiling) is in
+  `references/memory-enforcement.md`. This raises the *consideration*-rate, not the write-quality.
+- **Explicit `--voice` (the deterministic PO entry point).** `behavioral_memory.py --voice --lang <en|vi>
+  [--register <s>] [--vocabulary a,b] [--recurring-asks …] [--do …] [--dont …]` lets the PO state a preference directly
+  instead of relying on the LLM noticing a correction. It is a thin CLI over `record_po_style` (union-merge lists,
+  latest `register` wins) and honors the same DRY guard. At least one writable field is required; an empty `--voice` is
+  a no-op with a clear message, not a crash. The read path (`--dump po-style`) is unchanged.
+- **Observation mid-composition.** When the LLM has observed enough of the PO's voice to register a term or a recurring
+  ask (even without an explicit correction), it may call `record_po_style` directly.
+
+> **Honesty caveat (do NOT over-claim):** even with the forcing-function and `--voice`, these triggers are
+> **LLM-discretionary prose** (except `--voice`, which the PO drives deterministically). 3D stays **nudge-only** — a
+> wording correction is conversational, with no structural signal to key on, so there is no opt-in hook for it. The
+> store *reduces* the chance the same wording correction is needed twice and is also recoverable retroactively via
+> `--reflect`; it does NOT *always accrue* on every turn. "Reduced recurrence", never "the store actually fills itself".
 
 ### DRY guard (the Script-vs-LLM split, made concrete)
 
@@ -141,17 +155,22 @@ reminders. A high-`frequency` slip is the strongest nudge.
 ### Write trigger (soft fence + Contradiction Protocol feed it — soft, not guaranteed)
 
 - **`check_fence.py`** surfaces a `fence_breach` (a write that landed outside `docs/product/`) → record the structural
-  slip (`violated_rule: dry` or `frontmatter_source_of_truth` as appropriate) so the next pre-flight catches it.
+  slip (`violated_rule: dry` or `frontmatter_source_of_truth` as appropriate) so the next pre-flight catches it. The
+  same breach is also the `fence_breach` signal `memory_gap.collect` emits — surfaced in the required validate **Memory
+  pass** and, in an opted-in install, **persisted** (block-until-fixed) by the Tier-1 Stop hook, the one signal strong
+  enough to stop for. Detector + hook policy: `references/memory-enforcement.md`.
 - **The Contradiction Protocol** (`validation-rules-spec.md`) catching an attempted auto-flip → record
   `violated_rule: no_silent_reversal`.
 - The **PO** catching a slip directly → record it with the principle it violated.
 
-The write hook-line lives in `references/workflow-validate.md` (§ Step 2.5, after the impact-pass).
+The write hook-line lives in `references/workflow-validate.md` (§ Step 2.5, after the impact-pass); the required Memory
+pass (§ Step 2.7) makes "structural slip → 3E?" one of the three questions every validate report MUST answer.
 
 > **Honesty caveat (the soft-fence reality):** 3E is a **soft** mechanism — `check_fence.py` is advisory (always exits
-> 0, never blocks), and the LLM writes the entry at its discretion. The store **reduces recurrence**; it is **not a hard
-> block** and does **not** guarantee a slip is recorded every time. Do not claim "stores actually accrue" — that is
-> reduced-recurrence, not an invariant.
+> 0, never blocks), and the LLM writes the entry at its discretion. The required Memory pass and the opt-in persist-hook
+> raise how reliably the slip is *considered*, never that the write is *made*. The store **reduces recurrence**; it is
+> **not a hard block** and does **not** guarantee a slip is recorded every time. Do not claim "stores actually accrue" —
+> that is reduced-recurrence, not an invariant.
 
 ### Privacy posture
 

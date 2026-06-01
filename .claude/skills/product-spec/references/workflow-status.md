@@ -29,7 +29,9 @@ The feeder JSON shape:
   "removed": ["..."],
   "drafts": ["PRD-AUTH-E1", "..."],
   "stale_approvals": ["PRD-AUTH"],
-  "overdue": [ { "check": "overdue", "artifact_id": "...", "..." } ]
+  "overdue": [ { "check": "overdue", "artifact_id": "...", "..." } ],
+  "unrecorded_signals": [ { "type": "validate_no_marker", "severity": "info", "subject": null, "evidence": "...", "suggested_writer": "..." } ],
+  "reflect_suggestion": "..."
 }
 ```
 
@@ -41,6 +43,8 @@ The feeder JSON shape:
 | `drafts` | Node ids still in `status: draft`. | scan current graph. |
 | `stale_approvals` | **Approved** node ids that ALSO changed since the baseline — the approval predates the new wording. | `approved` ∩ `unvalidated`. |
 | `overdue` | Artifacts whose `target_date` is before `--today`. | **reuses** `time_advisory.check_overdue` (one home for the date math; pin `--today` to reproduce). |
+| `unrecorded_signals` | What looks unrecorded in the memory layer (fence breach / drift-since-validate / approved-changed-no-DEC / judged-not-stored). | **reuses** `memory_gap.collect` (the SINGLE detection home — `references/memory-enforcement.md` § signal catalogue; status never re-detects). |
+| `reflect_suggestion` | A soft one-line `--reflect` hint, present only when drift-since-last-validate is high. | derived advisory string — points at a retroactive `--reflect` harvest of rulings/observations never recorded. |
 
 ## How the LLM composes the nudge
 
@@ -50,6 +54,15 @@ The feeder JSON shape:
    - **Stale approvals** (`stale_approvals`): surface each verbatim — "**`PRD-AUTH`** is approved but its wording changed since approval. Keep / re-validate / revisit?" **Never silently re-flip** an approved decision (no-silent-reversal).
    - **Drafts** (`drafts`): "still in draft" — a gentle progress reminder, not a blocker.
    - **Overdue** (`overdue`): the calendar reminder, framed as information ("`PRD-X` was due `<date>`"), never a gate.
+   - **Unrecorded signals** (`unrecorded_signals`): surface what looks unrecorded in plain language — a stray file
+     outside `docs/product/`, drift since the last validate, an approved artifact whose wording changed without a
+     `DEC-<n>`, or verdicts that drifted without re-judging. Each signal already carries its `suggested_writer` (the
+     fix); point at it, never block. These are advisory and may be false positives (an `approved_changed_no_dec` on a
+     legitimate edit is expected) — frame them as "worth a look", not "you did something wrong". The detector is the
+     single home (`memory_gap` → `references/memory-enforcement.md`); `--status` only reports it.
+   - **Reflect hint** (`reflect_suggestion`): when present (high drift-since-validate), pass it through as a soft
+     one-liner — "a lot has changed unrecorded; `--reflect` can retroactively harvest any rulings/observations that
+     were never recorded." A suggestion only; `--status` never runs it.
 3. Always close with the **soft-fence reminder** (below) when anything is unvalidated.
 
 ## Honesty caveat — this is a NUDGE, not a guard
