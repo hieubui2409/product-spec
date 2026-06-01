@@ -11,9 +11,10 @@ User-invocable Claude skill for **non-technical product owners**: interview-driv
 One-shot setup (idempotent). Requires Python 3.11+ and curl/wget. The installer:
 
 1. Creates the per-skill venv at `../.venv/` (next to this folder).
-2. Installs `pyyaml` + `pytest` from `scripts/requirements.txt`.
-3. Vendors Mermaid JS locally for offline HTML visualizations.
-4. Runs the script test suite as a smoke check.
+2. Installs `pyyaml` (runtime) from `scripts/requirements.txt`.
+3. Vendors Mermaid JS + marked + DOMPurify locally for offline HTML (graph views + body rendering).
+
+Add `--dev` (`./install.sh --dev`) to also install `pytest` + `pytest-cov` from `scripts/requirements-dev.txt` and run the script test suite as a smoke check. The default runtime install ships only `pyyaml` and skips the test gate.
 
 ## Quickstart
 
@@ -23,7 +24,7 @@ Invoke from Claude Code:
 /cleanmatic:product-spec
 ```
 
-With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, validate, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--validate`, `--strict`, `--approve`, `--update`, `--summary`, `--viz <view>`, `--format ascii|mermaid|html`, `--lang en|vi`.
+With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, add stories, validate, update, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--validate`, `--strict`, `--approve`, `--update`, `--decision`, `--status`, `--summary`, `--viz <view>`, `--format ascii|mermaid|html`, `--lang en|vi`.
 
 ## Layout
 
@@ -31,7 +32,7 @@ With no flag, the skill detects the state of `docs/product/` and presents a menu
 - `references/` — full prose for each flag (frontmatter+ID spec, document model, validation rules, visualization spec, interview banks, workflow guides).
 - `scripts/` — Python (stdlib + pyyaml). Structural only; LLM owns judgment. Run via `../.venv/bin/python3 scripts/<name>.py --root <project-dir>`.
 - `assets/templates/` — markdown templates with `{{token}}` substitution.
-- `assets/vendor/mermaid.min.js` — vendored Mermaid for offline HTML.
+- `assets/vendor/` — vendored offline runtimes: `mermaid.min.js` (graph views) + `marked.min.js` + `purify.min.js` (body rendering).
 - `eval/` — scenario evals.
 - `examples/acme-shop/` — worked sample product spec.
 

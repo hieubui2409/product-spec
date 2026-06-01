@@ -90,4 +90,4 @@ Touch points (keep all four in sync):
 3. `references/flag-reference.md` — add a table row (flag, type, default, manifest equivalent, description) + an example.
 4. `SKILL.md` Flags table — add the user-facing one-liner.
 
-If the flag changes a locked signature, amend `plan.md` `## API Contracts` first.
+If the flag changes a locked CLI or exit-code contract, update `references/flag-reference.md` + `references/error-catalog.md` first — those are the durable homes for the contract.

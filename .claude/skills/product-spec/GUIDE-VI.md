@@ -537,6 +537,67 @@ và **các khóa cấu trúc** (`personas`, `scope`, `moscow`…) luôn giữ ti
 
 ---
 
+### Ưu tiên 14 — Hỏi "giờ tôi nên làm gì tiếp?" (Status)
+
+**Khi nào dùng:** Bạn quay lại sau một thời gian và muốn xem nhanh "sức khỏe" bộ tài liệu — có gì đã đổi kể từ lần
+kiểm tra chất lượng gần nhất, cái gì còn là bản nháp, cái gì chưa được kiểm tra. Đây là một lời nhắc chỉ-đọc; nó
+không sửa gì cả.
+
+Skill so sánh bộ tài liệu hiện tại với lần bạn chạy kiểm tra gần nhất rồi cho biết cái gì đã trôi lệch, cái gì chưa
+kiểm tra, cái gì còn nháp — để bạn biết nên tập trung vào đâu. Nó KHÔNG chạy lại toàn bộ kiểm tra chất lượng (đó là
+Validate); nó chỉ đọc dấu mốc lần-kiểm-tra-gần-nhất rồi báo cáo.
+
+#### Kịch bản hội thoại
+
+> **Bạn:** Bộ tài liệu của tôi đang ở trạng thái nào — có gì cần để mắt không?
+>
+> **Skill:** Trạng thái nhanh (chỉ đọc, không thay đổi gì):
+> - 🕒 3 mục đã đổi kể từ lần kiểm tra gần nhất (`PRD-CHECKOUT`, `PRD-CHECKOUT-E1`, story `…-S2`) — nên kiểm tra lại.
+> - 📝 2 mục còn *nháp*: `PRD-SEARCH`, epic `PRD-SEARCH-E1`.
+> - ✅ Mọi thứ còn lại khớp với bản đã kiểm tra gần nhất.
+>
+> Bạn có muốn tôi chạy kiểm tra đầy đủ trên các mục đã đổi không?
+
+#### Cờ lệnh tương đương
+
+```
+/cleanmatic:product-spec --status
+```
+
+---
+
+### Ưu tiên 15 — Ghi lại một quyết định để khỏi phải bàn lại (Sổ Quyết Định)
+
+**Khi nào dùng:** Bạn đã có một quyết định rõ ràng — giữ cách diễn đạt cũ, chấp nhận một đánh đổi đã biết, hoặc giải
+quyết một mâu thuẫn — và muốn nó được ghi nhớ để skill không nêu lại nữa. Hoặc đơn giản bạn muốn xem danh sách các
+quyết định đã ghi.
+
+Mỗi quyết định rõ ràng được lưu thành `DEC-<n>` trong `docs/product/decisions.md` (một nhật ký chỉ-thêm). Khi một
+khẳng định mới mâu thuẫn với tài liệu đã *duyệt*, skill sẽ nêu ra (Giữ / Đổi / Kết hợp) và ghi lại lựa chọn của bạn ở
+đây; bạn cũng có thể ghi trực tiếp. Một khi quyết định đã được lưu, skill coi đó là đã chốt và không nhắc lại cùng một
+vấn đề trôi lệch nữa — trừ khi nội dung gốc thật sự thay đổi, lúc đó nó sẽ hỏi quyết định cũ của bạn còn áp dụng không.
+
+#### Kịch bản hội thoại
+
+> **Bạn:** Cho tôi xem các quyết định đã chốt.
+>
+> **Skill:** Các quyết định đã ghi:
+> - **DEC-1** — Để luồng thanh toán cho khách vãng lai ra ngoài phạm vi v1 (chấp nhận 2026-05-20).
+> - **DEC-2** — Cho phép cửa sổ đổi trả 7 ngày dù đối thủ cho 30 ngày (đánh đổi có chủ đích).
+>
+> **Bạn:** Ghi lại là tạm thời chúng ta vẫn dùng đăng nhập chỉ bằng email.
+>
+> **Skill:** Đã ghi thành **DEC-3** kèm ngày hôm nay và lý do của bạn. Tôi sẽ không nêu lại "chỉ đăng nhập email" như một thiếu sót nữa.
+
+#### Cờ lệnh tương đương
+
+```
+/cleanmatic:product-spec --decision         # liệt kê các quyết định đã ghi
+/cleanmatic:product-spec --decision DEC-2    # xem một quyết định
+```
+
+---
+
 ## 4. Quy trình điển hình từ đầu đến cuối
 
 Nếu bạn mới bắt đầu, đây là trình tự khuyên dùng:

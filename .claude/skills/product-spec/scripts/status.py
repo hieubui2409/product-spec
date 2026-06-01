@@ -52,12 +52,9 @@ from encoding_utils import configure_utf8_console
 from spec_graph import build_graph, changed_nodes, diff_graphs, _now
 from check_consistency import _parse_iso_date
 from time_advisory import check_overdue
+from judgment_cache import _last_validated_path
 
 configure_utf8_console()
-
-
-def _memory_dir(root: Path) -> Path:
-    return root / "docs" / "product" / ".memory"
 
 
 def _snapshots_dir(root: Path) -> Path:
@@ -71,7 +68,7 @@ def _load_last_validated(root: Path) -> Optional[Dict[str, Any]]:
     A parse failure degrades to None (no baseline) — the same safe direction the
     judgment cache uses, since a never-validated spec and a corrupt marker both
     mean "no trustworthy comparison point"."""
-    path = _memory_dir(root) / "last_validated.json"
+    path = _last_validated_path(root)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, OSError, UnicodeDecodeError, json.JSONDecodeError):

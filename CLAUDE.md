@@ -97,6 +97,7 @@ For each flag, load the relevant reference from `.claude/skills/product-spec/ref
 | `--epic`                                                                           | `workflow-interview.md` (+ `interview-epic.md`)     |
 | `--story`                                                                          | `workflow-interview.md` (+ `interview-story.md`)    |
 | `--validate`, `--strict`, `--approve`, `--summary`                                 | `workflow-validate.md`                              |
+| `--decision` (list/record a PO ruling `DEC-<n>`)                                   | `workflow-validate.md`                              |
 | `--status`                                                                         | `workflow-status.md`                                |
 | `--auto`                                                                           | `workflow-auto.md`                                  |
 | `--update`                                                                         | `workflow-update.md`                                |
@@ -130,6 +131,9 @@ A new claim that contradicts an `approved` artifact is a stop point. Do NOT edit
 the contradiction verbatim with three choices: **Keep** (reject the new claim) · **Change** (and re-approve, with
 owner + date) · **Hybrid** (record both, plan a follow-up). Override: only the PO choosing **Change** with explicit
 re-approval touches approved content. Escalation: if unsure it truly contradicts, ask — never resolve it yourself.
+The chosen ruling is recorded in the Decision Register (`docs/product/decisions.md`, `DEC-<n>`; referenced from
+`.memory/judgments.json` via `po_ruling_ref`) so it is not re-litigated — see the `--decision` flow in
+`workflow-validate.md`.
 </GATE-NO-SILENT-REVERSAL>
 
 <GATE-NEVER-ASSUME>
@@ -161,12 +165,14 @@ persona identities/counts, core-value alignment, scope (`in`/`out`/`core-value`)
 All scripts live under `.claude/skills/product-spec/scripts/` and accept:
 
 ```
-<script>.py --root <project-dir> [--lang en|vi] [other flags]
+<script>.py --root <project-dir> [other flags]
 ```
 
-`--lang` is accepted by the prose/visual scripts whose output localizes (`visualize.py`, `render_export.py`,
-`generate_templates.py`); the analytical JSON feeders (`check_*`, `*_anchors.py`, `time_advisory.py`,
-`build_traceability_matrix.py`) emit lang-agnostic JSON with English keys and ignore it.
+`--lang en|vi` is accepted **only** by the prose/visual scripts whose output localizes (`visualize.py`,
+`render_export.py`, `generate_templates.py`). `status.py` and `check_fence.py` accept it but ignore it (their output is
+lang-agnostic). The analytical JSON feeders (`check_*`, `*_anchors.py`, `time_advisory.py`,
+`build_traceability_matrix.py`) do **not** accept `--lang` at all — passing it is an argparse error (exit 2); they emit
+lang-agnostic JSON with English keys. Pass `--lang` only to the scripts that take it.
 
 `--root` defaults to CWD. Scripts emit JSON to stdout. Analytical scripts always exit 0; `--strict` gating is your job,
 not the script's. The single exception is `strict_gate.py`, a CI-side wrapper that re-runs the analytical scripts and
@@ -217,6 +223,19 @@ Scripts available:
 - `migrate_multidim_fields.py` — bring a v1 spec up to the v2 schema by adding EMPTY placeholders
   (`risks: []`/`target_date: null`/`depends_on: []`/`competitive_parity: {}`/`competitors: []`). Dry-run default;
   `--apply` writes a `.bak` first, skips `approved` files (no-auto-edit-approved, G-A3), idempotent, always exits 0.
+- `decision_register.py` — Decision Register CLI (`--decision`): allocate / append / list / supersede `DEC-<n>` rulings
+  in `docs/product/decisions.md` (authoritative home for ruled drift; validate-before-write, append-only).
+- `judgment_cache.py` — incremental-validate cache (`.memory/judgments.json`): reuse LLM verdicts for unchanged nodes
+  (key = `check|scope|body_hash|lang|dep_hash`); `contradiction` never cached; caller-supplied `--model-id`; writes
+  `.memory/last_validated.json` on `--validate` only.
+- `behavioral_memory.py` — PO-style observations (`.memory/po-style.yaml`) + LLM self-corrections
+  (`.memory/self-corrections.json`), lang-keyed; enum home = `check_consistency.ENUMS`.
+- `preferences.py` — read/write `.memory/preferences.yaml` (closed-enum PO preferences with defaults).
+- `status.py` — read-only `--status` spec-health nudge: reads `.memory/last_validated.json`, lists unvalidated / drafts /
+  drift-since-last-validate. Never edits.
+- `fs_guard.py` — soft fence: `assert_under_docs_product` path-assert (resolve-then-contain, raises `FenceError`) at the
+  caller-path write chokepoints + memory writers.
+- `check_fence.py` — advisory git-status scan for files written outside `docs/product/`; always exits 0.
 - `install-vendor-mermaid.sh` / `install-vendor-markdown.sh` — one-time vendor of the Mermaid runtime and of marked +
   DOMPurify (the offline body-render sanitize chokepoint), called from `install.sh`.
 
@@ -323,6 +342,13 @@ docs/product/
 ├── exec-summary.md       (generated 1-page summary)
 ├── .session.md           (interview session state; committed; resumable)
 ├── change-log.md         (append-only delta log)
+├── decisions.md          (Decision Register: DEC-<n> rulings — authoritative home for ruled drift)
+├── .memory/              (committed memory layer)
+│   ├── judgments.json        (incremental-validate verdict cache)
+│   ├── last_validated.json   (validated-snapshot marker; written on --validate)
+│   ├── po-style.yaml         (PO-style observations)
+│   ├── self-corrections.json (LLM self-corrections)
+│   └── preferences.yaml      (closed-enum PO preferences)
 ├── exports/              (F1 read-once Export docs: <stem>-<ts>-<hash8>.md|html)
 ├── impact/               (impact-pass reports: <ts>.md — per-change downstream propagation)
 └── visuals/              (rendered visualizations, incl. board/explorer HTML)

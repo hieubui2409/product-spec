@@ -1,8 +1,7 @@
 """pack — deterministic tarball builder for cleanmatic:claude-pack.
 
 Modularized into ``cli``, ``tarball``, ``manifest_io``, ``templates``
-(each <200 LOC). See ``../../SKILL.md`` for the operating contract and
-``plan.md`` for locked signatures.
+(each <200 LOC). See ``../../SKILL.md`` for the operating contract.
 """
 
 from __future__ import annotations

@@ -70,7 +70,7 @@ Then invoke from Claude Code:
 - No story-point / hour estimation — stories carry only `size: S | M | L`.
 - No overwriting your manual edits — on `--update` it flags affected items and asks first.
 - No auto-flipping an `approved` decision — contradictions are surfaced for you to resolve (Keep / Change / Hybrid).
-- No internet at runtime — after install, everything runs on your machine.
+- No internet at runtime — after install, everything runs on your machine (one caveat: if Mermaid failed to vendor at install time, Mermaid **graph** views fall back to a CDN script at browser-render; re-run the installer to vendor it — ASCII and body views never reach a CDN).
 
 ---
 
@@ -153,10 +153,13 @@ Vietnamese phrasing is native-reviewed for natural wording.
 
 ## Privacy
 
-Both skills make **no network calls at runtime**. product-spec's one-time installer downloads `mermaid.min.js`,
-`marked.umd.js`, and `purify.min.js` from the public CDN (`cdn.jsdelivr.net`); each is then stored locally and verified
-against a pinned SHA-256 hash. claude-pack's safety filter **always drops** `.env`/secrets/keys, `.git/`, runtime
-caches, and session state from any bundle — non-removable via any flag.
+Both skills make **no network calls at runtime**. product-spec's one-time installer downloads the Mermaid, marked, and
+DOMPurify runtimes from the public CDN (`cdn.jsdelivr.net`); each is then stored locally as `mermaid.min.js` /
+`marked.min.js` / `purify.min.js` and verified against a pinned SHA-256 hash. (Degraded-install caveat: if
+`mermaid.min.js` failed to vendor, product-spec's Mermaid **graph** views fall back to a `cdn.jsdelivr.net` `<script>` at
+browser-render time — re-run the installer to vendor it; ASCII and body views never reach a CDN.) claude-pack's safety
+filter **always drops** `.env`/secrets/keys, `.git/`, runtime caches, and session state from any bundle — non-removable
+via any flag.
 
 ---
 

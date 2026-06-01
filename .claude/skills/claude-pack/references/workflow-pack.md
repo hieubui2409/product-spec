@@ -2,7 +2,7 @@
 
 The interactive (no-flag) flow. Activated when the PO invokes `/cleanmatic:claude-pack` without a manifest path and without category-override flags. Walks them through manifest authoring via `AskUserQuestion`, previews the build, then packs.
 
-**Hard rule (Researcher B audit Q4):** Python scripts NEVER call `AskUserQuestion`. The LLM is the UI layer; the script is the structural layer. `build_manifest.py` has three modes: `--discover`, `--list-questions`, `--write`.
+**Hard rule:** Python scripts NEVER call `AskUserQuestion`. The LLM is the UI layer; the script is the structural layer. `build_manifest.py` has three modes: `--discover`, `--list-questions`, `--write`.
 
 ## When This Flow Runs
 

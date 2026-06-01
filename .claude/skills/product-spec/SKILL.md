@@ -88,6 +88,7 @@ docs/product/
 ├── exec-summary.md           # generated 1-page summary
 ├── .session.md               # interview session state (committed; resumable)
 ├── change-log.md             # append-only delta log
+├── decisions.md              # Decision Register: DEC-<n> rulings (authoritative home for ruled drift)
 ├── exports/                  # F1 read-once Export docs (<stem>-<ts>-<hash8>.md|html)
 ├── impact/                   # impact-pass reports (<ts>.md — per-change downstream propagation)
 └── visuals/                  # rendered visualizations (ASCII / Mermaid / HTML; incl. board & explorer)

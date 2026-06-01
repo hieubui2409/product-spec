@@ -1,7 +1,7 @@
 """manifest_loader — parse, merge, validate, and resolve defaults for
 ``.claude/pack.manifest.yaml``.
 
-API surface (locked in plan.md):
+API surface:
 - ``load(path) -> dict``
 - ``merge_cli(manifest, cli) -> dict``
 - ``validate(manifest, root) -> list[str]``

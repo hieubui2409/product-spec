@@ -59,7 +59,7 @@ Output lands in `dist/claude-pack-{version}.tar.gz` + `.sha256` sidecar.
 ```
 
 Usage guide (task-oriented, all use cases as sample conversations): **[`GUIDE-VI.md`](./GUIDE-VI.md) / [`GUIDE-EN.md`](./GUIDE-EN.md)**.
-Full architecture: `references/maintainers-guide.md` (added in Phase 6).
+Full architecture: `references/maintainers-guide.md`.
 Reference index: see `SKILL.md` "Load-on-Demand References" table.
 
 ## FAQ

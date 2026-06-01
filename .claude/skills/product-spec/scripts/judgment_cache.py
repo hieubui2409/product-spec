@@ -61,6 +61,7 @@ import argparse
 import hashlib
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -95,6 +96,13 @@ def _cache_path(root) -> Path:
 
 def _last_validated_path(root) -> Path:
     return Path(root) / "docs" / "product" / ".memory" / "last_validated.json"
+
+
+def _now() -> str:
+    """Memory-layer UTC timestamp (`+00:00` offset form) — one home for the two
+    write paths below. Mirrors behavioral_memory._now; intentionally distinct from
+    spec_graph._now, which uses the `Z`-suffix graph-snapshot form."""
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 # ----------------------------------------------------------------------------
@@ -230,13 +238,12 @@ def store(root, key: str, verdict: Any, model_id: str,
     if key.split("|", 1)[0] in NEVER_CACHED:
         raise ValueError("contradiction is never cached")
 
-    from datetime import datetime, timezone
     cache = load_cache(root)
     if not _stamp_valid(cache, model_id):
         cache = _empty_cache(model_id)  # reset on a stamp mismatch
     entry: Dict[str, Any] = {
         "verdict": verdict,
-        "stored_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "stored_at": _now(),
     }
     if po_ruling_ref:
         entry["po_ruling_ref"] = po_ruling_ref
@@ -393,7 +400,6 @@ def write_last_validated(root, snapshot_path) -> Path:
     validated against snapshot X at time T"). It is written ON `--validate` ONLY — a bare
     `--viz --snapshot` writes the snapshot but never this marker, so the snapshot
     timeline and the validate timeline stay distinct."""
-    from datetime import datetime, timezone
     snap = Path(snapshot_path)
     # Fence the referenced snapshot path (it must live under docs/product/).
     assert_under_docs_product(snap, root)
@@ -406,7 +412,7 @@ def write_last_validated(root, snapshot_path) -> Path:
     payload = {
         "snapshot": snap.name,
         "snapshot_hash": snap_hash,
-        "validated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "validated_at": _now(),
     }
     path = _last_validated_path(root)
     assert_under_docs_product(path, root)

@@ -540,6 +540,67 @@ the structure remains stable and shared across both languages.
 
 ---
 
+### Priority 14 — Ask "what should I do next?" (Status)
+
+**When to use:** You come back after a break and want a quick health pulse — what changed since the last quality
+check, what's still in draft, what hasn't been validated yet. A read-only nudge; it never edits anything.
+
+The skill compares the current document set against the last time you ran a validation and tells you what drifted,
+what's unvalidated, and what's still a draft — so you know where to point your attention. It does not re-run the full
+quality check (that's Validate); it just reads the last-validated marker and reports.
+
+#### Conversation
+
+> **You:** What's the state of my spec — anything I should look at?
+>
+> **Skill:** Quick status (read-only, nothing changed):
+> - 🕒 3 items changed since your last validation (`PRD-CHECKOUT`, `PRD-CHECKOUT-E1`, story `…-S2`) — worth re-validating.
+> - 📝 2 still in *draft*: `PRD-SEARCH`, epic `PRD-SEARCH-E1`.
+> - ✅ Everything else matches the last validated snapshot.
+>
+> Want me to run a full validation on the changed items?
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --status
+```
+
+---
+
+### Priority 15 — Record a decision so it's never re-litigated (Decision Register)
+
+**When to use:** You made a deliberate call — kept the old wording, accepted a known trade-off, or resolved a
+contradiction — and want it remembered so the skill stops re-raising it. Or you just want to see the decisions
+you've recorded.
+
+Every explicit ruling is stored as `DEC-<n>` in `docs/product/decisions.md` (an append-only log). When a new claim
+contradicts an *approved* document, the skill surfaces it (Keep / Change / Hybrid) and records your choice here; you
+can also record one directly. Once a decision is on file, the skill treats it as settled and won't nag you about the
+same drift again — unless the underlying wording actually changes, in which case it asks whether your prior decision
+still applies.
+
+#### Conversation
+
+> **You:** Show me the decisions we've locked in.
+>
+> **Skill:** Recorded decisions:
+> - **DEC-1** — Keep guest checkout out of scope for v1 (accepted 2026-05-20).
+> - **DEC-2** — Allow the 7-day return window even though a competitor offers 30 (deliberate trade-off).
+>
+> **You:** Record that we're sticking with email-only login for now.
+>
+> **Skill:** Logged as **DEC-3** with today's date and your reason. I won't re-raise email-only login as a gap again.
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --decision         # list recorded decisions
+/cleanmatic:product-spec --decision DEC-2    # view one decision
+```
+
+---
+
 ## 4. A typical end-to-end workflow
 
 If you're just starting out, here's the recommended order:
