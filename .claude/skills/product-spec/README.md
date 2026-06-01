@@ -16,6 +16,8 @@ One-shot setup (idempotent). Requires Python 3.11+ and curl/wget. The installer:
 
 Add `--dev` (`./install.sh --dev`) to also install `pytest` + `pytest-cov` from `scripts/requirements-dev.txt` and run the script test suite as a smoke check. The default runtime install ships only `pyyaml` and skips the test gate.
 
+Add `--memory-hook` (`./install.sh --memory-hook`) to opt in to the Tier-1 memory-write Stop-hook reminder (registered into `.claude/settings.local.json`; `--memory-hook-shared` targets the committed `settings.json`). It is **opt-in only and never auto-registered** — a plain `./install.sh` leaves your hooks untouched. See `references/memory-enforcement.md`.
+
 ## Quickstart
 
 Invoke from Claude Code:
@@ -24,7 +26,7 @@ Invoke from Claude Code:
 /cleanmatic:product-spec
 ```
 
-With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, add stories, validate, update, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--validate`, `--strict`, `--approve`, `--update`, `--decision`, `--status`, `--summary`, `--viz <view>`, `--format ascii|mermaid|html`, `--lang en|vi`.
+With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, add stories, validate, update, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--validate`, `--strict`, `--approve`, `--update`, `--decision`, `--status`, `--summary`, `--viz <view>`, `--format ascii|mermaid|html`, `--lang en|vi`, `--voice` (record PO voice), `--reflect` (retroactive memory harvest).
 
 ## Layout
 

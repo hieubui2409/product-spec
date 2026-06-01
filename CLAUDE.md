@@ -103,6 +103,8 @@ For each flag, load the relevant reference from `.claude/skills/product-spec/ref
 | `--update`                                                                         | `workflow-update.md`                                |
 | `--viz` (incl. `board`/`explorer`), `--format`, `--lang`, `--group-by`, `--layers` | `visualization-spec.md` (+ `scripts/visualize.py`)  |
 | `--export`, `--layers`, `--depth`, `--compact-mode`                                | `workflow-export.md` (+ `scripts/render_export.py`) |
+| `--reflect` (retroactive memory harvest)                                           | `workflow-reflect.md` (+ `scripts/reflect_scan.py`) |
+| memory-write reliability (forcing-functions · opt-in Stop hook · `--memory-hook`)  | `memory-enforcement.md` (the single home)           |
 | *(every turn, no flag needed)*                                                     | `guardrails-and-boundaries.md` — **load regardless of flag** |
 
 Load only the references relevant to the active flag — except `guardrails-and-boundaries.md`, which applies on every
@@ -125,6 +127,9 @@ regardless of flag**.
   — redirect to a story anyway, do not read source to "help implement".
 - **Skipped a confirmation? Name the residual risk.** If the PO waves off a check ("just do it, stop asking"), honour
   it but state in one line what that check would have caught, then proceed. (This never waives the two GATEs below.)
+- **Memory hygiene.** A ruling, a structural slip, or a fence breach that isn't recorded is forgotten. Run the validate
+  Memory pass, honour the 3D per-prose-turn forcing-function, and catch up old gaps with `--reflect` — full model (+ the
+  honest ceiling: enforcement raises the consideration-rate, never the write-quality) in `references/memory-enforcement.md`.
 
 <GATE-NO-SILENT-REVERSAL>
 A new claim that contradicts an `approved` artifact is a stop point. Do NOT edit, pick a side, or tidy it up. Surface
@@ -236,6 +241,13 @@ Scripts available:
 - `fs_guard.py` — soft fence: `assert_under_docs_product` path-assert (resolve-then-contain, raises `FenceError`) at the
   caller-path write chokepoints + memory writers.
 - `check_fence.py` — advisory git-status scan for files written outside `docs/product/`; always exits 0.
+- `memory_gap.py` — the SINGLE detection home for memory-write gaps: emits unrecorded-signal JSON
+  (`fence_breach` / `validate_no_marker` / `approved_changed_no_dec` / `judged_not_stored`) by reusing
+  `check_fence`/`spec_graph`/`decision_register`/`judgment_cache`; makes no flag/no-flag judgment; always exits 0.
+- `reflect_scan.py` — SCRIPT half of `--reflect`: git-degrade-safe anchors (`commits_since_last`, `revert_fix_candidates`,
+  `existing_memory` dedup index) for the retroactive harvest; emits JSON, exits 0, never crashes with no git.
+- The opt-in Tier-1 Stop hook handler ships at top-level `.claude/hooks/memory_gap_hook.py` (Python/venv; reuses
+  `memory_gap.py`; registered only via `install.sh --memory-hook`, never auto-registered — see `memory-enforcement.md`).
 - `install-vendor-mermaid.sh` / `install-vendor-markdown.sh` — one-time vendor of the Mermaid runtime and of marked +
   DOMPurify (the offline body-render sanitize chokepoint), called from `install.sh`.
 

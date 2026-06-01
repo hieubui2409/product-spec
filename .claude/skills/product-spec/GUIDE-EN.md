@@ -601,6 +601,107 @@ still applies.
 
 ---
 
+### Priority 16 — Make sure nothing important slips through the cracks (the validate "Memory pass")
+
+**When to use:** You don't ask for this — it happens automatically every time you run a quality check (Validate). It's
+worth knowing it's there, so you understand why the report ends with a short "what did we remember to write down?" note.
+
+Decisions, corrections, and boundary slips only help later if they're actually *recorded*. So every Validate report ends
+with a **Memory pass**: a quick, explicit answer to three questions — did any contradiction become a recorded decision?
+did any structural slip get noted so it isn't repeated? are there any "looks unrecorded" signals worth acting on? Even a
+plain "nothing to record" is an honest, deliberate answer — not a skipped step. It only ever *prompts* you; it never
+records anything behind your back, and it never claims a slip is captured when you've decided it isn't worth recording.
+
+#### Conversation
+
+> **You:** Validate my spec.
+>
+> **Skill:** Quality report: traceability clean, two quality notes (listed above). And a quick **Memory pass**:
+> - 🧠 Decisions: the checkout-scope contradiction we resolved earlier is on file as **DEC-4** — nothing new to add.
+> - 🧠 Corrections: no structural slip this round.
+> - 🧠 Signals: one note — a file looks like it was edited outside `docs/product/`. Want me to record that as a
+>   self-correction, or is it expected?
+>
+> **You:** It's expected, leave it.
+>
+> **Skill:** Understood — I'll note it as acknowledged so I don't keep flagging the same thing.
+
+#### Equivalent flag
+
+The Memory pass is built into Validate — there's no separate flag. Just run:
+
+```
+/cleanmatic:product-spec --validate
+```
+
+---
+
+### Priority 17 — Catch up on memories you skipped earlier (Reflect)
+
+**When to use:** After a long stretch of work — a big import, lots of changes without running Validate, or an old spec you
+just brought in — you suspect some decisions or corrections were never written down. Reflect goes back and *harvests* them.
+
+The skill scans what's **written down** — your git history (if any) and the current document/memory state — and proposes
+the rulings and corrections that look like they were made but never recorded. Each one is just a **proposal**: you
+**accept**, **edit the wording**, or **reject** it, and only the ones you accept get saved. It runs only when you ask
+(it spends extra effort to think carefully), and it works even without git — it just harvests from your files. One honest
+limit: it can only catch what's *written down*, never something you only *said* in chat.
+
+#### Conversation
+
+> **You:** I imported a big spec and made lots of edits without validating. Can you catch up on anything we should have
+> recorded?
+>
+> **Skill:** I scanned the history and current state. Three things look unrecorded:
+> - A commit "revert guest-checkout scope" — looks like a decision. Record as a ruling?
+> - A fix "tighten return-window wording" — looks like a self-correction. Note it?
+> - Everything else is already on file — nothing to re-propose.
+>
+> **You:** Yes to the first as a decision, skip the second.
+>
+> **Skill:** Recorded the scope decision as **DEC-5** with your reason. Left the wording fix alone. Nothing else to catch up.
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --reflect
+```
+
+---
+
+### Priority 18 — Turn on an automatic memory reminder (opt-in Stop hook)
+
+**When to use:** You (or your build team) want the skill to **remind you at the end of a session** if a decision, a
+correction, or a boundary slip looks unrecorded — without having to remember to check yourself. This is an opt-in setup
+step, done once.
+
+This reminder is **off by default** and is **never turned on for you automatically** — auto-changing your settings would
+be a trust violation. You opt in with one install command, and you can turn it off any time. When on, it gently nudges at
+the end of a conversation if something looks unrecorded; only an outside-the-folder boundary breach (an unambiguous slip)
+asks you to fix it before finishing.
+
+#### Conversation
+
+> **You:** Can the skill remind me at the end if I forgot to record a decision?
+>
+> **Skill:** Yes — that's an opt-in reminder, off by default. Run the one-time setup command below to turn it on (it only
+> changes your local settings, never anything shared, and you can remove it any time). After that, I'll give you a quick
+> end-of-session nudge whenever something looks unrecorded.
+
+#### Equivalent flag
+
+This is an install option, not an in-skill flag. Run once in the project:
+
+```
+./install.sh --memory-hook          # turn the reminder on (local settings only)
+./install.sh --memory-hook-shared   # turn it on for the whole team (committed settings)
+```
+
+A plain `./install.sh` never touches your hooks. To turn it off, remove the `memory_gap_hook.py` entries from your
+settings file.
+
+---
+
 ## 4. A typical end-to-end workflow
 
 If you're just starting out, here's the recommended order:

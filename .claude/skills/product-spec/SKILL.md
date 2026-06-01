@@ -57,6 +57,8 @@ spec tree in ASCII, Mermaid, and self-contained HTML.
 | `--depth <preset>`         | `--export` verbosity: `context` (default) · `full` · `brief`.                                                                                                                                                                                                                                                                                                                               |
 | `--compact-mode <m>`       | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). `llm` requires `--format md` — it is rejected with `--format html` (DOMPurify strips the markers and no `.md` is written for the rewrite step).                                                                                       |
 | `--lang <code>`            | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; body-view facets/labels + in-view value labels + export headings localize. Graph/HTML-native page chrome (page `<title>`, panel headers) stays English.                                                                                                                                                                                                                                                       |
+| `--voice`                  | Record the PO's voice into `.memory/po-style.yaml` deterministically (`--register`/`--vocabulary`/`--recurring-asks`/`--do`/`--dont`, lang-keyed) instead of relying on the LLM noticing a wording correction. Thin CLI over `record_po_style` (one writer home). See `references/behavioral-memory.md`.                                                                                                                                                                                                  |
+| `--reflect`                | Retroactive memory harvest: when inline forcing-functions were skipped, scan git + `.memory/` (git-degrade-safe), spawn the read-only opus harvester, and propose unrecorded rulings (`DEC-<n>`) / self-corrections / voice for PO confirm-then-persist. On-demand + soft `--status` suggestion. See `references/workflow-reflect.md`.                                                                                                                                                                    |
 
 ## No-Flag Menu
 
@@ -157,6 +159,11 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 > **missing**, do NOT silently fail or fall back to system Python — pause and ask the user via **AskUserQuestion** to
 > confirm running the installer (`./install.sh` POSIX / `install.ps1 -ExecutionPolicy Bypass` Windows, both idempotent).
 > Run it only on approval, then retry the script.
+
+> 🪝 **Opt-in memory Stop hook:** `./install.sh --memory-hook` registers the Tier-1 memory-write reminder into
+> `.claude/settings.local.json` (gitignored; `--memory-hook-shared` targets the committed `settings.json`). It is
+> **opt-in only and never auto-registered** — a plain `./install.sh` does not touch hooks. Full posture + per-signal
+> policy: `references/memory-enforcement.md`.
 - `assets/templates/` — markdown templates with `{{token}}` substitution, the shared `_viewer-head.html` design-system
   partial, and the export/board/explorer HTML shells.
 - `assets/vendor/` — vendored JS for self-contained offline HTML: `mermaid.min.js` (graph views) + `marked.min.js` +
