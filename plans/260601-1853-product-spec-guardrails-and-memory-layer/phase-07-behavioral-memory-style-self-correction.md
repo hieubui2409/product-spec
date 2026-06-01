@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "behavioral-memory-style-self-correction"
-status: pending
+status: done
 priority: P2
 effort: "6h"
 dependencies: [4, 5, 6, 8]

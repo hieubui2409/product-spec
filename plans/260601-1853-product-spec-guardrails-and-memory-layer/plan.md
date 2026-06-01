@@ -1,7 +1,7 @@
 ---
 title: "product-spec: guardrails + memory layer (combined)"
 description: "Guardrails (off-topic/no-code/anti-rationalization) + references restructure (split+DRY) + memory 3-store + behavioral 3D/3E + --status. Mode: --hard --tdd, workflow-orchestratable."
-status: pending
+status: done
 priority: P1
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: [product-spec, memory, guardrails, references, tdd]
@@ -31,15 +31,15 @@ Source-of-truth input (decisions LOCKED): `plans/reports/from-brainstorm-to-plan
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [body-hash-foundation](./phase-01-body-hash-foundation.md) | Pending |
-| 2 | [references-restructure](./phase-02-references-restructure.md) | Pending |
-| 3 | [guardrails-claude-md-and-boundaries](./phase-03-guardrails-claude-md-and-boundaries.md) | Pending |
-| 4 | [workflow-guardrails](./phase-04-workflow-guardrails.md) | Pending |
-| 5 | [memory-core-decisions-prefs](./phase-05-memory-core-decisions-prefs.md) | Pending |
-| 6 | [judgment-cache-incremental-validate](./phase-06-judgment-cache-incremental-validate.md) | Pending |
-| 7 | [behavioral-memory-style-self-correction](./phase-07-behavioral-memory-style-self-correction.md) | Pending |
-| 8 | [soft-fence-and-status-nudge](./phase-08-soft-fence-and-status-nudge.md) | Pending |
-| 9 | [claude-pack-impact-verify](./phase-09-claude-pack-impact-verify.md) | Pending |
+| 1 | [body-hash-foundation](./phase-01-body-hash-foundation.md) | Done |
+| 2 | [references-restructure](./phase-02-references-restructure.md) | Done |
+| 3 | [guardrails-claude-md-and-boundaries](./phase-03-guardrails-claude-md-and-boundaries.md) | Done |
+| 4 | [workflow-guardrails](./phase-04-workflow-guardrails.md) | Done |
+| 5 | [memory-core-decisions-prefs](./phase-05-memory-core-decisions-prefs.md) | Done |
+| 6 | [judgment-cache-incremental-validate](./phase-06-judgment-cache-incremental-validate.md) | Done |
+| 7 | [behavioral-memory-style-self-correction](./phase-07-behavioral-memory-style-self-correction.md) | Done |
+| 8 | [soft-fence-and-status-nudge](./phase-08-soft-fence-and-status-nudge.md) | Done |
+| 9 | [claude-pack-impact-verify](./phase-09-claude-pack-impact-verify.md) | Done |
 
 ## Workflow-Orchestration Spec (ultracode-runnable)
 

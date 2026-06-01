@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "body-hash-foundation"
-status: pending
+status: done
 priority: P1
 effort: "3h"
 dependencies: []

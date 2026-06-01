@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "references-restructure"
-status: pending
+status: done
 priority: P1
 effort: "4h"
 dependencies: [1]

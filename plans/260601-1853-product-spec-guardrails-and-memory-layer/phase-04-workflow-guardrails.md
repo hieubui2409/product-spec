@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "workflow-guardrails"
-status: pending
+status: done
 priority: P2
 effort: "5h"
 dependencies: [2]

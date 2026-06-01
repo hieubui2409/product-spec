@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "claude-pack-impact-verify"
-status: pending
+status: done
 priority: P2
 effort: "2h"
 dependencies: [1, 2, 3, 4, 5, 6, 7, 8]

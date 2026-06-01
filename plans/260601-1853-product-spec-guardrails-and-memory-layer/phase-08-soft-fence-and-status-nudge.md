@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "soft-fence-and-status-nudge"
-status: pending
+status: done
 priority: P2
 effort: "5h"
 dependencies: []

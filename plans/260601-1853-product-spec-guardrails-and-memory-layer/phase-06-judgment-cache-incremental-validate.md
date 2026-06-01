@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "judgment-cache-incremental-validate"
-status: pending
+status: done
 priority: P1
 effort: "9h"
 dependencies: [1, 5, 8]

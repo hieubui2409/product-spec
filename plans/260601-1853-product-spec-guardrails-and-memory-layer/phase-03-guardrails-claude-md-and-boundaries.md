@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "guardrails-claude-md-and-boundaries"
-status: pending
+status: done
 priority: P1
 effort: "4h"
 dependencies: [2]

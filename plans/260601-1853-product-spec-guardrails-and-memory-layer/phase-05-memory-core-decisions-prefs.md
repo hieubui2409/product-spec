@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "memory-core-decisions-prefs"
-status: pending
+status: done
 priority: P1
 effort: "6h"
 dependencies: [2, 8]
