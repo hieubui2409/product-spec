@@ -17,6 +17,10 @@ Keys (all optional in the file):
   detail_level         concise | standard | verbose
   prioritization       moscow | value-effort | manual
   dismissed_reminders  list of reminder keys the PO asked to stop seeing
+  critique_drift_threshold  int >=1 (default 3) — node body_hash changes since the
+                       last critique before the opt-in spec-critique nudge fires.
+                       Non-enum: load() passes it through verbatim (no int-check);
+                       the consumer (critique_scan) coerces int() defensively.
 """
 
 import sys
@@ -45,6 +49,10 @@ DEFAULTS: Dict[str, Any] = {
     "detail_level": "standard",
     "prioritization": "moscow",
     "dismissed_reminders": [],
+    # Consumed by cleanmatic:spec-critique (a separate skill). Non-enum scalar: the
+    # read path below leaves it verbatim, so a hand-edited non-int degrades on the
+    # consumer side (critique_scan coerces int()), never here.
+    "critique_drift_threshold": 3,
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
