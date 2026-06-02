@@ -50,6 +50,17 @@ Keys (all optional in the file):
                        tokens are IN/OUT) lives in voice-and-tone.md's IN/OUT table, not
                        here. Euphemistic minced oaths (đậu xanh) are IN there; only the
                        LITERAL family-target form (đụ má mày) is OUT.
+  critique_inherit     on | off (default on) — spec-critique cross-critique INHERIT
+                       (parent→child): surface a parent's prior blockers/DEC as the
+                       child's inherited risk. ENUM-registered (not bare bool) so the
+                       YAML off/on→token coercion below maps it back to "off"/"on".
+  critique_rollup      on | off (default on) — spec-critique descendant ROLLUP
+                       (child→parent): aggregate critiqued children's verdicts onto the
+                       parent ("3/5 stories unbuildable").
+  critique_inherit_depth  nearest | deep (default nearest) — how far up the ancestry the
+                       INHERIT pass walks: nearest critiqued ancestor + most-recent
+                       scope=all (nearest), or every critiqued ancestor (deep). The
+                       --no-inherit flag beats --inherit deep (off wins over depth).
 
 The level-applicability of the register keys (gender at 7, dialect at ≥8, profanity at
 9) and the universal-harm floor are LLM-workflow/voice concerns, not schema concerns
@@ -103,6 +114,11 @@ DEFAULTS: Dict[str, Any] = {
     # Default = strong: level 9 already re-confirms with the PO on EVERY run, so when it
     # does fire, it runs at full power rather than a half-measure.
     "critique_profanity": "strong",
+    # spec-critique cross-critique context (both default ON, opt-out). ENUM on/off so
+    # the YAML bool coercion below maps `critique_inherit: off` back to the "off" token.
+    "critique_inherit": "on",
+    "critique_rollup": "on",
+    "critique_inherit_depth": "nearest",
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
@@ -121,6 +137,11 @@ ENUMS: Dict[str, frozenset] = {
     # euphemism đậu xanh is IN, the literal đụ má mày is OUT) lives in voice-and-tone.md's
     # IN/OUT table, not in this enum.
     "critique_profanity": frozenset({"off", "abbrev", "strong"}),
+    # on/off ENUM-registered (mirroring critique_profanity) so the YAML bool coercion
+    # maps `off`/`on` back to the string token instead of leaving a bare Python bool.
+    "critique_inherit": frozenset({"on", "off"}),
+    "critique_rollup": frozenset({"on", "off"}),
+    "critique_inherit_depth": frozenset({"nearest", "deep"}),
 }
 
 

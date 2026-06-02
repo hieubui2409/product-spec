@@ -38,10 +38,39 @@ def test_defaults_when_no_file(tmp_path):
     assert prefs["critique_profanity"] == "strong"
 
 
-def test_defaults_has_exactly_ten_keys(tmp_path):
-    # Guards the DEFAULTS/ENUMS symmetry contract as keys are added.
+def test_defaults_has_exactly_thirteen_keys(tmp_path):
+    # Guards the DEFAULTS/ENUMS symmetry contract as keys are added. 13 = the original
+    # 10 + the 3 spec-critique cross-critique keys (critique_inherit/rollup/depth).
     assert set(preferences.load(tmp_path)) == set(preferences.DEFAULTS)
-    assert len(preferences.DEFAULTS) == 10
+    assert len(preferences.DEFAULTS) == 13
+
+
+def test_cross_critique_defaults(tmp_path):
+    prefs = preferences.load(tmp_path)
+    assert prefs["critique_inherit"] == "on"
+    assert prefs["critique_rollup"] == "on"
+    assert prefs["critique_inherit_depth"] == "nearest"
+
+
+def test_critique_inherit_off_coerces_to_token(tmp_path):
+    # YAML 1.1 parses bare `off` as Python False; the enum coercion must map it
+    # back to the "off" string token (NOT leave a bare False, NOT drop the key).
+    _write_prefs(tmp_path, "critique_inherit: off\n")
+    assert preferences.load(tmp_path)["critique_inherit"] == "off"
+    _write_prefs(tmp_path, "critique_rollup: off\n")
+    assert preferences.load(tmp_path)["critique_rollup"] == "off"
+
+
+def test_critique_inherit_depth_deep_round_trips(tmp_path):
+    _write_prefs(tmp_path, "critique_inherit_depth: deep\n")
+    assert preferences.load(tmp_path)["critique_inherit_depth"] == "deep"
+
+
+def test_cross_critique_save_round_trip(tmp_path):
+    preferences.save(tmp_path, {"critique_inherit": "off", "critique_inherit_depth": "deep"})
+    prefs = preferences.load(tmp_path)
+    assert prefs["critique_inherit"] == "off"
+    assert prefs["critique_inherit_depth"] == "deep"
 
 
 def test_critique_level_enum_accepts_6_and_9(tmp_path):

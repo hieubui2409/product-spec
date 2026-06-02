@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""critique_inherit.py — the two cross-critique directions as deterministic bundle
+keys, consumed by the CONSOLIDATOR only (lenses stay blind — anti-anchoring).
+
+  * inherited_context (parent→child): a parent's prior blockers / DEC-worthy findings
+    surfaced as the child's inherited risk. Source = the findings-INDEX, classified
+    by GRAPH RELATION against the current scope.
+  * descendant_rollup (child→parent): aggregate a parent's already-critiqued children
+    ("3/5 critiqued children carry blockers → delivery risk at this parent").
+
+Classification uses `spec_graph.ancestors()`/`downstream()` — the ancestor SET, NOT
+the single `prd`/`epic` frontmatter fields (wrong for multi-parent reach). One pass
+over the index, deterministic, no wall-clock. The keys sit at the top of the bundle
+the lenses receive but the lens prompt is told to ignore them (consolidator-only).
+"""
+
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Set
+
+import critique_cache
+
+
+def _psp_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "product-spec" / "scripts"
+
+
+def _import_spec_graph():
+    sd = str(_psp_dir())
+    if sd not in sys.path:
+        sys.path.insert(0, sd)
+    import spec_graph
+    return spec_graph
+
+
+# The index is the LOSSY blockers + DEC-worthy cache; inherited surfaces only those.
+_INHERIT_SEVERITIES = frozenset({"blocker"})
+
+
+def _node_of(evidence_id: str) -> str:
+    """The node id an evidence-ID points at: strip a trailing `:line` citation
+    (`PRD-AUTH:12` → `PRD-AUTH`). IDs themselves carry no colon, so split-once is safe."""
+    return str(evidence_id).split(":", 1)[0]
+
+
+def _live_ids(graph: Dict[str, Any]) -> Set[str]:
+    return {n["id"] for n in graph.get("nodes", [])}
+
+
+def _classify(evidence_id: str, scope: str, ancestors_set: Set[str],
+              descendants_set: Set[str]) -> str:
+    """Bucket an evidence-ID vs the current scope X:
+      node == X or descendant of X → 'repeat' (existing repeat-offense plumbing)
+      node is an ancestor of X      → 'inherited'
+      unrelated                     → 'drop'."""
+    node = _node_of(evidence_id)
+    if node == scope or node in descendants_set:
+        return "repeat"
+    if node in ancestors_set:
+        return "inherited"
+    return "drop"
+
+
+def _index_rows(root) -> List[Dict[str, Any]]:
+    """Index entries deduped per evidence-ID, keeping the most-recent report_ts."""
+    best: Dict[str, Dict[str, Any]] = {}
+    for entry in critique_cache.load_index(root).values():
+        eid = entry.get("evidence_id")
+        if not eid:
+            continue
+        cur = best.get(eid)
+        if cur is None or str(entry.get("report_ts") or "") >= str(cur.get("report_ts") or ""):
+            best[eid] = entry
+    return list(best.values())
+
+
+def _inherited_candidates(root, graph, scope, fresh_only) -> List[Dict[str, Any]]:
+    sg = _import_spec_graph()
+    anc = sg.ancestors(graph, scope)
+    desc = sg.downstream(graph, scope)
+    live = _live_ids(graph)
+    out: List[Dict[str, Any]] = []
+    for entry in _index_rows(root):
+        eid = entry["evidence_id"]
+        if _classify(eid, scope, anc, desc) != "inherited":
+            continue
+        node = _node_of(eid)
+        if fresh_only and node not in live:  # stale parent (deleted node) → drop
+            continue
+        sev = entry.get("severity")
+        if sev not in _INHERIT_SEVERITIES and not entry.get("dec_worthy"):
+            continue  # blockers + DEC-worthy only
+        out.append({
+            "node": node,
+            "scope": entry.get("scope"),
+            "source": f"{node}@{entry.get('report_ts')}",
+            "evidence_id": eid,
+            "severity": sev,
+            "why": entry.get("why"),
+            "fix": entry.get("fix"),
+            "dec_worthy": bool(entry.get("dec_worthy")),
+        })
+    return out
+
+
+def _public(c: Dict[str, Any]) -> Dict[str, Any]:
+    """The bundle-facing shape (drop the internal `node`/`scope` bookkeeping)."""
+    return {k: c[k] for k in ("source", "evidence_id", "severity", "why", "fix",
+                              "dec_worthy")}
+
+
+def build_inherited_context(root, graph, scope: str, depth: str = "nearest",
+                            fresh_only: bool = True) -> List[Dict[str, Any]]:
+    """Parent→child inherited findings (blockers + DEC-worthy, full text, fresh-only).
+
+    depth='nearest' (default): nearest critiqued ancestor per branch + every
+    scope=='all' finding. depth='deep': every critiqued ancestor. Empty when the index
+    has nothing relevant (ON costs nothing without context)."""
+    cands = _inherited_candidates(root, graph, scope, fresh_only)
+    if depth == "deep" or not cands:
+        return [_public(c) for c in cands]
+    sg = _import_spec_graph()
+    cand_nodes = {c["node"] for c in cands}
+    kept: List[Dict[str, Any]] = []
+    for c in cands:
+        if c.get("scope") == "all":
+            kept.append(c)
+            continue
+        node = c["node"]
+        # Nearest per branch: drop this node if a NEARER critiqued ancestor exists —
+        # i.e. some other candidate b has THIS node among its own ancestors.
+        nearer = any(b != node and node in sg.ancestors(graph, b) for b in cand_nodes)
+        if not nearer:
+            kept.append(c)
+    return [_public(c) for c in kept]
+
+
+def build_descendant_rollup(root, graph, scope: str,
+                            fresh_only: bool = True) -> Dict[str, Any]:
+    """Child→parent rollup: bounded child counts + blocker children, fresh-only.
+    No-op (empty dict) when the parent has no critiqued children. Direction is UP.
+
+    The "was critiqued" set comes from `critique-state.json` (written per real run
+    REGARDLESS of blockers), NOT the lossy blockers-only index — so a CLEAN-critiqued
+    child still counts toward the denominator (else verdict_line is always N/N).
+    Blocker counts come from the index."""
+    sg = _import_spec_graph()
+    children = sorted(set(sg.children_of(graph).get(scope, [])))
+    if not children:
+        return {}
+    live = _live_ids(graph)
+    child_set = set(children)
+    # Critiqued children = those with a per-scope critique-state record (clean or not).
+    state = critique_cache.load_state(root)
+    critiqued: Set[str] = {c for c in children
+                           if c in state and (not fresh_only or c in live)}
+    blocker_counts: Dict[str, int] = {}
+    for entry in _index_rows(root):
+        node = _node_of(entry["evidence_id"])
+        if node not in child_set:
+            continue
+        if fresh_only and node not in live:
+            continue
+        critiqued.add(node)  # a blocker child is critiqued even if state is absent
+        if entry.get("severity") == "blocker" or entry.get("dec_worthy"):
+            blocker_counts[node] = blocker_counts.get(node, 0) + 1
+    if not critiqued:
+        return {}
+    blocker_children = [{"id": n, "blocker_count": blocker_counts[n]}
+                        for n in sorted(blocker_counts)]
+    verdict = (f"{len(blocker_children)}/{len(critiqued)} critiqued children "
+               f"carry blockers")
+    return {
+        "critiqued_child_count": len(critiqued),
+        "total_child_count": len(children),
+        "blocker_children": blocker_children,
+        "verdict_line": verdict,
+    }
+
+
+def index_report_findings(root, report_ts: str, scope: str,
+                          findings: List[Dict[str, Any]]) -> Any:
+    """Write-time wrapper over `critique_cache.upsert_findings`: feed this run's
+    blockers + DEC-worthy to the findings-index for the next critique's inherit /
+    repeat-offense. LOSSY by design — only blockers + DEC-worthy are indexed."""
+    rows: List[Dict[str, Any]] = []
+    for f in findings:
+        eid = f.get("evidence_id")
+        if not eid:
+            continue
+        if f.get("severity") != "blocker" and not f.get("dec_worthy"):
+            continue
+        rows.append({
+            "evidence_id": eid,
+            "severity": f.get("severity"),
+            "why": f.get("why") or f.get("why_it_dies"),
+            "fix": f.get("fix"),
+            "dec_worthy": bool(f.get("dec_worthy")),
+        })
+    return critique_cache.upsert_findings(root, report_ts, scope, rows)
