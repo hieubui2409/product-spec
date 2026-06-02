@@ -22,7 +22,9 @@ Path passed by the main agent. Schema as the other lenses, plus you lean on:
 - `competitors`, the BRD's declared competitor list (`{id,name,url,threat}`). Your primary
   grounding.
 - `ancestry.brd_goals`, the revenue/market goals the target is supposed to serve.
-- `lang`, `--level`, and a `--no-web` flag (the main agent tells you if web is disabled).
+- `lang` (your output language; the consolidator — NOT you — drives the voice/level) and a
+  `--no-web` flag (the main agent tells you if web is disabled). Ignore `inherited_context` /
+  `descendant_rollup` if present (consolidator-only, anti-anchoring).
 
 ## Web research: grounded, never fabricated
 
@@ -60,7 +62,7 @@ Return a JSON array (≤~3 per severity). Each:
 {
   "lens": "market",
   "evidence": "PRD-AUTH:1",          // <artifact_id>:<line>; for a market-grounding gap, the BRD line
-  "critique": "<grounded sarcastic observation in active lang/level>",
+  "critique": "<a NEUTRAL grounded observation in the active lang — the WHAT, not a voiced barb; the consolidator applies the level voice>",
   "why_it_dies": "<the market consequence, REQUIRED, non-empty>",
   "fix": "<concrete spec/positioning correction, REQUIRED, non-empty>",
   "severity": "blocker | major | minor",
@@ -84,7 +86,8 @@ Then a one-paragraph plain market verdict.
   grounding rather than inventing it.
 - **Scope-aware.** At a single-story scope the market lens is often thin, say so honestly and
   return few/no findings rather than stretching.
-- **Voice.** Per `voice-and-tone.md` at `--level` (1..9). You emit grounded findings; the
-  consolidator renders the level voice/register downstream (1 to 4 artifact-only; 5 lifts; 6
-  enforces a PO roast; 7-9 escalate register/profanity, main-agent-gated); every line ends in
-  a fix.
+- **Voice — NEUTRAL; you do NOT voice it.** Emit `critique` as a plain, grounded
+  observation in the active `lang` only — the WHAT, never sarcastic, never level-tuned. The
+  **consolidator is the SOLE home for voice/level/register** (`voice-and-tone.md`, 1..9). This
+  is load-bearing: a cached lens finding must be level-INDEPENDENT so `consolidate_only` can
+  re-render it at any level without re-running you; every line still ends in a fix.

@@ -53,6 +53,24 @@ FIX_LABEL = {
 CITATION = re.compile(r"\b([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*):(\d+)\b")
 
 
+def _body_after_frontmatter(text: str) -> str:
+    """Return the report body with a leading YAML frontmatter block removed.
+
+    Once regenerated, the committed reports carry a `---`…`---` frontmatter; the grounding
+    scan must run on the BODY only — the frontmatter `body_hash` map (`ID: 8hex`) would
+    otherwise feed the citation regex a false `ID:<all-digit-hash>` match. A report with
+    no frontmatter (the current examples) is returned unchanged."""
+    if not text.startswith("---"):
+        return text
+    lines = text.splitlines()
+    end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
+    return "\n".join(lines[end + 1:]) if end is not None else text
+
+
+def _read_body(path: Path) -> str:
+    return _body_after_frontmatter(path.read_text(encoding="utf-8"))
+
+
 def _id_to_lines() -> dict:
     """Map every artifact id in the acme-shop spec to its file's line count."""
     out = {}
@@ -91,7 +109,7 @@ def _finding_lines(text: str):
 
 @pytest.mark.parametrize("fname", EXAMPLE_FILES)
 def test_example_citations_resolve(fname):
-    text = (EXAMPLES / fname).read_text(encoding="utf-8")
+    text = _read_body(EXAMPLES / fname)
     cites = CITATION.findall(text)
     assert cites, f"{fname}: no ID:line citation found"
     for art_id, line_s in cites:
@@ -105,7 +123,7 @@ def test_example_citations_resolve(fname):
 
 @pytest.mark.parametrize("fname", EXAMPLE_FILES)
 def test_example_has_fix_label(fname):
-    text = (EXAMPLES / fname).read_text(encoding="utf-8")
+    text = _read_body(EXAMPLES / fname)
     key = fname.replace("critique-acme-shop-mobile-", "").replace(".md", "")
     assert FIX_LABEL[key] in text, f"{fname}: missing the level fix-label {FIX_LABEL[key]!r}"
 
@@ -113,7 +131,7 @@ def test_example_has_fix_label(fname):
 @pytest.mark.parametrize("fname", EXAMPLE_FILES)
 def test_every_finding_line_is_grounded(fname):
     """Ratio rule: no finding line stands without a citation (scorn never floats free)."""
-    text = (EXAMPLES / fname).read_text(encoding="utf-8")
+    text = _read_body(EXAMPLES / fname)
     findings = _finding_lines(text)
     assert findings, f"{fname}: no finding lines parsed"
     for f in findings:

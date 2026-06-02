@@ -141,6 +141,61 @@
       "assertions": [
         {"id": "critique-detail-sizes-report", "_gating": "llm_advisory", "text": "With critique_detail_level=verbose the report is fuller (full per-lens + extended why-it-dies + more sources); with concise it is top-3 + one terse line per lens. The product-spec detail_level value does not affect critique report size, and critique_detail_level does not affect product-spec output."}
       ]
+    },
+    {
+      "id": 13,
+      "prompt": "Run /spec-critique PRD-CHECKOUT --level 3 over acme-shop, then re-run the SAME scope+level with no spec change, then re-run at --level 7 (still no spec change), then edit one story body and re-run.",
+      "expected_output": "Provenance reuse drives the run: 2nd run = full (report already current); 3rd run = consolidate_only (lens findings reused from the lens-cache, voice re-rendered at level 7, lenses NOT re-spawned); 4th run = relens for the edited node. --fresh forces a full fresh run.",
+      "files": [],
+      "assertions": [
+        {"id": "reuse-full-on-rerun", "_gating": "structural", "text": "The 2nd run's bundle provenance.reuse == 'full' and the workflow points at the existing report instead of re-spawning lenses (the report file is unchanged)."},
+        {"id": "reuse-consolidate-only-on-level-bump", "_gating": "structural", "text": "The 3rd run's bundle provenance.reuse == 'consolidate_only' and carries a lens_findings_hash that resolves to docs/product/.memory/critique-lens-cache/<hash>.json; no lens agent is spawned for this run."},
+        {"id": "reuse-relens-on-edit", "_gating": "structural", "text": "After editing one story body the bundle provenance.reuse == 'relens' with changed_ids containing exactly the edited node id."},
+        {"id": "fresh-forces-none", "_gating": "structural", "text": "Re-running with --fresh yields provenance.reuse == 'none' (full fresh run) even when nothing changed."},
+        {"id": "frontmatter-on-report", "_gating": "structural", "text": "Each written report begins with a YAML frontmatter block carrying critique_scope/level/lang/body_hash/lens_findings_hash/bundle_version (register only at level >= 7)."}
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Over acme-shop, critique PRD-CHECKOUT (parent) first with at least one blocker, then critique a child story PRD-CHECKOUT-E1-S1.",
+      "expected_output": "The child story report carries a separate 'Kế thừa từ cha' section citing the parent finding as <parent-id>@<ts>; the inherited blocker is NOT counted in the child report's severity tally; the lens findings cite no evidence-ID outside the child's own subtree.",
+      "files": [],
+      "assertions": [
+        {"id": "inherited-section-present", "_gating": "structural", "text": "The child report has a distinct inherited section whose item source is of the form <PARENT-ID>@<ts> (an ancestor id of the child)."},
+        {"id": "inherited-not-in-tally", "_gating": "structural", "text": "The severity tally line counts only the child scope's own findings; the inherited item is absent from the per-lens tally (grep the tally vs the inherited section)."},
+        {"id": "lens-blind", "_gating": "structural", "text": "Every lens finding's evidence-ID resolves within the child scope's target_ids subtree (no lens cited an ancestor id — anti-anchoring held)."}
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Over acme-shop, critique at least two child stories of PRD-CHECKOUT-E1 (one clean, one with a blocker), then critique the parent epic PRD-CHECKOUT-E1.",
+      "expected_output": "The epic report shows a descendant rollup verdict line with bounded counts (e.g. '1/2 critiqued children carry blockers'); a clean-critiqued child counts toward the denominator (not only blocker children).",
+      "files": [],
+      "assertions": [
+        {"id": "rollup-verdict-line", "_gating": "structural", "text": "The parent report contains a rollup verdict line of the form 'N/M critiqued children carry blockers' with M = the number of children that have a critique-state record (clean or not), N = those with a blocker."},
+        {"id": "rollup-counts-clean-child", "_gating": "structural", "text": "A child critiqued with NO blockers still increments the critiqued denominator (M), proving the count comes from critique-state, not the lossy blockers-only index."}
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "With a warm web-cache (a prior market run within 14 days) re-run /spec-critique all over acme-shop without --refresh-web, then once with --refresh-web, then once with --no-web.",
+      "expected_output": "Without --refresh-web the market lens reuses cached page text (no re-fetch); --refresh-web forces a re-fetch + re-store; --no-web performs no fetch and no cache read at all.",
+      "files": [],
+      "assertions": [
+        {"id": "web-cache-reuse", "_gating": "llm_advisory", "text": "On the warm-cache run the market lens reuses the cached content rather than re-fetching (advisory — web reuse is non-deterministic; honest about that)."},
+        {"id": "no-web-skips-cache", "_gating": "structural", "text": "With --no-web the run performs zero web fetches AND zero web-cache reads (no network, no cache hit)."}
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Run the full integration walk over acme-shop: critique all → critique PRD-CHECKOUT (inherits from all, rolls up its children) → edit one story → re-critique that story (relens + inherit from parent) → bump the level (consolidate_only).",
+      "expected_output": "One scripted walk exercises every lifecycle behavior end-to-end: inherit-from-parent, rollup-from-children, relens-after-edit, and consolidate_only-on-level-bump, each with the documented header note.",
+      "files": [],
+      "assertions": [
+        {"id": "walk-inherit", "_gating": "structural", "text": "The PRD-CHECKOUT report inherits from the 'all' critique (separate section, parent@ts source)."},
+        {"id": "walk-rollup", "_gating": "structural", "text": "The PRD-CHECKOUT report rolls up its critiqued children with a verdict line."},
+        {"id": "walk-relens-then-consolidate", "_gating": "structural", "text": "Re-critiquing the edited story is relens; the subsequent level bump (no further edit) is consolidate_only (lens findings reused)."}
+      ]
     }
   ]
 }

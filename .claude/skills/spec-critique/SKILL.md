@@ -54,6 +54,11 @@ what validate *cannot*: the product/market/craft consequence + a fix. (See **Ant
 | `--interactive` | AskUserQuestion to pick scope + lenses + level before running. |
 | `--lang vi\|en` | Critique language. Default `vi`. IDs + frontmatter keys stay English. |
 | `--no-web` | Disable the market lens's WebSearch/WebFetch. With no BRD `competitors:` it then **flags missing competitive grounding** rather than fabricating. |
+| `--fresh` / `--force` | Bypass ALL reuse: force a full fresh run (`provenance.reuse = none`), re-running every lens even when nothing changed. Use after a fix you want re-judged from scratch. |
+| `--refresh-web` | Force the market lens to re-fetch URLs (ignore the 14-day web-cache) and re-store. `--no-web` still wins (no fetch at all). |
+| `--no-inherit` | Disable the parent→child **inherited_context** (the parent's prior blockers surfaced as the child's risk). Beats `--inherit deep` (off wins over depth). Default ON. |
+| `--no-rollup` | Disable the child→parent **descendant_rollup** (critiqued children's verdicts aggregated onto the parent). Default ON. |
+| `--inherit nearest\|deep` | Inherit depth (implies inherit ON): `nearest` (default) = nearest critiqued ancestor per branch + the latest `scope=all` critique; `deep` = every critiqued ancestor in the chain. |
 | `--level 1..9` | Voice intensity. Default = the `critique_level` preference (itself `5`, no-mercy, if unset; the last level before a mandated roast, so a flagless run is level 5 + the standing-consent reminder); the flag overrides it. Aliases (1-6 only): `--warm`(1) `--gentle`(2) `--blunt`(3) `--savage`(4) `--no-mercy`(5) `--roast`(6). **Levels 7-9 have NO aliases** — use `--level 7/8/9`. A PO who wants a standing harsh voice sets `critique_level` once. Levels 1 to 4 forbid personal attack (artifact only). Level 5 (`--no-mercy`) lifts the redline (personal barbs allowed) and is the **default baseline**, so it is **ungated** (no warning, no reminder). **Levels 6 to 9 carry a danger gate** (warning + AskUserQuestion when ad-hoc; standing-preference reminder for 6-8): 6 (`--roast`) ENFORCES a personal roast (lazy/careless author); 7 attacks competence in the confrontational `ông/tôi` register; 8 attacks character in the street `mày/tao` register; **9 adds work-targeted profanity (`đm/vl`) and removes every internal restraint, so it RE-CONFIRMS via AskUserQuestion on EVERY run regardless of source and downgrades to 8 on decline.** Register at 7-9 reads `critique_address_gender` / `critique_dialect` / `critique_profanity` from preferences. **Universal-harm floor (all levels, even 9, even with consent):** the TARGET decides, profanity at the WORK is fine, but never real violence threats, protected-characteristic slurs, self-harm, sexual, or family-target profanity (`đụ má`-style). Every level keeps evidence + a fix per line. See `references/voice-and-tone.md` for the IN/OUT floor table. |
 
 ## Output contract
@@ -96,9 +101,19 @@ A critique line must NOT merely restate a structural finding. Enforced two ways 
 
 ## The bundle contract (what the lens agents consume)
 
-`critique_scan.py --root <proj> --scope <id|all> --lang <vi|en>` emits ONE JSON bundle. Top-level keys:
+`critique_scan.py --root <proj> --scope <id|all> --lang <vi|en> [--level N] [--fresh] [--no-inherit] [--no-rollup]
+[--inherit nearest|deep]` emits ONE JSON bundle. Top-level keys:
 `bundle_version (=2), scope, lang, target_ids, ancestry{vision,brd_goals[],prd,epic}, digest[], source_files{},
-structural_findings[], cached_verdicts[], competitors[], prior_reports[], drift_threshold, parse_errors[]`.
+structural_findings[], cached_verdicts[], competitors[], prior_reports[], drift_threshold, provenance{},
+inherited_context[], descendant_rollup{}, parse_errors[]`.
+
+- `provenance` = `{reuse: none|full|consolidate_only|relens, ...}` — the lifecycle reuse verdict. `full` →
+  report already current; `consolidate_only` → reuse the lens-cache array, re-render at the new level (carries
+  `lens_findings_hash`); `relens` → some node changed (`changed_ids`); `none` → fresh run. ECONOMIC gate, not a safety
+  gate; `--fresh` forces `none`. The orchestrator branches on it (see `workflow-critique.md` §3a).
+- `inherited_context` (parent→child) + `descendant_rollup` (child→parent) — cross-critique context, consumed by
+  the **consolidator ONLY** (lenses stay blind, anti-anchoring). Inherited items render in a separate section and are
+  NEVER added to the severity tally. Both empty on run 1 / when `--no-inherit` / `--no-rollup`.
 
 - `digest` is a **LIST** of entries `{id,type,role,verbosity,title,frontmatter,body,ac}` (target/ancestor/descendant
   + vision/PRODUCT/BRD singletons), not an object.
@@ -113,15 +128,24 @@ structural_findings[], cached_verdicts[], competitors[], prior_reports[], drift_
 
 ## Scripts
 
-- `scripts/critique_scan.py`, the ONLY new analysis script. Deterministic, reuse-first (no LLM): assembles the
-  bundle, writes/reads the `last_critique.json` snapshot (`--snapshot`), counts drift (`--drift [--vs-validated]`).
-  Reuses product-spec's `spec_graph`, `assemble_digest`, `judgment_cache`, `preferences`, `fs_guard` via a cross-dir
-  import, and runs `check_traceability`/`check_consistency` as a subprocess. Always exits 0.
+- `scripts/critique_scan.py`, the CLI entrypoint + back-compat facade. Deterministic, reuse-first (no LLM): assembles
+  the bundle, writes/reads the `last_critique.json` snapshot (`--snapshot`), counts drift (`--drift [--vs-validated]`),
+  and emits the provenance/inherit/rollup keys. The implementation is split into focused modules:
+  `critique_common` (graph helpers), `critique_bundle` + `critique_signals` (bundle assembly), `critique_provenance`
+  (frontmatter + reuse decision), `critique_drift` (snapshot/drift), `critique_inherit` (inherit + rollup),
+  `critique_cache` + `critique_cache_io` + `critique_blob_cache` (the 5 cache/state stores). Reuses product-spec's
+  `spec_graph`/`assemble_digest`/`judgment_cache`/`preferences`/`fs_guard` via a cross-dir import; runs
+  `check_traceability`/`check_consistency` as a subprocess. Always exits 0.
+- **Cache/state stores** (`docs/product/.memory/`, committed): `critique-findings-index.json` (lossy evidence-ID query
+  cache → inherit/repeat-offense), `critique-lens-cache/<hash>.json` (FULL lens arrays → `consolidate_only`),
+  `critique-state.json` (per-scope provenance fast-path marker), `web-cache/<url-hash>.json` (market URL + 14-day TTL),
+  `humanized-cache.json` (reuse humanized output when consolidated text is unchanged).
 - Reused (read-only) from `product-spec/scripts/`: `decision_register.py` (the DEC bridge), `preferences.py` (the
-  `critique_drift_threshold` default 3; `critique_level` 1..9 default 5; and the level-7-9 register knobs
+  `critique_drift_threshold` default 3; `critique_level` 1..9 default 5; the level-7-9 register knobs
   `critique_address_gender` m/f, `critique_dialect` bac/trung/nam, `critique_profanity` off/abbrev/strong (default
-  strong, since level 9 re-confirms every run); plus
-  `critique_detail_level` concise/standard/verbose sizing the report).
+  strong, since level 9 re-confirms every run); `critique_detail_level` concise/standard/verbose sizing the report;
+  and the cross-critique knobs `critique_inherit` on/off, `critique_rollup` on/off, `critique_inherit_depth`
+  nearest/deep, all default on / nearest — registered in product-spec's `preferences.py`).
 
 > ⚙️ **Venv bootstrap (first run):** before invoking any script, check the shared interpreter exists
 > (`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is

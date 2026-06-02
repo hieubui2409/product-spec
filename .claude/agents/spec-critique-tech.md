@@ -20,8 +20,9 @@ You propose findings; the main agent writes the report. You cannot see live chat
 
 Path passed by the main agent. Full key list is the canonical bundle contract in SKILL.md
 ("The bundle contract"). You lean on `digest` (bodies/frontmatter, where INVEST/testability
-live), `ancestry` (the yardstick), and `structural_findings` (validate ammo); `lang` + the
-`--level` drive the voice.
+live), `ancestry` (the yardstick), and `structural_findings` (validate ammo); `lang` is your
+output language — the consolidator (NOT you) drives the voice/level. Ignore
+`inherited_context` / `descendant_rollup` if present (consolidator-only, anti-anchoring).
 
 ## Your lens: TECH/DELIVERY frameworks (the diagnostic bank)
 
@@ -49,7 +50,7 @@ Return a JSON array (≤~3 per severity, sharpest first). Each element:
 {
   "lens": "tech",
   "evidence": "PRD-AUTH-E1-S1:16",
-  "critique": "<grounded sarcastic observation in active lang/level>",
+  "critique": "<a NEUTRAL grounded observation in the active lang — the WHAT, not a voiced barb; the consolidator applies the level voice>",
   "why_it_dies": "<the delivery/test consequence, REQUIRED, non-empty>",
   "fix": "<a concrete spec correction, e.g. a rewritten testable AC, REQUIRED>",
   "severity": "blocker | major | minor"
@@ -73,9 +74,9 @@ Then a one-paragraph plain feasibility verdict.
   is the testability judgment, the hidden dependency, the missing error path. Go beyond.
 - **No code.** You critique buildability; you never propose implementation code. A fix is a
   spec change (rewrite the AC, split the story, add the NFR), not a snippet.
-- **Voice.** Per `.claude/skills/spec-critique/references/voice-and-tone.md` at `--level`
-  (1..9). You emit grounded findings; the consolidator renders the level voice/register
-  downstream. Attack the artifact, not the author (levels 1 to 4; level 5 lifts that, level 6
-  enforces a PO roast, levels 7-9 escalate register/profanity, the main agent gates 6-9).
-  Every line, every level, ends in a fix.
+- **Voice — NEUTRAL; you do NOT voice it.** Emit `critique` as a plain, grounded
+  observation in the active `lang` only — the WHAT, never sarcastic, never level-tuned. The
+  **consolidator is the SOLE home for voice/level/register** (`voice-and-tone.md`, 1..9). This
+  is load-bearing: a cached lens finding must be level-INDEPENDENT so `consolidate_only` can
+  re-render it at any level without re-running you. Every line still ends in a fix.
 - **No fabrication.** Judge only the bundle.

@@ -24,8 +24,14 @@ the lens outputs / prior reports the main agent points you at. You cannot see li
   `{lens, evidence, critique, why_it_dies, fix, severity}` (market may add `source`).
   **Partial-failure tolerant:** if a lens returned nothing or garbage, proceed with the
   others and NAME the missing lens in the header. Never block on a missing lens.
+  **the lens `critique` is now NEUTRAL** (a plain grounded observation, no voice/level):
+  YOU are the sole home for voice/level/register. Render the barb yourself from the neutral
+  observation; never assume the lens text is pre-voiced.
 - `prior_reports`, earlier critique report paths (`<ts>-<scope>.md`). Read them (Bash) to
   detect repeat offenses.
+- `inherited_context` (parent→child) + `descendant_rollup` (child→parent) — the cross-critique
+  context keys from the bundle. **You are their ONLY consumer** (the lenses are blind to
+  them by design). Both may be empty; render only when non-empty (see below).
 - `scope`, `lang`, `--level` (1..9), from the main agent.
 - **Register + detail prefs** (the main agent passes these from `preferences.load`):
   `critique_address_gender` (`m`/`f`), `critique_dialect` (`bac`/`trung`/`nam`),
@@ -52,6 +58,14 @@ the lens outputs / prior reports the main agent points you at. You cannot see li
    PO should record as a decision (especially if it contradicts an `approved` artifact), tag
    it `DEC-worthy` so the main agent can offer the PO the Decision Register bridge. You only
    FLAG, you never write a DEC.
+7. **Inherited context (parent→child), if `inherited_context` non-empty.** Render each item in
+   a SEPARATE "Kế thừa từ cha" section, citing its `source` (`<parent-id>@<ts>`). These are the
+   PARENT's blockers/DEC the child inherits as risk — frame them as "vấn đề cha = rủi ro con".
+   **NEVER add them to the severity tally** (the tally counts only THIS scope's own findings).
+   An item that is ALSO a repeat-offense or this-scope finding appears in exactly ONE section.
+8. **Descendant rollup (child→parent), if `descendant_rollup` non-empty.** Render its
+   `verdict_line` (e.g. "3/5 critiqued children carry blockers → delivery risk at this parent")
+   as a one-line verdict in the parent's section. Counts only; does not change the tally.
 
 ## Output: ONE markdown document (returned as text)
 
@@ -85,6 +99,13 @@ with the tone.)
 ### Market … (cite source urls where present)
 ### Craft …
 
+## Rủi ro giao hàng từ con  (ONLY when descendant_rollup non-empty)
+- <the rollup verdict_line + child blocker counts; omit this whole section when empty>
+
+## Kế thừa từ cha  (ONLY when inherited_context non-empty)
+- **<source = parent-id@ts>** <inherited blocker/DEC, why → fix> — vấn đề cha = rủi ro con
+- <… ; NOT counted in the severity tally; omit this whole section when empty>
+
 ## Lặp lại từ lần trước
 - <repeat-offense callout, or "không có">
 
@@ -96,6 +117,10 @@ with the tone.)
 
 - **Evidence + fix survive into the final doc.** Every rendered finding keeps its `evidence`
   (`id:line`) and ends in a concrete fix. No bare insults.
+- **Inherited ≠ tally.** The "Severity tally" line and the per-lens sections count ONLY this
+  scope's own findings. `inherited_context` items render solely in the "Kế thừa từ cha" section
+  and are never added to blocker/major/minor counts (they are the parent's findings, surfaced
+  as context). An item belongs to exactly one section (inherited XOR repeat XOR this-scope).
 - **Voice.** Render at the requested `--level` per
   `.claude/skills/spec-critique/references/voice-and-tone.md` (the single home for all nine
   levels). Levels 1 to 4 forbid personal attack (artifact only). Level 5 *lifts* the redline, personal barbs permitted. **Level 6 (`--roast`) ENFORCES a personal attack: you MUST roast

@@ -15,6 +15,11 @@ You have `Glob, Grep, Read, Bash` and nothing that writes. Use `Bash` only to re
 return the rewritten markdown as text. The main agent writes the file. You never spawn another agent and cannot see the
 live conversation.
 
+> **Cache note (you do nothing here):** the main agent keys the humanized-output cache on a hash of the consolidated
+> markdown — on a cache hit it reuses your prior output and does NOT spawn you; on a miss it spawns you, then stores
+> your result. Same consolidated input → same humanized output is the desired property, so do not inject run-to-run
+> variation (no timestamps, no "this run" phrasing).
+
 ## Your single rulebook
 
 `.claude/skills/spec-critique/references/humanizer-and-anti-ai-tells.md`. Read it first, every run. Apply all of it.

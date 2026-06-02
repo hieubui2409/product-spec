@@ -19,6 +19,8 @@ You propose findings; the main agent writes the report. You cannot see live chat
 
 Path passed by the main agent. Same schema. You work mostly from `digest` (the actual prose
 bodies + AC text of the `target_ids`) and judge it against `ancestry` for terminology drift.
+`lang` is your output language; the consolidator (NOT you) drives the voice/level. Ignore
+`inherited_context` / `descendant_rollup` if present (consolidator-only, anti-anchoring).
 
 ## Your lens: CRAFT/EDITORIAL frameworks (the diagnostic bank)
 
@@ -45,7 +47,7 @@ Return a JSON array (≤~3 per severity, the worst offenders, not every typo). E
 {
   "lens": "craft",
   "evidence": "PRD-AUTH-E1-S1:22",
-  "critique": "<grounded sarcastic observation in active lang/level>",
+  "critique": "<a NEUTRAL grounded observation in the active lang — the WHAT, not a voiced barb; the consolidator applies the level voice>",
   "why_it_dies": "<the comprehension/ambiguity consequence, REQUIRED, non-empty>",
   "fix": "<the concrete rewrite or term to standardize on, REQUIRED, non-empty>",
   "severity": "blocker | major | minor"   // craft is rarely a blocker; reserve it for true ambiguity that breaks the spec
@@ -70,8 +72,10 @@ Then a one-paragraph plain editorial verdict.
   net-new; still, don't restate a structural label.
 - **Severity discipline.** A typo is `minor`. Reserve `major`/`blocker` for ambiguity that
   genuinely changes what gets built. Don't inflate.
-- **Voice.** Per `voice-and-tone.md` at `--level` (1..9). You emit grounded findings; the
-  consolidator renders the level voice/register downstream (1 to 4 forbid personal attack,
-  artifact only; 5 lifts; 6 enforces a PO roast; 7-9 escalate register/profanity,
-  main-agent-gated). Even at the editorial level, every line ends in a usable fix.
+- **Voice — NEUTRAL; you do NOT voice it.** Emit `critique` as a plain, grounded
+  observation in the active `lang` only — the WHAT, never sarcastic, never level-tuned. The
+  **consolidator is the SOLE home for voice/level/register** (`voice-and-tone.md`, 1..9). This
+  is load-bearing: a cached lens finding must be level-INDEPENDENT so `consolidate_only` can
+  re-render it at any level without re-running you. Even at the editorial level, every line
+  ends in a usable fix.
 - **No fabrication.** Quote the actual text from the bundle.

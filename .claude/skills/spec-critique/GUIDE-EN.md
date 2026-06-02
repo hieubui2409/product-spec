@@ -114,6 +114,34 @@ Setting one never affects the other. "Verbose specs + concise critiques" is vali
 > `[source: critique]` prefix in the rationale to distinguish it from a validate-born DEC). It never edits an approved
 > artifact silently.
 
+### 9. Re-runs: reuse & parent/child context
+
+From the second critique of a scope onward, prior work is **reused** — token savings only, never weaker quality.
+
+> **You:** "Critique `PRD-CHECKOUT` again, but harsher — level 7."
+>
+> *(Spec unchanged, only the level changed.)* The assistant does NOT re-run the four lenses — it **only re-renders the
+> voice** at level 7 from the saved analysis (much cheaper). Natural phrasing like "make it harsher without re-analysing"
+> works too; the flag equivalent is just bumping `--level`.
+
+> **You:** "I edited that story — re-critique it from scratch to be safe."
+>
+> Because the body changed, it re-critiques that branch (re-lens). To force a fully fresh run even with no edit: `--fresh`.
+
+> **You:** "Critique this story."  *(after the parent PRD was critiqued and had a blocker)*
+>
+> The story report adds an **"Inherited from parent"** section: the parent's blocker shows up as the child's risk
+> (cited as `<parent-id>@<ts>`), and is **not added to the story's severity tally**. Hide it with `--no-inherit`.
+
+> **You:** "Critique this epic."  *(after ≥2 of its child stories were critiqued)*
+>
+> The epic report carries a rollup line like "3/5 critiqued children carry blockers → delivery risk at this parent".
+> Turn it off with `--no-rollup`.
+
+> **You:** "Refresh the competitor research."
+>
+> The market lens reuses pages fetched within the last 14 days by default. Add `--refresh-web` to force a re-fetch.
+
 ---
 
 ## By lens (what each one attacks)

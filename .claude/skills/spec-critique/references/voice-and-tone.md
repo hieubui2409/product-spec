@@ -206,6 +206,23 @@ The dividing question is always: **is this line aimed at the work, the effort, t
 who the author IS as a person / their body / their family / their safety (OUT)?** When a line is borderline, it is OUT.
 This is what level 9 keeps even after the PO confirms.
 
+## The override boundary: what the PO CAN vs CANNOT change (the single home)
+
+The voice is tunable; the floor and the architecture are not. This table is the ONE authoritative home for the
+override boundary — SKILL.md, the workflow, and the agents reference it, they never restate it.
+
+| The PO CAN override (their call) | The PO CANNOT override (bất biến, even with consent) |
+|----------------------------------|------------------------------------------------------|
+| **Level 1..9** (`--level`/alias or the `critique_level` preference) | The **universal-harm floor** — the IN/OUT table above. The TARGET decides, never the strength; level 9 + confirm still keeps it. |
+| **Register**: `critique_address_gender` (ông/bà), `critique_dialect` (bac/trung/nam) | The **subagent split**: read-only lenses + read-only consolidator + an INDEPENDENT Gate-2 humanizer. The PO may not collapse them into the main agent (the independent second eye is structural). |
+| **Profanity strength**: `critique_profanity` off/abbrev/strong (work-aimed only) | **Evidence + fix per finding** — every line cites `ID:line` and ends in a usable fix, at every level. |
+| **Scope** (which artifact) and **lenses** (which of the four run) | **Grounding** — no fabricated personas/goals/competitors/market facts; judge only the bundle. |
+| **Detail size**: `critique_detail_level` concise/standard/verbose | The **no-silent-reversal GATE** on `approved` artifacts (Keep / Change+re-approve / Hybrid). |
+
+Anything in the right column is a defect if breached, regardless of what level or flag the PO set. Anything in the left
+column is the PO's deliberate choice and the skill honors it without re-litigating (subject to the level-6-9 danger
+gate / level-9 per-run re-confirm, which is a SAFETY prompt, not a veto).
+
 ## The nine levels
 
 | Lvl | Alias | Register | Personal attack |

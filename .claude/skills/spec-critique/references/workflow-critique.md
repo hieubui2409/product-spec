@@ -87,12 +87,35 @@ The lens agents are the judgment layer; validate verdicts are supplementary ammo
 ```bash
 ./.claude/skills/.venv/bin/python3 \
   .claude/skills/spec-critique/scripts/critique_scan.py \
-  --root <project> --scope <scope> --lang <lang>
+  --root <project> --scope <scope> --lang <lang> --level <N> \
+  [--fresh] [--no-inherit] [--no-rollup] [--inherit deep]
 ```
 
-Write the bundle JSON to a SCRATCH path **outside** the fence, `$TMPDIR/spec-critique-bundle-<ts>.json` (it is
-scratch, not a spec artifact; never under `docs/product/`). Pass that path to each lens agent. The bundle's top-level
-keys + the `digest` list shape are documented in SKILL.md ("The bundle contract").
+Pass the resolved `--level` so the bundle's `provenance` verdict compares against the right level/register. Write the
+bundle JSON to a SCRATCH path **outside** the fence, `$TMPDIR/spec-critique-bundle-<ts>.json` (it is scratch, not a spec
+artifact; never under `docs/product/`). The bundle's top-level keys + the `digest` list shape are documented in
+SKILL.md ("The bundle contract"); the new keys are `provenance`, `inherited_context`, `descendant_rollup`.
+
+### 3a. Provenance branch — read `bundle["provenance"]["reuse"]` and act
+
+This is the ECONOMIC gate (token savings), never a safety gate. `--fresh`/`--force` always forces `none`.
+
+- **`full`** — drift=0 AND level/lang/register identical → the existing report is already current. Tell the PO (in
+  `--lang`), point at `provenance.report`, offer `--fresh` to force a rebuild, and STOP (no lens fan-out, no consolidate).
+- **`consolidate_only`** — drift=0 but level/lang/register differs → SKIP the lens fan-out (step 4). Load the FULL prior
+  lens-findings array from the lens-cache `docs/product/.memory/critique-lens-cache/<lens_findings_hash>.json` (the
+  `lens_findings_hash` is in the provenance result; this is the lens-findings store, NOT the lossy findings-index). Jump to step 5
+  and re-consolidate those findings at the NEW level. The header notes "lens findings reused from `<report>@<ts>`". (If
+  the lens-cache file is missing the script already downgraded the verdict to `relens` — you will never see a
+  `consolidate_only` without its array.)
+- **`relens`** — some node `body_hash` changed → **whole-scope re-lens** (full step 4). `changed_ids` is advisory
+  provenance for the header ("N node(s) changed since last critique"), NOT a per-node dispatch; partial per-node re-lens
+  is explicitly OUT of scope (YAGNI). Re-running the whole scope is correct, just not maximally frugal.
+- **`none`** — full fresh run (steps 4→6).
+
+**Bootstrap note:** the findings-index + lens-cache + critique-state start EMPTY. Run 1 of any scope has nothing to
+reuse/inherit/rollup → `reuse: none` + empty `inherited_context`/`descendant_rollup` is correct-by-design, not a bug.
+Reuse/inherit/rollup begin working from run 2+ (cross-critique context also needs the parent-before-child run order).
 
 ## 4. Fan out the lens agents (parallel, read-only)
 
@@ -104,19 +127,37 @@ Spawn the selected lenses concurrently via `Task`, each given: the bundle path, 
   narrow, or skip it and let the consolidator note the omission. At `--scope all` the market lens is most valuable.
 - **Market grounding:** with no BRD `competitors:` AND `--no-web`, the market lens flags "thiếu căn cứ cạnh tranh"
   and never fabricates competitors. With web enabled it may research + cite (url in the finding's `source`).
+- **Web-TTL gate (market lens).** Before the market lens fetches a URL, the main agent consults the web-cache
+  (`critique_cache.get_cached(root, url, ttl_days=14)`): on a hit within TTL, pass the cached page text to the lens
+  instead of re-fetching; on a miss/expiry, fetch then `critique_cache.put_cached(root, url, content)`. The cache is
+  REUSE-ONLY — it never fabricates a page. `--refresh-web` forces a re-fetch + re-store (ignore the cache). `--no-web`
+  still wins absolutely: no fetch AND no cache read.
+- **Lens ignores `inherited_context` / `descendant_rollup` (anti-anchoring, 5 reasons).** The bundle carries these
+  keys but the lens prompts are told to skip them, and you do NOT re-inject them into a lens spawn. Why the lens stays
+  blind: (1) **anti-anchoring** — a fresh lens must judge THIS artifact on its own merits, not be primed by the parent's
+  verdict; (2) **scope discipline** — the lens critiques `target_ids`, not the ancestry; (3) **consolidator's job (DRY)**
+  — cross-critique context is rendered once, by the consolidator, not smeared across four lenses; (4) **×4 cost** —
+  feeding context to every lens quadruples the prompt for no gain; (5) **double-surface** — an inherited item shown by
+  both a lens AND the consolidator would double-count. The market exception ("see the parent's verdict, skip re-search")
+  is handled by the web/judgment caches, NOT by feeding prose to the lens.
 - Each agent returns a compact JSON findings array `{lens,evidence,critique,why_it_dies,fix,severity}` (+ `source`
-  for market). Collect whatever returns, **tolerate N<4** (a lens may return nothing/garbage).
+  for market). The `critique` is NEUTRAL (voice is the consolidator's job). Collect whatever returns, **tolerate
+  N<4** (a lens may return nothing/garbage).
 
 ## 5. Consolidate
 
-**First, load the register + detail preferences and pass them in (M4 — do NOT skip).** Before spawning, the main agent
+**First, load the register + detail preferences and pass them in (do NOT skip).** Before spawning, the main agent
 runs `preferences.load(root)` and extracts `critique_address_gender`, `critique_dialect`, `critique_profanity`,
 `critique_detail_level`. These four values are INJECTED into the consolidate spawn prompt (and the humanize prompt in
 5b). Without this the agents render the defaults (`m` / `bac` / `abbrev` / `standard`) regardless of the PO's config,
 so a `gender: f` or `dialect: trung` preference would silently have no effect.
 
 Spawn `spec-critique-consolidate` (opus) with: the available lens findings arrays + the bundle's `prior_reports` +
-`scope`/`lang`/`level` + the four register/detail prefs above. It dedups cross-lens, enforces the mechanical
+the bundle's `inherited_context` + `descendant_rollup` (the consolidator is their ONLY consumer; render inherited
+items in a SEPARATE "Kế thừa từ cha" section NOT in the tally, and the rollup `verdict_line` in the parent's section) +
+`scope`/`lang`/`level` + the four register/detail prefs above. **On a `consolidate_only` provenance branch (step 3a),
+the "lens findings arrays" you pass are the cached array loaded from the lens-cache, NOT a fresh fan-out** — same
+consolidator, new level. It dedups cross-lens, enforces the mechanical
 anti-overlap floor (drop byte-identical validate-echoes + findings missing why/fix), assigns final severity
 (structural-backed ≥ major), picks the top-3, detects repeat-offense vs prior reports, flags DEC-worthy items, and
 renders ONE markdown body in the voice. The register knobs apply ONLY at their own threshold: at levels 7 to 9 it
@@ -136,6 +177,11 @@ markdown TEXT, it does not write.
 
 ## 5b. Humanize (Gate 2: the independent second eye)
 
+**Humanized-output cache — check before spawning.** Compute a hash of the consolidator's markdown and consult the
+humanized-cache (`critique_cache.get_humanized(root, hash)`): on a hit, REUSE the stored humanized text and skip the
+spawn entirely; on a miss, spawn the humanizer (below), then store its result (`critique_cache.put_humanized(root, hash,
+text)`). Identical consolidated input → identical humanized output, so this is a safe pure-token saving.
+
 Spawn `spec-critique-humanize` (sonnet) with the consolidator's markdown + `--lang`/`--level` + the same
 `critique_address_gender`/`critique_dialect`/`critique_profanity`/`critique_detail_level` values from step 5. It
 rewrites the prose to strip AI-tells and Vietnamese word-for-word-translation tells per
@@ -152,25 +198,43 @@ consolidator self-applies the rules while writing; Gate 2 = this independent age
 
 Write the humanized markdown from step 5b (not the raw consolidator draft).
 
-1. **Write** `docs/product/critique/<ts>-<scope>.md` with the humanized markdown from step 5b (never the raw
-   consolidator draft). Use the soft fence: the write target is under `docs/product/critique/`, confirm with
-   `fs_guard.assert_under_docs_product` semantics
-   (the main agent's own write; `critique_scan` owns the script-side fence for the snapshot). `<ts>` = compact UTC
-   timestamp; `<scope>` = the scope id or `all`.
-   - **Sanitize before writing (mechanical safety net, do NOT trust the agents to be clean).** Even with the agent
-     output contracts, an LLM occasionally leaks reasoning. Before writing, the main agent MUST:
+1. **Write** `docs/product/critique/<ts>-<scope>.md` with YAML frontmatter + the humanized markdown from step 5b
+   (never the raw consolidator draft). Use the soft fence: the write target is under `docs/product/critique/`, confirm
+   with `fs_guard.assert_under_docs_product` semantics (the main agent's own write; `critique_scan` owns the script-side
+   fence for the snapshot). `<ts>` = compact UTC timestamp; `<scope>` = the scope id or `all`.
+   - **Frontmatter (REQUIRED so the next run can decide reuse).** Compute the lens-findings hash of the FULL
+     combined lens array (`critique_cache._lens_findings_hash(all_lens_findings)`), then build the block with
+     `critique_provenance.build_report_frontmatter(root, scope, level, lang, register, lens_findings_hash)` (register =
+     the prefs dict ONLY at level ≥ 7, else None) and PREPEND it above the `# Critique:` heading. The frontmatter carries
+     `critique_scope`/`level`/`lang`/`register`/`body_hash`/`lens_findings_hash`/`bundle_version`. (On a
+     `consolidate_only` rebuild, reuse the SAME `lens_findings_hash` you loaded the array from — the lens findings did
+     not change, only the voice.)
+   - **Sanitize the BODY first, THEN prepend frontmatter (ordering matters).** Even with the agent output contracts, an
+     LLM occasionally leaks reasoning. Run the sanitize on the humanized markdown BEFORE adding the `---` block (the
+     sanitize's "strip to first `#`" would otherwise eat the frontmatter):
      (a) **strip any preamble** — drop everything before the first line that starts with `# ` (the report heading);
      (b) **de-duplicate drafts** — if the text contains more than one `# Critique` heading (the agent emitted several
      draft copies), keep only the LAST complete copy;
      (c) **purge stray dashes** — replace any em/en dash (`—`, `–`) in the prose with a comma, colon, or period, but
      leave dashes inside `inline code`, fenced blocks, and verbatim spec quotes untouched.
-     The file handed to the PO begins at `# Critique:` and contains the report exactly once, dash-clean.
-2. **Snapshot**, refresh the drift marker:
+     The sanitized body begins at `# Critique:` and contains the report exactly once, dash-clean; then prepend the
+     frontmatter block so the file on disk is `---`…`---` + body.
+2. **Lens-cache (this is what makes a FUTURE `consolidate_only` possible).** Persist the FULL combined lens
+   array verbatim: `critique_cache.put_lens_findings(root, lens_findings_hash, all_lens_findings)` (same hash the
+   frontmatter carries). On a `consolidate_only` rebuild the array already exists — re-`put` is a harmless idempotent
+   write. Skip this only if there were no lens findings at all.
+3. **Findings-index.** Feed this run's blockers + DEC-worthy to the index for the next critique's inherit /
+   repeat-offense: `critique_inherit.index_report_findings(root, <ts>, scope, all_lens_findings)` (it filters to
+   blockers + DEC-worthy itself).
+4. **Snapshot**, refresh the drift marker:
    ```bash
    ./.claude/skills/.venv/bin/python3 \
      .claude/skills/spec-critique/scripts/critique_scan.py --root <project> --snapshot --scope <scope>
    ```
-3. **DEC bridge (opt-in, GATEs apply):** for each DEC-worthy item the consolidator flagged, AskUserQuestion
+5. **Critique-state (the provenance fast-path source).** Record the per-scope marker so the NEXT run's fast-path
+   can decide reuse without reading this report:
+   `critique_provenance.record_critique_state(root, scope, level, lang, lens_findings_hash, blocker_count, register=<prefs-or-None>, report="docs/product/critique/<ts>-<scope>.md")`.
+6. **DEC bridge (opt-in, GATEs apply):** for each DEC-worthy item the consolidator flagged, AskUserQuestion
    (Keep / Change / Hybrid, or simply "record this as a decision?"). On PO confirm only:
    ```bash
    ./.claude/skills/.venv/bin/python3 \

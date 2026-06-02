@@ -122,6 +122,34 @@ nên khi đã chạy thì cho chạy hết công suất.
 > nhận, nó mới ghi một bản ghi `DEC-<số>` qua công cụ `decision_register.py`, kèm tiền tố `[nguồn: critique]` trong phần
 > lý do để sau này phân biệt với quyết định sinh ra từ `--validate`. Nó không bao giờ tự ý sửa một hạng mục đã duyệt.
 
+### 9. Chê lại lần hai: tái sử dụng & ngữ cảnh cha-con
+
+Lần chê thứ hai trở đi sẽ **tái sử dụng** việc đã làm — chỉ để tiết kiệm, không bao giờ làm yếu chất lượng.
+
+> **Bạn:** "Chê lại `PRD-CHECKOUT` nhưng gắt hơn đi, mức 7."
+>
+> *(Spec không đổi, chỉ đổi mức.)* Trợ lý không chạy lại bốn lăng kính — nó **chỉ kết xuất lại giọng** ở mức 7 từ phần
+> phân tích đã lưu (rẻ hơn nhiều). Muốn nói tự nhiên kiểu "làm gắt hơn mà khỏi phân tích lại" cũng được; tương đương cờ
+> là cứ nâng `--level`.
+
+> **Bạn:** "Tôi vừa sửa story đó rồi, chê lại từ đầu cho chắc."
+>
+> Vì phần thân đã đổi, trợ lý chê lại nhánh đó (re-lens). Muốn ép chạy mới hoàn toàn dù không sửa gì: thêm `--fresh`.
+
+> **Bạn:** "Chê cái story này đi."  *(sau khi PRD cha đã bị chê và có lỗi chặn)*
+>
+> Báo cáo của story sẽ có thêm mục **"Kế thừa từ cha"**: lỗi chặn của PRD cha hiện ra như rủi ro của con (ghi rõ
+> `<id-cha>@<thời-điểm>`), **không cộng vào bảng đếm mức độ** của story. Không muốn thấy phần này: `--no-inherit`.
+
+> **Bạn:** "Chê cái epic này."  *(sau khi đã chê ≥2 story con của nó)*
+>
+> Báo cáo epic có một dòng tổng kết kiểu "3/5 story con đã chê dính lỗi chặn → epic này có vấn đề giao hàng". Tắt bằng
+> `--no-rollup`.
+
+> **Bạn:** "Cập nhật lại thông tin đối thủ trong phần thị trường."
+>
+> Mặc định lăng kính market dùng lại trang đã tra trong 14 ngày. Thêm `--refresh-web` để buộc tra lại từ đầu.
+
 ---
 
 ## Bốn lăng kính chê những gì
