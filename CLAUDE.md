@@ -369,6 +369,76 @@ docs/product/
 
 The skill never writes outside `docs/product/`.
 
+> **Related skill — `cleanmatic:spec-critique` (the opinionated tear-down).** product-spec PRODUCES + validates the
+> spec; spec-critique is a separate, optional CONSUMER that gives a brutal-but-grounded opinion on whether it is worth
+> building (see its own operating guide below). The dependency is **one-way**: spec-critique reads product-spec output,
+> product-spec never reaches into critique. Do NOT bake an active "run /spec-critique" reminder into the product-spec
+> workflow (it may not be installed, and the drift nudge below already covers it). If the PO wants reminding, point them
+> at the opt-in post-validate drift nudge: `spec-critique/install.sh --critique-hook`.
+
+<!-- BEGIN: cleanmatic:spec-critique operating guide -->
+
+# Spec-Critique — LLM Operating Guide
+
+Auto-loaded by Claude Code. Tells you (the LLM) how to operate the **`cleanmatic:spec-critique`** skill: a PO-facing,
+**opinionated** critique of an existing `cleanmatic:product-spec` spec across four lenses (product/tech/market/craft).
+It reuses `--validate` findings as ammo, then says what validate cannot (why-it-dies, market, craft). It **never edits
+the spec** and **never gates CI** (non-deterministic by design: opinion + web + voice). Full executable detail lives in
+`.claude/skills/spec-critique/references/` — load on demand.
+
+## Script vs LLM split (same contract as product-spec)
+
+| Layer | Owns |
+|-------|------|
+| **Script** (`critique_scan.py`, deterministic) | assemble the bundle (ancestry + digest + `source_files` citation ground-truth keyed by ID + structural findings + cached verdicts + competitors + prior reports), write/read the `last_critique.json` drift snapshot, count drift. Always exits 0. Reuses product-spec's `spec_graph`/`assemble_digest`/`judgment_cache`/`preferences`/`fs_guard`. |
+| **LLM** (the four lens agents + opus consolidator + sonnet humanizer) | the judgment + the voice. Lenses emit grounded findings; the consolidator dedups, grades, picks top-3, flags repeat-offense + DEC-worthy, renders the level voice; the humanizer strips AI/translation tells while preserving the bite + the floor. |
+
+The main agent orchestrates (parse flags → bundle → fan out lenses → consolidate → humanize → write ONE report under
+`docs/product/critique/<ts>-<scope>.md`). Lens agents + consolidator + humanizer are READ-ONLY; only the main agent writes.
+
+## Voice levels 1..9 (the one home is `references/voice-and-tone.md`)
+
+- **Default = 5** (`--no-mercy`, the `critique_level` preference). Levels 1-4 forbid personal attack (artifact only).
+- **Level 5 is the ungated baseline** — personal barbs allowed, but no warning/confirm/reminder.
+- **Danger gate = levels 6-9 only.** 6 (`--roast`) mandates a personal roast; 7 attacks competence (`ông/tôi`); 8
+  attacks character (`mày/tao`); 9 adds work-targeted profanity (`đm/vl`). Ad-hoc 6/7/8 → warn + AskUserQuestion
+  confirm; standing-preference 6/7/8 → one-line reminder (no re-ask). **Level 9 ALWAYS re-confirms every run regardless
+  of source, and downgrades to 8 on decline.** Levels 7-9 have **no aliases** (`--level 7/8/9`).
+- **Register knobs** (`preferences.yaml`, levels 7-9): `critique_address_gender` m/f (`ông/tôi`↔`bà/tôi`),
+  `critique_dialect` bac/trung/nam (`mày/tao`↔`mi/tau`↔nam, the PO's OWN voice), `critique_profanity`
+  off/abbrev/strong (default strong). The first level-≥7 run offers a one-batch interview to seed them (asked once).
+- **Universal-harm floor (every level incl. 9, even with consent): the TARGET decides, not the strength.** Profanity at
+  the WORK is IN (incl. the minced-oath dodge `đậu xanh`); anything aimed at who the author IS is OUT, real violence
+  threats, protected-characteristic slurs, region-mockery, self-harm, sexual content, literal family-target profanity
+  (`đụ má mày`). The authoritative spec is the IN/OUT adjudication table in `voice-and-tone.md` (single home; agents
+  reference it, never copy). Every finding at every level still cites `ID:line` + ends in a fix.
+
+## Two GATEs (shared with product-spec)
+
+- **GATE-NEVER-ASSUME:** never assume scope/lenses/level; ask or honor the flags. Never write a `DEC` or touch a spec
+  artifact without explicit PO confirm.
+- **GATE-NO-SILENT-REVERSAL:** a critique finding contradicting an `approved` artifact surfaces Keep / Change+re-approve
+  / Hybrid; only `Change` records via `decision_register.py` on confirm.
+
+## Two detail levels (independent)
+
+`detail_level` (product-spec) sizes the SPEC prose; `critique_detail_level` (spec-critique) sizes the CRITIQUE report
+(concise = top-3 + one line/lens; verbose = full per-lens + extended why-it-dies). Setting one never affects the other.
+
+## Workflow pointers (load on demand)
+
+| When | Reference |
+|------|-----------|
+| every run (orchestration, gate, level resolution) | `references/workflow-critique.md` |
+| rendering the voice at `--level` (levels 1..9, floor) | `references/voice-and-tone.md` |
+| a lens's framework checklist | `references/lens-frameworks.md` |
+| writing prose that reads human (both humanizer gates) | `references/humanizer-and-anti-ai-tells.md` |
+
+## What this skill does NOT do
+
+No code generation. No spec editing (writes a report only). No CI gate. No auto-memory (only a PO-confirmed `DEC`
+bridge). No HTML/PDF (markdown only). It does NOT auto-run `--validate` (validate stays reproducible/PO-facing).
+
 <!-- BEGIN: cleanmatic:claude-pack operating guide -->
 
 # Claude Pack — LLM Operating Guide
