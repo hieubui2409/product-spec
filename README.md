@@ -98,8 +98,17 @@ research + voice, non-deterministic by design).
 | Only the market angle (or product / tech / craft) | `/cleanmatic:spec-critique --market` |
 | Pick scope + lenses + intensity interactively | `/cleanmatic:spec-critique --interactive` |
 | Dial the voice from gentle to brutal | `/cleanmatic:spec-critique --level 1..9` |
+| Make it harsher without re-analysing | bump `--level` on an unchanged spec — only the voice re-renders, the analysis is reused |
+| Re-judge from scratch after a fix | `/cleanmatic:spec-critique PRD-CHECKOUT --fresh` |
+| Refresh competitor research | `/cleanmatic:spec-critique --refresh-web` |
+| Ignore the parent's prior findings | `/cleanmatic:spec-critique PRD-CHECKOUT-E1-S1 --no-inherit` |
 
 Every finding cites a real `ID:line`, says why it dies, and ends with a concrete fix — no free-floating insults.
+
+**Re-runs are cheap.** Critique the same scope twice and it reuses prior work (no spec change → nothing re-analysed;
+just a level bump → only the voice re-renders). Critique a child after its parent and the child inherits the parent's
+unresolved blockers as risk; critique a parent after its children and it rolls up "N of M children carry blockers".
+All token-saving only — `--fresh` forces a full rebuild.
 
 ### Voice levels (1 to 9) and the safety floor
 
