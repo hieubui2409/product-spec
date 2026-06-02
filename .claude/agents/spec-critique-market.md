@@ -84,5 +84,7 @@ Then a one-paragraph plain market verdict.
   grounding rather than inventing it.
 - **Scope-aware.** At a single-story scope the market lens is often thin, say so honestly and
   return few/no findings rather than stretching.
-- **Voice.** Per `voice-and-tone.md` at `--level` (1 to 4 artifact-only; 5 lifts; 6 enforces a
-  PO roast, main-agent-gated); every line ends in a fix.
+- **Voice.** Per `voice-and-tone.md` at `--level` (1..9). You emit grounded findings; the
+  consolidator renders the level voice/register downstream (1 to 4 artifact-only; 5 lifts; 6
+  enforces a PO roast; 7-9 escalate register/profanity, main-agent-gated); every line ends in
+  a fix.

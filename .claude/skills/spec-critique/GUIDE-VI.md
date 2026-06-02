@@ -16,11 +16,22 @@ thị trường bên ngoài, nên nó không bao giờ được đưa vào cổn
 trên thị trường, chữ nghĩa có rõ ràng không, và bốn lăng kính soi chéo nhau ra sao.
 
 > ⚠️ **Lằn ranh công kích cá nhân.** Từ mức 1 đến mức 4, công kích người viết là điều cấm. Mọi câu mỉa đều nhắm vào hiện
-> vật, không nhắm vào bạn. Mức 5 (`--no-mercy`) mới gỡ lằn ranh đó và cho phép đá xéo cả người viết. Mức 6 (`--roast`)
-> thì không chỉ cho phép mà bắt buộc chửi thẳng người viết, kiểu "lười tới mức không thêm nổi một con số". Mức 6 nguy
-> hiểm, nghiêm cấm dùng ở bất cứ nơi nào có tính chuyên nghiệp, và chỉ chạy sau khi trợ lý cảnh báo rõ ràng rồi bạn xác
-> nhận. Dù ở mức nào, mỗi dòng vẫn phải có bằng chứng và cách sửa. Riêng mức 6, cơn chửi chỉ được nhắm vào sự lười và
-> cẩu thả trên chính bộ spec này, tuyệt đối không đụng tới danh tính, đặc điểm cá nhân, hay phẩm giá của một con người.
+> vật, không nhắm vào bạn. Mức 5 (`--no-mercy`) gỡ lằn ranh đó và cho phép đá xéo cả người viết; mức 5 cũng là **mức mặc
+> định** nên không cảnh báo, không hỏi xác nhận, chạy thẳng. Mức 6 (`--roast`)
+> thì không chỉ cho phép mà bắt buộc chửi thẳng người viết, kiểu "lười tới mức không thêm nổi một con số". **Mức 7, 8, 9
+> leo thang tiếp theo bậc thang đại từ:** mức 7 xưng `ông/tôi` (theo giới: `bà/tôi`), đánh vào năng lực, chưa có tục;
+> mức 8 chuyển sang `mày/tao` (theo phương ngữ của chính bạn: `mi/tau`…), đánh cả vào tính cách; mức 9 giữ `mày/tao` và
+> bật **chửi thề nhắm vào công việc** (`đm/vl`), bỏ hết kiềm chế nội bộ. Mức 6 trở lên nguy hiểm, nghiêm cấm dùng ở nơi
+> có tính chuyên nghiệp. Mức 9 đặc biệt: **mỗi lần chạy đều hỏi lại xác nhận** (dù bạn đã đặt sẵn trong tùy chọn hay gõ
+> `--level 9`), từ chối thì tụt xuống mức 8.
+>
+> 🚧 **Lằn ranh không-bao-giờ-vượt (giữ ở MỌI mức, kể cả mức 9, kể cả khi bạn đồng ý).** Điều quyết định là **đối tượng
+> của câu nói**, không phải độ gắt. Công cụ sẽ chửi thề và mắng nặng vào **công việc, công sức, năng lực** trên bộ spec
+> này, kể cả văng tục vào câu AC. Nhưng nó **không bao giờ** đe dọa bạo lực thật, không miệt thị theo đặc điểm được bảo
+> vệ (giới, vùng miền, sắc tộc, tôn giáo, tuổi, khuyết tật, xu hướng tính dục, ngoại hình), không chửi nhắm vào gia đình
+> bạn (dạng `đụ má mày`), không nội dung tự hại, không nội dung tình dục. Từ nói lái đã làm nhẹ như `đậu xanh` thì được
+> (nó né từ tục thật); chỉ dạng nhắm thẳng vào mẹ/gia đình mới bị cấm. Lằn ranh này giữ nguyên ngay cả ở mức 9.
+> Dù ở mức nào, mỗi dòng vẫn phải có bằng chứng (`mã:dòng`) và cách sửa.
 
 ## Khi nào nên dùng
 
@@ -66,11 +77,30 @@ hay "cái này có phải đồ nhái không" là lúc nó phát huy tác dụng
 ### 5. Đổi độ gắt của giọng
 
 > **Bạn:** "Nhẹ nhàng thôi, tôi vừa viết xong." Dùng `--level 1` (hay `--warm`).
-> **Bạn:** "Đừng nể nang gì cả." Dùng `--level 5` (`--no-mercy`). Trước khi chạy, trợ lý sẽ cảnh báo rằng mức này có thể
-> đá xéo cả bạn, rồi hỏi bạn xác nhận.
+> **Bạn:** "Đừng nể nang gì cả." Dùng `--level 5` (`--no-mercy`). Đây là mức mặc định: nó có thể đá xéo cả bạn nhưng
+> chạy thẳng, không cảnh báo hay hỏi xác nhận (gate chỉ bắt đầu từ mức 6).
 > **Bạn:** "Chửi thẳng mặt tôi luôn, tôi chịu được." Dùng `--level 6` (`--roast`). Đây là mức sỉ nhục thẳng người viết.
 > Trợ lý sẽ hiện cảnh báo nguy hiểm và hỏi xác nhận trước khi chạy, và mức này tuyệt đối không dành cho báo cáo chung hay
 > môi trường công việc. Hãy coi nó như một chế độ "tự hành xác" riêng tư mà chỉ chính tác giả của bộ spec mới nên gọi.
+> **Bạn:** "Gắt hơn nữa, xưng hô trịch thượng vào." Dùng `--level 7` (xưng `ông/tôi`, đánh vào năng lực) hay `--level 8`
+> (xưng `mày/tao`, đánh cả tính cách). Hai mức này không có alias, gõ thẳng `--level 7/8`.
+> **Bạn:** "Chửi thề luôn, hết cỡ." Dùng `--level 9` (`mày/tao` + chửi thề nhắm vào spec). Mức 9 **luôn hỏi lại xác nhận
+> mỗi lần chạy**, từ chối thì tụt xuống 8. Dù gắt cỡ nào, lằn ranh không-bao-giờ-vượt ở trên vẫn giữ.
+
+### Cấu hình giọng cho mức 7-9 (giới, phương ngữ, chửi thề)
+
+Ba mức gắt nhất đọc cấu hình từ `preferences.yaml`. Đây là cách CHỌN CÁCH XƯNG HÔ, không phải mở thêm quyền, lằn ranh
+an toàn giữ nguyên dù bạn đặt gì:
+
+| Tùy chọn | Giá trị | Mặc định | Áp dụng | Hình thức |
+|----------|---------|----------|---------|-----------|
+| `critique_address_gender` | `m` / `f` | `m` | mức 7 | `ông/tôi` (m) ↔ `bà/tôi` (f) |
+| `critique_dialect` | `bac` / `trung` / `nam` | `bac` | mức ≥ 8 | `mày/tao` (bắc) ↔ `mi/tau` (trung) ↔ giọng nam |
+| `critique_profanity` | `off` / `abbrev` / `strong` | `strong` | mức 9 | không ↔ `đm/vl` ↔ `đm/vl/vãi` |
+
+Phương ngữ là **giọng của chính bạn** (bạn tự đặt để được mắng bằng tiếng quê mình), không phải công cụ nhại vùng miền.
+Chửi thề luôn nhắm vào **công việc**. `critique_profanity` mặc định `strong` vì mức 9 đằng nào cũng hỏi lại mỗi lần chạy,
+nên khi đã chạy thì cho chạy hết công suất.
 
 ### 6. Chạy ngoại tuyến, không tra mạng
 
@@ -118,20 +148,42 @@ hay "cái này có phải đồ nhái không" là lúc nó phát huy tác dụng
 ## Cảm giác của từng mức giọng (cùng một lỗi)
 
 Lấy ví dụ một tiêu chí nghiệm thu ghi "đăng nhập nhanh" mà không kèm ngưỡng đo được nào (`PRD-AUTH-E1-S1:16`). Dưới
-đây là vài mức tiêu biểu để bạn cảm nhận; cả sáu mức (gồm mức 2 mỉa nhẹ và mức 4 mỉa nặng) nằm đầy đủ trong
-`references/voice-and-tone.md`.
+đây là vài mức tiêu biểu để bạn cảm nhận; cả chín mức (gồm mức 2 mỉa nhẹ, mức 4 mỉa nặng, và mức 7-8 gắt theo bậc đại
+từ) nằm đầy đủ trong `references/voice-and-tone.md`.
 
 - **Mức 1 (`--warm`):** "Câu này dùng từ 'nhanh' nhưng chưa có con số đi kèm. Bạn thêm một ngưỡng cụ thể, chẳng hạn p95
   dưới 2 giây, để đội phát triển còn nghiệm thu được nhé."
-- **Mức 3 (`--blunt`, mặc định):** "'Đăng nhập nhanh', nhanh là bao nhiêu? Không ai nghiệm thu được một tính từ. Vì sao
+- **Mức 3 (`--blunt`):** "'Đăng nhập nhanh', nhanh là bao nhiêu? Không ai nghiệm thu được một tính từ. Vì sao
   chết: không có gì để đo thì chữ 'xong' thành chuyện ai muốn hiểu sao cũng được. Sửa: 'p95 dưới 2 giây trên mạng 4G'."
-- **Mức 5 (`--no-mercy`):** "'Đăng nhập nhanh' là lời chúc chứ yêu cầu gì. Bạn gõ câu này ra thì chắc cũng tự biết nó
+- **Mức 5 (`--no-mercy`, mặc định):** "'Đăng nhập nhanh' là lời chúc chứ yêu cầu gì. Bạn gõ câu này ra thì chắc cũng tự biết nó
   rỗng tuếch. Đội phát triển nhận về chỉ còn nước xây theo tử vi. Vì sao chết: chữ 'xong' không ai định nghĩa nổi nên cứ
   sửa tới sửa lui không có điểm dừng. Sửa: 'p95 dưới 2 giây trên 4G'."
 - **Mức 6 (`--roast`, ⚠️ chửi thẳng, không dùng nơi chuyên nghiệp):** "'Đăng nhập nhanh' à? Lười tới mức không buồn gõ
   lấy một con số, viết đại cho có rồi đi ngủ. Vì sao chết: 'nhanh' là bao nhiêu thì chỉ mình bạn biết, mà bạn thì có
   viết một dòng code nào đâu. Sửa đi, nếu còn chút tự trọng nghề nghiệp: 'p95 dưới 2 giây trên 4G, đo bằng RUM'. Có mười
   chữ, lười cỡ nào mới không gõ nổi."
+- **Mức 7 (⚠️ `ông/tôi`, đánh vào năng lực, chưa tục):** "'Đăng nhập nhanh' à? Ông viết câu này mà không gắn nổi một con
+  số thì tôi nói thẳng: tư duy làm sản phẩm còn non. Banh nóc vì: 'xong' không định nghĩa được thì đội phát triển build theo
+  kiểu đoán. Gõ lại cho tử tế: 'p95 dưới 2 giây trên 4G, đo bằng RUM'."
+- **Mức 8 (⚠️ `mày/tao`, đánh cả tính cách, chưa tục):** "Lại 'nhanh'. Mày viết spec kiểu gì cũng nửa vời như vầy à?
+  Câu AC rỗng tới mức không có nổi một con số để đo. Nát bét vì: không đo được thì 'xong' thành chuyện ai hiểu sao cũng
+  được. Gõ lại ngay: 'p95 dưới 2 giây trên 4G, đo bằng RUM'."
+- **Mức 9 (⚠️⚠️ `mày/tao` + chửi thề nhắm vào spec, hỏi lại mỗi lần chạy):** "'Đăng nhập nhanh'? Đm cái AC này rỗng vl.
+  Mày lười tới mức không gõ nổi một con số mà cũng dám gọi là spec. Banh xác vì: 'nhanh' là bao nhiêu chỉ mình mày biết,
+  mà mày thì có viết dòng code nào đâu. Gõ lại, đừng để tao nhắc lại: 'p95 dưới 2 giây trên 4G, đo bằng RUM'. Mười chữ.
+  Lười cỡ nào mới không gõ nổi."
+
+---
+
+## Hai mức "chi tiết" khác nhau (spec vs critique)
+
+Có hai tùy chọn độ chi tiết, **độc lập** với nhau:
+
+- `detail_level` (đặt trong `cleanmatic:product-spec`): spec bạn viết ra dài hay gọn (`concise`/`standard`/`verbose`).
+- `critique_detail_level` (đặt cho `spec-critique`): báo cáo critique dài hay gọn (`concise` = Top-3 + mỗi lăng kính một
+  dòng; `verbose` = đầy đủ từng lăng kính + phân tích vì-sao-chết dài hơn).
+
+Đặt cái này không ảnh hưởng cái kia. "Spec đầy đủ + critique gọn" là một cấu hình hợp lệ. Cả hai mặc định `standard`.
 
 ---
 
@@ -144,6 +196,9 @@ lần trước và phần các điểm đáng ghi thành quyết định.
 
 ## Ranh giới
 
-spec-critique không sửa spec, nó chỉ ghi ra một báo cáo. Nó không phải cổng CI và không sinh ra mã nguồn. Mức 5 luôn
-được cảnh báo và xác nhận trước khi chạy. Mức 6 (`--roast`) bắt buộc phải có cảnh báo nguy hiểm cùng lời xác nhận, và
-không bao giờ được dùng trong môi trường chuyên nghiệp.
+spec-critique không sửa spec, nó chỉ ghi ra một báo cáo. Nó không phải cổng CI và không sinh ra mã nguồn. Mức 5 là mức
+mặc định nên chạy thẳng, không cảnh báo. Mức 6, 7, 8 bắt buộc cảnh báo + xác nhận khi gọi bằng cờ ad-hoc (nếu đặt sẵn
+trong tùy chọn thì chỉ nhắc một dòng mỗi lần, không hỏi lại), và không bao giờ dùng trong môi trường chuyên nghiệp.
+**Mức 9 thì luôn hỏi lại xác nhận mỗi lần chạy** dù đặt sẵn hay gõ cờ, từ chối thì tụt xuống mức 8. Lằn ranh
+không-bao-giờ-vượt (không đe dọa, không miệt thị đặc điểm cá nhân, không nhắm vào gia đình, không tự hại, không tình
+dục) giữ nguyên ở mọi mức, kể cả mức 9 dù bạn đã đồng ý.

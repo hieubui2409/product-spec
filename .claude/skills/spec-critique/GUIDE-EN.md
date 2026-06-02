@@ -10,12 +10,22 @@ warm voice, CI-gateable. `spec-critique` is the deliberate opposite: it **critiq
 research, so it is **never** in the CI gate. It *consumes* validate's findings as ammo, then says what validate
 **cannot**: why-it-dies, market, writing craft, cross-lens.
 
-> ⚠️ **Personal-attack redline.** Levels 1 to 4 forbid attacking the author; only the artifact is fair game. Levels 5
-> and 6 both require a warning and an explicit confirmation before they run. Level 5 (`--no-mercy`) lifts the redline,
-> so personal barbs are allowed. Level 6 (`--roast`) goes further and requires a direct roast of the author ("too lazy
-> to add a number", "scribbled it and went to bed"). Level 6 is dangerous and has no place in any professional context.
-> Every level still keeps evidence and a fix, and level 6 attacks only the author's sloppiness on this spec, never
-> their identity, protected characteristics, worth as a person, and never with slurs, threats, or self-harm content.
+> ⚠️ **Personal-attack redline.** Levels 1 to 4 forbid attacking the author; only the artifact is fair game. Level 5
+> (`--no-mercy`) lifts the redline, so personal barbs are allowed, and it is the **default baseline** voice. Level 6 (`--roast`) requires a direct roast of the
+> author ("too lazy to add a number", "scribbled it and went to bed"). **Levels 7 to 9 escalate further:** level 7 is
+> cold contempt + a competence attack with zero profanity; level 8 adds a character attack with profanity on
+> (work-targeted); level 9 is sustained work-targeted profanity with no internal restraint. (Vietnamese rides the
+> `ông/tôi` → `mày/tao` pronoun ladder; English has no ladder, so 7-9 escalate by profanity-presence.) Levels 6-9 are
+> dangerous and have no place in any professional context. **Level 5 is the default baseline and is ungated** (no
+> warning). Levels 6-8 warn + confirm when ad-hoc (a standing preference just prints a one-line reminder); **level 9
+> re-confirms on EVERY run regardless of source and downgrades to 8 on decline.**
+>
+> 🚧 **Universal-harm floor (holds at EVERY level, even 9, even with consent).** The TARGET of a line decides, not its
+> strength. The tool will swear at and tear into the WORK, the effort, the competence on this spec, profanity aimed at
+> an empty AC included. It will NEVER threaten real violence, never use protected-characteristic slurs (gender, region,
+> ethnicity, religion, age, disability, sexuality, appearance), never aim profanity at your family (`đụ má`-style),
+> never produce self-harm or sexual content. A defanged minced oath like `đậu xanh` is allowed (it dodges the literal
+> vulgarity); only the literal family-target form is out. Every line still keeps evidence (`ID:line`) and a fix.
 
 ## When to use
 
@@ -54,10 +64,37 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 ### 5. Change the voice level
 
 > **You:** "Go easy, I just wrote this." → `--level 1` (`--warm`).
-> **You:** "Don't hold back." → `--level 5` (`--no-mercy`), the assistant warns you that it may go after you personally, then asks you to confirm before running.
+> **You:** "Don't hold back." → `--level 5` (`--no-mercy`). This is the default baseline: it may go after you personally but runs straight away, no warning or confirm (the gate starts at level 6).
 > **You:** "Roast me to my face, I can take it." → `--level 6` (`--roast`), ⚠️ this **insults the author directly**;
 > the assistant shows a danger warning + asks for explicit confirmation first, and it is **never for shared reports or
 > professional use**. It's a private "destroy-me" mode for the spec's own author.
+> **You:** "Harsher, get contemptuous." → `--level 7` (cold contempt + competence attack, no profanity) or `--level 8`
+> (character attack, profanity on). No aliases for 7-9, type `--level 7/8`.
+> **You:** "Full profanity, no holds barred." → `--level 9` (sustained work-targeted profanity, no restraint). Level 9
+> **re-confirms on every run** and downgrades to 8 if you decline. The universal-harm floor above holds at 9 regardless.
+
+### Register config for levels 7-9 (gender, dialect, profanity)
+
+The three harshest levels read knobs from `preferences.yaml`. These pick the ADDRESS form, not extra permission, the
+safety floor is identical whatever you set:
+
+| Pref | Values | Default | Applies at | Surface form |
+|------|--------|---------|-----------|--------------|
+| `critique_address_gender` | `m` / `f` | `m` | level 7 | `ông/tôi` (m) ↔ `bà/tôi` (f), Vietnamese only |
+| `critique_dialect` | `bac` / `trung` / `nam` | `bac` | level ≥ 8 | `mày/tao` ↔ `mi/tau` ↔ southern, Vietnamese only |
+| `critique_profanity` | `off` / `abbrev` / `strong` | `strong` | level 9 | none ↔ `đm/vl` ↔ `đm/vl/vãi`, work-targeted |
+
+In English the gender/dialect knobs are no-ops (no pronoun ladder); `critique_profanity` still sets profanity strength
+and is what separates English level 7 (off) from 8 (on). Default is `strong` because level 9 re-confirms every run
+anyway, so when it fires it runs at full power.
+
+### The two "detail" levels are independent (spec vs critique)
+
+- `detail_level` (set in `cleanmatic:product-spec`) sizes the SPEC you write (`concise`/`standard`/`verbose`).
+- `critique_detail_level` (for `spec-critique`) sizes the CRITIQUE report (`concise` = top-3 + one line per lens;
+  `verbose` = full per-lens + longer why-it-dies).
+
+Setting one never affects the other. "Verbose specs + concise critiques" is valid. Both default to `standard`.
 
 ### 6. Offline (`--no-web`)
 
@@ -97,16 +134,26 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 ## Feel the voice levels (same finding)
 
 Finding: an AC says "fast login" with no measurable threshold (`PRD-AUTH-E1-S1:16`). These are a few representative
-levels; all six (including level 2's dry edge and level 4's heavy sarcasm) live in `references/voice-and-tone.md`.
+levels; all nine (including level 2's dry edge, level 4's heavy sarcasm, and the level-7-8 escalation) live in
+`references/voice-and-tone.md`.
 
 - **L1 (`--warm`):** "'Fast login' has no number, add a threshold (e.g. p95 < 2s) so the build team can test it."
-- **L3 (`--blunt`, default):** "'Fast login', fast how? QA can't test an adjective. Why it dies: an unmeasurable AC
+- **L3 (`--blunt`):** "'Fast login', fast how? QA can't test an adjective. Why it dies: an unmeasurable AC
   makes 'done' a matter of opinion. Fix: 'p95 < 2s on 4G'."
-- **L5 (`--no-mercy`):** "'Fast login' is a wish, not a requirement, and you knew it was hollow when you typed it.
+- **L5 (`--no-mercy`, default):** "'Fast login' is a wish, not a requirement, and you knew it was hollow when you typed it.
   Engineers will build by horoscope. Why it dies: 'done' is undefinable → endless rework. Fix now: 'p95 < 2s on 4G'."
 - **L6 (`--roast`, ⚠️ insults the author, never professional):** "'Fast login'?? Too lazy to type one number, so you
   scribbled it and called it a day. Why it dies: 'fast' = a number only you know, and you don't write the code. Fix it
   if you've any pride left: 'p95 < 2s on 4G, measured by RUM', ten characters, how lazy do you have to be."
+- **L7 (⚠️ cold contempt + competence, zero profanity):** "'Fast login', and not one number behind it. Let me be blunt:
+  whoever owns this spec does not yet think like a product person. Blown apart because: undefined 'done' hands the build team
+  a guessing game. Rewrite it properly: 'p95 < 2s on 4G, measured by RUM'."
+- **L8 (⚠️ character attack + profanity on, work-targeted):** "'Fast' again. This whole spec is half-assed the same way
+  every time. The AC is so empty there isn't one number to test, and it's bullshit to ship something this lazy and call
+  it a requirement. Trashed because: nothing to measure means endless rework. Rewrite it now: 'p95 < 2s on 4G'."
+- **L9 (⚠️⚠️ sustained profanity, re-confirms every run):** "'Fast login'? This AC is fucking empty. Too lazy to type
+  one number and you still call it a spec, that's pathetic. Wrecked because: 'fast' is a number only you know, and
+  you don't write the code. Rewrite it, and don't make me say it twice: 'p95 < 2s on 4G, measured by RUM'."
 
 ---
 
@@ -119,5 +166,8 @@ levels; all six (including level 2's dry edge and level 4's heavy sarcasm) live 
 
 ## Boundaries
 
-- No spec editing (writes a report only). No CI gate. No code generation. Level 5 is always warned first; level 6
-  (`--roast`) requires a danger warning + explicit confirm and is never for professional use.
+- No spec editing (writes a report only). No CI gate. No code generation. Level 5 is the ungated default baseline;
+  levels 6-8 require a danger warning + explicit confirm when ad-hoc (a standing preference prints a one-line reminder
+  instead) and are never for professional use; **level 9 re-confirms on every run and downgrades to 8 on decline.** The universal-harm
+  floor (no threats / protected-trait slurs / family-target profanity / self-harm / sexual content) holds at every level
+  including 9, even with consent.

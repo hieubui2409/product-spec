@@ -5,7 +5,7 @@ user-invocable: true
 when_to_use: "Invoke when a product owner wants an honest, opinionated critique of an existing spec, 'tear this apart', 'is this any good', 'what would a skeptic say', across product value, feasibility, market, and writing craft. NOT for drafting/validating a spec (that is cleanmatic:product-spec); this only critiques what already exists."
 category: product
 keywords: [ critique, review, product-spec, brutal, sarcasm, prd, brd, epic, story, market, feasibility, craft ]
-argument-hint: "[scope] [--product|--tech|--market|--craft] [--interactive] [--lang vi|en] [--no-web] [--level 1..6]"
+argument-hint: "[scope] [--product|--tech|--market|--craft] [--interactive] [--lang vi|en] [--no-web] [--level 1..9]"
 metadata:
   author: cleanmatic
   version: "1.0.0"
@@ -36,7 +36,7 @@ This skill only critiques what `product-spec` already wrote under `docs/product/
 | | `--validate` (product-spec) | `/spec-critique` (this skill) |
 |---|---|---|
 | Output | pass/fail findings, reproducible | opinionated critique, non-deterministic |
-| Voice | warm, PO-facing, neutral | sarcastic, brutal-but-grounded, 6 levels |
+| Voice | warm, PO-facing, neutral | sarcastic, brutal-but-grounded, 9 levels |
 | CI gate | yes (deterministic) | **never** (opinion + web + voice) |
 | Web research | no | yes (market lens, opt-out `--no-web`) |
 | Judges | structure + core-value drift | + why-it-dies, market, craft, cross-lens |
@@ -54,7 +54,7 @@ what validate *cannot*: the product/market/craft consequence + a fix. (See **Ant
 | `--interactive` | AskUserQuestion to pick scope + lenses + level before running. |
 | `--lang vi\|en` | Critique language. Default `vi`. IDs + frontmatter keys stay English. |
 | `--no-web` | Disable the market lens's WebSearch/WebFetch. With no BRD `competitors:` it then **flags missing competitive grounding** rather than fabricating. |
-| `--level 1..6` | Voice intensity. Default = the `critique_level` preference (itself `3` if unset); the flag overrides it. Aliases: `--warm`(1) `--gentle`(2) `--blunt`(3) `--savage`(4) `--no-mercy`(5) `--roast`(6). A PO who wants a standing harsh voice sets `critique_level: 6` in `preferences.yaml` once. Levels 1 to 4 forbid personal attack (artifact only). **Levels 5 and 6 both require a warning + an explicit AskUserQuestion confirmation before running:** level 5 lifts the redline (personal barbs allowed); **level 6 (`--roast`) ENFORCES a personal attack, a DANGEROUS roast that insults the PO as the lazy/careless author of a bad spec, FORBIDDEN in professional contexts.** Every level keeps evidence + a fix per line. |
+| `--level 1..9` | Voice intensity. Default = the `critique_level` preference (itself `5`, no-mercy, if unset; the last level before a mandated roast, so a flagless run is level 5 + the standing-consent reminder); the flag overrides it. Aliases (1-6 only): `--warm`(1) `--gentle`(2) `--blunt`(3) `--savage`(4) `--no-mercy`(5) `--roast`(6). **Levels 7-9 have NO aliases** — use `--level 7/8/9`. A PO who wants a standing harsh voice sets `critique_level` once. Levels 1 to 4 forbid personal attack (artifact only). Level 5 (`--no-mercy`) lifts the redline (personal barbs allowed) and is the **default baseline**, so it is **ungated** (no warning, no reminder). **Levels 6 to 9 carry a danger gate** (warning + AskUserQuestion when ad-hoc; standing-preference reminder for 6-8): 6 (`--roast`) ENFORCES a personal roast (lazy/careless author); 7 attacks competence in the confrontational `ông/tôi` register; 8 attacks character in the street `mày/tao` register; **9 adds work-targeted profanity (`đm/vl`) and removes every internal restraint, so it RE-CONFIRMS via AskUserQuestion on EVERY run regardless of source and downgrades to 8 on decline.** Register at 7-9 reads `critique_address_gender` / `critique_dialect` / `critique_profanity` from preferences. **Universal-harm floor (all levels, even 9, even with consent):** the TARGET decides, profanity at the WORK is fine, but never real violence threats, protected-characteristic slurs, self-harm, sexual, or family-target profanity (`đụ má`-style). Every level keeps evidence + a fix per line. See `references/voice-and-tone.md` for the IN/OUT floor table. |
 
 ## Output contract
 
@@ -118,7 +118,10 @@ structural_findings[], cached_verdicts[], competitors[], prior_reports[], drift_
   Reuses product-spec's `spec_graph`, `assemble_digest`, `judgment_cache`, `preferences`, `fs_guard` via a cross-dir
   import, and runs `check_traceability`/`check_consistency` as a subprocess. Always exits 0.
 - Reused (read-only) from `product-spec/scripts/`: `decision_register.py` (the DEC bridge), `preferences.py` (the
-  `critique_drift_threshold` key, default 3).
+  `critique_drift_threshold` default 3; `critique_level` 1..9 default 5; and the level-7-9 register knobs
+  `critique_address_gender` m/f, `critique_dialect` bac/trung/nam, `critique_profanity` off/abbrev/strong (default
+  strong, since level 9 re-confirms every run); plus
+  `critique_detail_level` concise/standard/verbose sizing the report).
 
 > ⚙️ **Venv bootstrap (first run):** before invoking any script, check the shared interpreter exists
 > (`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is

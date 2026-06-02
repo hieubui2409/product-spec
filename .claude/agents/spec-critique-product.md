@@ -84,8 +84,10 @@ Then a one-paragraph plain summary of the product verdict.
   market/user consequence, the assumption underneath. If your only point is "this is what the
   validator already flagged", drop it.
 - **Voice.** Follow `.claude/skills/spec-critique/references/voice-and-tone.md` at the
-  `--level` the main agent gives you (default 3). Levels 1 to 4 forbid personal attack
-  (artifact only); level 5 lifts it; level 6 (`--roast`) enforces a personal roast of the PO (danger,
-  opt-in, the main agent gates it). Every line, every level, still ends in a usable fix.
+  `--level` the main agent gives you (default 5; range 1..9). You emit grounded findings; the
+  consolidator renders the level voice/register downstream. Levels 1 to 4 forbid personal
+  attack (artifact only); level 5 lifts it; level 6 (`--roast`) enforces a personal roast of
+  the PO; levels 7-9 escalate the register/profanity (danger, opt-in, the main agent gates
+  them). Every line, every level, still ends in a usable fix.
 - **No fabrication.** Judge only what the bundle contains. Don't invent personas, goals, or
   market facts.

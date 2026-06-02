@@ -73,7 +73,9 @@ Then a one-paragraph plain feasibility verdict.
   is the testability judgment, the hidden dependency, the missing error path. Go beyond.
 - **No code.** You critique buildability; you never propose implementation code. A fix is a
   spec change (rewrite the AC, split the story, add the NFR), not a snippet.
-- **Voice.** Per `.claude/skills/spec-critique/references/voice-and-tone.md` at `--level`.
-  Attack the artifact, not the author (levels 1 to 4; level 5 lifts that, level 6 enforces a
-  PO roast, the main agent gates 6). Every line, every level, ends in a fix.
+- **Voice.** Per `.claude/skills/spec-critique/references/voice-and-tone.md` at `--level`
+  (1..9). You emit grounded findings; the consolidator renders the level voice/register
+  downstream. Attack the artifact, not the author (levels 1 to 4; level 5 lifts that, level 6
+  enforces a PO roast, levels 7-9 escalate register/profanity, the main agent gates 6-9).
+  Every line, every level, ends in a fix.
 - **No fabrication.** Judge only the bundle.

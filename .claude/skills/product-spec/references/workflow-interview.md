@@ -18,6 +18,48 @@ End-to-end workflow the LLM follows for the **product / brd / prd / epic / story
 4. Append a change-log entry via `generate_templates.py --type change_log_entry --keep-optional detail`.
 5. Offer next step: "Create the BRD now, or stop here?"
 
+## Detail-level preference (seed once, then consume every prose turn)
+
+`detail_level` controls **how verbose the product-spec output is** — the vision narrative, PRD prose, story
+descriptions, AC, and how many interview follow-ups to ask. It is a closed enum (`concise` / `standard` / `verbose`,
+default `standard`) living in `preferences.yaml` (`scripts/preferences.py`). It is SEPARATE from `critique_detail_level`
+(which sizes the `cleanmatic:spec-critique` report) — setting one never affects the other, so "verbose specs + concise
+critiques" is a valid combo.
+
+### Seed it (once, early)
+
+On the **first** interview for a project (Init Flow), or whenever `preferences.yaml` has no `detail_level` set yet, ask
+ONE `AskUserQuestion` near the start and persist the answer:
+
+- **EN:** "How much detail should I put into the spec I write? **Concise** (short, to-the-point acceptance criteria and
+  narrative, fewer follow-up questions), **Standard** (the balanced default), or **Verbose** (fuller narrative, more
+  examples and rationale)?"
+- **VI:** "Bạn muốn spec tôi viết chi tiết tới đâu? **Gọn** (tiêu chí nghiệm thu và mô tả ngắn gọn, đúng trọng tâm, hỏi
+  ít hơn), **Tiêu chuẩn** (mức cân bằng mặc định), hay **Đầy đủ** (mô tả dày hơn, nhiều ví dụ và lý lẽ hơn)?"
+
+Map: Concise/Gọn → `concise`, Standard/Tiêu chuẩn → `standard`, Verbose/Đầy đủ → `verbose`. Persist:
+
+```bash
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root>   # read current prefs first
+# then write via the save() API (a thin caller), or hand-set in preferences.yaml
+```
+
+Per `GATE-NEVER-ASSUME`: this is a stylistic seed with a documented fallback, so if the PO skips it, default to
+`standard` and say so. Never re-ask once set (read `.session.md` / `preferences.yaml`).
+
+### Consume it (every prose-bearing turn)
+
+Before composing prose — vision narrative, PRD body, story description, AC, or the size of an `AskUserQuestion` batch —
+read `preferences.load(root)["detail_level"]` and size accordingly (LLM-side guidance, like `lang`, not a script knob):
+
+| `detail_level` | product-spec prose |
+|----------------|--------------------|
+| `concise` | terse AC + narrative, minimal rationale, fewer interview follow-ups |
+| `standard` (default) | the current balanced behaviour |
+| `verbose` | fuller narrative, more worked examples, richer rationale |
+
+This shapes prose LENGTH only; it never changes structure, frontmatter facts, or the DRY home of any fact.
+
 ## Phased Interview Engine
 
 The interview is **phased** (vision → brd → prd → epic → story) and **resumable** via `docs/product/.session.md` (committed). Session schema in `frontmatter-and-id-spec.md`.

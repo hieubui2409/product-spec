@@ -14,24 +14,65 @@ consolidator are READ-ONLY (they propose); only the main agent writes (the repor
 ## 1. Parse flags (or `--interactive`)
 
 - Resolve `scope` (default `all`), `lenses` (default all four), `lang` (default `vi`), `--no-web`.
-- **Level resolution:** an explicit `--level`/alias flag wins; otherwise the default is the `critique_level` preference
-  (`preferences.load(root)["critique_level"]`, itself defaulting to 3). So a PO who wants a standing harsh voice sets
-  `critique_level: 6` once and every flagless run roasts.
+- **Level resolution (1..9):** an explicit `--level`/alias flag wins; otherwise the default is the `critique_level`
+  preference (`preferences.load(root)["critique_level"]`, itself defaulting to **5**, no-mercy). So a flagless run is
+  level 5 (the last level before a mandated roast) plus the standing-consent reminder; a PO who wants a different
+  standing voice sets `critique_level: 3` (gentler) or `: 6`/`7`/`8` (harsher) once. `critique_level: 9` is a
+  VALID standing default too, but a RESOLVED level of 9 (from the preference OR a `--level 9` flag) always re-confirms
+  per run, see the gate.
 - `--interactive` → AskUserQuestion (three quick questions): which scope, which lenses, which level. Ground options in
   what exists (offer real artifact IDs from the graph).
-- `--level` alias map: `--warm`=1, `--gentle`=2, `--blunt`=3, `--savage`=4, `--no-mercy`=5, `--roast`=6.
-- **Levels 5 and 6 danger gate.** These two carry a warning because they break the professional line (5 may jab the
-  author; 6 is a direct roast that has no place in a shared report). How the gate resolves depends on WHERE the level
+- `--level` alias map: `--warm`=1, `--gentle`=2, `--blunt`=3, `--savage`=4, `--no-mercy`=5, `--roast`=6. **Levels 7, 8,
+  9 have NO aliases** — invoke them only with `--level 7`, `--level 8`, `--level 9`.
+- **Level 5 is the default baseline, NOT gated.** `critique_level` defaults to 5 (no-mercy), so a flagless run is level
+  5. Level 5 lifts the personal-barb redline but it is the everyday voice now: it shows **no warning, no confirm, no
+  standing reminder**, just run. (An ad-hoc `--no-mercy` / `--level 5` is likewise ungated.) The danger gate begins at
+  6, where the attack turns into a mandated personal roast.
+- **Danger gate (levels 6 through 9).** These carry a warning because they cross the professional line in a way the
+  level-5 baseline does not. The escalation: 6 is a direct roast of effort/care; 7 attacks competence in the
+  confrontational `ông/tôi` register; 8 attacks character in the street `mày/tao` register; 9 adds work-targeted
+  profanity (`đm/vl`) and removes every internal restraint. How the gate resolves depends on the level AND where it
   came from:
-  - **From an ad-hoc `--level 5/6` / `--no-mercy` / `--roast` flag (no standing preference):** show the warning and ask
-    for an explicit AskUserQuestion confirmation BEFORE spawning any agent. Never infer consent from vague phrasing. On
-    a no: level 5 falls back to 4, level 6 falls back to 5.
-  - **From the `critique_level` preference being 5 or 6 (standing consent):** the PO already opted in deliberately by
-    setting the preference, so do NOT re-ask every run. Still print the one-line danger reminder each run (never run it
-    silently), in `--lang`: e.g. _"giọng mức 6 (roast) đang bật mặc định: bài critique sẽ chửi thẳng người viết, đừng
+  - **Levels 6, 7, 8 — from an ad-hoc flag (no standing preference):** show the level-appropriate warning and ask for
+    an explicit AskUserQuestion confirmation BEFORE spawning any agent. Never infer consent from vague phrasing.
+    On a "no", fall back one step: 8→7, 7→6, 6→5 (5 is the ungated baseline, so a fall-back to 5 just runs).
+  - **Levels 6, 7, 8 — from the `critique_level` preference (standing consent):** the PO opted in deliberately by
+    setting the preference, so do NOT re-ask every run. Print the one-line danger reminder each run (never run silently),
+    in `--lang`: e.g. _"giọng mức 8 đang bật mặc định: critique sẽ chửi mày/tao, đánh vào năng lực lẫn tính cách; đừng
     chia sẻ ra ngoài; đổi bằng `critique_level` trong preferences hoặc `--level`."_ Then proceed.
-  - The hard floor still holds at every level incl. 6: each line cites `ID:line` + ends in a fix; the roast attacks the
-    work's sloppiness, never identity, protected characteristics, slurs, threats, or self-harm.
+  - **Level 9 — ALWAYS re-confirms, regardless of source.** Whether 9 comes from the `critique_level: 9` preference OR a
+    `--level 9` flag, whenever the resolved level is 9 the workflow shows the STRONGEST warning + an AskUserQuestion
+    confirm **every run** (never a silent standing reminder). The warning names exactly what level 9 removes (the polite
+    pronoun, the no-profanity rule, the effort-only attack scope) AND what the floor still forbids (real violence
+    threats / protected-characteristic slurs / self-harm / sexual / family-target profanity). **On decline, downgrade to
+    8** (NOT to 6, NOT off). Vague phrasing is never consent. So 9 is settable and forceable, but it is never silent.
+  - The **universal-harm floor** holds at EVERY level including 9, even with confirmation. The rule is the TARGET of the
+    line, not its strength: profanity at the work is IN, anything aimed at who the author IS (body, family, region of
+    origin, safety) is OUT. The authoritative spec is the IN/OUT adjudication table in
+    `references/voice-and-tone.md` (the single home; agents reference it, never copy it). Every finding at every level
+    still cites `ID:line` + ends in a fix; lv9 may interleave pure-scorn lines but each sits in a grounded finding block
+    (scorn-count ≤ finding-count).
+
+## 1b. Register seeding (first time a level-7-9 voice is used)
+
+The level-7-9 register knobs (`critique_address_gender`, `critique_dialect`, `critique_profanity`) default to
+`m`/`bac`/`strong`. The PO can hand-edit `preferences.yaml`, but they may not know the knobs exist. So the FIRST time a
+run resolves to level ≥ 7 (whether by flag or the `critique_level` preference) AND the seed has not been offered before,
+ask ONE `AskUserQuestion` batch (in `--lang`) to seed them, then persist via `preferences.save`:
+
+- **Gender** (drives lv7 `ông/tôi` vs `bà/tôi`): "Xưng hô theo giới nào?" → `ông/tôi` (`m`) / `bà/tôi` (`f`).
+- **Dialect** (drives lv8+ pronoun, the PO's OWN voice): "Giọng vùng nào của chính bạn?" → Bắc `mày/tao` (`bac`) /
+  Trung `mi/tau` (`trung`) / Nam (`nam`).
+- **Profanity strength** (lv9, work-targeted): "Mức chửi thề (nhắm vào spec)?" → tắt (`off`) / `đm/vl` (`abbrev`) /
+  `đm/vl/vãi` (`strong`).
+
+Ground the batch in the floor: state in one line that whatever they pick, the universal-harm floor holds (profanity
+only at the work, never threats / protected-trait slurs / family-target / self-harm / sexual). Per `GATE-NEVER-ASSUME`,
+these are stylistic seeds with documented defaults: if the PO skips, keep the defaults and say so. Persist the answers
+AND append a `critique_register_seeded` marker to `dismissed_reminders` (via `preferences.save`) so the batch is asked
+**once**, never re-offered. In `lang: en` the gender/dialect questions are no-ops (skip them; only ask profanity
+strength, which still distinguishes EN level 7 from 8). An explicit `--level`-time register flag, if ever added, would
+override; for now the batch is the only interactive seed.
 
 ## 2. Verdict ammo: NO forced `--validate` (refined D8)
 
@@ -68,12 +109,23 @@ Spawn the selected lenses concurrently via `Task`, each given: the bundle path, 
 
 ## 5. Consolidate
 
+**First, load the register + detail preferences and pass them in (M4 — do NOT skip).** Before spawning, the main agent
+runs `preferences.load(root)` and extracts `critique_address_gender`, `critique_dialect`, `critique_profanity`,
+`critique_detail_level`. These four values are INJECTED into the consolidate spawn prompt (and the humanize prompt in
+5b). Without this the agents render the defaults (`m` / `bac` / `abbrev` / `standard`) regardless of the PO's config,
+so a `gender: f` or `dialect: trung` preference would silently have no effect.
+
 Spawn `spec-critique-consolidate` (opus) with: the available lens findings arrays + the bundle's `prior_reports` +
-`scope`/`lang`/`level`. It dedups cross-lens, enforces the mechanical anti-overlap floor (drop byte-identical
-validate-echoes + findings missing why/fix), assigns final severity (structural-backed ≥ major), picks the top-3,
-detects repeat-offense vs prior reports, flags DEC-worthy items, and renders ONE markdown body in the voice. It writes
-through Gate 1 of the humanizer (it consults `references/humanizer-and-anti-ai-tells.md` as it drafts). Its header NAMES
-any lens that did not complete. It returns markdown TEXT, it does not write.
+`scope`/`lang`/`level` + the four register/detail prefs above. It dedups cross-lens, enforces the mechanical
+anti-overlap floor (drop byte-identical validate-echoes + findings missing why/fix), assigns final severity
+(structural-backed ≥ major), picks the top-3, detects repeat-offense vs prior reports, flags DEC-worthy items, and
+renders ONE markdown body in the voice. At levels 7 to 9 it renders the surface register from the prefs (`ông/tôi` vs
+`bà/tôi` by gender; `mày/tao` vs `mi/tau` by dialect; work-targeted profanity per `critique_profanity`). It sizes the
+report by `critique_detail_level` (concise = top-3 + one-line-per-lens, no extended pre-mortems; standard = current
+full per-lens; verbose = full per-lens + extended why-it-dies + more sources). It writes through Gate 1 of the
+humanizer (it consults `references/humanizer-and-anti-ai-tells.md` as it drafts) and reaffirms the universal-harm floor
++ grounding by reference to `voice-and-tone.md` (no copy). Its header NAMES any lens that did not complete. It returns
+markdown TEXT, it does not write.
 
 - **Render the level's labels in the findings, not just in your head.** The active level's why/fix label wording (the
   `voice-and-tone.md` table: e.g. L1 "Chỗ này đáng lưu tâm" / "Có thể thử", L3 "Toang ở đâu" / "Sửa") MUST actually
@@ -82,13 +134,17 @@ any lens that did not complete. It returns markdown TEXT, it does not write.
 
 ## 5b. Humanize (Gate 2: the independent second eye)
 
-Spawn `spec-critique-humanize` (sonnet) with the consolidator's markdown + `--lang`/`--level`. It rewrites the prose to
-strip AI-tells and Vietnamese word-for-word-translation tells per `references/humanizer-and-anti-ai-tells.md`, while
-preserving the bite, the level's tone (the level 5/6 personal attack stays), every finding, every evidence `ID:line`,
-every fix, and the structure. It returns the cleaned markdown. This pass is mandatory: the file written in step 6 is
-the humanized version, never the consolidator's raw draft. (Gate 1 = consolidator self-applies the rules while writing;
-Gate 2 = this independent agent re-checks the finished draft. Two passes, matching the humanizer's own draft → find
-tells → final-rewrite process.)
+Spawn `spec-critique-humanize` (sonnet) with the consolidator's markdown + `--lang`/`--level` + the same
+`critique_address_gender`/`critique_dialect`/`critique_profanity`/`critique_detail_level` values from step 5. It
+rewrites the prose to strip AI-tells and Vietnamese word-for-word-translation tells per
+`references/humanizer-and-anti-ai-tells.md`, while preserving the bite, the level's tone (the level 5/6 personal attack
+stays; the level 7-9 harsher register AND the level-9 work-targeted profanity stay, do NOT soften `mày/tao` or strip
+`đm/vl` as an "AI-tell"), every finding, every evidence `ID:line`, every fix, and the structure. The one exception is
+the universal-harm floor: that clause is LEVEL-AGNOSTIC and OVERRIDES the preserve instruction, if preserving venom
+would cross the floor (a real violence threat / protected-characteristic slur / self-harm / sexual / family-target
+profanity), the humanizer DROPS the line, it does not soften-and-keep. It returns the cleaned markdown. This pass is
+mandatory: the file written in step 6 is the humanized version, never the consolidator's raw draft. (Gate 1 =
+consolidator self-applies the rules while writing; Gate 2 = this independent agent re-checks the finished draft.)
 
 ## 6. Write + snapshot + optional DEC bridge
 

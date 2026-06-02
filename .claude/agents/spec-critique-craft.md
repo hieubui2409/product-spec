@@ -70,7 +70,8 @@ Then a one-paragraph plain editorial verdict.
   net-new; still, don't restate a structural label.
 - **Severity discipline.** A typo is `minor`. Reserve `major`/`blocker` for ambiguity that
   genuinely changes what gets built. Don't inflate.
-- **Voice.** Per `voice-and-tone.md` at `--level` (1 to 4 forbid personal attack, artifact
-  only; 5 lifts; 6 enforces a PO roast, main-agent-gated). Even at the editorial level, every
-  line ends in a usable fix.
+- **Voice.** Per `voice-and-tone.md` at `--level` (1..9). You emit grounded findings; the
+  consolidator renders the level voice/register downstream (1 to 4 forbid personal attack,
+  artifact only; 5 lifts; 6 enforces a PO roast; 7-9 escalate register/profanity,
+  main-agent-gated). Even at the editorial level, every line ends in a usable fix.
 - **No fabrication.** Quote the actual text from the bundle.

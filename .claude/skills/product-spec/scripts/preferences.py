@@ -14,18 +14,46 @@ this through `load()`; the read hook itself lives in `workflow-interview.md`.
 
 Keys (all optional in the file):
   lang                 en | vi              — default interview/output language
-  detail_level         concise | standard | verbose
+  detail_level         concise | standard | verbose — PRODUCT-SPEC output verbosity
+                       (sizes vision/PRD/story prose + interview follow-ups). Wired
+                       in workflow-interview.md. SEPARATE from critique_detail_level.
   prioritization       moscow | value-effort | manual
   dismissed_reminders  list of reminder keys the PO asked to stop seeing
   critique_drift_threshold  int >=1 (default 3) — node body_hash changes since the
                        last critique before the opt-in spec-critique nudge fires.
                        Non-enum: load() passes it through verbatim (no int-check);
                        the consumer (critique_scan) coerces int() defensively.
-  critique_level       int 1..6 (default 3) — the cleanmatic:spec-critique default
-                       voice level when no --level flag is given. Closed enum.
-                       A standing 5 or 6 is the PO's explicit consent to the
-                       brutal/roast voice; the skill still shows the one-line danger
-                       reminder each run but does not re-ask (see workflow-critique).
+  critique_level       int 1..9 (default 5) — the cleanmatic:spec-critique default
+                       voice level when no --level flag is given. Closed enum. Default 5
+                       (no-mercy) is the last level before a mandated personal roast (6+);
+                       a flagless run is level 5 + the standing-consent reminder.
+                       A standing 5/6/7/8 is the PO's explicit consent to that voice;
+                       the skill shows the one-line danger reminder each run but does
+                       not re-ask. 9 is ALSO a valid standing default, BUT a resolved
+                       level of 9 (from this preference OR a --level 9 flag) re-confirms
+                       via AskUserQuestion EVERY run and downgrades to 8 on decline —
+                       that per-run gate is enforced in workflow-critique, NOT here.
+  critique_detail_level  concise | standard | verbose — SPEC-CRITIQUE report verbosity
+                       (concise = top-3 + terse per-lens; verbose = full per-lens +
+                       extended pre-mortems). SEPARATE from detail_level; the two never
+                       bleed into each other.
+  critique_address_gender  m | f — level-7 address form: ông/tôi (m) ↔ bà/tôi (f).
+                       Vietnamese-only; a no-op in lang: en.
+  critique_dialect     bac | trung | nam — level-8+ pronoun, the PO's OWN voice
+                       (self-configured, not regional mockery): mày/tao (bac) ↔
+                       mi/tau (trung) ↔ nam. Vietnamese-only; a no-op in lang: en.
+  critique_profanity   off | abbrev | strong (default strong) — level-9 profanity AIMED
+                       AT THE WORK: off ↔ đm/vl (abbrev) ↔ đm/vl/vãi (strong). Default is
+                       strong because level 9 re-confirms with the PO every run anyway.
+                       The enum is a STRENGTH
+                       tier, not a token list — the work-vs-person TARGET rule (and which
+                       tokens are IN/OUT) lives in voice-and-tone.md's IN/OUT table, not
+                       here. Euphemistic minced oaths (đậu xanh) are IN there; only the
+                       LITERAL family-target form (đụ má mày) is OUT.
+
+The level-applicability of the register keys (gender at 7, dialect at ≥8, profanity at
+9) and the universal-harm floor are LLM-workflow/voice concerns, not schema concerns
+(script-vs-LLM split): this module only stores closed-enum values, it judges nothing.
 """
 
 import sys
@@ -51,6 +79,7 @@ class PreferenceError(ValueError):
 # (with its default) is the ONLY place a new preference is registered.
 DEFAULTS: Dict[str, Any] = {
     "lang": "en",
+    # PRODUCT-SPEC output verbosity (sizes generated prose + interview follow-ups).
     "detail_level": "standard",
     "prioritization": "moscow",
     "dismissed_reminders": [],
@@ -58,10 +87,22 @@ DEFAULTS: Dict[str, Any] = {
     # read path below leaves it verbatim, so a hand-edited non-int degrades on the
     # consumer side (critique_scan coerces int()), never here.
     "critique_drift_threshold": 3,
-    # Default spec-critique voice level (1..6) when no --level is passed. Closed
-    # enum below. A standing 5/6 is the PO's deliberate consent to the brutal/roast
-    # voice (see workflow-critique's gate handling).
-    "critique_level": 3,
+    # Default spec-critique voice level (1..9) when no --level is passed. Closed
+    # enum below. Default 5 (no-mercy) = the last level before a mandated personal
+    # roast (6+). A standing 5/6/7/8 is the PO's deliberate consent to that voice;
+    # 9 is settable too but re-confirms per run + downgrades to 8 on decline (gate
+    # in workflow-critique, NOT a schema cap).
+    "critique_level": 5,
+    # SPEC-CRITIQUE report verbosity — separate from detail_level above.
+    "critique_detail_level": "standard",
+    # Level-7 address form (ông/tôi vs bà/tôi); Vietnamese-only, no-op in en.
+    "critique_address_gender": "m",
+    # Level-8+ pronoun, the PO's own self-configured voice; Vietnamese-only, no-op in en.
+    "critique_dialect": "bac",
+    # Level-9 profanity aimed at the WORK; no family/sexual-target token representable.
+    # Default = strong: level 9 already re-confirms with the PO on EVERY run, so when it
+    # does fire, it runs at full power rather than a half-measure.
+    "critique_profanity": "strong",
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
@@ -70,7 +111,16 @@ ENUMS: Dict[str, frozenset] = {
     "lang": frozenset({"en", "vi"}),
     "detail_level": frozenset({"concise", "standard", "verbose"}),
     "prioritization": frozenset({"moscow", "value-effort", "manual"}),
-    "critique_level": frozenset({1, 2, 3, 4, 5, 6}),
+    # 1..9: 9 is a VALID standing default; the per-run re-confirm + downgrade-to-8
+    # for a resolved 9 is workflow behaviour (workflow-critique), not a schema check.
+    "critique_level": frozenset(range(1, 10)),
+    "critique_detail_level": frozenset({"concise", "standard", "verbose"}),
+    "critique_address_gender": frozenset({"m", "f"}),
+    "critique_dialect": frozenset({"bac", "trung", "nam"}),
+    # Strength tier only; the target-based floor (which tokens are IN/OUT, e.g. the
+    # euphemism đậu xanh is IN, the literal đụ má mày is OUT) lives in voice-and-tone.md's
+    # IN/OUT table, not in this enum.
+    "critique_profanity": frozenset({"off", "abbrev", "strong"}),
 }
 
 
@@ -99,6 +149,11 @@ def load(root) -> Dict[str, Any]:
             continue
         value = raw[key]
         if key in ENUMS:
+            # YAML 1.1 parses bare off/on/no/yes as booleans, so `critique_profanity: off`
+            # reaches us as Python False. Map it back to the enum's string token so the
+            # PO can write the value unquoted and still have it resolve.
+            if isinstance(value, bool):
+                value = {False: "off", True: "on"}.get(value, value)
             if value in ENUMS[key]:
                 resolved[key] = value
             # else: leave the default (defensive against a hand-edited typo)

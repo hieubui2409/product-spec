@@ -9,7 +9,7 @@ a why-it-dies, and a fix. It **never edits the spec** and **never gates CI**.
 ## How it differs from `--validate`
 
 `product-spec --validate` is reproducible, warm, PO-facing, and CI-gateable, pass/fail on structure + core-value.
-`/spec-critique` is the opposite by design: **opinionated, non-deterministic** (LLM judgment + web research + a 6-level
+`/spec-critique` is the opposite by design: **opinionated, non-deterministic** (LLM judgment + web research + a 9-level
 voice), and therefore kept OUT of the CI gate. It is a *consumer* of validate, not a replacement.
 
 ## Install
@@ -44,7 +44,7 @@ committed `.claude/settings.json`. Windows: `install.ps1` (`-CritiqueHook` / `-C
 | `--interactive` | Pick scope + lenses + level via prompts before running. |
 | `--lang vi\|en` | Critique language. Default `vi`. IDs + frontmatter keys stay English. |
 | `--no-web` | Disable the market lens's web research; with no BRD `competitors:` it flags missing grounding rather than fabricating. |
-| `--level 1..6` | Voice intensity (default 3). Aliases `--warm`/`--gentle`/`--blunt`/`--savage`/`--no-mercy`/`--roast`. Levels 1 to 4 forbid personal attack. Levels 5 and 6 both require a warning + explicit confirmation: 5 lifts the redline (personal barbs allowed); **6 (`--roast`) ENFORCES a personal roast of the PO, ⚠️ dangerous, forbidden in professional contexts.** |
+| `--level 1..9` | Voice intensity (default 5, no-mercy). Aliases (1-6 only) `--warm`/`--gentle`/`--blunt`/`--savage`/`--no-mercy`/`--roast`; levels 7-9 use `--level 7/8/9` (no aliases). Levels 1 to 4 forbid personal attack. Level 5 lifts the redline but is the **default baseline** and is **ungated**. Levels 6+ carry a danger gate: **6 (`--roast`) ENFORCES a personal roast; 7 attacks competence (`ông/tôi`); 8 attacks character (`mày/tao`); 9 adds work-targeted profanity (`đm/vl`) and RE-CONFIRMS every run (downgrades to 8 on decline).** ⚠️ 6-9 are forbidden in professional contexts. Register at 7-9 reads `critique_address_gender`/`critique_dialect`/`critique_profanity`. **Universal-harm floor holds at every level (even 9):** profanity at the WORK is fine, never threats / protected-trait slurs / self-harm / sexual / family-target profanity. |
 
 ## Output
 
