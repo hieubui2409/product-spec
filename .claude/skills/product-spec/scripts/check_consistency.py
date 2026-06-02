@@ -16,7 +16,6 @@ CLI:
 """
 
 import argparse
-import datetime as dt
 import json
 import re
 import sys
@@ -27,13 +26,36 @@ from typing import Any, Dict, List, Optional
 from encoding_utils import configure_utf8_console
 from spec_graph import (
     build_graph,
-    matching_child_counts,
     _now,
     ID_PATTERN_BY_TYPE,
-    COMP_ID_PATTERN,
-    competitor_id_to_name,
     make_finding as _f,
     resolve_ac as _resolve_ac,
+)
+
+# TIME / RISK / COMPETITION checks live in focused sibling modules.
+from check_consistency_time import (
+    check_target_date_shape as _check_target_date_shape,
+    check_depends_on_type as _check_depends_on_type,
+    time_child_late as _time_child_late,
+    dep_order as _dep_order,
+    DEPENDS_ON_ALLOWED_TYPES,
+    # Re-exported: callers that imported _parse_iso_date from this module directly
+    # (time_realism_anchors, time_advisory, status) continue to resolve here.
+    parse_iso_date as _parse_iso_date,
+)
+from check_consistency_risk import (
+    check_risks as _check_risks,
+    risk_high_ratio as _risk_high_ratio,
+    risk_blindspot as _risk_blindspot,
+    RISK_HIGH_RATIO,
+    RISK_BLINDSPOT_MIN_STORIES,
+)
+from check_consistency_competition import (
+    check_competitors as _check_competitors,
+    check_competitive_parity as _check_competitive_parity,
+    COMPETITIVE_PARITY_ALLOWED_TYPES,
+    COMP_ID_PATTERN,
+    COMPETITION_ENUMS,
 )
 
 configure_utf8_console()
@@ -48,24 +70,19 @@ ENUMS = {
     "lang": {"en", "vi"},
     # Risk-entry sub-field enums. Distinct keys from the artifact-level `status`
     # above: a risk's `status` is open|mitigated|accepted, NOT the artifact's
-    # draft|review|approved lifecycle. Validated per-entry in _check_risks().
+    # draft|review|approved lifecycle. Validated per-entry in check_risks().
     "risk_impact": {"low", "med", "high"},
     "risk_likelihood": {"low", "med", "high"},
     "risk_status": {"open", "mitigated", "accepted"},
     # COMPETITION enums. `threat` is a BRD competitor's threat tier;
-    # `competitive_parity` is a PRD's per-competitor parity verdict. Distinct
-    # keys so each carries its own closed set. Validated in _check_competitors()
-    # (threat) and _check_competitive_parity() (parity).
+    # `competitive_parity` is a PRD's per-competitor parity verdict.
     "competitor_threat": {"low", "med", "high"},
     "competitive_parity": {"ahead", "parity", "behind", "none"},
 }
 
 # List-typed frontmatter fields. If a generate-templates regression (or a
-# manual hand-edit) leaves these as a bare scalar like "TBD", downstream
-# renderers iterate it per character and emit phantom personas / dangling
-# links. Catch the shape error at validate time so the PO is told exactly
-# which field is wrong, instead of staring at three "unknown BRD goal T/B/D"
-# errors and wondering what happened.
+# manual hand-edit) leaves these as a bare scalar, downstream renderers
+# iterate it per character and emit phantom personas / dangling links.
 LIST_FIELDS = (
     "personas",
     "metrics",
@@ -75,40 +92,21 @@ LIST_FIELDS = (
 )
 
 # Soft cap surfaced as a warn during PO interview. Brainstorm §3 + §11 +
-# interview-vision V2 set "cap 2-4 (soft)". Enforced as a warn here so the
-# PO sees an explicit signal at validate time instead of trusting the LLM
-# to remember to push back during interview.
+# interview-vision V2 set "cap 2-4 (soft)".
 PERSONA_SOFT_CAP = 4
-
-# When more than this fraction of an artifact's risks sit at `impact: high`,
-# `risk_high_ratio` warns (the risk register is top-heavy — the PO is either
-# over-rating or genuinely exposed). A strict majority: 3/5 (60%) trips, 2/5
-# (40%) does not. Tunable module constant (mirrors PERSONA_SOFT_CAP).
-RISK_HIGH_RATIO = 0.5
-
-# An epic with at least this many child stories but zero declared risks trips
-# `risk_blindspot` — a sizeable feature with no risk register is a blind spot.
-# The child-story count is a deterministic graph traversal (NOT an LLM
-# judgment), keeping this in the script layer per the Script-vs-LLM split.
-RISK_BLINDSPOT_MIN_STORIES = 5
 
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
 
-# `depends_on` (the new TIME edge) is allowed on PRD + Epic ONLY (design Q13/Q64).
-# A non-empty list on any other artifact type reuses the existing `invalid_type`
-# finding — NOT a new check id — keeping the catalog small.
-DEPENDS_ON_ALLOWED_TYPES = ("prd", "epic")
+_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
-# `competitive_parity` is a PRD-level map (a PRD's per-competitor verdict). A
-# parity map on any other artifact type is misplaced → reuses `invalid_type`
-# (symmetric with DEPENDS_ON_ALLOWED_TYPES), keeping the catalog small.
-COMPETITIVE_PARITY_ALLOWED_TYPES = ("prd",)
 
-# ISO calendar-date shape (YYYY-MM-DD) for `target_date`. PyYAML auto-parses a
-# valid date to a datetime.date; a malformed/quoted value stays a str and is
-# caught by this shape check (→ invalid_type). Only the SHAPE is structural;
-# overdue-vs-today is advisory and lives in time_advisory.py (out of this gate).
-_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+def _parse_semver(v: Any) -> Optional[tuple]:
+    if not isinstance(v, str):
+        return None
+    m = _SEMVER_RE.match(v.strip())
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
 
 def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -126,9 +124,6 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             if nid in ("<missing-id>", "<invalid-id>"):
                 continue
             files = sorted({n.get("file") for n in ns if n.get("file")})
-            # Build a carrier node so _f() populates artifact_id/file consistently
-            # with every other finding in this module (previously a raw dict bypassed
-            # _f and produced a slightly different shape).
             carrier = {"id": nid, "file": files[0] if files else None}
             findings.append(_f(
                 "dup_id", "error", carrier,
@@ -147,10 +142,8 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             v = n.get(field)
             if v is None:
                 continue
-            # Guard the set-membership test: an unhashable value (a YAML list/dict
-            # where a scalar enum is expected, e.g. `status: [draft]`) would raise
-            # TypeError on `v not in <set>`. Surface it as invalid_type rather than
-            # crashing — same fail-soft contract as _check_competitive_parity.
+            # Guard the set-membership test: an unhashable value would raise
+            # TypeError on `v not in <set>`. Surface it as invalid_type.
             if isinstance(v, (list, dict)):
                 findings.append(_f("invalid_type", "error", n, f"Field {field}={v!r} must be a single enum value; got {type(v).__name__}.", field=field, value=v))
             elif v not in ENUMS[field]:
@@ -175,9 +168,6 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
         findings.extend(_check_depends_on_type(n))
         findings.extend(_check_competitive_parity(n, graph))
 
-        # Soft cap on personas — surface as a warn (not blocking). Lives
-        # alongside enum checks because the cap shape is closed (count) even
-        # though the list contents are free text.
         personas = n.get("personas")
         if isinstance(personas, list) and len(personas) > PERSONA_SOFT_CAP:
             findings.append(_f(
@@ -209,288 +199,10 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     return findings
 
 
-# ── TIME-dimension structural checks (pure date comparisons; no wall clock) ──
-#
-# All deterministic — they compare dates already on the graph, never `today`
-# (which would break G-A4 reproducibility). The wall-clock `overdue` advisory is
-# deliberately a SEPARATE script (time_advisory.py), outside this gate.
-
-
-def _parse_iso_date(v: Any):
-    """Coerce a node's target_date to a datetime.date for comparison, or None.
-
-    PyYAML already parses a valid `YYYY-MM-DD` to datetime.date (or datetime —
-    accept its .date()). A str only reaches here if it slipped the shape gate;
-    parse it leniently and return None on failure so a malformed value (already
-    flagged invalid_type) simply drops out of the ordering checks."""
-    if isinstance(v, dt.datetime):
-        return v.date()
-    if isinstance(v, dt.date):
-        return v
-    if isinstance(v, str) and _ISO_DATE_RE.match(v.strip()):
-        try:
-            return dt.date.fromisoformat(v.strip())
-        except ValueError:
-            return None
-    return None
-
-
-def _check_target_date_shape(node: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """target_date must be an ISO calendar date (YYYY-MM-DD). Absent → clean
-    (optional, G-D1). A value PyYAML left as a non-ISO string is invalid_type."""
-    v = node.get("target_date")
-    if v is None:
-        return []
-    if isinstance(v, (dt.date, dt.datetime)):
-        return []
-    if isinstance(v, str) and _ISO_DATE_RE.match(v.strip()):
-        # Regex-valid shape is not enough: a quoted `"2026-13-99"` / `"2026-02-30"`
-        # matches YYYY-MM-DD but is not a real calendar date. Parse it to confirm,
-        # mirroring the lenient parse in _parse_iso_date.
-        try:
-            dt.date.fromisoformat(v.strip())
-            return []
-        except ValueError:
-            pass
-    return [_f(
-        "invalid_type", "error", node,
-        f"Field target_date={v!r} must be a valid ISO calendar date (YYYY-MM-DD).",
-        field="target_date", value=v,
-    )]
-
-
-def _check_depends_on_type(node: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """`depends_on` is allowed on PRD + Epic only. A non-empty list on any other
-    artifact type reuses the EXISTING `invalid_type` finding (no new check id).
-    An empty/absent list is always fine (the uniform empty default is harmless)."""
-    deps = node.get("depends_on")
-    if not deps:
-        return []
-    if node.get("type") in DEPENDS_ON_ALLOWED_TYPES:
-        return []
-    return [_f(
-        "invalid_type", "error", node,
-        f"Field depends_on is only valid on {' or '.join(DEPENDS_ON_ALLOWED_TYPES)}; "
-        f"{node['id']} is a {node.get('type')}.",
-        field="depends_on", value=deps,
-    )]
-
-
-def _time_child_late(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Warn when a child's target_date is AFTER its parent's (an epic due after
-    its PRD finishes is incoherent). Only fires when BOTH dates parse."""
-    findings: List[Dict[str, Any]] = []
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    for n in graph["nodes"]:
-        parent_id = n.get("epic") or n.get("prd")
-        if not parent_id:
-            continue
-        parent = nodes_by_id.get(parent_id)
-        if not parent:
-            continue
-        cd = _parse_iso_date(n.get("target_date"))
-        pd = _parse_iso_date(parent.get("target_date"))
-        if cd is None or pd is None:
-            continue
-        if cd > pd:
-            findings.append(_f(
-                "time_child_late", "warn", n,
-                f"{n['id']} target_date {cd} is after parent {parent['id']} "
-                f"target_date {pd}; a child cannot finish after its parent.",
-                parent_id=parent["id"],
-                child_target_date=str(cd),
-                parent_target_date=str(pd),
-            ))
-    return findings
-
-
-def _dep_order(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Warn when A depends_on B but A.target_date < B.target_date — A is due
-    before the prerequisite it waits on. Only fires when BOTH dates parse."""
-    findings: List[Dict[str, Any]] = []
-    nodes_by_id = {n["id"]: n for n in graph["nodes"]}
-    for n in graph["nodes"]:
-        ad = _parse_iso_date(n.get("target_date"))
-        if ad is None:
-            continue
-        for dep in n.get("depends_on") or []:
-            target = nodes_by_id.get(dep)
-            if not target:
-                continue  # dep_dangling owns the missing-ID case
-            bd = _parse_iso_date(target.get("target_date"))
-            if bd is None:
-                continue
-            if ad < bd:
-                findings.append(_f(
-                    "dep_order", "warn", n,
-                    f"{n['id']} target_date {ad} is before its prerequisite "
-                    f"{target['id']} target_date {bd}; A cannot complete before B.",
-                    depends_on=dep,
-                    target_date=str(ad),
-                    prerequisite_target_date=str(bd),
-                ))
-    return findings
-
-
-# ── COMPETITION-dimension structural checks (enum + ref + id + shape) ───────
-#
-# All deterministic — closed-enum membership + an ID-grammar regex + an
-# id-set lookup against graph["competitors"]. No LLM (G-B1): the `competitive_drift`
-# warn is the LLM's job, graded by the eval runner, NOT here.
-#
-# Competitor IDENTITY lives ONCE in the BRD's `competitors:` list (the single DRY
-# home, materialized onto graph["competitors"]). A PRD references competitors by
-# ID via the ID-keyed map `competitive_parity: {COMP-ACME: behind}`.
-
-
-def _competitor_ids(graph: Dict[str, Any]) -> set:
-    """The set of well-formed BRD competitor ids — the resolve target for every
-    PRD `competitive_parity` key. Delegates to the single DRY home
-    (spec_graph.competitor_id_to_name) so the 'resolvable competitor' rule has
-    one authority shared with the drift anchors."""
-    return set(competitor_id_to_name(graph))
-
-
-def _check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Validate the BRD `competitors:` list (the DRY identity home).
-
-    Three deterministic checks, mirroring the risk-entry discipline:
-      - a non-mapping entry (e.g. `- "just a string"`) reuses the EXISTING
-        `invalid_type` finding (NOT a new `invalid_shape`; F7).
-      - `threat` validated against its closed enum → `unknown_enum`.
-      - the competitor `id` must match the `COMP-<SLUG>` grammar → `invalid_id`.
-
-    Competitors are NOT graph nodes (the BRD's only node-expansion is its goals),
-    so findings here carry `artifact_id=BRD` / `file=brd.md` for the PO."""
-    findings: List[Dict[str, Any]] = []
-    competitors = graph.get("competitors")
-    if not isinstance(competitors, list):
-        return findings
-    # A synthetic BRD-scoped node carrier so _f() attributes the finding to the
-    # BRD file (competitors have no node of their own). brd.md is the single home.
-    brd_carrier = {"id": "BRD", "file": "brd.md"}
-    seen_ids: set = set()
-    for entry in competitors:
-        if not isinstance(entry, dict):
-            findings.append(_f(
-                "invalid_type", "error", brd_carrier,
-                f"competitors[] entry {entry!r} must be a YAML mapping with an "
-                f"`id`/`name`/`threat`; got {type(entry).__name__}.",
-                field="competitors", value=entry,
-            ))
-            continue
-        threat = entry.get("threat")
-        if isinstance(threat, (list, dict)):
-            # Unhashable value where a scalar enum is expected → guard the
-            # membership test below from raising TypeError (fail-soft).
-            findings.append(_f(
-                "invalid_type", "error", brd_carrier,
-                f"competitor threat={threat!r} must be a single enum value; got {type(threat).__name__}.",
-                field="competitors[].threat", value=threat,
-            ))
-        elif threat is not None and threat not in ENUMS["competitor_threat"]:
-            findings.append(_f(
-                "unknown_enum", "error", brd_carrier,
-                f"competitor threat={threat!r} not in {sorted(ENUMS['competitor_threat'])}.",
-                field="competitors[].threat", value=threat,
-            ))
-        cid = entry.get("id")
-        if not (isinstance(cid, str) and COMP_ID_PATTERN.match(cid)):
-            findings.append(_f(
-                "invalid_id", "error", brd_carrier,
-                f"competitor id {cid!r} does not match the COMP-<SLUG> grammar "
-                f"({COMP_ID_PATTERN.pattern}).",
-                field="competitors[].id", value=cid, expected_pattern=COMP_ID_PATTERN.pattern,
-            ))
-        else:
-            # Two competitor entries sharing one COMP- id make a PRD parity key
-            # resolve ambiguously (and _competitor_ids dedups them into a set).
-            # Flag the repeat — mirrors the artifact-level dup_id loop in check().
-            if cid in seen_ids:
-                findings.append(_f(
-                    "dup_id", "error", brd_carrier,
-                    f"Duplicate competitor id {cid!r} in the BRD competitors: list.",
-                    field="competitors[].id", value=cid,
-                ))
-            seen_ids.add(cid)
-    return findings
-
-
-def _check_competitive_parity(node: Dict[str, Any], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Validate one PRD's `competitive_parity` ID-keyed map.
-
-    Three deterministic checks:
-      - the whole field must be a mapping; a non-mapping (`competitive_parity:
-        [..]`) reuses the EXISTING `invalid_type` (F7).
-      - each KEY must resolve to a `graph["competitors"][].id` → else
-        `unknown_ref` error (a PRD cannot invent a competitor; identity is the
-        BRD's DRY home).
-      - each VALUE must be in the parity enum → `unknown_enum`; a non-scalar
-        value (a list/dict) reuses `invalid_type` rather than crashing the
-        membership test.
-    Absent → clean (optional; a v1 PRD has no parity map, G-A2)."""
-    cp = node.get("competitive_parity")
-    if cp is None:
-        return []
-    if node.get("type") not in COMPETITIVE_PARITY_ALLOWED_TYPES:
-        return [_f(
-            "invalid_type", "error", node,
-            f"competitive_parity is only valid on {' or '.join(COMPETITIVE_PARITY_ALLOWED_TYPES)}; "
-            f"{node.get('id')} is a {node.get('type')}.",
-            field="competitive_parity", value=cp,
-        )]
-    if not isinstance(cp, dict):
-        return [_f(
-            "invalid_type", "error", node,
-            f"competitive_parity={cp!r} must be an ID-keyed mapping "
-            f"(e.g. {{COMP-ACME: behind}}); got {type(cp).__name__}.",
-            field="competitive_parity", value=cp,
-        )]
-    findings: List[Dict[str, Any]] = []
-    known = _competitor_ids(graph)
-    for comp_id, parity in cp.items():
-        if comp_id not in known:
-            findings.append(_f(
-                "unknown_ref", "error", node,
-                f"competitive_parity key {comp_id!r} does not resolve to any BRD "
-                f"competitor id; competitor identity lives in the BRD's competitors: list.",
-                field="competitive_parity", ref=comp_id,
-            ))
-        if isinstance(parity, (list, dict)):
-            findings.append(_f(
-                "invalid_type", "error", node,
-                f"competitive_parity[{comp_id!r}]={parity!r} must be a single parity "
-                f"enum value; got {type(parity).__name__}.",
-                field="competitive_parity", value=parity,
-            ))
-        elif parity is not None and parity not in ENUMS["competitive_parity"]:
-            findings.append(_f(
-                "unknown_enum", "error", node,
-                f"competitive_parity[{comp_id!r}]={parity!r} not in "
-                f"{sorted(ENUMS['competitive_parity'])}.",
-                field="competitive_parity", value=parity,
-            ))
-    return findings
-
-
-_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
-
-
-def _parse_semver(v: Any) -> Optional[tuple]:
-    if not isinstance(v, str):
-        return None
-    m = _SEMVER_RE.match(v.strip())
-    if not m:
-        return None
-    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
-
-
 def _version_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Flag any child whose semver `version` exceeds its parent's.
 
-    Rare in practice: child gets a major bump while parent stays behind.
-    Spec advertises this check; this is the concrete implementation. Only
-    flags when BOTH versions parse cleanly so a missing or malformed
+    Only flags when BOTH versions parse cleanly so a missing or malformed
     `version:` is silently ignored (the dedicated parse check handles it).
     """
     findings: List[Dict[str, Any]] = []
@@ -522,8 +234,7 @@ def _version_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _self_reference(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Flag any artifact whose parent reference points at itself.
 
-    Real-world rare but a common LLM hallucination when -auto reassigns IDs.
-    Spec catalog row: `self_reference` / error.
+    Real-world rare but a common LLM hallucination when --auto reassigns IDs.
     """
     findings: List[Dict[str, Any]] = []
     for n in graph["nodes"]:
@@ -553,18 +264,14 @@ def _self_reference(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Brainstorm §16 mandates `.session.md` be committed (cross-machine
-    resume). A common accidental footgun is the project-wide `.gitignore`
-    excluding `.md` or `docs/product/*` patterns and silently dropping it.
+    """Warn when a `.gitignore` pattern likely excludes `.session.md`.
 
-    This check only runs when we have a project root and is best-effort: it
-    looks for the session file and for `.gitignore` patterns that would
-    likely match it. False positives are acceptable; the finding is `warn`.
+    §16 mandates `.session.md` be committed for cross-machine resume.
+    Best-effort only; a false positive is acceptable since the finding is `warn`.
     """
     findings: List[Dict[str, Any]] = []
     root_path_raw = graph.get("root_path")
     if not root_path_raw:
-        # Not exposed by the graph today — best-effort skip when missing.
         return findings
     root = Path(root_path_raw)
     session = root / "docs" / "product" / ".session.md"
@@ -574,14 +281,11 @@ def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     try:
         patterns = gitignore.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeDecodeError):
-        # A non-UTF-8 .gitignore raises UnicodeDecodeError (a ValueError subclass,
-        # NOT an OSError); skip the best-effort warn instead of crashing the gate.
         return findings
     for raw in patterns:
         p = raw.strip()
         if not p or p.startswith("#"):
             continue
-        # Crude match: a literal `.session.md` or a glob covering it.
         if ".session.md" in p or p in ("*.md", "docs/product/**", "docs/**"):
             findings.append({
                 "check": "session_md_gitignored",
@@ -598,131 +302,11 @@ def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     return findings
 
 
-def _check_risks(node: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Validate each entry of a node's `risks:` list.
-
-    Two structural checks, both deterministic:
-      - a non-dict entry (e.g. `risks: ["just a string"]`) reuses the EXISTING
-        `invalid_type` finding rather than inventing a new `invalid_shape` —
-        keeps the catalog small; the whole-list shape error (`risks: "TBD"`)
-        is already caught by the LIST_FIELDS loop in check().
-      - `impact` / `likelihood` / `status` validated against their closed enums
-        → `unknown_enum` (mirrors the artifact-level enum check above). A risk's
-        `status` is open|mitigated|accepted, distinct from the artifact status.
-    """
-    raw = node.get("risks")
-    if not isinstance(raw, list):
-        # None (no risks:) or a bad whole-list shape (handled by LIST_FIELDS).
-        return []
-    findings: List[Dict[str, Any]] = []
-    risk_field_to_enum = {
-        "impact": "risk_impact",
-        "likelihood": "risk_likelihood",
-        "status": "risk_status",
-    }
-    for entry in raw:
-        if not isinstance(entry, dict):
-            findings.append(_f(
-                "invalid_type",
-                "error",
-                node,
-                f"risks[] entry {entry!r} must be a YAML mapping with a "
-                f"`description`; got {type(entry).__name__}.",
-                field="risks",
-                value=entry,
-            ))
-            continue
-        for risk_field, enum_key in risk_field_to_enum.items():
-            val = entry.get(risk_field)
-            if val is None:
-                continue
-            if isinstance(val, (list, dict)):
-                # Unhashable value where a scalar enum is expected → guard the
-                # membership test below from raising TypeError (fail-soft).
-                findings.append(_f(
-                    "invalid_type",
-                    "error",
-                    node,
-                    f"risk {risk_field}={val!r} must be a single enum value; got {type(val).__name__}.",
-                    field=f"risks[].{risk_field}",
-                    value=val,
-                ))
-            elif val not in ENUMS[enum_key]:
-                findings.append(_f(
-                    "unknown_enum",
-                    "error",
-                    node,
-                    f"risk {risk_field}={val!r} not in {sorted(ENUMS[enum_key])}.",
-                    field=f"risks[].{risk_field}",
-                    value=val,
-                ))
-    return findings
-
-
-def _risk_high_ratio(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Warn when more than RISK_HIGH_RATIO of an artifact's risks are `high`
-    impact. Per-node, deterministic count; only artifacts with at least one
-    risk are considered."""
-    findings: List[Dict[str, Any]] = []
-    for n in graph["nodes"]:
-        risks = n.get("risks")
-        if not isinstance(risks, list):
-            continue
-        dict_risks = [r for r in risks if isinstance(r, dict)]
-        total = len(dict_risks)
-        if total == 0:
-            continue
-        high = sum(1 for r in dict_risks if r.get("impact") == "high")
-        if high / total > RISK_HIGH_RATIO:
-            pct = round(high / total * 100)
-            findings.append(_f(
-                "risk_high_ratio",
-                "warn",
-                n,
-                f"{n['id']} has {high}/{total} risks ({pct}%) at impact=high; "
-                f"more than {round(RISK_HIGH_RATIO * 100)}% — review whether the "
-                f"register is over-rated or the feature is genuinely high-exposure.",
-                high=high,
-                total=total,
-            ))
-    return findings
-
-
-def _risk_blindspot(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Warn for an epic with >= RISK_BLINDSPOT_MIN_STORIES child stories and zero
-    declared risks. The child-story count is a deterministic graph traversal —
-    NOT an LLM judgment — keeping the check in the script layer per the
-    Script-vs-LLM split."""
-    findings: List[Dict[str, Any]] = []
-    child_counts = matching_child_counts(graph)
-    for n in graph["nodes"]:
-        if n.get("type") != "epic":
-            continue
-        risks = n.get("risks")
-        has_risk = isinstance(risks, list) and any(isinstance(r, dict) for r in risks)
-        if has_risk:
-            continue
-        story_count = child_counts.get(n["id"], 0)
-        if story_count >= RISK_BLINDSPOT_MIN_STORIES:
-            findings.append(_f(
-                "risk_blindspot",
-                "warn",
-                n,
-                f"{n['id']} has {story_count} child stories but no declared risks. "
-                f"A feature of this size with an empty risk register is a blind spot.",
-                story_count=story_count,
-            ))
-    return findings
-
-
 def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings: List[Dict[str, Any]] = []
     nodes_by_id = {n["id"]: n for n in graph["nodes"]}
 
     def _flag(child: Dict[str, Any], parent: Dict[str, Any]) -> None:
-        # `STATUS_ORDER.get(...)` raises TypeError if the value is unhashable
-        # (e.g. PO wrote `status: [draft]` as a list). Coerce defensively;
-        # the malformed value will be flagged separately by `unknown_enum`.
         child_status = child.get("status")
         parent_status = parent.get("status")
         cs = STATUS_ORDER.get(child_status if isinstance(child_status, str) else "", -1)
@@ -737,18 +321,12 @@ def _status_inconsistency(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             ))
 
     for n in graph["nodes"]:
-        # story -> epic, epic -> prd via direct scalar parent field.
         parent_id = n.get("epic") or n.get("prd")
         if parent_id:
             parent = nodes_by_id.get(parent_id)
             if parent:
                 _flag(n, parent)
 
-        # prd -> brd_goal via list. Originally skipped; an approved PRD whose
-        # BRD goals are still draft is a real inconsistency the LLM-judgment
-        # layer cannot see structurally. Guard: a bare-string brd_goals (hand-edit
-        # regression) would char-split here — mirror _self_reference's isinstance
-        # guard so a non-list is simply skipped (invalid_type owns the shape error).
         if n.get("type") == "prd":
             brd_goals = n.get("brd_goals")
             if not isinstance(brd_goals, list):

@@ -40,6 +40,12 @@ from typing import Any, Dict, List, Optional
 from encoding_utils import configure_utf8_console
 from fs_guard import FenceError, assert_under_docs_product
 from spec_graph import build_graph, ID_PATTERN_BY_TYPE
+from template_id_alloc import (
+    allocate_id,
+    ID_PATTERN_OVERRIDE,
+    PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY,
+    SLUG_PATTERN_FOR_PRD,
+)
 
 configure_utf8_console()
 
@@ -68,32 +74,6 @@ OUTPUT_PATH_FOR_TYPE = {
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "assets" / "templates"
 
-# Strict parent-ID patterns — derived from spec_graph.ID_PATTERN_BY_TYPE (the
-# single authoritative home) so a parent passed at generate time fast-fails the
-# same way it would be flagged at validate time.
-PARENT_PATTERN_FOR_PRD = ID_PATTERN_BY_TYPE["prd"]   # PRD-<SLUG>, slug ≤16 chars
-PARENT_PATTERN_FOR_EPIC = ID_PATTERN_BY_TYPE["epic"]  # PRD-<SLUG>-E<n>
-# A trailing -E<n> or -E<n>-S<n> means the ID is an epic or story shape — reject
-# when a PRD ID is expected so callers can't accidentally pass an epic/story.
-PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY = re.compile(r"-E\d+(-S\d+)?$")
-# Bare PRD slug fast-fail (uppercase ASCII letter start, digits/hyphens, ≤16
-# chars). Must match the slug section of PARENT_PATTERN_FOR_PRD so that
-# `PRD-<SLUG>` produced below is itself a valid parent for an epic.
-SLUG_PATTERN_FOR_PRD = re.compile(r"^[A-Z][A-Z0-9-]{0,15}$")
-
-# Caller-supplied `--id` override patterns — keyed from spec_graph.ID_PATTERN_BY_TYPE
-# (the single authoritative home) so an --auto batch caller that pre-allocates IDs
-# cannot smuggle an invalid one past the generator.
-ID_PATTERN_OVERRIDE: Dict[str, re.Pattern] = {
-    **ID_PATTERN_BY_TYPE,
-    "product": re.compile(r"^PRODUCT$"),
-    "vision": re.compile(r"^VISION$"),
-    "brd": re.compile(r"^BRD$"),
-    "exec_summary": re.compile(r"^EXEC-SUMMARY$"),
-    "sign_off": re.compile(r".+"),
-    "change_log_entry": re.compile(r".+"),
-}
-
 OPTIONAL_RE = re.compile(
     r"<!--\s*OPTIONAL:\s*(?P<name>[a-z0-9_-]+)\s*-->(?P<body>.*?)<!--\s*/OPTIONAL\s*-->",
     re.DOTALL,
@@ -101,74 +81,6 @@ OPTIONAL_RE = re.compile(
 
 TOKEN_RE = re.compile(r"\{\{(?P<key>[a-zA-Z0-9_]+)\}\}")
 
-
-def allocate_id(graph: Dict[str, Any], target_type: str, slug: Optional[str], parent: Optional[str], session_used: List[str]) -> str:
-    existing_ids = {n["id"] for n in graph["nodes"]} | set(session_used)
-    if target_type == "goal":
-        return _next_with_prefix(existing_ids, "BRD-G")
-    if target_type == "prd":
-        if not slug:
-            raise ValueError("--slug is required for type=prd")
-        normalised = slug.upper()
-        if not SLUG_PATTERN_FOR_PRD.match(normalised):
-            raise ValueError(
-                f"--slug must be uppercase ASCII (A-Z, 0-9, hyphen), start with "
-                f"a letter, and be ≤16 chars (matches {SLUG_PATTERN_FOR_PRD.pattern}); "
-                f"got {slug!r}"
-            )
-        # A slug like AUTH-E1 mints PRD-AUTH-E1, which collides with the epic-1 ID
-        # grammar under PRD-AUTH. Reject any slug whose resulting ID tail looks like
-        # an epic (-E<n>) or story (-E<n>-S<n>) suffix.
-        if PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY.search(normalised):
-            raise ValueError(
-                f"--slug {slug!r} produces an ID (PRD-{normalised}) that collides "
-                f"with the epic/story ID grammar (suffix -{normalised.split('-E', 1)[-1]!r} "
-                f"matches -E<n> or -E<n>-S<n>). Use a slug without a trailing -E<n> sequence."
-            )
-        return f"PRD-{normalised}"
-    if target_type == "epic":
-        # Parent must be a PRD ID exactly (PRD-<SLUG>, slug ≤16 chars). Reject
-        # story/epic IDs (which would emit nonsense like PRD-AUTH-E1-S1-E1) and
-        # oversized slugs (which would later trip invalid_id at validate time).
-        if (
-            not parent
-            or not PARENT_PATTERN_FOR_PRD.match(parent)
-            or PRD_PARENT_LOOKS_LIKE_EPIC_OR_STORY.search(parent)
-        ):
-            raise ValueError(
-                f"--parent must be a valid PRD ID for type=epic "
-                f"(PRD-<SLUG>, slug ≤16 chars, no -E<n>/-S<n> suffix); got {parent!r}"
-            )
-        return _next_with_prefix(existing_ids, f"{parent}-E")
-    if target_type == "story":
-        # Parent must be an epic ID exactly (PRD-<SLUG>-E<n>). Substring "-E"
-        # would also match a story ID and allow PRD-AUTH-E1-S1-S1 nonsense.
-        if not parent or not PARENT_PATTERN_FOR_EPIC.match(parent):
-            raise ValueError(
-                f"--parent must be a valid epic ID for type=story "
-                f"(pattern {PARENT_PATTERN_FOR_EPIC.pattern}); got {parent!r}"
-            )
-        return _next_with_prefix(existing_ids, f"{parent}-S")
-    if target_type == "product":
-        return "PRODUCT"
-    if target_type == "vision":
-        return "VISION"
-    if target_type == "brd":
-        return "BRD"
-    if target_type == "exec_summary":
-        return "EXEC-SUMMARY"
-    return ""
-
-
-def _next_with_prefix(existing: set, prefix: str) -> str:
-    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$")
-    used = []
-    for x in existing:
-        m = pattern.match(x or "")
-        if m:
-            used.append(int(m.group(1)))
-    n = (max(used) + 1) if used else 1
-    return f"{prefix}{n}"
 
 
 def render(template_text: str, values: Dict[str, Any], keep_optional: List[str]) -> str:
