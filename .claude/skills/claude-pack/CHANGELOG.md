@@ -1,10 +1,56 @@
 # Changelog
 
-All notable changes to the **claude-pack bundle** (`cleanmatic:product-spec` + `cleanmatic:claude-pack`)
-are documented here. Tags `claude-pack-v*` version the bundle as a whole.
+All notable changes to the **claude-pack bundle** are documented here. The bundle ships three skills
+(`cleanmatic:product-spec`, `cleanmatic:spec-critique`, `cleanmatic:claude-pack`) plus their agents and
+opt-in hooks. Tags `claude-pack-v*` version the bundle as a whole.
 Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: [semver](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.2.0] — 2026-06-03
+
+Adds the **lifecycle caching + cross-critique inheritance** layer to spec-critique:
+re-running a critique now reuses prior work (token savings, never a safety gate), and
+a critique can surface a parent's prior blockers onto a child (and a parent can roll
+up its critiqued children's verdicts). Includes a cross-skill touch to product-spec's
+preferences. Defaults preserve current behaviour (additive, backward-compatible).
+
+### Added — spec-critique
+
+- **Lifecycle caching (5 committed `.memory/` stores).** `critique-findings-index.json`
+  (lossy evidence-ID query cache → inherit/repeat-offense), `critique-lens-cache/<hash>.json`
+  (the FULL lens-findings array verbatim — the store that makes `consolidate_only` real),
+  `critique-state.json` (per-scope provenance fast-path marker), `web-cache/<url-hash>.json`
+  (market URL fetch + 14-day TTL), `humanized-cache.json` (reuse humanized output when the
+  consolidated text is unchanged).
+- **Provenance reuse + report frontmatter.** Critique reports now carry YAML frontmatter
+  (`critique_scope`/`level`/`lang`/`register`/`body_hash`/`lens_findings_hash`/`bundle_version`);
+  the next run decides reuse 4 ways: `none` / `full` (already current) / `consolidate_only`
+  (re-render voice at a new level WITHOUT re-running lenses) / `relens` (a node changed). A
+  register flip at the same level re-consolidates (voice is consolidate-time).
+- **Cross-critique context.** `inherited_context` (parent→child: a parent's prior blockers
+  surfaced as the child's risk, rendered in a separate section, never in the tally) and
+  `descendant_rollup` (child→parent: critiqued children's verdicts aggregated onto the
+  parent). Consumed by the consolidator ONLY; the lenses stay blind (anti-anchoring).
+- **voice-neutral lenses.** The 4 lens prompts now emit a NEUTRAL grounded observation;
+  the consolidator is the SOLE home for voice/level/register. This is what makes a cached lens
+  finding level-independent (the basis for `consolidate_only`).
+- **New flags:** `--fresh`/`--force` (bypass all reuse), `--refresh-web` (force market
+  re-fetch), `--no-inherit`, `--no-rollup`, `--inherit nearest|deep` (`--no-inherit` beats
+  `--inherit deep`). New bundle keys: `provenance`, `inherited_context`, `descendant_rollup`.
+- **Override-boundary table** in `voice-and-tone.md` (the single home): what the PO CAN
+  override (level/register/profanity-strength/scope/lenses/detail) vs CANNOT (the universal-harm
+  floor + the read-only subagent split).
+- **Modularization.** `critique_scan.py` split into focused modules (`critique_common`,
+  `critique_bundle`, `critique_signals`, `critique_provenance`, `critique_drift`,
+  `critique_inherit`, `critique_cache` + `critique_cache_io` + `critique_blob_cache`).
+
+### Added — product-spec (cross-skill touch)
+
+- **3 critique preferences registered** in `product-spec/scripts/preferences.py` `DEFAULTS`+`ENUMS`
+ : `critique_inherit` (on/off), `critique_rollup` (on/off), `critique_inherit_depth`
+  (nearest/deep) — all default on/nearest, with the YAML `on/off→token` coercion. Required
+  because `preferences.load()` drops any key not registered there.
 
 ## [1.1.0] — 2026-06-02
 
