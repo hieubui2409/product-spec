@@ -1,0 +1,326 @@
+{
+  "snapshot_at": "2026-06-02T01:26:23Z",
+  "version": "1.0",
+  "generated_at": "2026-06-02T01:26:23Z",
+  "product": {
+    "name": "Ghép Đôi Việt",
+    "core_value": "Kết nối thật được duy trì — số cặp đôi nhắn tin qua lại từ 7 ngày trở lên trong tháng.",
+    "personas": [
+      "P-URBAN",
+      "P-PROVINCE",
+      "P-RETURNEE"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "PRODUCT",
+      "type": "product",
+      "body_hash": "12f8eb81",
+      "title": "Ghép Đôi Việt",
+      "status": "draft",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "PRODUCT.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "VISION",
+      "type": "vision",
+      "body_hash": "44634e30",
+      "title": "Vision — Ghép Đôi Việt | Tầm nhìn",
+      "status": "draft",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "vision.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "BRD-G1",
+      "type": "goal",
+      "title": "Đạt 100k MAU trong năm đầu",
+      "status": "draft",
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "BRD-G2",
+      "type": "goal",
+      "title": "20% người dùng hoạt động tạo >=1 match mỗi tuần",
+      "status": "draft",
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "BRD-G3",
+      "type": "goal",
+      "title": "Doanh thu premium đủ hoà vốn vận hành vào năm 2",
+      "status": "draft",
+      "metrics": [
+        "premium-conversion-rate",
+        "arpu"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "PRD-MATCH",
+      "type": "prd",
+      "body_hash": "6ef8ad25",
+      "title": "Khám phá & Ghép đôi",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate",
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/match.md",
+      "brd_goals": [
+        "BRD-G1",
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý",
+          "impact": "high",
+          "likelihood": "med",
+          "mitigation": "Mở rộng bán kính gợi ý ra toàn quốc khi pool địa phương cạn",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "parity",
+        "COMP-BUMBLE": "behind"
+      }
+    },
+    {
+      "id": "PRD-MATCH-E1",
+      "type": "epic",
+      "body_hash": "982249bd",
+      "title": "Khám phá & Quẹt ghép đôi",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-MATCH-E1.md",
+      "brd_goals": [
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": "PRD-MATCH",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Chất lượng gợi ý thấp khi chưa đủ tín hiệu hành vi người dùng",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Bắt đầu bằng gợi ý theo vị trí + sở thích cơ bản, tinh chỉnh dần",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-MATCH-E1-S1",
+      "type": "story",
+      "body_hash": "0ebcb5e1",
+      "title": "Khám phá & quẹt hồ sơ",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-MATCH-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-MATCH-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-MATCH-E1-S2",
+      "type": "story",
+      "body_hash": "e98127fb",
+      "title": "Gợi ý ghép đôi chất lượng",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": "L",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-MATCH-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-MATCH-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "PRD-MATCH",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-MATCH",
+      "to": "BRD-G2",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-MATCH-E1",
+      "to": "PRD-MATCH",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-MATCH-E1-S1",
+      "to": "PRD-MATCH-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-MATCH-E1-S2",
+      "to": "PRD-MATCH-E1",
+      "kind": "epic"
+    }
+  ],
+  "risks": [
+    {
+      "node": "PRD-MATCH",
+      "description": "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý",
+      "impact": "high",
+      "likelihood": "med",
+      "mitigation": "Mở rộng bán kính gợi ý ra toàn quốc khi pool địa phương cạn",
+      "status": "open"
+    },
+    {
+      "node": "PRD-MATCH-E1",
+      "description": "Chất lượng gợi ý thấp khi chưa đủ tín hiệu hành vi người dùng",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Bắt đầu bằng gợi ý theo vị trí + sở thích cơ bản, tinh chỉnh dần",
+      "status": "open"
+    }
+  ],
+  "competitors": [
+    {
+      "id": "COMP-TINDER",
+      "name": "Tinder",
+      "url": "https://tinder.com",
+      "threat": "high"
+    },
+    {
+      "id": "COMP-BUMBLE",
+      "name": "Bumble",
+      "url": "https://bumble.com",
+      "threat": "med"
+    },
+    {
+      "id": "COMP-HEN",
+      "name": "Hẹn",
+      "url": "https://hen.vn",
+      "threat": "med"
+    },
+    {
+      "id": "COMP-FIKA",
+      "name": "Fika",
+      "url": "https://fika.app",
+      "threat": "low"
+    }
+  ],
+  "parse_errors": [],
+  "root_path": "/home/hieubt/Documents/cleanmatic-skills/e2e/dating-app"
+}

@@ -139,3 +139,7 @@ worktrees/
 # Gemini CLI settings (contains user-specific config)
 .gemini/
 Script.tar.gz
+
+# spec-critique e2e scratch bundles (transient agent scratch, not part of the fixture)
+/e2e/**/.regen-bundle.json
+/e2e/**/.critique-bundle-*.json

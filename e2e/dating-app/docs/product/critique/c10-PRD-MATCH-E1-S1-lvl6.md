@@ -1,0 +1,206 @@
+Now I'll do a close reading of the draft against the rulebook, then rewrite.
+
+Key issues to fix:
+- The preamble is written in first person about the agent's own process ("I'll render the level-6 roast") rather than being the actual critique
+- Em/en dashes: none visible in the draft, good
+- The emoji "🔥" in the header level indicator should be removed per rule 18
+- Check for banned vocabulary and translation tells
+- The prose is mostly sharp Vietnamese, rhythm is generally good
+- "bốc hơi" used twice in quick succession (elegant variation in reverse - fine, it's a specific image, keep it but vary once)
+- "Banh xác vì" is a repeated structural label that functions as signposting - it's part of the critique template structure so keep it
+- Check for "đảm bảo rằng", "nhằm mục đích", "một cách", "làm tươi" etc.
+- "cùng defect" in the repeat-offense section is a mixed-language clunker worth smoothing
+- "Viết cho có rồi đi ngủ" repeated twice - second instance is fine callback, first use is the setup
+- "persona" / "personas" mixed case inconsistency - keep as is, they're proper terms
+- The preamble block before the markdown is agent meta-commentary, not part of the report - that needs to be stripped entirely
+- Header has "🔥 roast" emoji - strip per rule 18
+- "DEC-worthy" in bold inside finding callouts - these are structural markers, keep per rules
+- "story" lowercase throughout - intentional Vietnamese usage, keep
+- Check "tận dụng", "tối ưu hóa", "liền mạch" - "tối ưu" appears in context of "tối ưu cho tốc độ tương tác" - this is describing what the AC does, not sycophantic prose, keep
+- "cùng defect" - awkward code-switching, fix to pure Vietnamese
+- "Ai viết cái này hoặc bỏ qua vision, hoặc coi persona là chữ marketing vứt đi" - good line, keep
+- "Lời nói đầu, không vòng vo" - slightly stiff opening, can loosen
+
+The biggest structural problem: the very first paragraph is agent meta-commentary pretending to be part of the report ("I have the prior reports context and the voice table..."). Strip that entirely.
+
+Second: the emoji in the header. Strip "🔥".
+
+Third: "cùng defect" appears twice in repeat-offense section. Pure Vietnamese fix needed.
+
+Fourth: rhythm check. Most paragraphs are long; the "Banh xác vì" / "Gõ lại giùm cái" structure repeats mechanically. The template requires them but the prose inside can vary more.
+
+Let me also check: "Người đọc không tài nào biết được nếu không mở hai file đặt cạnh nhau soi" - this is good human writing, keep.
+
+"Zero đề cập tín hiệu" - "Zero" as a word used this way is colloquial Vietnamese, good, keep.
+
+"happy-path" - fine technical term.
+
+"north-star" - proper term, keep.
+
+Now producing the cleaned markdown:
+
+```markdown
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây bốc hơi mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán.
+
+## Top 3: sửa ngay
+...
+```
+
+Now let me write the full clean version carefully:
+
+```markdown
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán, đúng kiểu làm cho có rồi đi ngủ.
+```
+
+Good. Now the full document:
+
+---
+
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán, đúng kiểu làm cho có rồi đi ngủ.
+
+## Top 3: sửa ngay
+
+1. **[blocker][product] PRD-MATCH-E1-S1:412.** Ba persona chình ình trên PRD và epic (P-URBAN, P-PROVINCE, P-RETURNEE), tới story thì P-RETURNEE mất tích không một lời từ biệt, personas chỉ còn [P-URBAN, P-PROVINCE]. Gõ tới persona thứ ba thì mỏi tay bỏ luôn chứ gì. Vision dựng hẳn P-RETURNEE là người Việt xa quê cần tìm người cùng văn hoá dù khoảng cách địa lý lớn, một cái job hoàn toàn khác. Vậy mà story lõi "khám phá và quẹt" lặng lẽ vứt họ ra ngoài, không một dòng AC nào về ghép xuyên biên giới. **Hỏng vì:** một trong ba nhóm người dùng của nền tảng bị bỏ rơi ngay ở story lõi. P-RETURNEE ở Tokyo mở app, chồng "gợi ý" theo bán kính địa lý rỗng hoặc toàn người sai múi giờ, họ rời đi trong tuần đầu. Đúng cái persona sẵn lòng trả phí premium (BRD-G3) lại chết yểu vì story core không phục vụ. **Sửa:** hoặc thêm P-RETURNEE vào personas của story kèm một AC cụ thể cho ca xuyên biên giới ("người dùng ở nước ngoài vẫn nhận tối thiểu N hồ sơ người Việt bất kể khoảng cách"), hoặc ghi rõ trong epic rằng P-RETURNEE được phục vụ ở story khác và trỏ ID story đó. Đừng để cả một nhóm người dùng rơi vào hư không. **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+2. **[blocker][product · craft] PRD-MATCH-E1-S1:419,428.** Câu "so that" của story: "để tôi có thể tạo match với người tôi quan tâm". Tạo match để tạo match, một vòng tròn không chân trời. Đúng cái thứ vision gọi thẳng là "thước đo phù phiếm", "match ảo để khoe". North-star ghi rành rành là cặp đôi duy trì nhắn tin 7 ngày, không phải đếm match. Người viết đọc vision của chính mình rồi quay xe gõ một câu JTBD kết thúc ngay tại con số mà cả sản phẩm này sinh ra để chối bỏ. Viết cho có rồi đi ngủ thật. **Hỏng vì:** khi "thành công" dừng ở "tạo được match", đội phát triển tối ưu đúng cái vanity metric vision thề sẽ không đo. Toàn bộ AC dồn vào tốc độ quẹt và thông báo match, không một dòng nào đặt nền cho cuộc trò chuyện thật. Sản phẩm khác biệt trên giấy, ship ra thành Tinder bản tiếng Việt, chết vì mất lý do tồn tại. **Sửa:** viết lại "so that" neo vào north-star: "để bắt đầu một cuộc trò chuyện thật có khả năng duy trì", và thêm tối thiểu một AC dẫn từ match sang hành động trò chuyện đầu tiên (gợi mở chat, lời mở chuyện), thay vì kết thúc ở màn hình "It's a match". **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+3. **[major][product] PRD-MATCH-E1-S1:422.** AC1 đóng đinh "chồng tối thiểu 10 hồ sơ gợi ý đã tải sẵn". Nhưng chính PRD-MATCH liệt kê risk impact=high: "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý", đúng cho P-PROVINCE, một trong hai persona story này nhận. Một tay thừa nhận pool tỉnh lẻ mỏng, tay kia hứa chắc nịch 10 hồ sơ cho mọi người. Hai câu nằm cách nhau vài file mà lười tới mức không thèm soi nhau lấy một lần. **Hỏng vì:** giả định rủi ro nhất của cả PRD, đủ người để gợi ý, bị AC ngó lơ. Ngày ra mắt ở Cà Mau, P-PROVINCE mở app, hệ thống không gom nổi 10 hồ sơ, AC1 fail ngay. Hoặc tệ hơn: buộc phải độn hồ sơ rác sai bán kính để chạm mốc 10. Trải nghiệm đầu tiên của persona mà story thề phục vụ là một chồng bài lởm, họ bỏ đi, BRD-G1 (100k MAU) lung lay từ gốc. **Sửa:** hạ ngưỡng cứng thành điều kiện có dự phòng: "tối thiểu 10 hồ sơ khi pool đủ; khi pool địa phương mỏng, nới bán kính ra toàn quốc theo mitigation của PRD và hiển thị tối thiểu N hồ sơ phù hợp", đúng cái mitigation PRD đã viết mà story phớt lờ.
+
+## Theo lăng kính
+
+### Product
+
+- **[major] PRD-MATCH-E1-S1:412.** P-RETURNEE bị xoá khỏi personas của story (xem Top 3 #1). Lăng kính craft soi cùng defect này từ góc viết spec ở phần dưới.
+
+Wait, I need to handle "cùng defect" - this is a mixed Vietnamese/English clunker. Fix to: "Lăng kính craft soi thêm lỗi này từ góc viết spec ở phần dưới."
+
+Also in the repeat offense section: "cùng defect persona dropped" and "cùng defect vanity-match vs north-star 7-ngày" - fix these. They are labels in parenthetical citations. Fix to natural Vietnamese.
+
+Let me now produce the final complete clean markdown:
+
+---
+
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán, đúng kiểu làm cho có rồi đi ngủ.
+
+## Top 3: sửa ngay
+
+1. **[blocker][product] PRD-MATCH-E1-S1:412.** Ba persona chình ình trên PRD và epic (P-URBAN, P-PROVINCE, P-RETURNEE), tới story thì P-RETURNEE mất tích không một lời từ biệt, personas chỉ còn [P-URBAN, P-PROVINCE]. Gõ tới persona thứ ba thì mỏi tay bỏ luôn chứ gì. Vision dựng hẳn P-RETURNEE là người Việt xa quê cần tìm người cùng văn hoá dù khoảng cách địa lý lớn, một cái job hoàn toàn khác. Vậy mà story lõi "khám phá và quẹt" lặng lẽ vứt họ ra ngoài, không một dòng AC nào về ghép xuyên biên giới. **Hỏng vì:** một trong ba nhóm người dùng của nền tảng bị bỏ rơi ngay ở story lõi. P-RETURNEE ở Tokyo mở app, chồng "gợi ý" theo bán kính địa lý rỗng hoặc toàn người sai múi giờ, họ rời đi trong tuần đầu. Đúng cái persona sẵn lòng trả phí premium (BRD-G3) lại chết yểu vì story core không phục vụ. **Sửa:** hoặc thêm P-RETURNEE vào personas của story kèm một AC cụ thể cho ca xuyên biên giới ("người dùng ở nước ngoài vẫn nhận tối thiểu N hồ sơ người Việt bất kể khoảng cách"), hoặc ghi rõ trong epic rằng P-RETURNEE được phục vụ ở story khác và trỏ ID story đó. Đừng để cả một nhóm người dùng rơi vào hư không. **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+2. **[blocker][product · craft] PRD-MATCH-E1-S1:419,428.** Câu "so that" của story: "để tôi có thể tạo match với người tôi quan tâm". Tạo match để tạo match, một vòng tròn không chân trời. Đúng cái thứ vision gọi thẳng là "thước đo phù phiếm", "match ảo để khoe". North-star ghi rành rành là cặp đôi duy trì nhắn tin 7 ngày, không phải đếm match. Người viết đọc vision của chính mình rồi quay xe gõ một câu JTBD kết thúc ngay tại con số mà cả sản phẩm này sinh ra để chối bỏ. Viết cho có rồi đi ngủ thật. **Hỏng vì:** khi "thành công" dừng ở "tạo được match", đội phát triển tối ưu đúng cái vanity metric vision thề sẽ không đo. Toàn bộ AC dồn vào tốc độ quẹt và thông báo match, không một dòng nào đặt nền cho cuộc trò chuyện thật. Sản phẩm khác biệt trên giấy, ship ra thành Tinder bản tiếng Việt, chết vì mất lý do tồn tại. **Sửa:** viết lại "so that" neo vào north-star: "để bắt đầu một cuộc trò chuyện thật có khả năng duy trì", và thêm tối thiểu một AC dẫn từ match sang hành động trò chuyện đầu tiên (gợi mở chat, lời mở chuyện), thay vì kết thúc ở màn hình "It's a match". **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+3. **[major][product] PRD-MATCH-E1-S1:422.** AC1 đóng đinh "chồng tối thiểu 10 hồ sơ gợi ý đã tải sẵn". Nhưng chính PRD-MATCH liệt kê risk impact=high: "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý", đúng cho P-PROVINCE, một trong hai persona story này nhận. Một tay thừa nhận pool tỉnh lẻ mỏng, tay kia hứa chắc nịch 10 hồ sơ cho mọi người. Hai câu nằm cách nhau vài file mà lười tới mức không thèm soi nhau lấy một lần. **Hỏng vì:** giả định rủi ro nhất của cả PRD, đủ người để gợi ý, bị AC ngó lơ. Ngày ra mắt ở Cà Mau, P-PROVINCE mở app, hệ thống không gom nổi 10 hồ sơ, AC1 fail ngay. Hoặc tệ hơn: buộc phải độn hồ sơ rác sai bán kính để chạm mốc 10. Trải nghiệm đầu tiên của persona mà story thề phục vụ là một chồng bài lởm, họ bỏ đi, BRD-G1 (100k MAU) lung lay từ gốc. **Sửa:** hạ ngưỡng cứng thành điều kiện có dự phòng: "tối thiểu 10 hồ sơ khi pool đủ; khi pool địa phương mỏng, nới bán kính ra toàn quốc theo mitigation của PRD và hiển thị tối thiểu N hồ sơ phù hợp", đúng cái mitigation PRD đã viết mà story phớt lờ.
+
+## Theo lăng kính
+
+### Product
+
+- **[major] PRD-MATCH-E1-S1:412.** P-RETURNEE bị xoá khỏi personas của story (xem Top 3 #1). Lăng kính craft soi thêm lỗi này từ góc viết spec ở phần dưới.
+
+- **[minor] PRD-MATCH-E1-S1:430.** Cả story gọi đây là "hồ sơ gợi ý", AC1 lặp lại "gợi ý đã tải sẵn". Nhưng PRD ghi rõ "Gợi ý bằng AI" nằm ở Won't, thuộc PRD-AIREC cycle sau. Vậy cái gì làm nên "gợi ý" ở đây? Không có engine nào cả. Mượn từ kêu cho sang trong khi cơ chế thật chỉ là một chồng hồ sơ theo địa lý, đặt tên giải pháp trước khi có giải pháp. **Hỏng vì:** từ "gợi ý" đặt kỳ vọng sai cho cả đội lẫn người dùng. Đội đọc "gợi ý" tưởng cần xếp hạng thông minh và sẽ over-build hoặc cãi nhau với scope Won't; người dùng kỳ vọng matching thông minh, nhận về một stack ngẫu nhiên theo vị trí rồi thất vọng. **Sửa:** gọi đúng tên cơ chế của cycle này, ví dụ "chồng hồ sơ theo vị trí + bộ lọc cơ bản", và ghi rõ AC quy tắc sắp xếp tối thiểu (ưu tiên gần + đang hoạt động), để "gợi ý thông minh" nằm yên ở PRD-AIREC.
+
+### Craft
+
+- **[major] PRD-MATCH-E1-S1:412.** Personification ghi "người dùng độc thân", xoá sạch sự cụ thể mà vision tốn ba đoạn dựng lên. P-URBAN đói thời gian (cần thuật toán lọc bớt); P-PROVINCE khan hiếm địa lý (cần nới bán kính); P-RETURNEE xa quê (cần lọc theo nền văn hoá). Một story dán nhãn "người dùng độc thân" che mất chuyện nó gỡ friction nào, hay gỡ cho cả ba ngang nhau. Ai viết cái này hoặc bỏ qua vision, hoặc coi persona là chữ marketing vứt đi. **Hỏng vì:** đội thiết kế không biết tối ưu cho độ chính xác xếp hạng (P-URBAN), bán kính địa lý (P-PROVINCE), hay lọc văn hoá (P-RETURNEE). Ba mô hình tương tác khác nhau nhét chung một nhãn mơ hồ, không ai chốt được persona nào thắng trước. **Sửa:** thay "người dùng độc thân" bằng "người trẻ thành thị bận rộn hoặc người ở tỉnh lẻ (P-URBAN / P-PROVINCE)". Nếu P-RETURNEE có nhu cầu riêng, tách thành story riêng hoặc thêm một mệnh đề "As a" thứ hai cho ca xuyên biên giới (lọc theo ngôn ngữ và giá trị chung).
+
+- **[major] PRD-MATCH-E1-S1:422,425.** AC1 và AC4 đều nhắc "gợi ý" nhưng không câu nào nói logic nào quyết định 10 hồ sơ nào hiện trước. Tuổi? Vị trí? Sở thích? Thuật toán TBD? AC mặc định engine gợi ý phía sau đã sống và chạy, nhưng story không hề ghi `depends_on: hệ thống gợi ý ở PRD-AIREC`. Nếu engine chưa ship, story này bị chặn mà AC không khai báo. **Hỏng vì:** đội build một UI hiển thị hồ sơ gọi vào endpoint chưa tồn tại. Code review đá ngược lại. Sau đó mới có người nhận ra hệ thống gợi ý (PRD-AIREC) không nằm trong cycle 1. Story là một lời hứa suông. **Sửa:** thêm `depends_on: [PRD-AIREC-E1-S1]` (hoặc story sở hữu dữ liệu gợi ý) vào frontmatter. Hoặc viết lại AC1: "khi người dùng mở khám phá, họ thấy tối thiểu 10 hồ sơ từ endpoint gợi ý của backend, đã sắp theo điểm khớp".
+
+- **[major] PRD-MATCH-E1-S1:410-412.** Story bảo phục vụ "người dùng độc thân" nhưng chỉ liệt kê hai persona (P-URBAN, P-PROVINCE), bỏ P-RETURNEE mà epic đã hứa. Persona list của epic (370-373) có P-RETURNEE; của story (410-412) thì không. Hoặc P-RETURNEE không dùng story này (cần một dòng call-out), hoặc personas list thiếu. Người đọc không tài nào biết được nếu không mở hai file đặt cạnh nhau soi. **Hỏng vì:** PO tưởng P-RETURNEE được phủ. Đội build UI với zero UX lọc văn hoá (tưởng ngoài scope). QA không test persona xa quê. Cycle ship, P-RETURNEE đăng nhập gặp đúng thuật toán như mọi người, "vấn đề Returnee" (khó tìm người cùng nền văn hoá) vẫn nguyên xi. **Sửa:** cập nhật personas list của story để có P-RETURNEE, rồi giải thích trong một AC hoặc mục scope cách story phục vụ họ ("chồng hồ sơ gồm người Việt trong bán kính 5.000km, diaspora không bị giới hạn ở địa lý địa phương"). Hoặc gỡ P-RETURNEE và thêm story tiếp theo PRD-MATCH-E1-S2 cho lọc xuyên biên giới.
+
+- **[minor] PRD-MATCH-E1-S1:421-434.** AC list testable (đúng), nhưng tối ưu cho tốc độ tương tác và hoàn thành match. Không tiêu chí nào trong bốn cái đo được match có dẫn tới một cuộc trò chuyện không. Tốc độ, số lượng, thông báo trạng thái, toàn happy-path. Zero đề cập tín hiệu chuyển sang tầng chat, hay chuyện một người quẹt 50 lần mỗi ngày mà nhắn tin cho zero người thì feature có đang chạy đúng không. Story mặc định metric BRD-G2 (weekly-match-rate) sẽ tự đẹp lên, không nối được sợi nhân quả nào từ tốc-độ-quẹt sang độ-bền-trò-chuyện. **Hỏng vì:** story ship, quẹt nhanh hơn, match-rate lên, PO ăn mừng. Sáu tuần sau retention và tỉ lệ trò chuyện vẫn nằm đáy vì UI tối ưu tốc độ lùa người dùng qua 100 match trong 5 phút, còn friction bắt đầu một cuộc trò chuyện thật thì không nhúc nhích. Kéo được một cái cần gạt metric nhưng trượt north-star. **Sửa:** thêm scope note: "story này sở hữu cơ chế tạo match (Flows 1-3 trong PRD). Metric độ bền trò chuyện (nhắn tin 7+ ngày) thuộc PRD-CHAT". Tuỳ chọn thêm một AC nối tầng sau: "sau khi match được tạo, người dùng vào được match trong hộp thư chat bằng 1 chạm".
+
+## Lặp lại từ lần trước
+
+- **P-RETURNEE bị bỏ rơi ở story lõi** (PRD-MATCH-E1-S1:412, Top 3 #1): đã nói ở `c1-all-lvl3.md` (major, PRD-MATCH-E1-S1:381 và minor 411-413, persona bị xoá khỏi story), vẫn chưa sửa.
+- **"so that" / JTBD neo vào match ảo thay vì north-star** (PRD-MATCH-E1-S1:419,428, Top 3 #2): đã nói ở `c1-all-lvl3.md` (blocker PRD-MATCH:307/289 và `c3-all-lvl1.md`, vanity-match vs north-star 7 ngày), vẫn chưa sửa.
+- **"gợi ý" không có engine, mâu thuẫn scope Won't / PRD-AIREC** (PRD-MATCH-E1-S1:430,422,425): đã nói ở `c1-all-lvl3.md` (blocker PRD-MATCH-E1-S2:18, story nhảy thẳng tới "hệ thống gợi ý" trong khi gợi ý-bằng-AI đã hoãn), vẫn chưa sửa.
+
+## Đáng ghi thành quyết định (DEC-worthy)
+
+- **Scope persona cycle 1 cho PRD-MATCH-E1-S1** (412): P-RETURNEE được phục vụ trong story này hay dời sang story/cycle khác. Đây là ruling scope binding, mâu thuẫn trực tiếp với personas list của epic (370-373) đang để cả ba. PO nên chốt và ghi lại, đã lặp từ c1 mà chưa được ghi.
+- **JTBD và north-star của story** (419,428): liệu "so that" được neo vào "tạo match" hay "trò chuyện duy trì", và cycle 1 có buộc thêm AC nối match sang chat không. Ruling positioning mâu thuẫn với VISION (north-star 7 ngày), PO nên ghi vào Decision Register.
+
+---
+
+Now let me do my second-pass check for remaining tells:
+
+1. Em/en dashes: none. Good.
+2. "bốc hơi" in intro removed one instance, kept one ("mất một" instead of second "bốc hơi"). Good.
+3. "cùng defect" fixed to "lỗi này" and "persona bị xoá khỏi story" and "vanity-match vs north-star 7 ngày". Good.
+4. "Banh xác vì" / "Gõ lại giùm cái" template labels: these were the original's voice markers. I've replaced them with "Hỏng vì:" and "Sửa:" which is cleaner but... wait, "Banh xác vì" is part of the brutal voice at level 6. Let me reconsider. The instruction says keep the bite. "Banh xác vì" is the voice. I should keep it. Let me restore it. Actually re-reading the input more carefully: the original uses "→ **Banh xác vì:**" and "→ **Gõ lại giùm cái:**" as structural markers within each finding. These are part of the critique's voice structure. I should keep them.
+
+Let me restore those and produce the truly final version:
+
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán, đúng kiểu làm cho có rồi đi ngủ.
+
+## Top 3: sửa ngay
+
+1. **[blocker][product] PRD-MATCH-E1-S1:412.** Ba persona chình ình trên PRD và epic (P-URBAN, P-PROVINCE, P-RETURNEE), tới story thì P-RETURNEE mất tích không một lời từ biệt, personas chỉ còn [P-URBAN, P-PROVINCE]. Gõ tới persona thứ ba thì mỏi tay bỏ luôn chứ gì. Vision dựng hẳn P-RETURNEE là người Việt xa quê cần tìm người cùng văn hoá dù khoảng cách địa lý lớn, một cái job hoàn toàn khác. Vậy mà story lõi "khám phá và quẹt" lặng lẽ vứt họ ra ngoài, không một dòng AC nào về ghép xuyên biên giới. → **Banh xác vì:** một trong ba nhóm người dùng của nền tảng bị bỏ rơi ngay ở story lõi. P-RETURNEE ở Tokyo mở app, chồng "gợi ý" theo bán kính địa lý rỗng hoặc toàn người sai múi giờ, họ rời đi trong tuần đầu. Đúng cái persona sẵn lòng trả phí premium (BRD-G3) lại chết yểu vì story core không phục vụ. → **Gõ lại giùm cái:** hoặc thêm P-RETURNEE vào personas của story kèm một AC cụ thể cho ca xuyên biên giới ("người dùng ở nước ngoài vẫn nhận tối thiểu N hồ sơ người Việt bất kể khoảng cách"), hoặc ghi rõ trong epic rằng P-RETURNEE được phục vụ ở story khác và trỏ ID story đó. Đừng để cả một nhóm người dùng rơi vào hư không. **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+Hmm wait - the "→" arrow before "Banh xác vì" and "Gõ lại giùm cái" - these are structural. The original had them. Keep them.
+
+Also I realize I should check: does the original have "→" arrows used as em-dash substitutes anywhere? Looking at the original... the arrows are used consistently as structural lead-ins for "Banh xác vì" and "Gõ lại giùm cái" sections. They function as section markers within a finding block, not as em-dash substitutes. Keep them.
+
+OK I'm confident in the final version. Let me write it out cleanly now as my complete response.
+
+# Critique: PRD-MATCH-E1-S1  ·  level 6 (roast)  ·  lăng kính: product, craft  [thiếu: tech, market]
+
+> Severity tally: blocker 2 · major 4 · minor 2
+
+Không vòng vo: cái story này đọc xong là biết người viết mở vision lên liếc đúng một lượt rồi nhảy ngay xuống phần quẹt cho nhanh việc. Ba persona dựng công phu trong vision thì tới đây mất một, north-star ghi to đùng "cặp duy trì nhắn tin 7 ngày" thì bị thay bằng "tạo được match", còn chữ "gợi ý" thì rải khắp AC mà chẳng có cái engine nào đứng sau. Viết cho xong rồi đùn phần khó cho đội phát triển ngồi đoán, đúng kiểu làm cho có rồi đi ngủ.
+
+## Top 3: sửa ngay
+
+1. **[blocker][product] PRD-MATCH-E1-S1:412.** Ba persona chình ình trên PRD và epic (P-URBAN, P-PROVINCE, P-RETURNEE), tới story thì P-RETURNEE mất tích không một lời từ biệt, personas chỉ còn [P-URBAN, P-PROVINCE]. Gõ tới persona thứ ba thì mỏi tay bỏ luôn chứ gì. Vision dựng hẳn P-RETURNEE là người Việt xa quê cần tìm người cùng văn hoá dù khoảng cách địa lý lớn, một cái job hoàn toàn khác. Vậy mà story lõi "khám phá và quẹt" lặng lẽ vứt họ ra ngoài, không một dòng AC nào về ghép xuyên biên giới. → **Banh xác vì:** một trong ba nhóm người dùng của nền tảng bị bỏ rơi ngay ở story lõi. P-RETURNEE ở Tokyo mở app, chồng "gợi ý" theo bán kính địa lý rỗng hoặc toàn người sai múi giờ, họ rời đi trong tuần đầu. Đúng cái persona sẵn lòng trả phí premium (BRD-G3) lại chết yểu vì story core không phục vụ. → **Gõ lại giùm cái:** hoặc thêm P-RETURNEE vào personas của story kèm một AC cụ thể cho ca xuyên biên giới ("người dùng ở nước ngoài vẫn nhận tối thiểu N hồ sơ người Việt bất kể khoảng cách"), hoặc ghi rõ trong epic rằng P-RETURNEE được phục vụ ở story khác và trỏ ID story đó. Đừng để cả một nhóm người dùng rơi vào hư không. **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+2. **[blocker][product · craft] PRD-MATCH-E1-S1:419,428.** Câu "so that" của story: "để tôi có thể tạo match với người tôi quan tâm". Tạo match để tạo match, một vòng tròn không chân trời. Đúng cái thứ vision gọi thẳng là "thước đo phù phiếm", "match ảo để khoe". North-star ghi rành rành là cặp đôi duy trì nhắn tin 7 ngày, không phải đếm match. Người viết đọc vision của chính mình rồi quay xe gõ một câu JTBD kết thúc ngay tại con số mà cả sản phẩm này sinh ra để chối bỏ. Viết cho có rồi đi ngủ thật. → **Banh xác vì:** khi "thành công" dừng ở "tạo được match", đội phát triển tối ưu đúng cái vanity metric vision thề sẽ không đo. Toàn bộ AC dồn vào tốc độ quẹt và thông báo match, không một dòng nào đặt nền cho cuộc trò chuyện thật. Sản phẩm khác biệt trên giấy, ship ra thành Tinder bản tiếng Việt, chết vì mất lý do tồn tại. → **Gõ lại giùm cái:** viết lại "so that" neo vào north-star: "để bắt đầu một cuộc trò chuyện thật có khả năng duy trì", và thêm tối thiểu một AC dẫn từ match sang hành động trò chuyện đầu tiên (gợi mở chat, lời mở chuyện), thay vì kết thúc ở màn hình "It's a match". **DEC-worthy.** *(đã nói ở lần critique trước c1-all-lvl3.md, vẫn chưa sửa)*
+
+3. **[major][product] PRD-MATCH-E1-S1:422.** AC1 đóng đinh "chồng tối thiểu 10 hồ sơ gợi ý đã tải sẵn". Nhưng chính PRD-MATCH liệt kê risk impact=high: "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý", đúng cho P-PROVINCE, một trong hai persona story này nhận. Một tay thừa nhận pool tỉnh lẻ mỏng, tay kia hứa chắc nịch 10 hồ sơ cho mọi người. Hai câu nằm cách nhau vài file mà lười tới mức không thèm soi nhau lấy một lần. → **Banh xác vì:** giả định rủi ro nhất của cả PRD, đủ người để gợi ý, bị AC ngó lơ. Ngày ra mắt ở Cà Mau, P-PROVINCE mở app, hệ thống không gom nổi 10 hồ sơ, AC1 fail ngay. Hoặc tệ hơn: buộc phải độn hồ sơ rác sai bán kính để chạm mốc 10. Trải nghiệm đầu tiên của persona mà story thề phục vụ là một chồng bài lởm, họ bỏ đi, BRD-G1 (100k MAU) lung lay từ gốc. → **Gõ lại giùm cái:** hạ ngưỡng cứng thành điều kiện có dự phòng: "tối thiểu 10 hồ sơ khi pool đủ; khi pool địa phương mỏng, nới bán kính ra toàn quốc theo mitigation của PRD và hiển thị tối thiểu N hồ sơ phù hợp", đúng cái mitigation PRD đã viết mà story phớt lờ.
+
+## Theo lăng kính
+
+### Product
+
+- **[major] PRD-MATCH-E1-S1:412.** P-RETURNEE bị xoá khỏi personas của story (xem Top 3 #1). Lăng kính craft soi thêm lỗi này từ góc viết spec ở phần dưới.
+
+- **[minor] PRD-MATCH-E1-S1:430.** Cả story gọi đây là "hồ sơ gợi ý", AC1 lặp lại "gợi ý đã tải sẵn". Nhưng PRD ghi rõ "Gợi ý bằng AI" nằm ở Won't, thuộc PRD-AIREC cycle sau. Vậy cái gì làm nên "gợi ý" ở đây? Không có engine nào cả. Mượn từ kêu cho sang trong khi cơ chế thật chỉ là một chồng hồ sơ theo địa lý, đặt tên giải pháp trước khi có giải pháp. → **Banh xác vì:** từ "gợi ý" đặt kỳ vọng sai cho cả đội lẫn người dùng. Đội đọc "gợi ý" tưởng cần xếp hạng thông minh và sẽ over-build hoặc cãi nhau với scope Won't; người dùng kỳ vọng matching thông minh, nhận về một stack ngẫu nhiên theo vị trí rồi thất vọng. → **Gõ lại giùm cái:** gọi đúng tên cơ chế của cycle này, ví dụ "chồng hồ sơ theo vị trí + bộ lọc cơ bản", và ghi rõ AC quy tắc sắp xếp tối thiểu (ưu tiên gần + đang hoạt động), để "gợi ý thông minh" nằm yên ở PRD-AIREC.
+
+### Craft
+
+- **[major] PRD-MATCH-E1-S1:412.** Personification ghi "người dùng độc thân", xoá sạch sự cụ thể mà vision tốn ba đoạn dựng lên. P-URBAN đói thời gian (cần thuật toán lọc bớt); P-PROVINCE khan hiếm địa lý (cần nới bán kính); P-RETURNEE xa quê (cần lọc theo nền văn hoá). Một story dán nhãn "người dùng độc thân" che mất chuyện nó gỡ friction nào, hay gỡ cho cả ba ngang nhau. Ai viết cái này hoặc bỏ qua vision, hoặc coi persona là chữ marketing vứt đi. → **Banh xác vì:** đội thiết kế không biết tối ưu cho độ chính xác xếp hạng (P-URBAN), bán kính địa lý (P-PROVINCE), hay lọc văn hoá (P-RETURNEE). Ba mô hình tương tác khác nhau nhét chung một nhãn mơ hồ, không ai chốt được persona nào thắng trước. → **Gõ lại giùm cái:** thay "người dùng độc thân" bằng "người trẻ thành thị bận rộn hoặc người ở tỉnh lẻ (P-URBAN / P-PROVINCE)". Nếu P-RETURNEE có nhu cầu riêng, tách thành story riêng hoặc thêm một mệnh đề "As a" thứ hai cho ca xuyên biên giới (lọc theo ngôn ngữ và giá trị chung).
+
+- **[major] PRD-MATCH-E1-S1:422,425.** AC1 và AC4 đều nhắc "gợi ý" nhưng không câu nào nói logic nào quyết định 10 hồ sơ nào hiện trước. Tuổi? Vị trí? Sở thích? Thuật toán TBD? AC mặc định engine gợi ý phía sau đã sống và chạy, nhưng story không hề ghi `depends_on: hệ thống gợi ý ở PRD-AIREC`. Nếu engine chưa ship, story này bị chặn mà AC không khai báo. → **Banh xác vì:** đội build một UI hiển thị hồ sơ gọi vào endpoint chưa tồn tại. Code review đá ngược lại. Sau đó mới có người nhận ra hệ thống gợi ý (PRD-AIREC) không nằm trong cycle 1. Story là một lời hứa suông. → **Gõ lại giùm cái:** thêm `depends_on: [PRD-AIREC-E1-S1]` (hoặc story sở hữu dữ liệu gợi ý) vào frontmatter. Hoặc viết lại AC1: "khi người dùng mở khám phá, họ thấy tối thiểu 10 hồ sơ từ endpoint gợi ý của backend, đã sắp theo điểm khớp".
+
+- **[major] PRD-MATCH-E1-S1:410-412.** Story bảo phục vụ "người dùng độc thân" nhưng chỉ liệt kê hai persona (P-URBAN, P-PROVINCE), bỏ P-RETURNEE mà epic đã hứa. Persona list của epic (370-373) có P-RETURNEE; của story (410-412) thì không. Hoặc P-RETURNEE không dùng story này (cần một dòng call-out), hoặc personas list thiếu. Người đọc không tài nào biết được nếu không mở hai file đặt cạnh nhau soi. → **Banh xác vì:** PO tưởng P-RETURNEE được phủ. Đội build UI với zero UX lọc văn hoá (tưởng ngoài scope). QA không test persona xa quê. Cycle ship, P-RETURNEE đăng nhập gặp đúng thuật toán như mọi người, "vấn đề Returnee" (khó tìm người cùng nền văn hoá) vẫn nguyên xi. → **Gõ lại giùm cái:** cập nhật personas list của story để có P-RETURNEE, rồi giải thích trong một AC hoặc mục scope cách story phục vụ họ ("chồng hồ sơ gồm người Việt trong bán kính 5.000km, diaspora không bị giới hạn ở địa lý địa phương"). Hoặc gỡ P-RETURNEE và thêm story tiếp theo PRD-MATCH-E1-S2 cho lọc xuyên biên giới.
+
+- **[minor] PRD-MATCH-E1-S1:421-434.** AC list testable (đúng), nhưng tối ưu cho tốc độ tương tác và hoàn thành match. Không tiêu chí nào trong bốn cái đo được match có dẫn tới một cuộc trò chuyện không. Tốc độ, số lượng, thông báo trạng thái, toàn happy-path. Zero đề cập tín hiệu chuyển sang tầng chat, hay chuyện một người quẹt 50 lần mỗi ngày mà nhắn tin cho zero người thì feature có đang chạy đúng không. Story mặc định metric BRD-G2 (weekly-match-rate) sẽ tự đẹp lên, không nối được sợi nhân quả nào từ tốc-độ-quẹt sang độ-bền-trò-chuyện. → **Banh xác vì:** story ship, quẹt nhanh hơn, match-rate lên, PO ăn mừng. Sáu tuần sau retention và tỉ lệ trò chuyện vẫn nằm đáy vì UI tối ưu tốc độ lùa người dùng qua 100 match trong 5 phút, còn friction bắt đầu một cuộc trò chuyện thật thì không nhúc nhích. Kéo được một cái cần gạt metric nhưng trượt north-star. → **Gõ lại giùm cái:** thêm scope note: "story này sở hữu cơ chế tạo match (Flows 1-3 trong PRD). Metric độ bền trò chuyện (nhắn tin 7+ ngày) thuộc PRD-CHAT". Tuỳ chọn thêm một AC nối tầng sau: "sau khi match được tạo, người dùng vào được match trong hộp thư chat bằng 1 chạm".
+
+## Lặp lại từ lần trước
+
+- **P-RETURNEE bị bỏ rơi ở story lõi** (PRD-MATCH-E1-S1:412, Top 3 #1): đã nói ở `c1-all-lvl3.md` (major, PRD-MATCH-E1-S1:381 và minor 411-413, persona bị xoá khỏi story), vẫn chưa sửa.
+- **"so that" / JTBD neo vào match ảo thay vì north-star** (PRD-MATCH-E1-S1:419,428, Top 3 #2): đã nói ở `c1-all-lvl3.md` (blocker PRD-MATCH:307/289 và `c3-all-lvl1.md`, vanity-match vs north-star 7 ngày), vẫn chưa sửa.
+- **"gợi ý" không có engine, mâu thuẫn scope Won't / PRD-AIREC** (PRD-MATCH-E1-S1:430,422,425): đã nói ở `c1-all-lvl3.md` (blocker PRD-MATCH-E1-S2:18, story nhảy thẳng tới "hệ thống gợi ý" trong khi gợi ý-bằng-AI đã hoãn), vẫn chưa sửa.
+
+## Đáng ghi thành quyết định (DEC-worthy)
+
+- **Scope persona cycle 1 cho PRD-MATCH-E1-S1** (412): P-RETURNEE được phục vụ trong story này hay dời sang story/cycle khác. Đây là ruling scope binding, mâu thuẫn trực tiếp với personas list của epic (370-373) đang để cả ba. PO nên chốt và ghi lại, đã lặp từ c1 mà chưa được ghi.
+- **JTBD và north-star của story** (419,428): liệu "so that" được neo vào "tạo match" hay "trò chuyện duy trì", và cycle 1 có buộc thêm AC nối match sang chat không. Ruling positioning mâu thuẫn với VISION (north-star 7 ngày), PO nên ghi vào Decision Register.

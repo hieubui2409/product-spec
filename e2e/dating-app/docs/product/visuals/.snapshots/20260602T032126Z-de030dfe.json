@@ -1,0 +1,1360 @@
+{
+  "snapshot_at": "2026-06-02T03:21:26Z",
+  "version": "1.0",
+  "generated_at": "2026-06-02T03:21:26Z",
+  "product": {
+    "name": "Ghép Đôi Việt",
+    "core_value": "Kết nối thật được duy trì — số cặp đôi nhắn tin qua lại từ 7 ngày trở lên trong tháng.",
+    "personas": [
+      "P-URBAN",
+      "P-PROVINCE",
+      "P-RETURNEE"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "PRODUCT",
+      "type": "product",
+      "body_hash": "12f8eb81",
+      "title": "Ghép Đôi Việt",
+      "status": "draft",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "PRODUCT.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "VISION",
+      "type": "vision",
+      "body_hash": "44634e30",
+      "title": "Vision — Ghép Đôi Việt | Tầm nhìn",
+      "status": "draft",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "vision.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "BRD-G1",
+      "type": "goal",
+      "title": "Đạt 100k MAU trong năm đầu",
+      "status": "draft",
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "BRD-G2",
+      "type": "goal",
+      "title": "20% người dùng hoạt động tạo >=1 match mỗi tuần",
+      "status": "draft",
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "BRD-G3",
+      "type": "goal",
+      "title": "Doanh thu premium đủ hoà vốn vận hành vào năm 2",
+      "status": "draft",
+      "metrics": [
+        "premium-conversion-rate",
+        "arpu"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "PRD-AIREC",
+      "type": "prd",
+      "body_hash": "c258d8fd",
+      "title": "Gợi ý ghép đôi bằng AI",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "could",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/airec.md",
+      "brd_goals": [
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Gợi ý bằng AI là tính năng me-too: Tinder và Bumble đã có thuật toán gợi ý trưởng thành; làm sau mà không có dữ liệu tương tác đủ lớn thì chất lượng gợi ý kém, dễ thua trải nghiệm đối thủ",
+          "impact": "med",
+          "likelihood": "high",
+          "mitigation": "Đặt moscow:could và horizon:later; chỉ đầu tư sau khi lõi ghép đôi (PRD-MATCH) và nhắn tin (PRD-CHAT) tích đủ dữ liệu tương tác thật để mô hình có cái mà học",
+          "status": "open"
+        },
+        {
+          "description": "AI gợi ý tối ưu cho số match có thể kéo lệch khỏi north-star (kết nối duy trì >=7 ngày) nếu huấn luyện theo lượt quẹt thay vì độ bền hội thoại",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Nếu làm, đặt mục tiêu mô hình theo tỉ lệ match chuyển thành nhắn tin duy trì, không theo số match thô",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "behind",
+        "COMP-BUMBLE": "behind"
+      }
+    },
+    {
+      "id": "PRD-CHAT",
+      "type": "prd",
+      "body_hash": "1cfc4161",
+      "title": "Nhắn tin",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/chat.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [
+        "PRD-MATCH"
+      ],
+      "risks": [
+        {
+          "description": "Tin nhắn không gửi được hoặc trễ làm cuộc trò chuyện đứt quãng, giảm số cặp duy trì 7 ngày",
+          "impact": "high",
+          "likelihood": "med",
+          "mitigation": "Cơ chế gửi lại tự động + báo trạng thái gửi/nhận rõ ràng; hàng đợi offline",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "parity",
+        "COMP-BUMBLE": "parity"
+      }
+    },
+    {
+      "id": "PRD-EVENTS",
+      "type": "prd",
+      "body_hash": "1733e335",
+      "title": "Sự kiện gặp mặt offline toàn quốc",
+      "status": "draft",
+      "scope": "out",
+      "moscow": "could",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/events.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Sự kiện offline đòi hỏi vận hành thực địa (địa điểm, kiểm duyệt người tham dự, an toàn) vượt xa năng lực một app hẹn hò",
+          "impact": "high",
+          "likelihood": "high",
+          "mitigation": "Thử nghiệm quy mô nhỏ tại 1-2 thành phố trước khi mở toàn quốc",
+          "status": "open"
+        },
+        {
+          "description": "Lệch north-star: north-star đo bằng nhắn tin duy trì >=7 ngày, không phải lượt tham dự sự kiện",
+          "impact": "high",
+          "likelihood": "high",
+          "mitigation": "Giữ moscow:could, horizon:later; chỉ đầu tư khi lõi nhắn tin đã chứng minh giá trị",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {}
+    },
+    {
+      "id": "PRD-MATCH",
+      "type": "prd",
+      "body_hash": "6ef8ad25",
+      "title": "Khám phá & Ghép đôi",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate",
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/match.md",
+      "brd_goals": [
+        "BRD-G1",
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý",
+          "impact": "high",
+          "likelihood": "med",
+          "mitigation": "Mở rộng bán kính gợi ý ra toàn quốc khi pool địa phương cạn",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "parity",
+        "COMP-BUMBLE": "behind"
+      }
+    },
+    {
+      "id": "PRD-PREMIUM",
+      "type": "prd",
+      "body_hash": "26b9a8eb",
+      "title": "Gói trả phí Premium",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "should",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "premium-conversion-rate",
+        "arpu"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/premium.md",
+      "brd_goals": [
+        "BRD-G3"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Tính năng trả phí có thể làm xói mòn trải nghiệm miễn phí (ví dụ giới hạn lượt thích quá chặt khiến người dùng mới rời app trước khi cảm nhận giá trị)",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Giữ hạn mức miễn phí đủ rộng để trải nghiệm lõi (khám phá + match) còn dùng được; chỉ tính phí các tăng tốc, không khoá kết nối thật",
+          "status": "open"
+        },
+        {
+          "description": "Doanh thu premium phụ thuộc vào lõi kết nối đã chứng minh giá trị; bán gói trả phí trước khi PRD-CHAT chứng minh north-star có thể chuyển đổi thấp",
+          "impact": "med",
+          "likelihood": "high",
+          "mitigation": "Đặt horizon:later; chỉ đẩy mạnh sau khi nhắn tin duy trì >=7 ngày đã có dữ liệu giữ chân",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "behind",
+        "COMP-BUMBLE": "parity",
+        "COMP-HEN": "parity"
+      }
+    },
+    {
+      "id": "PRD-SAFETY",
+      "type": "prd",
+      "body_hash": "1b1dc2cb",
+      "title": "Xác minh danh tính & Chống lừa đảo",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly",
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "prds/safety.md",
+      "brd_goals": [
+        "BRD-G1",
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Bước xác minh thêm rào cản, làm rớt người dùng trong onboarding",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Cho phép khám phá trước, chỉ bắt buộc xác minh trước khi nhắn tin/match sâu; huy hiệu đã xác minh tạo động lực tự nguyện",
+          "status": "open"
+        },
+        {
+          "description": "Kẻ lừa đảo dùng ảnh/giấy tờ giả vượt qua xác minh tự động",
+          "impact": "high",
+          "likelihood": "med",
+          "mitigation": "Đối chiếu selfie sống (liveness) với ảnh giấy tờ; chuyển các trường hợp nghi ngờ sang kiểm duyệt thủ công",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": {
+        "COMP-TINDER": "parity",
+        "COMP-BUMBLE": "parity",
+        "COMP-HEN": "ahead"
+      }
+    },
+    {
+      "id": "PRD-AIREC-E1",
+      "type": "epic",
+      "body_hash": "a2c8a061",
+      "title": "Gợi ý ghép đôi bằng AI",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "could",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-AIREC-E1.md",
+      "brd_goals": [
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": "PRD-AIREC",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Chưa đủ dữ liệu tương tác thật để mô hình gợi ý vượt thứ tự theo-khoảng-cách hiện có; rủi ro tốn công mà không cải thiện rõ rệt",
+          "impact": "med",
+          "likelihood": "high",
+          "mitigation": "Chỉ khởi động sau khi lõi ghép đôi và nhắn tin tích đủ tín hiệu; đặt mốc đo cải thiện so với thứ tự mặc định trước khi mở rộng",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-CHAT-E1",
+      "type": "epic",
+      "body_hash": "eb20b520",
+      "title": "Nhắn tin realtime giữa hai người đã match",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-CHAT-E1.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": "PRD-CHAT",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Cổng chặn theo match lỏng lẻo cho phép người chưa match nhắn tin, phá vỡ niềm tin",
+          "impact": "high",
+          "likelihood": "low",
+          "mitigation": "Kiểm tra trạng thái match ở phía máy chủ trước mỗi lần mở/gửi, không tin client",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-EVENTS-E1",
+      "type": "epic",
+      "body_hash": "e3aabc84",
+      "title": "Mạng lưới sự kiện gặp mặt offline",
+      "status": "draft",
+      "scope": "out",
+      "moscow": "could",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-EVENTS-E1.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": "PRD-EVENTS",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Vận hành sự kiện thực địa (địa điểm, an toàn người tham dự) vượt phạm vi một app hẹn hò ở giai đoạn này",
+          "impact": "high",
+          "likelihood": "high",
+          "mitigation": "Giới hạn ở danh sách + đăng ký giữ chỗ; mọi khâu tổ chức thực địa do đội vận hành xử lý thủ công khi thử nghiệm",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-MATCH-E1",
+      "type": "epic",
+      "body_hash": "982249bd",
+      "title": "Khám phá & Quẹt ghép đôi",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-MATCH-E1.md",
+      "brd_goals": [
+        "BRD-G2"
+      ],
+      "epic": null,
+      "prd": "PRD-MATCH",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Chất lượng gợi ý thấp khi chưa đủ tín hiệu hành vi người dùng",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Bắt đầu bằng gợi ý theo vị trí + sở thích cơ bản, tinh chỉnh dần",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-PREMIUM-E1",
+      "type": "epic",
+      "body_hash": "019f8b55",
+      "title": "Gói trả phí Premium",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "should",
+      "horizon": "later",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "premium-conversion-rate",
+        "arpu"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-PREMIUM-E1.md",
+      "brd_goals": [
+        "BRD-G3"
+      ],
+      "epic": null,
+      "prd": "PRD-PREMIUM",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Người dùng trả phí nhưng không thấy giá trị tương xứng (boost không tăng match thật) dẫn tới huỷ gói và đánh giá xấu",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Đặt kỳ vọng rõ ràng về quyền lợi boost (tăng hiển thị, không hứa tăng match); đo và minh bạch hiệu quả",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-SAFETY-E1",
+      "type": "epic",
+      "body_hash": "afee85f3",
+      "title": "Xác minh danh tính & Chống lừa đảo",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": null,
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "epics/PRD-SAFETY-E1.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": "PRD-SAFETY",
+      "target_date": null,
+      "depends_on": [],
+      "risks": [
+        {
+          "description": "Người dùng e ngại nộp ảnh giấy tờ vì lo ngại quyền riêng tư",
+          "impact": "med",
+          "likelihood": "med",
+          "mitigation": "Nêu rõ ảnh giấy tờ chỉ dùng để xác minh, không hiển thị công khai; xoá sau khi đối chiếu",
+          "status": "open"
+        }
+      ],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-AIREC-E1-S1",
+      "type": "story",
+      "body_hash": "917f7bc9",
+      "title": "Xếp hạng khám phá theo gợi ý AI",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "could",
+      "horizon": "later",
+      "size": "L",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-AIREC-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-AIREC-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-CHAT-E1-S1",
+      "type": "story",
+      "body_hash": "8943eb03",
+      "title": "Gửi và nhận tin nhắn realtime",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-CHAT-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-CHAT-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-CHAT-E1-S2",
+      "type": "story",
+      "body_hash": "8c751c9f",
+      "title": "Cổng chặn nhắn tin theo match",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": "S",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-CHAT-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-CHAT-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-CHAT-E1-S3",
+      "type": "story",
+      "body_hash": "0e54d9bf",
+      "title": "Trải nghiệm nhắn tin mượt mà",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "should",
+      "horizon": "next",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-CHAT-E1-S3.md",
+      "brd_goals": [],
+      "epic": "PRD-CHAT-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-CHAT-E1-S4",
+      "type": "story",
+      "body_hash": "628c183c",
+      "title": "Nhắn tin an toàn tuyệt đối",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "should",
+      "horizon": "next",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-CHAT-E1-S4.md",
+      "brd_goals": [],
+      "epic": "PRD-CHAT-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-EVENTS-E1-S1",
+      "type": "story",
+      "body_hash": "40cb8605",
+      "title": "Khám phá danh sách sự kiện theo khu vực",
+      "status": "draft",
+      "scope": "out",
+      "moscow": "could",
+      "horizon": "later",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-EVENTS-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-EVENTS-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-EVENTS-E1-S2",
+      "type": "story",
+      "body_hash": "a8852e0b",
+      "title": "Giữ chỗ và huỷ chỗ tham dự sự kiện",
+      "status": "draft",
+      "scope": "out",
+      "moscow": "could",
+      "horizon": "later",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-EVENTS-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-EVENTS-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-EVENTS-E1-S3",
+      "type": "story",
+      "body_hash": "3b04bb23",
+      "title": "Đặt vé concert âm nhạc toàn quốc",
+      "status": "draft",
+      "scope": "out",
+      "moscow": "could",
+      "horizon": "later",
+      "size": "L",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-EVENTS-E1-S3.md",
+      "brd_goals": [],
+      "epic": "PRD-EVENTS-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-MATCH-E1-S1",
+      "type": "story",
+      "body_hash": "0ebcb5e1",
+      "title": "Khám phá & quẹt hồ sơ",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-MATCH-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-MATCH-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-MATCH-E1-S2",
+      "type": "story",
+      "body_hash": "e98127fb",
+      "title": "Gợi ý ghép đôi chất lượng",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "now",
+      "size": "L",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "weekly-match-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-MATCH-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-MATCH-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-PREMIUM-E1-S1",
+      "type": "story",
+      "body_hash": "e5f44b06",
+      "title": "Xem ai đã thích mình",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "should",
+      "horizon": "later",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "premium-conversion-rate"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-PREMIUM-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-PREMIUM-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-PREMIUM-E1-S2",
+      "type": "story",
+      "body_hash": "82cd5b3b",
+      "title": "Boost hồ sơ có thời hạn",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "should",
+      "horizon": "later",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "arpu"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-PREMIUM-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-PREMIUM-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-SAFETY-E1-S1",
+      "type": "story",
+      "body_hash": "1c73ea43",
+      "title": "Xác minh selfie–giấy tờ",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": "M",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-SAFETY-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-SAFETY-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-SAFETY-E1-S2",
+      "type": "story",
+      "body_hash": "169b4b79",
+      "title": "Báo cáo hồ sơ lừa đảo/catfish",
+      "status": "draft",
+      "scope": "core-value",
+      "moscow": "must",
+      "horizon": "next",
+      "size": "S",
+      "personas": [
+        "P-URBAN",
+        "P-PROVINCE",
+        "P-RETURNEE"
+      ],
+      "metrics": [
+        "mau-monthly"
+      ],
+      "owner": "Trần Bảo Hiếu",
+      "version": "0.1.0",
+      "lang": "vi",
+      "file": "stories/PRD-SAFETY-E1-S2.md",
+      "brd_goals": [],
+      "epic": "PRD-SAFETY-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "PRD-AIREC",
+      "to": "BRD-G2",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-CHAT",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-EVENTS",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-MATCH",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-MATCH",
+      "to": "BRD-G2",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-PREMIUM",
+      "to": "BRD-G3",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-SAFETY",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-SAFETY",
+      "to": "BRD-G2",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-AIREC-E1",
+      "to": "PRD-AIREC",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-CHAT-E1",
+      "to": "PRD-CHAT",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-EVENTS-E1",
+      "to": "PRD-EVENTS",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-MATCH-E1",
+      "to": "PRD-MATCH",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-PREMIUM-E1",
+      "to": "PRD-PREMIUM",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-SAFETY-E1",
+      "to": "PRD-SAFETY",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-AIREC-E1-S1",
+      "to": "PRD-AIREC-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-CHAT-E1-S1",
+      "to": "PRD-CHAT-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-CHAT-E1-S2",
+      "to": "PRD-CHAT-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-CHAT-E1-S3",
+      "to": "PRD-CHAT-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-CHAT-E1-S4",
+      "to": "PRD-CHAT-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-EVENTS-E1-S1",
+      "to": "PRD-EVENTS-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-EVENTS-E1-S2",
+      "to": "PRD-EVENTS-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-EVENTS-E1-S3",
+      "to": "PRD-EVENTS-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-MATCH-E1-S1",
+      "to": "PRD-MATCH-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-MATCH-E1-S2",
+      "to": "PRD-MATCH-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-PREMIUM-E1-S1",
+      "to": "PRD-PREMIUM-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-PREMIUM-E1-S2",
+      "to": "PRD-PREMIUM-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-SAFETY-E1-S1",
+      "to": "PRD-SAFETY-E1",
+      "kind": "epic"
+    },
+    {
+      "from": "PRD-SAFETY-E1-S2",
+      "to": "PRD-SAFETY-E1",
+      "kind": "epic"
+    }
+  ],
+  "risks": [
+    {
+      "node": "PRD-AIREC",
+      "description": "Gợi ý bằng AI là tính năng me-too: Tinder và Bumble đã có thuật toán gợi ý trưởng thành; làm sau mà không có dữ liệu tương tác đủ lớn thì chất lượng gợi ý kém, dễ thua trải nghiệm đối thủ",
+      "impact": "med",
+      "likelihood": "high",
+      "mitigation": "Đặt moscow:could và horizon:later; chỉ đầu tư sau khi lõi ghép đôi (PRD-MATCH) và nhắn tin (PRD-CHAT) tích đủ dữ liệu tương tác thật để mô hình có cái mà học",
+      "status": "open"
+    },
+    {
+      "node": "PRD-AIREC",
+      "description": "AI gợi ý tối ưu cho số match có thể kéo lệch khỏi north-star (kết nối duy trì >=7 ngày) nếu huấn luyện theo lượt quẹt thay vì độ bền hội thoại",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Nếu làm, đặt mục tiêu mô hình theo tỉ lệ match chuyển thành nhắn tin duy trì, không theo số match thô",
+      "status": "open"
+    },
+    {
+      "node": "PRD-CHAT",
+      "description": "Tin nhắn không gửi được hoặc trễ làm cuộc trò chuyện đứt quãng, giảm số cặp duy trì 7 ngày",
+      "impact": "high",
+      "likelihood": "med",
+      "mitigation": "Cơ chế gửi lại tự động + báo trạng thái gửi/nhận rõ ràng; hàng đợi offline",
+      "status": "open"
+    },
+    {
+      "node": "PRD-EVENTS",
+      "description": "Sự kiện offline đòi hỏi vận hành thực địa (địa điểm, kiểm duyệt người tham dự, an toàn) vượt xa năng lực một app hẹn hò",
+      "impact": "high",
+      "likelihood": "high",
+      "mitigation": "Thử nghiệm quy mô nhỏ tại 1-2 thành phố trước khi mở toàn quốc",
+      "status": "open"
+    },
+    {
+      "node": "PRD-EVENTS",
+      "description": "Lệch north-star: north-star đo bằng nhắn tin duy trì >=7 ngày, không phải lượt tham dự sự kiện",
+      "impact": "high",
+      "likelihood": "high",
+      "mitigation": "Giữ moscow:could, horizon:later; chỉ đầu tư khi lõi nhắn tin đã chứng minh giá trị",
+      "status": "open"
+    },
+    {
+      "node": "PRD-MATCH",
+      "description": "Pool người dùng ban đầu mỏng ở tỉnh lẻ làm giảm chất lượng gợi ý",
+      "impact": "high",
+      "likelihood": "med",
+      "mitigation": "Mở rộng bán kính gợi ý ra toàn quốc khi pool địa phương cạn",
+      "status": "open"
+    },
+    {
+      "node": "PRD-PREMIUM",
+      "description": "Tính năng trả phí có thể làm xói mòn trải nghiệm miễn phí (ví dụ giới hạn lượt thích quá chặt khiến người dùng mới rời app trước khi cảm nhận giá trị)",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Giữ hạn mức miễn phí đủ rộng để trải nghiệm lõi (khám phá + match) còn dùng được; chỉ tính phí các tăng tốc, không khoá kết nối thật",
+      "status": "open"
+    },
+    {
+      "node": "PRD-PREMIUM",
+      "description": "Doanh thu premium phụ thuộc vào lõi kết nối đã chứng minh giá trị; bán gói trả phí trước khi PRD-CHAT chứng minh north-star có thể chuyển đổi thấp",
+      "impact": "med",
+      "likelihood": "high",
+      "mitigation": "Đặt horizon:later; chỉ đẩy mạnh sau khi nhắn tin duy trì >=7 ngày đã có dữ liệu giữ chân",
+      "status": "open"
+    },
+    {
+      "node": "PRD-SAFETY",
+      "description": "Bước xác minh thêm rào cản, làm rớt người dùng trong onboarding",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Cho phép khám phá trước, chỉ bắt buộc xác minh trước khi nhắn tin/match sâu; huy hiệu đã xác minh tạo động lực tự nguyện",
+      "status": "open"
+    },
+    {
+      "node": "PRD-SAFETY",
+      "description": "Kẻ lừa đảo dùng ảnh/giấy tờ giả vượt qua xác minh tự động",
+      "impact": "high",
+      "likelihood": "med",
+      "mitigation": "Đối chiếu selfie sống (liveness) với ảnh giấy tờ; chuyển các trường hợp nghi ngờ sang kiểm duyệt thủ công",
+      "status": "open"
+    },
+    {
+      "node": "PRD-AIREC-E1",
+      "description": "Chưa đủ dữ liệu tương tác thật để mô hình gợi ý vượt thứ tự theo-khoảng-cách hiện có; rủi ro tốn công mà không cải thiện rõ rệt",
+      "impact": "med",
+      "likelihood": "high",
+      "mitigation": "Chỉ khởi động sau khi lõi ghép đôi và nhắn tin tích đủ tín hiệu; đặt mốc đo cải thiện so với thứ tự mặc định trước khi mở rộng",
+      "status": "open"
+    },
+    {
+      "node": "PRD-CHAT-E1",
+      "description": "Cổng chặn theo match lỏng lẻo cho phép người chưa match nhắn tin, phá vỡ niềm tin",
+      "impact": "high",
+      "likelihood": "low",
+      "mitigation": "Kiểm tra trạng thái match ở phía máy chủ trước mỗi lần mở/gửi, không tin client",
+      "status": "open"
+    },
+    {
+      "node": "PRD-EVENTS-E1",
+      "description": "Vận hành sự kiện thực địa (địa điểm, an toàn người tham dự) vượt phạm vi một app hẹn hò ở giai đoạn này",
+      "impact": "high",
+      "likelihood": "high",
+      "mitigation": "Giới hạn ở danh sách + đăng ký giữ chỗ; mọi khâu tổ chức thực địa do đội vận hành xử lý thủ công khi thử nghiệm",
+      "status": "open"
+    },
+    {
+      "node": "PRD-MATCH-E1",
+      "description": "Chất lượng gợi ý thấp khi chưa đủ tín hiệu hành vi người dùng",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Bắt đầu bằng gợi ý theo vị trí + sở thích cơ bản, tinh chỉnh dần",
+      "status": "open"
+    },
+    {
+      "node": "PRD-PREMIUM-E1",
+      "description": "Người dùng trả phí nhưng không thấy giá trị tương xứng (boost không tăng match thật) dẫn tới huỷ gói và đánh giá xấu",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Đặt kỳ vọng rõ ràng về quyền lợi boost (tăng hiển thị, không hứa tăng match); đo và minh bạch hiệu quả",
+      "status": "open"
+    },
+    {
+      "node": "PRD-SAFETY-E1",
+      "description": "Người dùng e ngại nộp ảnh giấy tờ vì lo ngại quyền riêng tư",
+      "impact": "med",
+      "likelihood": "med",
+      "mitigation": "Nêu rõ ảnh giấy tờ chỉ dùng để xác minh, không hiển thị công khai; xoá sau khi đối chiếu",
+      "status": "open"
+    }
+  ],
+  "competitors": [
+    {
+      "id": "COMP-TINDER",
+      "name": "Tinder",
+      "url": "https://tinder.com",
+      "threat": "high"
+    },
+    {
+      "id": "COMP-BUMBLE",
+      "name": "Bumble",
+      "url": "https://bumble.com",
+      "threat": "med"
+    },
+    {
+      "id": "COMP-HEN",
+      "name": "Hẹn",
+      "url": "https://hen.vn",
+      "threat": "med"
+    },
+    {
+      "id": "COMP-FIKA",
+      "name": "Fika",
+      "url": "https://fika.app",
+      "threat": "low"
+    }
+  ],
+  "parse_errors": [],
+  "root_path": "/home/hieubt/Documents/cleanmatic-skills/e2e/dating-app"
+}
