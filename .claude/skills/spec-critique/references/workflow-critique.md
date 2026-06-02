@@ -119,8 +119,10 @@ Spawn `spec-critique-consolidate` (opus) with: the available lens findings array
 `scope`/`lang`/`level` + the four register/detail prefs above. It dedups cross-lens, enforces the mechanical
 anti-overlap floor (drop byte-identical validate-echoes + findings missing why/fix), assigns final severity
 (structural-backed ≥ major), picks the top-3, detects repeat-offense vs prior reports, flags DEC-worthy items, and
-renders ONE markdown body in the voice. At levels 7 to 9 it renders the surface register from the prefs (`ông/tôi` vs
-`bà/tôi` by gender; `mày/tao` vs `mi/tau` by dialect; work-targeted profanity per `critique_profanity`). It sizes the
+renders ONE markdown body in the voice. The register knobs apply ONLY at their own threshold: at levels 7 to 9 it
+renders the surface register from the prefs (`ông/tôi` vs `bà/tôi` by gender at 7; `mày/tao` vs `mi/tau` by dialect at
+≥8; work-targeted profanity per `critique_profanity` at 9). **Levels 1 to 6 ignore the register knobs entirely** even
+when passed, level 6 (roast) stays `bạn/tôi`; a `bà/tôi`/`mi/tau`/profanity leak at level ≤6 is a defect. It sizes the
 report by `critique_detail_level` (concise = top-3 + one-line-per-lens, no extended pre-mortems; standard = current
 full per-lens; verbose = full per-lens + extended why-it-dies + more sources). It writes through Gate 1 of the
 humanizer (it consults `references/humanizer-and-anti-ai-tells.md` as it drafts) and reaffirms the universal-harm floor

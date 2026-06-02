@@ -148,6 +148,11 @@ new permissions, the floor is identical whatever they are set to.
 | `critique_dialect` | `bac` / `trung` / `nam` | `bac` | level ≥ 8 | `mày/tao` (bac) ↔ `mi/tau` (trung) ↔ the southern `mày/tao` register (nam) |
 | `critique_profanity` | `off` / `abbrev` / `strong` | `strong` | level 9 | none ↔ `đm`, `vl` (abbrev) ↔ `đm`, `vl`, `vãi` (strong) |
 
+**Threshold is hard: these knobs apply ONLY at their own level and never below.** Levels 1 to 6 ignore gender, dialect,
+and profanity entirely, levels 1 to 5 stay `bạn/tôi` and level 6 (roast) stays `bạn/tôi` too (it roasts in the second
+person, never with `ông/bà`, `mày/tao`, `mi/tau`, or profanity). Gender only renders at 7, dialect only at ≥8,
+profanity only at 9. A `bà/tôi` or `mi/tau` showing up at level 6 or below is a register-bleed defect.
+
 Two things about these knobs are non-negotiable:
 
 - **Profanity is aimed at the WORK, always.** `cái AC này rỗng vl`, `đm cái scope mâu thuẫn`, `viết vầy mà cũng dám
