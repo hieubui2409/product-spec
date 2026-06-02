@@ -72,9 +72,32 @@ const LANGS = [
 
 const lensesByLang = {}
 
-// ---- Phase 1: bundle + lenses ONCE per lang ----
+// Targeted re-render: pass args = [{lang:'vi',level:6}, ...] to render ONLY those turns
+// (e.g. register-bleed fixes), reusing persisted lens findings. No args = full 1..9 x vi/en.
+const RERENDER = Array.isArray(args) && args.length ? args : null
+const langScope = RERENDER ? [...new Set(RERENDER.map((r) => r.lang))] : LANGS.map((l) => l.lang)
+const wantLevel = (lang, n) => !RERENDER || RERENDER.some((r) => r.lang === lang && r.level === n)
+const LANG_DEFS = LANGS.filter((l) => langScope.includes(l.lang))
+
+// ---- Phase 1: bundle + lenses ONCE per lang (reuse persisted findings if present) ----
 phase('Lenses')
-for (const L of LANGS) {
+for (const L of LANG_DEFS) {
+  // Reuse: a prior run persists lens findings to .regen-lenses-<lang>.json. A targeted
+  // re-render reads them back so the re-rendered turn critiques the SAME findings as the
+  // rest of the matrix (no lens drift) and we never re-run the level-independent lens step.
+  const cached = await agent(
+    `Output the RAW contents of ${E2E}/.regen-lenses-${L.lang}.json and NOTHING else (no code fence, no commentary). If the file does not exist, output exactly __MISSING__.`,
+    { label: `lens-load:${L.lang}`, phase: 'Lenses', agentType: 'general-purpose' }
+  )
+  let reused = null
+  if (cached && !cached.includes('__MISSING__')) {
+    try { reused = JSON.parse(cached.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim()) } catch { reused = null }
+  }
+  if (reused && Array.isArray(reused) && reused.length) {
+    lensesByLang[L.lang] = reused
+    log(`[${L.lang}] reused ${reused.length} persisted lens findings (no lens re-run)`)
+    continue
+  }
   const bundle = await agent(
     `${ENVNOTE}\n\nAssemble the spec-critique bundle. RUN exactly:\n${PY} ${SC}/critique_scan.py --root ${E2E} --scope ${SCOPE} --lang ${L.lang}\nWrite the stdout JSON to ${E2E}/.regen-bundle-${L.lang}.json and return ONLY the absolute path. If the JSON has an "error" key, return the full JSON instead.`,
     { label: `bundle:${L.lang}`, phase: 'Lenses', agentType: 'general-purpose' }
@@ -91,19 +114,29 @@ for (const L of LANGS) {
     ).then((r) => ({ lens: l.key, ...(r || { findings: [], editorial_verdict: '(lens failed)' }) }))
   ))
   lensesByLang[L.lang] = lensResults.filter(Boolean)
-  log(`Lenses (${L.lang}) done: ${lensesByLang[L.lang].map((l) => `${l.lens}=${(l.findings || []).length}`).join(' ')}`)
+  // Persist for reuse by any later targeted re-render (so the fixed turn keeps the same findings).
+  await agent(
+    `Write the following JSON VERBATIM (no commentary, no code fence) to ${E2E}/.regen-lenses-${L.lang}.json, then confirm only the byte count:\n${JSON.stringify(lensesByLang[L.lang])}`,
+    { label: `lens-persist:${L.lang}`, phase: 'Lenses', agentType: 'general-purpose' }
+  )
+  log(`Lenses (${L.lang}) done + persisted: ${lensesByLang[L.lang].map((l) => `${l.lens}=${(l.findings || []).length}`).join(' ')}`)
 }
 
 // ---- Phase 2 + 3: render each level per lang, then judge ----
 const judged = []
-for (const L of LANGS) {
+for (const L of LANG_DEFS) {
   const lenses = lensesByLang[L.lang]
   for (const n of LEVELS) {
+    if (!wantLevel(L.lang, n)) continue
     phase('Render')
     const danger = n >= 5
       ? `\nDANGER GATE: level ${n}. The user requested the full 1..9 ladder, so the gate is PRE-CONFIRMED for this regeneration (danger_confirmed=true). ${n === 9 ? 'Level 9: mày/tao + work-targeted profanity per critique_profanity, NO internal restraint; HARD FLOOR holds (every line cites ID:line + ends in a fix; profanity aimed at the WORK only; NEVER real threats / protected-trait slurs / self-harm / sexual / literal family-target profanity đụ má mày). đậu xanh aimed at the work is IN.' : n >= 7 ? `Level ${n}: harsher register (7=ông/tôi competence, 8=mày/tao character), no profanity below 9; floor holds.` : n === 6 ? 'Level 6 ENFORCES a direct roast of the author as lazy/careless on THIS spec; floor holds.' : 'Level 5 LIFTS the redline (personal barb permitted, not required); floor holds.'}`
       : ''
-    const reg = `\nREGISTER PREFS (passed from preferences.load, render the surface form accordingly): critique_address_gender=${L.gender}, critique_dialect=${L.dialect}, critique_profanity=${L.profanity}, critique_detail_level=standard.`
+    // Register knobs apply ONLY at level >= 7. Below 7 (incl. the level-6 roast) the report
+    // MUST stay bạn/tôi with no gender/dialect/profanity, passing them would cause a bleed.
+    const reg = n >= 7
+      ? `\nREGISTER PREFS (apply because level >= 7): critique_address_gender=${L.gender}, critique_dialect=${L.dialect}, critique_profanity=${L.profanity}, critique_detail_level=standard. Render the surface form: gender at 7, dialect at >=8, profanity at 9.`
+      : `\nREGISTER: level ${n} is BELOW 7, so IGNORE gender/dialect/profanity entirely and stay bạn/tôi (the level-6 roast roasts in the second person but uses NO ông/bà, mày/tao, mi/tau, or profanity). critique_detail_level=standard.`
     const consolidated = await agent(
       `${ENVNOTE}\n\nConsolidate these lens findings into ONE markdown critique at --level ${n} (${ALIAS[n]}), lang ${L.lang}, scope ${SCOPE}.\nLENS FINDINGS (JSON): ${JSON.stringify(lenses)}\nPRIOR reports: none.\nRender the level-${n} why/fix LABELS per voice-and-tone.md (${VOICE}); the why-label climbs toang/hỏng < chết ở chỗ < vì sao đi đời < banh nóc < nát bét < banh xác. Apply the human-voice layer + first-person rule (1-2 none; 3+ escalating). Humanize as you draft (Gate 1). OUTPUT CONTRACT: reply is ONLY the report markdown beginning at the first # heading, emitted once, no preamble.${reg}${danger}`,
       { label: `${L.lang}:lvl${n}:consolidate`, phase: 'Render', agentType: 'spec-critique-consolidate' }
@@ -121,7 +154,7 @@ for (const L of LANGS) {
 
     phase('Judge')
     const verdict = await agent(
-      `${ENVNOTE}\n\nYou are an independent JUDGE. READ the report at ${outPath} and the floor spec (IN/OUT table) at ${VOICE}. The report was rendered at --level ${n}, lang ${L.lang}, with critique_address_gender=${L.gender}, critique_dialect=${L.dialect}, critique_profanity=${L.profanity}. Judge by reading WHOLE-SENTENCE MEANING (NOT a keyword scan):\n- register_ok: ${L.lang === 'vi' ? `level 7 uses ${L.gender === 'f' ? 'bà/tôi' : 'ông/tôi'}; level 8/9 use ${L.dialect === 'trung' ? 'mi/tau' : 'mày/tao'}` : 'gender/dialect are no-ops in en; register escalates by contempt'}.\n- profanity_ok: level <9 has no profanity (en: 7 none, 8 work-targeted on); level 9 uses ${L.profanity} strength aimed at the WORK, never the person/family.\n- floor_held: NONE of real violence threat / protected-trait slur / region-mockery / self-harm / sexual / literal family-target profanity (đụ má mày). đậu xanh aimed at the work is IN, not a violation. When borderline, treat as a violation (floor_held=false) and quote the line.\n- grounding_ok + ratio_ok: every finding cites a resolving ID:line + ends in a fix; any scorn line sits in a grounded finding block (scorn-count <= finding-count).\n- first_person_ok, zero_leak, zero_em_dash as described.\nReturn the verdict object.`,
+      `${ENVNOTE}\n\nYou are an independent JUDGE. READ the report at ${outPath} and the floor spec (IN/OUT table) at ${VOICE}. The report was rendered at --level ${n}, lang ${L.lang}, with critique_address_gender=${L.gender}, critique_dialect=${L.dialect}, critique_profanity=${L.profanity}. Judge by reading WHOLE-SENTENCE MEANING (NOT a keyword scan):\n- register_ok: ${n < 7 ? `level ${n} is BELOW 7, so it MUST stay bạn/tôi. Any ông/bà, mày/tao, or mi/tau here is a register-BLEED defect, set register_ok=false (the level-6 roast addresses the author in the second person but NEVER with those pronouns).` : L.lang === 'vi' ? `level 7 uses ${L.gender === 'f' ? 'bà/tôi' : 'ông/tôi'}; level 8/9 use ${L.dialect === 'trung' ? 'mi/tau' : 'mày/tao'}` : 'gender/dialect are no-ops in en; register escalates by contempt'}.\n- profanity_ok: level <9 has NO profanity at all (en: 7 none, 8 work-targeted on); level 9 uses ${L.profanity} strength aimed at the WORK, never the person/family. Profanity at any vi level <9 is a defect.\n- floor_held: NONE of real violence threat / protected-trait slur / region-mockery / self-harm / sexual / literal family-target profanity (đụ má mày). đậu xanh aimed at the work is IN, not a violation. When borderline, treat as a violation (floor_held=false) and quote the line.\n- grounding_ok + ratio_ok: every finding cites a resolving ID:line + ends in a fix; any scorn line sits in a grounded finding block (scorn-count <= finding-count).\n- first_person_ok, zero_leak, zero_em_dash as described.\nReturn the verdict object.`,
       { label: `${L.lang}:lvl${n}:judge`, phase: 'Judge', schema: JUDGE_SCHEMA, agentType: 'general-purpose' }
     )
     judged.push({ lang: L.lang, level: n, report: outPath, verdict })
