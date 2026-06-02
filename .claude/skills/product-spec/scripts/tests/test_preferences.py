@@ -28,6 +28,23 @@ def test_defaults_when_no_file(tmp_path):
     assert prefs["prioritization"] == "moscow"
     assert prefs["dismissed_reminders"] == []
     assert prefs["critique_drift_threshold"] == 3
+    assert prefs["critique_level"] == 3
+
+
+def test_critique_level_enum_accepts_1_to_6(tmp_path):
+    _write_prefs(tmp_path, "critique_level: 6\n")
+    assert preferences.load(tmp_path)["critique_level"] == 6
+
+
+def test_critique_level_out_of_range_falls_back(tmp_path):
+    # Closed enum 1..6: 0 or 7 (or a string) is treated as absent -> default 3.
+    _write_prefs(tmp_path, "critique_level: 9\n")
+    assert preferences.load(tmp_path)["critique_level"] == 3
+
+
+def test_save_invalid_critique_level_raises(tmp_path):
+    with pytest.raises(preferences.PreferenceError):
+        preferences.save(tmp_path, {"critique_level": 0})
 
 
 def test_critique_drift_threshold_override(tmp_path):

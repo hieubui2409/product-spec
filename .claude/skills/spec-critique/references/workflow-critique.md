@@ -13,18 +13,25 @@ consolidator are READ-ONLY (they propose); only the main agent writes (the repor
 
 ## 1. Parse flags (or `--interactive`)
 
-- Resolve `scope` (default `all`), `lenses` (default all four), `level` (default 3), `lang` (default `vi`), `--no-web`.
+- Resolve `scope` (default `all`), `lenses` (default all four), `lang` (default `vi`), `--no-web`.
+- **Level resolution:** an explicit `--level`/alias flag wins; otherwise the default is the `critique_level` preference
+  (`preferences.load(root)["critique_level"]`, itself defaulting to 3). So a PO who wants a standing harsh voice sets
+  `critique_level: 6` once and every flagless run roasts.
 - `--interactive` → AskUserQuestion (three quick questions): which scope, which lenses, which level. Ground options in
   what exists (offer real artifact IDs from the graph).
 - `--level` alias map: `--warm`=1, `--gentle`=2, `--blunt`=3, `--savage`=4, `--no-mercy`=5, `--roast`=6.
-- **Levels 5 and 6 both require a warning and an explicit AskUserQuestion confirmation before any agent is spawned.**
-  Neither one runs on inference; the PO has to say yes. The two warnings differ in weight:
-  - **Level 5 (`--no-mercy`):** warn that the critique will be brutal and may take a jab at the author personally, then
-    ask the PO to confirm. On a no, fall back to level 4.
-  - **Level 6 (`--roast`):** this one is dangerous. The critique will insult the author directly, and it has no place in
-    a real review or any report a colleague might read. Show that danger warning plainly, then ask the PO to confirm
-    they want it anyway. Run it only on a clear yes; on anything else, fall back to level 5. Never treat vague phrasing
-    as consent. The `--roast` alias (or an explicit "level 6") plus the confirmation are both required.
+- **Levels 5 and 6 danger gate.** These two carry a warning because they break the professional line (5 may jab the
+  author; 6 is a direct roast that has no place in a shared report). How the gate resolves depends on WHERE the level
+  came from:
+  - **From an ad-hoc `--level 5/6` / `--no-mercy` / `--roast` flag (no standing preference):** show the warning and ask
+    for an explicit AskUserQuestion confirmation BEFORE spawning any agent. Never infer consent from vague phrasing. On
+    a no: level 5 falls back to 4, level 6 falls back to 5.
+  - **From the `critique_level` preference being 5 or 6 (standing consent):** the PO already opted in deliberately by
+    setting the preference, so do NOT re-ask every run. Still print the one-line danger reminder each run (never run it
+    silently), in `--lang`: e.g. _"giọng mức 6 (roast) đang bật mặc định: bài critique sẽ chửi thẳng người viết, đừng
+    chia sẻ ra ngoài; đổi bằng `critique_level` trong preferences hoặc `--level`."_ Then proceed.
+  - The hard floor still holds at every level incl. 6: each line cites `ID:line` + ends in a fix; the roast attacks the
+    work's sloppiness, never identity, protected characteristics, slurs, threats, or self-harm.
 
 ## 2. Verdict ammo: NO forced `--validate` (refined D8)
 

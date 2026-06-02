@@ -54,7 +54,7 @@ what validate *cannot*: the product/market/craft consequence + a fix. (See **Ant
 | `--interactive` | AskUserQuestion to pick scope + lenses + level before running. |
 | `--lang vi\|en` | Critique language. Default `vi`. IDs + frontmatter keys stay English. |
 | `--no-web` | Disable the market lens's WebSearch/WebFetch. With no BRD `competitors:` it then **flags missing competitive grounding** rather than fabricating. |
-| `--level 1..6` | Voice intensity. Default `3`. Aliases: `--warm`(1) `--gentle`(2) `--blunt`(3) `--savage`(4) `--no-mercy`(5) `--roast`(6). Levels 1 to 4 forbid personal attack (artifact only). **Levels 5 and 6 both require a warning + an explicit AskUserQuestion confirmation before running:** level 5 lifts the redline (personal barbs allowed); **level 6 (`--roast`) ENFORCES a personal attack, a DANGEROUS roast that insults the PO as the lazy/careless author of a bad spec, FORBIDDEN in professional contexts.** Every level keeps evidence + a fix per line. |
+| `--level 1..6` | Voice intensity. Default = the `critique_level` preference (itself `3` if unset); the flag overrides it. Aliases: `--warm`(1) `--gentle`(2) `--blunt`(3) `--savage`(4) `--no-mercy`(5) `--roast`(6). A PO who wants a standing harsh voice sets `critique_level: 6` in `preferences.yaml` once. Levels 1 to 4 forbid personal attack (artifact only). **Levels 5 and 6 both require a warning + an explicit AskUserQuestion confirmation before running:** level 5 lifts the redline (personal barbs allowed); **level 6 (`--roast`) ENFORCES a personal attack, a DANGEROUS roast that insults the PO as the lazy/careless author of a bad spec, FORBIDDEN in professional contexts.** Every level keeps evidence + a fix per line. |
 
 ## Output contract
 

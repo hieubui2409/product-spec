@@ -21,6 +21,11 @@ Keys (all optional in the file):
                        last critique before the opt-in spec-critique nudge fires.
                        Non-enum: load() passes it through verbatim (no int-check);
                        the consumer (critique_scan) coerces int() defensively.
+  critique_level       int 1..6 (default 3) — the cleanmatic:spec-critique default
+                       voice level when no --level flag is given. Closed enum.
+                       A standing 5 or 6 is the PO's explicit consent to the
+                       brutal/roast voice; the skill still shows the one-line danger
+                       reminder each run but does not re-ask (see workflow-critique).
 """
 
 import sys
@@ -53,6 +58,10 @@ DEFAULTS: Dict[str, Any] = {
     # read path below leaves it verbatim, so a hand-edited non-int degrades on the
     # consumer side (critique_scan coerces int()), never here.
     "critique_drift_threshold": 3,
+    # Default spec-critique voice level (1..6) when no --level is passed. Closed
+    # enum below. A standing 5/6 is the PO's deliberate consent to the brutal/roast
+    # voice (see workflow-critique's gate handling).
+    "critique_level": 3,
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
@@ -61,6 +70,7 @@ ENUMS: Dict[str, frozenset] = {
     "lang": frozenset({"en", "vi"}),
     "detail_level": frozenset({"concise", "standard", "verbose"}),
     "prioritization": frozenset({"moscow", "value-effort", "manual"}),
+    "critique_level": frozenset({1, 2, 3, 4, 5, 6}),
 }
 
 
