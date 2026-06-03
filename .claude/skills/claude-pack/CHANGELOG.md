@@ -7,13 +7,20 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
-## [1.3.0] — 2026-06-03
+## [1.1.0] — 2026-06-03
 
-Hardens spec-critique's bilingual output and ships the regenerated reference fixtures.
-The consolidator now renders English reports fully in English (a root-cause fix for a
-Vietnamese-leak regression), the English level-9 voice has a concrete "sustained
-profanity" floor so it outscales level 8, and a new advisory language-purity check
-guards the leak class. Report-only, additive, backward-compatible.
+The first release since v1.0.0. Three layers landed together on the way here:
+product-spec **memory-write enforcement**, spec-critique **lifecycle caching +
+cross-critique inheritance**, and spec-critique **bilingual-output hardening**. Additive
+and backward-compatible; defaults preserve current behaviour. Sections below are grouped
+by theme; each carries its own Added/Changed.
+
+---
+
+**Bilingual-output hardening (spec-critique).** The consolidator renders English reports
+fully in English (a root-cause fix for a Vietnamese-leak regression), the English level-9
+voice has a concrete "sustained profanity" floor so it outscales level 8, and a new
+advisory language-purity check guards the leak class. Report-only.
 
 ### Added — spec-critique
 
@@ -51,13 +58,12 @@ guards the leak class. Report-only, additive, backward-compatible.
   resolver, the ratio rule, a frontmatter contract check) and added the language-check
   unit tests. spec-critique suite: 150 passing.
 
-## [1.2.0] — 2026-06-03
+---
 
-Adds the **lifecycle caching + cross-critique inheritance** layer to spec-critique:
-re-running a critique now reuses prior work (token savings, never a safety gate), and
-a critique can surface a parent's prior blockers onto a child (and a parent can roll
-up its critiqued children's verdicts). Includes a cross-skill touch to product-spec's
-preferences. Defaults preserve current behaviour (additive, backward-compatible).
+**Lifecycle caching + cross-critique inheritance (spec-critique).** Re-running a critique
+reuses prior work (token savings, never a safety gate), and a critique can surface a
+parent's prior blockers onto a child (and a parent rolls up its critiqued children's
+verdicts). Includes a cross-skill touch to product-spec's preferences.
 
 ### Added — spec-critique
 
@@ -96,11 +102,11 @@ preferences. Defaults preserve current behaviour (additive, backward-compatible)
   (nearest/deep) — all default on/nearest, with the YAML `on/off→token` coercion. Required
   because `preferences.load()` drops any key not registered there.
 
-## [1.1.0] — 2026-06-02
+---
 
-Adds the **memory-write enforcement layer** to product-spec — the spec skill now
-detects and nudges when a judgment or ruling that belongs in the committed memory
-layer looks unrecorded. claude-pack ships the supporting agent + hook handler.
+**Memory-write enforcement (product-spec).** The spec skill detects and nudges when a
+judgment or ruling that belongs in the committed memory layer looks unrecorded;
+claude-pack ships the supporting agent + hook handler.
 
 ### Added — product-spec
 
