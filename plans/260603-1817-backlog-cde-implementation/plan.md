@@ -66,6 +66,7 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Pending |
 | 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Pending |
 | 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Pending |
+| 9 | [Capstone — real E2E + full example + docs sweep + changelogs](./phase-09-e2e-example-docs-changelogs.md) | Pending |
 
 ## Dependencies
 
@@ -76,6 +77,8 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 - Phase 4 → Phase 5 **release-notes flavor only** (`[4]`): the `--summary --audience release-notes` delta needs the C9 trail. **`--audience exec` is independent and carries Phase 5** — so Phase 5 frontmatter is `dependencies: []` with this conditional noted (avoids the F8 "soft prose vs hard frontmatter" contradiction).
 
 **Independent:** Phase 7 (D11 cleanup).
+
+**Phase 9 (capstone)** `dependencies: [1..8]` — real E2E + example refresh + docs sweep + changelog backfill run LAST, after every feature lands. DRY note: Phase 1 *scaffolds* the product-spec*/CHANGELOGs; Phase 9 *backfills* them from git log. The refreshed real critique example also serves as Phase 3's E1 freshness fixture (closes red-team H2).
 
 **Cross-plan:** none. Prior plans (`260528-…product-spec-skill`, `260602-…spec-critique-*`, `260529-…claude-pack-skill`, etc.) are shipped features this plan extends; no blocking relationship.
 
