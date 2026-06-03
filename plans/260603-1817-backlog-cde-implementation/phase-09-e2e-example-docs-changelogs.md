@@ -29,12 +29,13 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 
 ## Architecture / approach
 ### A. Real E2E in an external folder (real data, script + LLM)
+- **Drive it THROUGH THE WORKFLOW, not by hand (PO 2026-06-03).** The run MUST follow the skills' actual workflow references end-to-end — `workflow-interview.md` (+ `interview-vision/brd/prd/epic/story`), `workflow-validate.md`, `workflow-critique.md`, `workflow-apply-critique.md`, `workflow-discover.md`, the viz/summary flows — invoking the real flags/menus exactly as a PO would. No hand-authoring artifacts, no shortcutting steps. This dogfoods the workflow docs themselves: if a workflow reference is wrong/stale, the run breaks and that IS a finding to fix.
 - In a temp dir OUTSIDE the repo, drive the full flow on a real product idea:
   `--product`/init → BRD → PRD → epic → story → `--validate`/`--strict` → critique (real lenses, LLM, may use web for market lens) → **E1 `--apply-critique`** → **C9 `--viz audit`** → **E4 `--summary --audience`** → **E2 `--discover`** seed → exercise **`goal_without_metric`** + strengthened lenses (Phase 8).
 - Capture: the deterministic script outputs (assertable) + a human-observed checklist of the LLM steps (interview/critique/apply-critique quality). The script half can become a repeatable E2E smoke script; the LLM half is a release checklist.
 
 ### B. Refresh the canonical example (synergy with red-team H2)
-- Use the E2E run's REAL artifacts (with real frontmatter + `body_hash`) to refresh `product-spec/examples/` and `product-spec-critique/examples/`. The refreshed critique example now carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2). Keep a hand-authored note only where illustration is clearer.
+- Use the E2E run's REAL artifacts (with real frontmatter + `body_hash`) to refresh `product-spec/examples/` and `product-spec-critique/examples/`. **The example is whatever the workflow actually produced** — not a hand-polished mock — so it stays faithful to real tool output. The refreshed critique example now carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2). Keep a hand-authored note only where illustration is clearer.
 
 ### C. Docs sweep (root + skill)
 - **Root `CLAUDE.md`**: update the product-spec + critique operating guides for every new surface — `--apply-critique`, `--viz audit`, `--summary --audience`, `--discover`, `goal_without_metric`, strengthened lens prompts, E5 versioning + verifier. Update the workflow-pointers tables.
@@ -53,14 +54,14 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 - Modify: `product-spec/CHANGELOG.md`, `product-spec-critique/CHANGELOG.md` (backfill), `claude-pack/CHANGELOG.md` (bundle update)
 
 ## Implementation Steps
-1. Run the full E2E in an external temp folder on real data (scripts via venv python + LLM steps); record script outputs + LLM-step observations.
-2. Refresh both `examples/` from the real artifacts (real frontmatter/body_hash); wire the critique example as E1's freshness fixture (closes H2).
+1. Run the full E2E in an external temp folder on real data **by following the workflow references step-by-step** (interview→validate→critique→apply-critique→discover→viz→summary), invoking real flags/menus; scripts via venv python + LLM steps. Record script outputs + LLM-step observations + **any workflow-doc defect the run exposes** (fix those docs as part of step 3).
+2. Refresh both `examples/` from the real workflow-produced artifacts (real frontmatter/body_hash); wire the critique example as E1's freshness fixture (closes H2).
 3. Sweep docs: root `CLAUDE.md` + `README.md`; each skill's `SKILL.md`/`GUIDE-EN`/`GUIDE-VI`/`README`. Every new flag/view/check + strengthened lens reflected.
 4. Backfill `product-spec` + `product-spec-critique` CHANGELOGs from git log (keepachangelog, themed); update `claude-pack` CHANGELOG for the bundle.
 5. Capture the E2E as: a repeatable script-half smoke + a human release checklist (state plainly the LLM half is not a CI gate).
 
 ## Success Criteria
-- [ ] A real E2E run completed in an external folder exercising EVERY new surface (E1/C9/E4/E2/goal_without_metric/strengthened lenses) — script + LLM — with outputs recorded.
+- [ ] A real E2E run completed in an external folder **by following the workflow references** (not hand-built), exercising EVERY new surface (E1/C9/E4/E2/goal_without_metric/strengthened lenses) — script + LLM — with outputs + any workflow-doc defects recorded and fixed.
 - [ ] Both `examples/` refreshed from real artifacts; critique example carries frontmatter and serves as E1's freshness fixture (H2 closed).
 - [ ] Root `CLAUDE.md` + `README.md` and all per-skill `SKILL.md`/`GUIDE-EN`/`GUIDE-VI`/`README` updated for the new surfaces.
 - [ ] `product-spec` + `product-spec-critique` CHANGELOGs backfilled from git log; `claude-pack` CHANGELOG updated for the bundle.
