@@ -287,6 +287,23 @@ The floor is identical to the Vietnamese floor (target decides). `critique_addre
 VI-only and are no-ops in `lang: en`. `critique_profanity` still maps to EN profanity strength (off / present / strong)
 and is the knob that mechanically distinguishes EN level 7 from level 8.
 
+## Design note: language is a source-anchored axis, not a render-time one
+
+Level is a RENDER-TIME axis: lens findings are level-neutral, cached once, and the consolidator re-renders the voice at
+any level from that cache (the `consolidate_only` reuse path). Language is NOT — it is an IDENTITY axis anchored to the
+source spec. The lens reads and reasons in the spec's `lang`, cites evidence verbatim from source files that are
+themselves in that language, and the consolidator RENDERS in `lang`; it never TRANSLATES from a neutral interlingua. So
+a Vietnamese spec and an English critique of it are distinct report identities (distinct lens-findings cache, distinct
+provenance), and `lang` is part of the provenance match — a language change re-lenses, it is not a cheap re-render.
+
+This asymmetry is deliberate. Deferring level to render keeps the consolidator's job single (voice). Deferring language
+would force a translation step that reintroduces the exact translationese the humanizer exists to strip, on the most
+load-bearing prose (the why/fix), while evidence quoted from a foreign-language source stays in that language anyway —
+so a "neutral interlingua lens" buys an illusory saving (a spec is critiqued in ONE language; it is never both at once)
+at a real, recurring cost. Considered and rejected on YAGNI grounds. When the source is Vietnamese, an `en` report
+therefore legitimately quotes Vietnamese phrases with an English gloss — that is correct, not a render leak (see
+`scripts/check_report_language.py`, which separates a quoted source phrase from a structural Vietnamese leak).
+
 ## Honesty caveat
 
 A short, honest critique beats a padded one. When there is little wrong, say so. Never manufacture findings just to
