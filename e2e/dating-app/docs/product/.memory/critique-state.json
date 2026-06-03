@@ -1,4 +1,18 @@
 {
+  "PRD-CHAT-E1-S1": {
+    "blocker_count": 0,
+    "lang": "vi",
+    "last_ts": "2026-06-03T00:00:00",
+    "lens_findings_hash": null,
+    "level": 5
+  },
+  "PRD-CHAT-E1-S2": {
+    "blocker_count": 0,
+    "lang": "vi",
+    "last_ts": "2026-06-03T00:00:00",
+    "lens_findings_hash": null,
+    "level": 5
+  },
   "all": {
     "blocker_count": 4,
     "drift_since": 0,

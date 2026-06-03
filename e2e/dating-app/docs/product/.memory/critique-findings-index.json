@@ -1,4 +1,32 @@
 {
-  "entries": {},
+  "entries": {
+    "BRD:62@voice-ladder9-vi-lvl9": {
+      "dec_worthy": false,
+      "evidence_id": "BRD:62",
+      "fix": "",
+      "report_ts": "voice-ladder9-vi-lvl9",
+      "scope": "all",
+      "severity": "blocker",
+      "why": ""
+    },
+    "PRD-CHAT-E1-S3:18@voice-ladder9-vi-lvl9": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-CHAT-E1-S3:18",
+      "fix": "",
+      "report_ts": "voice-ladder9-vi-lvl9",
+      "scope": "all",
+      "severity": "blocker",
+      "why": ""
+    },
+    "PRD-MATCH-E1-S2:21@voice-ladder9-vi-lvl9": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-MATCH-E1-S2:21",
+      "fix": "",
+      "report_ts": "voice-ladder9-vi-lvl9",
+      "scope": "all",
+      "severity": "blocker",
+      "why": ""
+    }
+  },
   "version": 1
 }
