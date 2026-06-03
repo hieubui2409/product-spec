@@ -81,8 +81,8 @@ flowchart TD
     C -->|yes| C1[suggest 'chạy --validate trước', proceed anyway]
     C -->|no| D
     C1 --> D[fan-out selected lens agents in parallel - read-only]
-    D --> E[spec-critique-consolidate opus: dedup · severity · top-3 · repeat-offense · DEC-worthy · voice + humanizer Gate 1]
-    E --> E2[spec-critique-humanize sonnet: Gate 2 - strip AI/translation tells, keep the bite + findings]
+    D --> E[critique-consolidator opus: dedup · severity · top-3 · repeat-offense · DEC-worthy · voice + humanizer Gate 1]
+    E --> E2[critique-humanizer sonnet: Gate 2 - strip AI/translation tells, keep the bite + findings]
     E2 --> F[main agent WRITES docs/product/critique/<ts>-<scope>.md + --snapshot]
     F --> H{DEC-worthy flagged?}
     H -->|yes| I[AskUserQuestion per item → on confirm: decision_register.py --append, rationale [nguồn: critique]]

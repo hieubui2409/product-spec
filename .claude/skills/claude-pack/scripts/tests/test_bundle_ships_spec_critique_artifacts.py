@@ -23,12 +23,12 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 MANIFEST_PATH = REPO_ROOT / ".claude" / "pack.manifest.yaml"
 
 AGENT_FILES = [
-    "spec-critique-product.md",
-    "spec-critique-tech.md",
-    "spec-critique-market.md",
-    "spec-critique-craft.md",
-    "spec-critique-consolidate.md",
-    "spec-critique-humanize.md",
+    "product-critic.md",
+    "tech-critic.md",
+    "market-critic.md",
+    "craft-critic.md",
+    "critique-consolidator.md",
+    "critique-humanizer.md",
 ]
 HOOK_FILE = "spec_critique_nudge.py"
 SKILL_SLUG = "spec-critique"

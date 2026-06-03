@@ -10,12 +10,12 @@ skills:
 - spec-critique
 agents:
 - memory-harvester.md
-- spec-critique-product.md
-- spec-critique-tech.md
-- spec-critique-market.md
-- spec-critique-craft.md
-- spec-critique-consolidate.md
-- spec-critique-humanize.md
+- product-critic.md
+- tech-critic.md
+- market-critic.md
+- craft-critic.md
+- critique-consolidator.md
+- critique-humanizer.md
 hooks:
 - memory_gap_hook.py
 - spec_critique_nudge.py

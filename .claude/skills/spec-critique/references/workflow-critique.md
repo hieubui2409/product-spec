@@ -120,8 +120,8 @@ Reuse/inherit/rollup begin working from run 2+ (cross-critique context also need
 ## 4. Fan out the lens agents (parallel, read-only)
 
 Spawn the selected lenses concurrently via `Task`, each given: the bundle path, the active `--level`, `--lang`, and
-(for market) the `--no-web` flag. Agent names: `spec-critique-product`, `spec-critique-tech`, `spec-critique-market`,
-`spec-critique-craft`.
+(for market) the `--no-web` flag. Agent names: `product-critic`, `tech-critic`, `market-critic`,
+`craft-critic`.
 
 - **Scope-aware:** at a single-story scope the **market** lens is usually thin, spawn it but tell it the scope is
   narrow, or skip it and let the consolidator note the omission. At `--scope all` the market lens is most valuable.
@@ -152,7 +152,7 @@ runs `preferences.load(root)` and extracts `critique_address_gender`, `critique_
 5b). Without this the agents render the defaults (`m` / `bac` / `abbrev` / `standard`) regardless of the PO's config,
 so a `gender: f` or `dialect: trung` preference would silently have no effect.
 
-Spawn `spec-critique-consolidate` (opus) with: the available lens findings arrays + the bundle's `prior_reports` +
+Spawn `critique-consolidator` (opus) with: the available lens findings arrays + the bundle's `prior_reports` +
 the bundle's `inherited_context` + `descendant_rollup` (the consolidator is their ONLY consumer; render inherited
 items in a SEPARATE "Kế thừa từ cha" section NOT in the tally, and the rollup `verdict_line` in the parent's section) +
 `scope`/`lang`/`level` + the four register/detail prefs above. **On a `consolidate_only` provenance branch (step 3a),
@@ -182,7 +182,7 @@ humanized-cache (`critique_cache.get_humanized(root, hash)`): on a hit, REUSE th
 spawn entirely; on a miss, spawn the humanizer (below), then store its result (`critique_cache.put_humanized(root, hash,
 text)`). Identical consolidated input → identical humanized output, so this is a safe pure-token saving.
 
-Spawn `spec-critique-humanize` (sonnet) with the consolidator's markdown + `--lang`/`--level` + the same
+Spawn `critique-humanizer` (sonnet) with the consolidator's markdown + `--lang`/`--level` + the same
 `critique_address_gender`/`critique_dialect`/`critique_profanity`/`critique_detail_level` values from step 5. It
 rewrites the prose to strip AI-tells and Vietnamese word-for-word-translation tells per
 `references/humanizer-and-anti-ai-tells.md`, while preserving the bite, the level's tone (the level 5/6 personal attack

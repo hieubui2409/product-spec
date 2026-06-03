@@ -2,7 +2,7 @@
 
 Adapted from the `blader/humanizer` skill (v2.7.0, MIT), itself based on Wikipedia's "Signs of AI writing". This is the
 single rulebook both humanizer gates use: the consolidator applies it while drafting (Gate 1), and the
-`spec-critique-humanize` agent re-checks the finished draft against it (Gate 2). Read it in full, every run.
+`critique-humanizer` agent re-checks the finished draft against it (Gate 2). Read it in full, every run.
 
 ---
 
