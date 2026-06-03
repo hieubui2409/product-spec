@@ -143,7 +143,7 @@ Lần chê thứ hai trở đi sẽ **tái sử dụng** việc đã làm — ch
 
 > **Bạn:** "Chê cái epic này."  *(sau khi đã chê ≥2 story con của nó)*
 >
-> Báo cáo epic có một dòng tổng kết kiểu "3/5 story con đã chê dính lỗi chặn → epic này có vấn đề giao hàng". Tắt bằng
+> Báo cáo epic có một dòng tổng kết kiểu "3/5 story con đã chê dính lỗi chặn → epic này có vấn đề bàn giao". Tắt bằng
 > `--no-rollup`.
 
 > **Bạn:** "Cập nhật lại thông tin đối thủ trong phần thị trường."

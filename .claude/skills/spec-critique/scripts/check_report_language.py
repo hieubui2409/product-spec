@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
 # the high-signal denylist for the specific heading/label/register leaks.
 _VI_STRUCTURAL = (
     "Theo lăng kính", "sửa ngay", "Toang ở đâu", "Banh xác", "Banh nóc", "Nát bét",
-    "Gõ lại", "Lặp lại từ", "Đáng ghi thành", "Kế thừa từ cha", "Rủi ro giao hàng",
+    "Gõ lại", "Lặp lại từ", "Đáng ghi thành", "Kế thừa từ cha", "Rủi ro bàn giao",
     "đm", "vãi", "mày", "tao", "ông/tôi", "không có",
 )
 

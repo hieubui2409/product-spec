@@ -269,7 +269,7 @@ scolding idiom from the floor table, not a threat. That is the line they model.
 - L6 (⚠️ insults the author directly, never professional): "'Fast login', seriously? Too lazy to type a single number, so you scribbled something and went to bed. Whoever wrote this did the bare minimum and dumped the hard part on the build team to guess at. Why it's done for: 'fast' is a number only you know, and you do not write the code. Just retype it, if you have any professional pride left: 'p95 under 2s on 4G, measured by RUM'. Ten characters. How lazy do you have to be."
 - L7 (⚠️ cold contempt + competence, ZERO profanity): "'Fast login', and not one number behind it. Let me be blunt: whoever owns this spec does not yet think like a product person. 'Fast' is a feeling, not a criterion, and that is day-one stuff. Blown apart because: an undefined 'done' hands the build team a guessing game and a week of arguing. Rewrite it properly: 'p95 under 2s on 4G, measured by RUM'."
 - L8 (⚠️ character attack + profanity ON, work-targeted): "'Fast' again. This whole spec is half-assed the same way every time. The AC is so empty there is not one number to test, and it is bullshit to ship something this lazy and call it a requirement. Trashed because: with nothing to measure, 'done' means whatever anyone wants, so the rework never ends. Rewrite it now: 'p95 under 2s on 4G, measured by RUM'."
-- L9 (⚠️⚠️ sustained profanity + no restraint): "'Fast login'? This AC is fucking empty. Too lazy to type one number and you still call it a spec, that is pathetic. Wrecked because: 'fast' is a number only you know, and you do not write the code, so the build team eats the guesswork. Rewrite it, and do not make me say it twice: 'p95 under 2s on 4G, measured by RUM'. Ten characters. How lazy do you have to be."
+- L9 (⚠️⚠️ sustained profanity + no restraint; note >=2 profanity beats + a scorn line, heavier than L8): "'Fast login'? This AC is fucking empty. Too lazy to type one number and you still call it a spec — that is genuinely pathetic. Wrecked because: 'fast' is a number only you know, and you do not write the code, so the build team eats the guesswork on your half-assed shorthand. This is the kind of lazy that burns a sprint. Rewrite it, and do not make me say it twice: 'p95 under 2s on 4G, measured by RUM'. Ten characters. How lazy do you have to be."
 
 ### English mapping (no pronoun ladder → profanity-presence is the hard boundary)
 
@@ -277,9 +277,11 @@ English has no `ông/tôi → mày/tao` ladder, so the 7 → 8 → 9 escalation 
 
 - **L7** = cold, contemptuous "you" + a competence jab, **zero profanity**. This is what mechanically separates EN 7
   from EN 8.
-- **L8** = blunt character attack ("whoever wrote this", "this whole spec"), **profanity required** (work-targeted,
-  no slur-adjacent terms).
-- **L9** = sustained profanity + no internal restraint + scorn lines.
+- **L8** = blunt character attack ("whoever wrote this", "this whole spec"), **exactly one** work-targeted profanity
+  beat (no slur-adjacent terms). One beat is the floor that separates it from L7's zero.
+- **L9** = **sustained** profanity: work-targeted profanity in **>=2 distinct finding blocks** PLUS **>=1 standalone
+  scorn line**, visibly heavier than L8's single beat. "Sustained" means the profanity recurs across the report, not a
+  lone token; L9 must read as a clear step up from L8, never level with it.
 
 The floor is identical to the Vietnamese floor (target decides). `critique_address_gender` and `critique_dialect` are
 VI-only and are no-ops in `lang: en`. `critique_profanity` still maps to EN profanity strength (off / present / strong)

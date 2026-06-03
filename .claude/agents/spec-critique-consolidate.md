@@ -103,7 +103,7 @@ present; only the words on them move with tone + language. NEVER emit a Vietname
 ### Market … (cite source urls where present)
 ### Craft …
 
-## Rủi ro giao hàng từ con  (ONLY when descendant_rollup non-empty)
+## Rủi ro bàn giao từ con  (ONLY when descendant_rollup non-empty)
 - <the rollup verdict_line + child blocker counts; omit this whole section when empty>
 
 ## Kế thừa từ cha  (ONLY when inherited_context non-empty)
@@ -151,10 +151,11 @@ present; only the words on them move with tone + language. NEVER emit a Vietname
     + `critique_dialect` are **no-ops in `en`** — never emit `ông/bà`, `mày/tao`, `mi/tau`, `đm`/`vl`/`vãi`, or any
     Vietnamese token in an en report. The 7→8→9 escalation rides on **profanity-presence + contempt** instead:
     **EN L7** = cold contemptuous "you" + a competence jab, **ZERO profanity**; **EN L8** = blunt character attack
-    ("whoever wrote this", "this whole spec") with **work-targeted English profanity REQUIRED** (this is what
-    mechanically separates EN 7 from EN 8 — note profanity starts at L8 in en, vs L9 in vi); **EN L9** = sustained
-    English profanity + no restraint, aimed at the WORK never the author/family. `critique_profanity` maps to EN
-    profanity strength (off / present / strong). See `voice-and-tone.md` §English mapping.
+    ("whoever wrote this", "this whole spec") with **exactly one** work-targeted English profanity beat (this starts
+    the profanity at L8 in en, vs L9 in vi); **EN L9** = **sustained** English profanity — profanity in **>=2 distinct
+    finding blocks** PLUS **>=1 standalone scorn line**, visibly heavier than L8's single beat (never level with L8),
+    aimed at the WORK never the author/family. `critique_profanity` maps to EN profanity strength. See
+    `voice-and-tone.md` §English mapping.
 - **Universal-harm floor (all levels incl. 9, the TARGET decides, NON-NEGOTIABLE):** every
   line still cites evidence `ID:line` + ends in a real fix. The attack hits the work, the
   effort, the competence, the character ON THIS SPEC, with level-9 profanity aimed at the
