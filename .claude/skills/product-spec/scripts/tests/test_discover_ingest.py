@@ -41,6 +41,36 @@ def test_symlink_escape_rejected(tmp_path):
     assert res["accepted"] == []
 
 
+def test_walk_symlinked_file_escape_rejected(tmp_path):
+    # CRITICAL regression: a symlinked .md FILE *inside a walked directory* pointing outside root
+    # must be rejected, not read (the directory-walk fence, not just the top-level path).
+    root = _root(tmp_path)
+    outside = tmp_path.parent / "outside_secrets"
+    outside.mkdir(exist_ok=True)
+    (outside / "creds.txt").write_text("TOP SECRET", encoding="utf-8")
+    (root / "inputs" / "leak.md").symlink_to(outside / "creds.txt")
+    res = iri.resolve_inputs(["inputs"], root)  # walk the dir, not the symlink directly
+    assert all("creds" not in a and "leak" not in a for a in res["accepted"]), res["accepted"]
+    assert any("symlink/escape" in r["reason"] for r in res["rejected"])
+    # And the scaffold must not read its contents.
+    scaffold = iri.draft_scaffold(res, root)
+    assert all("TOP SECRET" not in f.get("text", "") for f in scaffold["files"])
+
+
+def test_walk_symlinked_dir_escape_rejected(tmp_path):
+    # A symlinked DIRECTORY inside a walked directory pointing outside root must not be descended.
+    root = _root(tmp_path)
+    outside = tmp_path.parent / "outside_dir2"
+    outside.mkdir(exist_ok=True)
+    (outside / "leak.md").write_text("ESCAPED CONTENT", encoding="utf-8")
+    (root / "inputs" / "subdir").symlink_to(outside, target_is_directory=True)
+    res = iri.resolve_inputs(["inputs"], root)
+    assert all("leak.md" not in a for a in res["accepted"])
+    assert any("symlink/escape" in r["reason"] for r in res["rejected"])
+    scaffold = iri.draft_scaffold(res, root)
+    assert all("ESCAPED CONTENT" not in f.get("text", "") for f in scaffold["files"])
+
+
 def test_non_md_txt_rejected(tmp_path):
     root = _root(tmp_path)
     (root / "inputs" / "a.pdf").write_text("x", encoding="utf-8")

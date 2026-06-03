@@ -77,11 +77,18 @@ def resolve_inputs(paths: List[str], root, *, max_files: int = DEFAULT_MAX_FILES
         if len(accepted) >= max_files:
             truncated = True
             return
-        reason = _classify_file(p, root, max_bytes)
+        # `iterdir()` yields UN-resolved entries and `_is_within` is purely lexical, so resolve
+        # FIRST: a symlink reached inside a walked dir must not slip past the fence (the escape
+        # the top-level path handling already guards). Store + classify the resolved target.
+        resolved = p.resolve(strict=False)
+        if not _is_within(resolved, root):
+            rejected.append({"path": str(p), "reason": "outside project root (symlink/escape)"})
+            return
+        reason = _classify_file(resolved, root, max_bytes)
         if reason is None:
-            accepted.append(str(p))
+            accepted.append(str(resolved))
         else:
-            rejected.append({"path": str(p), "reason": reason})
+            rejected.append({"path": str(resolved), "reason": reason})
 
     def _walk_dir(d: Path, depth: int):
         nonlocal truncated
@@ -100,6 +107,12 @@ def resolve_inputs(paths: List[str], root, *, max_files: int = DEFAULT_MAX_FILES
             # Skip dotted dirs/files outright (no descent into .git/.aws/etc.).
             if entry.name.startswith("."):
                 rejected.append({"path": str(entry), "reason": "dotfile/secret-path excluded"})
+                continue
+            # Resolve BEFORE descending/accepting: a symlinked dir OR file that escapes root is
+            # refused here (resolve-then-fence), closing the directory-walk symlink-escape hole.
+            entry_resolved = entry.resolve(strict=False)
+            if not _is_within(entry_resolved, root):
+                rejected.append({"path": str(entry), "reason": "outside project root (symlink/escape)"})
                 continue
             if entry.is_dir():
                 _walk_dir(entry, depth + 1)
