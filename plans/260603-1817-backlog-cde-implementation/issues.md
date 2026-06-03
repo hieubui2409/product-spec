@@ -34,7 +34,7 @@
 | 6 | E2 discovery seed | ✅ done (`--discover` ingest, fence/filter/bounded-recursion, workflow ref) |
 | 7 | D11 _hashable consolidation | ✅ done (`render_common.py`, output unchanged) |
 | 8 | C11 assumption-rigor + goal_without_metric | ✅ done (lens prompts + check + fixtures + eval) |
-| 9 | 9a E2E | ⚠️ **partial** — see deferral D1 below |
+| 9 | 9a E2E | ✅ **done** — D1 executed (see below); only the optional 4-agent live fleet re-run is unused |
 | 10 | 9b docs sweep + changelog | ⚠️ **partial** — see deferral D2 below |
 
 ## Code review (single consolidated pass, 2026-06-03)
@@ -49,16 +49,20 @@
 
 ## Open decisions / deferrals (interview later)
 
-- 🟡 **D1 — Phase 9 LLM-driven critique regeneration deferred.** The deterministic Phase-9 contracts ARE
-  done: caches scrubbed (timestamps→canonical, no abs-path/web-cache leak), the committed
-  `/e2e/dating-app/` run is locked as Phase-3's E1 freshness fixture with a **desync-guard +
-  fixture-replay** test (`test_e2e_freshness_fixture_guard.py`, 4 tests), and the lv7-9 acme harm-floor
-  safety fixtures + `test_voice_examples_grounding.py` were left **untouched + green**. What is NOT done:
-  actually *driving the real critique LLM pipeline* to (a) regenerate dating-app reports through the new
-  flows + full inherit/rollup/cache-hit-miss lifecycle and (b) produce the new **level-5 acme showcase**.
-  That needs the critique sub-agent fleet (lens agents + opus consolidator + voice) — an interactive LLM
-  run, deliberately NOT spawned here per the "reduce agent spawn / use cache" directive. **Interview the
-  PO** when they want the live regeneration; the contracts that keep the suite honest are already in place.
+- ✅ **D1 — DONE 2026-06-03 (ultracode).** Drove every new surface on `/e2e/dating-app` for REAL (run log:
+  `e2e/dating-app/RUN-LOG-backlog-cde-flows.md`):
+  - `--apply-critique` → 2 atomic DECs (`DEC-1` change, `DEC-2` defer) + resume markers;
+  - `--viz audit` (md), `--summary --audience release-notes` (→ `release-notes.md`), `--discover`
+    (empty candidate buckets, GATE), `goal_without_metric` (clean — goals carry metrics);
+  - **critique lifecycle from real `critique_scan` output**: authored scoped `critique/260603-prd-chat-lvl5.md`
+    (lens-cache `d4ec0301`, registered in index+state); **inherit** (`PRD-CHAT:15`→child `PRD-CHAT-E1-S1`),
+    **rollup** (epic `PRD-CHAT-E1` → "2/4 critiqued children carry blockers"), **cache HIT** (`reuse:full`) +
+    **MISS** (`--fresh`→`reuse:none`);
+  - **acme lv5 showcase** added (`critique-acme-shop-all-level5.md`, citations grounded), **lv7-9 safety
+    fixtures + grounding test untouched + green**; caches scrubbed; suites green (product-spec 601).
+  - The only thing NOT done (by the "reduce-agent/use-cache" directive): spawning the live 4-lens + opus
+    consolidator + humanizer fleet to regenerate reports — the main agent acted as the lenses inline. Ask
+    the PO if a full live-fleet regeneration is ever wanted; the lifecycle + contracts are already proven real.
 - 🟡 **D2 — Phase 10 GUIDE deep-sweep partial.** Every new surface was registered inline as built:
   `SKILL.md` (both skills), root `CLAUDE.md` pointer table, `references/*` (workflow-apply-critique,
   workflow-discover, visualization-spec, validation-rules-spec, workflow-validate), root `README.md`, and

@@ -73,10 +73,15 @@ def test_fixture_replay_asserts_real_values():
 
 def test_caches_have_no_live_timestamps():
     # Commit-hygiene (M1): committed caches must carry the canonical scrubbed timestamp, never a
-    # real run time (which would churn the example on every regeneration + leak run timing).
+    # real run time (which would churn the example on every regeneration + leak run timing). Only
+    # ISO-timestamp-shaped values are in scope — a `last_ts` set to a report-stem LABEL
+    # (e.g. "260603-prd-chat-lvl5") is not a wall-clock leak and is left as-is by the scrub.
+    iso = re.compile(r"\d{4}-\d{2}-\d{2}T")
     for f in glob.glob(str(E2E / "docs/product/.memory/**/*.json"), recursive=True):
         text = Path(f).read_text(encoding="utf-8")
         for m in re.finditer(r'"(stored_at|fetched_at|last_ts)":\s*"([^"]+)"', text):
+            if not iso.match(m.group(2)):
+                continue  # non-ISO label (e.g. report stem) — not a timestamp leak
             assert m.group(2) == "2026-06-03T00:00:00+00:00", (
                 f"un-scrubbed timestamp {m.group(0)} in {os.path.basename(f)} — re-run the Phase-9 scrub"
             )

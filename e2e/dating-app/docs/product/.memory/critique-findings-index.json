@@ -9,6 +9,15 @@
       "severity": "blocker",
       "why": ""
     },
+    "PRD-CHAT-E1-S3:18@260603-prd-chat-lvl5": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-CHAT-E1-S3:18",
+      "fix": "Replace with measurable Given-When-Then: '100 consecutive frames render, <5% drop below 60fps on a mid-range Android' and 'first 50 messages reach time-to-interactive <=1.5s p95 on 4G'. Pin the device + network profile in frontmatter.",
+      "report_ts": "260603-prd-chat-lvl5",
+      "scope": "PRD-CHAT",
+      "severity": "major",
+      "why": "The test author has no threshold to assert against; the story ships with its AC permanently interpreted by whoever runs the demo, and is unsizeable as written."
+    },
     "PRD-CHAT-E1-S3:18@voice-ladder9-vi-lvl9": {
       "dec_worthy": false,
       "evidence_id": "PRD-CHAT-E1-S3:18",
@@ -17,6 +26,42 @@
       "scope": "all",
       "severity": "blocker",
       "why": ""
+    },
+    "PRD-CHAT-E1-S4:18@260603-prd-chat-lvl5": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-CHAT-E1-S4:18",
+      "fix": "Split into discrete testable stories, one mechanism each (block→server rejects with 403 and stores nothing; report→queued to review SLA; encryption→server-side log verification). Retire the catch-all.",
+      "report_ts": "260603-prd-chat-lvl5",
+      "scope": "PRD-CHAT",
+      "severity": "blocker",
+      "why": "An unbounded safety contract on a medium should-have is a blank check: any build trivially claims compliance because the system does something, the AC stays vacuously true until a real incident blocks release, and it can never be sized or accepted."
+    },
+    "PRD-CHAT-E1-S4:22@260603-prd-chat-lvl5": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-CHAT-E1-S4:22",
+      "fix": "Rename to a concrete mechanism ('Block + report + encrypt in 1:1 chat') so the title states what is built, not an outcome that cannot be tested.",
+      "report_ts": "260603-prd-chat-lvl5",
+      "scope": "PRD-CHAT",
+      "severity": "major",
+      "why": "A title that asserts an absolute sets a reader expectation the body can never satisfy and primes every downstream reviewer to wave the story through on vibes; the unmeasurability is now structural, top to bottom."
+    },
+    "PRD-CHAT:15@260603-prd-chat-lvl5": {
+      "dec_worthy": true,
+      "evidence_id": "PRD-CHAT:15",
+      "fix": "Add a sustained-conversation metric (e.g. sustained-7day-conversation-rate) to PRD-CHAT success and demote mau-monthly to a leading funnel indicator. This is the build-side of DEC-1.",
+      "report_ts": "260603-prd-chat-lvl5",
+      "scope": "PRD-CHAT",
+      "severity": "blocker",
+      "why": "Teams build to the metric they are graded on. Grade chat on MAU and the team ships notification spam and re-engagement loops that lift logins while the conversation-retention north-star stays unowned — the exact vanity-volume trap the product was founded to escape."
+    },
+    "PRD-CHAT:22@260603-prd-chat-lvl5": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-CHAT:22",
+      "fix": "Either name what the chat does that Tinder/Bumble do not (conversation-sustaining nudges, 7-day streak signals) and rate it ahead there, or record that chat is intentionally at parity and the moat lives elsewhere.",
+      "report_ts": "260603-prd-chat-lvl5",
+      "scope": "PRD-CHAT",
+      "severity": "minor",
+      "why": "If chat is merely at parity with incumbents, it is not a reason to switch; the product's one claimed differentiator (sustained connection) has to live IN the chat experience or the parity rating is an admission of me-too."
     },
     "PRD-MATCH-E1-S2:21@voice-ladder9-vi-lvl9": {
       "dec_worthy": false,

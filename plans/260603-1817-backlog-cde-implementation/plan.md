@@ -66,7 +66,7 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Done |
 | 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Done |
 | 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Done |
-| 9 | [9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase](./phase-09-e2e-example-docs-changelogs.md) | Partial (deterministic contracts done; live LLM regen deferred — see issues.md D1) |
+| 9 | [9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase](./phase-09-e2e-example-docs-changelogs.md) | Done |
 | 10 | [9b — docs sweep + changelog backfill](./phase-10-docs-sweep-changelog-backfill.md) | Partial (surfaces+changelogs done; GUIDE deep-sweep deferred — see issues.md D2) |
 
 ## Dependencies

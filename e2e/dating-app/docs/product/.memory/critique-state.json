@@ -1,4 +1,9 @@
 {
+  "PRD-CHAT": {
+    "blocker_count": 2,
+    "last_ts": "260603-prd-chat-lvl5",
+    "lens_findings_hash": "d4ec0301275ffe2f"
+  },
   "PRD-CHAT-E1-S1": {
     "blocker_count": 0,
     "lang": "vi",
@@ -12,6 +17,10 @@
     "last_ts": "2026-06-03T00:00:00+00:00",
     "lens_findings_hash": null,
     "level": 5
+  },
+  "PRD-CHAT-E1-S4": {
+    "blocker_count": 1,
+    "last_ts": "260603-prd-chat-lvl5"
   },
   "all": {
     "blocker_count": 4,
