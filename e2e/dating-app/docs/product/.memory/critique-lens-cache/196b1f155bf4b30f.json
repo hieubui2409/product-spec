@@ -1,0 +1,154 @@
+[
+  {
+    "critique": "core_value và north-star của sản phẩm được định nghĩa là 'số cặp đôi duy trì nhắn tin qua lại >= 7 ngày' (PRODUCT.md:15, VISION:51), nhưng danh sách Success Metrics của BRD (BRD:62-65) chỉ có mau-monthly, weekly-match-rate, premium-conversion-rate, arpu — không có chỉ số nào đo cuộc trò chuyện duy trì 7 ngày. Rà toàn bộ story: không story nào mang chỉ số north-star; mọi story đều gắn mau-monthly hoặc weekly-match-rate (chính là các 'con số match/quy mô' mà VISION:45-52 nói thẳng là muốn thoát khỏi).",
+    "evidence": "BRD:62",
+    "fix": "Thêm một metric north-star tường minh vào BRD Success Metrics (ví dụ sustained-7day-conversation-rate) và gắn nó làm metric chính cho PRD-CHAT và ít nhất story PRD-CHAT-E1-S1; xem lại BRD-G2 để hoặc thay weekly-match-rate bằng chỉ số kết nối duy trì, hoặc nêu rõ match-rate chỉ là leading indicator phụ thuộc north-star.",
+    "lens": "product",
+    "severity": "blocker",
+    "why_it_dies": "Sản phẩm có thể đạt 'thành công' theo đúng bộ chỉ số của nó (100k MAU, 20% tạo match/tuần) mà vẫn thất bại hoàn toàn ở lý do tồn tại của nó — không một cặp nào trò chuyện thật. Differentiator duy nhất so với Tinder/Bumble (kết nối duy trì, không phải match ảo) không được đo, nên không thể chứng minh, không thể tối ưu, và đội build sẽ tối ưu cho match-count y hệt đối thủ. Riskiest assumption của cả sản phẩm không có instrument nào để kiểm chứng."
+  },
+  {
+    "critique": "PRD-MATCH-E1-S1 là story must / core-value của lõi sản phẩm, nhưng câu 'so that' dừng ở 'để tôi có thể tạo match với người tôi quan tâm' (dòng 30) và 4 AC (dòng 34-37) chỉ kết thúc ở sự kiện tạo match + thông báo match; story gắn metrics: [weekly-match-rate] (dòng 16). Không AC nào nối lượt thích tới mục tiêu cuộc trò chuyện được duy trì.",
+    "evidence": "PRD-MATCH-E1-S1:30",
+    "fix": "Sửa 'so that' và thêm một AC nối tới hành trình kết nối (ví dụ: sau khi match, dẫn thẳng người dùng vào luồng mở cuộc trò chuyện PRD-CHAT; ghi tín hiệu match→first-message), và bổ sung/đổi metric của story sang chỉ số kết nối duy trì thay vì chỉ weekly-match-rate.",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "Story đáy phễu của lõi sản phẩm tối ưu đúng cho kết cục 'match ảo' mà VISION:45-52 tuyên bố chống lại. Nếu lõi đo và thưởng cho việc tạo match, mọi quyết định thiết kế hạ nguồn (xếp hồ sơ, thông báo) sẽ kéo về phía số match, không phải kết nối thật — chính là sản phẩm Tinder mà spec nói không muốn xây."
+  },
+  {
+    "critique": "PRD-CHAT-E1-S4 ('Nhắn tin an toàn tuyệt đối') có 'so that' vòng tròn (dòng 28: muốn an toàn để yên tâm) và 2 AC không thể kiểm chứng: 'cuộc trò chuyện phải an toàn tuyệt đối' và 'hệ thống phải bảo vệ người dùng hoàn toàn' (dòng 18-19). Phạm vi 'an toàn' này lại trùng với PRD-SAFETY (xác minh danh tính & chống lừa đảo), vốn là PRD core-value riêng.",
+    "evidence": "PRD-CHAT-E1-S4:18",
+    "fix": "Hoặc xoá S4 và dồn phạm vi an toàn về PRD-SAFETY, hoặc thu hẹp S4 thành một job cụ thể của nhắn tin (ví dụ: chặn/báo cáo người trong cuộc trò chuyện) với AC đếm được (báo cáo gửi được, người bị chặn không gửi tin được trong X giây).",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "AC không đo được ('tuyệt đối', 'hoàn toàn') không thể done — đội build không biết khi nào xong, QA không có gì để kiểm, và story sẽ hoặc trượt vô hạn hoặc bị tick done tuỳ tiện. Việc nhân đôi phạm vi an toàn với PRD-SAFETY phá vỡ một-nhà-chứa-một-sự-thật, dẫn tới yêu cầu mâu thuẫn giữa hai PRD."
+  },
+  {
+    "critique": "PRD-PREMIUM bán doanh thu lõi (BRD-G3) bằng đúng bộ cơ chế của mô hình match-count mà sản phẩm tuyên bố chống: 'xem ai đã thích mình', boost hồ sơ để được hiển thị nhiều hơn, thích không giới hạn (dòng 37-38). PRD tự nhận đây là tập tính năng me-too, đi sau Tinder và ngang Bumble (dòng 42-45).",
+    "evidence": "PRD-PREMIUM:37",
+    "fix": "Định nghĩa ít nhất một gói/tính năng premium phục vụ trực tiếp kết nối duy trì (ví dụ: tăng tốc tìm người nghiêm túc, không phải tăng lượt hiển thị), và ghi rõ trong PRD-PREMIUM Overview cách premium tránh tái lập mô hình match-vanity mà vision phủ nhận; nếu không thể, nêu thẳng đây là rủi ro giả định lõi.",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "Động cơ doanh thu duy nhất hướng tới hoà vốn (BRD-G3) được xây trên các incentive quẹt-vô-tận / đếm-lượt-thích — đúng pain mà VISION:22-28 nói là lý do người Việt chán app phương Tây. Nếu pain đó có thật, người dùng mục tiêu sẽ không trả tiền cho chính cái họ ghét; nếu họ trả, giả định cốt lõi của vision sai. Spec không giải quyết mâu thuẫn này — value proposition của premium chưa ánh xạ tới một gain/pain nào trong vision."
+  },
+  {
+    "critique": "PRD-EVENTS-E1-S3 đặc tả một hệ thống tổ chức và bán vé concert âm nhạc toàn quốc trong app hẹn hò (5 AC: danh sách concert theo nghệ sĩ/hạng vé, đặt tối đa 4 vé, giữ chỗ 10 phút, vé QR, lọc theo thể loại nhạc — dòng 18-22), kích cỡ L. Spec đã tự ghi nhận đây là gold-plating/solution-first (dòng 41-48) và đặt scope:out/could/later.",
+    "evidence": "PRD-EVENTS-E1-S3:18",
+    "fix": "Giáng S3 xuống một dòng ý tưởng một câu trong mục 'tầm nhìn xa' của PRD-EVENTS thay vì một story có AC đầy đủ; chỉ nâng cấp lại thành story khi north-star đã được instrument và chứng minh, kèm một quyết định PO tường minh (DEC) so với north-star.",
+    "lens": "product",
+    "severity": "minor",
+    "why_it_dies": "Dù gắn nhãn out/could, một mảng kinh doanh bán vé sự kiện cỡ L với AC đầy đủ vẫn nằm trong backlog tiêu thụ chu kỳ review của PO, làm loãng tín hiệu trọng tâm cho đội build và nhà đầu tư, và mời gọi đầu tư sớm vào một lĩnh vực (vận hành nghệ sĩ, an ninh đám đông) hoàn toàn không đo north-star. Tự-nhận-thức không khử được chi phí cơ hội của việc giữ nó ở mức đặc tả chi tiết này."
+  },
+  {
+    "critique": "Cả hai AC của story PRD-CHAT-E1-S3 dùng kết quả không đo được: 'trải nghiệm phải mượt mà' (dòng 18) và 'giao diện hiển thị nhanh và không giật lag' (dòng 19). Không có ngưỡng số học, không có thiết bị tham chiếu, không có phần trăm thất bại được phép. Story PRD-CHAT-E1-S4 (dòng 18–19) mắc cùng lỗi: 'an toàn tuyệt đối' và 'bảo vệ người dùng hoàn toàn' — không có tiêu chí vượt/không vượt xác định được.",
+    "evidence": "PRD-CHAT-E1-S3:18",
+    "fix": "Thay toàn bộ AC bằng ngưỡng đo được: PRD-CHAT-E1-S3 — 'Khi cuộn danh sách tin nhắn hoặc gõ phím trên thiết bị Android tầm trung (RAM 3 GB), frame rate duy trì >= 55 fps và không có jank frame nào vượt 16 ms trong chuỗi 100 frame liên tiếp.' / 'Khi mở cuộc trò chuyện có 50 tin nhắn, giao diện tương tác được trong vòng 1,5 giây (đo ở p95).' PRD-CHAT-E1-S4 — liệt kê cụ thể cơ chế bảo vệ muốn kiểm tra: ví dụ 'Khi người dùng gửi URL trong tin nhắn, hệ thống hiển thị cảnh báo link ngoài trước khi mở'; 'Khi người dùng tải lên ảnh, hệ thống quét CSAM trước khi lưu và từ chối với mã lỗi rõ ràng nếu phát hiện'.",
+    "lens": "tech",
+    "severity": "blocker",
+    "why_it_dies": "Không có AC nào trong hai story này có thể chuyển thành test case thông/không thông. Kỹ sư không có điều kiện dừng (definition of done) để đóng sprint; QA không có ngưỡng để từ chối; sản phẩm không bao giờ 'xong'. Story bị để ngỏ vô thời hạn hoặc được đóng theo cảm tính."
+  },
+  {
+    "critique": "AC dòng 21 của PRD-MATCH-E1-S2 đặt kết quả A/B test thống kê (tỉ lệ match cao hơn 20%, p < 0.05) làm tiêu chí chấp nhận của story. A/B test trên dữ liệu người dùng thật cần lưu lượng đủ lớn và thường mất nhiều tuần để đạt p < 0.05; đây là chỉ số đo lường sau khi triển khai, không phải điều kiện bàn giao sprint.",
+    "evidence": "PRD-MATCH-E1-S2:21",
+    "fix": "Tách story thành hai phần: (1) Story kỹ thuật (hiện tại) giữ các AC về lọc tiêu chí cứng, tỉ lệ hồ sơ active, thời gian tải — những điều kiện kiểm tra được tại bàn giao; (2) Story đo lường riêng: 'Thiết lập A/B test framework để đo tỉ lệ match giữa nhóm gợi ý AI và nhóm ngẫu nhiên; báo cáo kết quả sau N ngày với mẫu M người dùng.' AC của story đo lường là 'bảng dashboard A/B test có dữ liệu thực và kết quả có thể đọc được', không phải p < 0.05.",
+    "lens": "tech",
+    "severity": "blocker",
+    "why_it_dies": "Story không thể được đóng ở cuối sprint vì kết quả A/B test chưa có khi bàn giao. Nếu coi AC này là điều kiện cứng, story bị treo vô thời hạn trong trạng thái 'chờ dữ liệu'. Nếu bỏ qua, AC trở thành cam kết trống — cả hai đều làm quy trình bàn giao mất tính xác định."
+  },
+  {
+    "critique": "AC dòng 22 của PRD-MATCH-E1-S2 yêu cầu tính năng giải thích gợi ý ('Vì sao gợi ý người này?' hiển thị ít nhất 2 tiêu chí khớp). PRD-AIREC (dòng 77) liệt kê tường minh tính năng này trong mục Won't this round: 'Giải thích lý do gợi ý (\"vì sao bạn thấy người này\") — cân nhắc cycle sau.' PRD-MATCH-E1-S2 có scope core-value, moscow must, horizon now; PRD-AIREC là scope in, moscow could, horizon later. Hai artifact xung đột trực tiếp trên cùng một tính năng mà không có depends_on nào liên kết.",
+    "evidence": "PRD-MATCH-E1-S2:22",
+    "fix": "Loại bỏ AC dòng 22 khỏi PRD-MATCH-E1-S2. Nếu tính năng giải thích là cần thiết, chuyển nó thành story riêng trong PRD-AIREC với moscow could và horizon later, phù hợp với quyết định Won't đã ghi tại PRD-AIREC:77. Thêm depends_on: [PRD-AIREC] vào PRD-MATCH-E1-S2 nếu bất kỳ AC nào phụ thuộc vào logic ranking của AIREC.",
+    "lens": "tech",
+    "severity": "major",
+    "why_it_dies": "Kỹ sư triển khai PRD-MATCH-E1-S2 phải xây lớp giải thích gợi ý nhưng PRD-AIREC — nơi nắm toàn bộ logic gợi ý — không bao giờ xây lớp đó trong cycle này. Story sẽ hoặc bị block (chờ AIREC) hoặc tự tái triển khai logic gợi ý bên trong MATCH, tạo ra hai code path song song."
+  },
+  {
+    "critique": "AC dòng 20 của PRD-PREMIUM-E1-S1 kiểm tra rằng 'khi giao dịch hoàn tất, thì quyền xem được mở khoá trong vòng 5 giây'. Story này giả định một luồng thanh toán đã tồn tại và trả về sự kiện 'giao dịch hoàn tất'. PRD-PREMIUM dòng 78 đặt tường minh việc tích hợp cổng thanh toán vào Won't this round. Không có depends_on nào trong chuỗi PRD-PREMIUM → PRD-PREMIUM-E1 → PRD-PREMIUM-E1-S1 liên kết tới bất kỳ story thanh toán nào.",
+    "evidence": "PRD-PREMIUM-E1-S1:20",
+    "fix": "Thêm một story hoặc epic stub rõ ràng về payment integration (dù chỉ là placeholder) và đặt PRD-PREMIUM-E1-S1 phụ thuộc vào đó qua depends_on. Sửa AC dòng 20 thành: 'Giả sử payment gateway trả về webhook xác nhận giao dịch thành công, khi webhook được nhận, thì hệ thống cập nhật trạng thái gói của người dùng và quyền xem được mở khoá trong vòng 5 giây.' Điều này làm rõ ranh giới giữa payment và entitlement layer, đồng thời cho phép kiểm tra entitlement logic độc lập với payment provider.",
+    "lens": "tech",
+    "severity": "major",
+    "why_it_dies": "Không có payment gateway → không có sự kiện 'giao dịch hoàn tất' → AC này không thể được kiểm tra trong môi trường tích hợp thực. Test sẽ phải mock toàn bộ payment flow, làm mất đi giá trị kiểm tra end-to-end của AC. Khi payment gateway được chọn sau, story phải viết lại AC và kiểm tra lại từ đầu."
+  },
+  {
+    "critique": "AC dòng 21 của PRD-SAFETY-E1-S1 yêu cầu ảnh giấy tờ gốc bị xoá khỏi lưu trữ trong vòng 24 giờ sau khi xác minh thành công và 'không bao giờ hiển thị cho người dùng khác'. Đây là yêu cầu tuân thủ bảo mật/quyền riêng tư quan trọng (gần tương đương GDPR retention), nhưng AC không xác định bất kỳ cơ chế nào để QA hoặc audit verify: không có audit log, không có API check, không có retention policy reference.",
+    "evidence": "PRD-SAFETY-E1-S1:21",
+    "fix": "Tách thành hai AC riêng: (1) 'Giả sử xác minh hoàn tất, khi truy vấn storage audit log sau 25 giờ, thì record ảnh giấy tờ gốc của user đó không còn tồn tại trong storage bucket và deletion event được ghi trong audit trail với timestamp.' (2) 'Giả sử hệ thống vận hành bình thường, khi admin truy vấn retention report, thì không có ảnh giấy tờ nào có created_at cũ hơn 25 giờ còn trong storage.' Đồng thời thêm vào NFR của PRD-SAFETY: deletion SLA 24h được enforce bởi scheduled job, không phải on-demand.",
+    "lens": "tech",
+    "severity": "major",
+    "why_it_dies": "Không có cách nào để test thụ động từ phía người dùng hay QA rằng ảnh đã thực sự bị xoá khỏi storage sau 24 giờ. Nếu có sự cố (ảnh không bị xoá do bug trong cron job), không ai biết cho đến khi breach. AC này cần thêm một acceptance path có thể quan sát được để thực sự là testable."
+  },
+  {
+    "critique": "AC dòng 21 của PRD-AIREC-E1-S1 đặt ngưỡng hiệu năng '20 hồ sơ đầu tiên hiển thị trong vòng 2 giây trên thiết bị di động phổ thông tại Việt Nam'. Không có định nghĩa cho 'thiết bị di động phổ thông tại Việt Nam' (CPU tier, RAM, OS version) và không có percentile (p50? p95?). Story này có size L, moscow could, horizon later — và phụ thuộc vào một mô hình ML chưa được chọn (đội build chọn ở giai đoạn triển khai).",
+    "evidence": "PRD-AIREC-E1-S1:21",
+    "fix": "Định nghĩa tường minh hardware reference profile tại NFR của PRD-AIREC (ví dụ: 'Thiết bị Android tầm trung 2023+: Snapdragon 680 hoặc tương đương, RAM 4 GB, kết nối 4G 20 Mbps') và gắn percentile (p95). Sửa AC thành: 'Giả sử mô hình tính điểm gợi ý cho một phiên khám phá, khi tải màn khám phá trên thiết bị reference (xem NFR), thì 20 hồ sơ đầu tiên hiển thị trong vòng 2 giây ở p95 — với điều kiện scoring được thực hiện server-side và kết quả được cache.' Nếu không thể xác định hardware target trước khi chọn mô hình, loại bỏ AC này khỏi story delivery và chuyển thành spike/NFR kiểm tra sau khi chọn mô hình.",
+    "lens": "tech",
+    "severity": "minor",
+    "why_it_dies": "Không có thiết bị tham chiếu → không thể cấu hình môi trường test → performance threshold không reproducible. Khi mô hình ML thực tế được chọn và inference latency đo được, 2 giây có thể hoàn toàn không khả thi mà không có caching layer riêng. Kỹ sư không thể size story này chính xác khi cả hardware target lẫn model đều chưa xác định."
+  },
+  {
+    "critique": "BRD-G3 đặt mục tiêu hoà vốn vận hành năm 2 từ doanh thu premium, nhưng toàn bộ spec không có con số nào: không mức giá gói, không tỉ lệ chuyển đổi mục tiêu, không ARPU mục tiêu, không ước tính chi phí vận hành. PRD-PREMIUM (các chỉ số `premium-conversion-rate`, `arpu`) được đặt `horizon: later` và bản thân thừa nhận là me-too đi sau Tinder — nhưng không có luận cứ định lượng nào cho thấy 100k MAU × tỉ lệ chuyển đổi X × ARPU Y đủ cover chi phí vận hành năm 2.",
+    "evidence": "BRD:22",
+    "fix": "Thêm vào BRD một bảng unit-economics tối thiểu: mức giá gói (VND/tháng), tỉ lệ chuyển đổi mục tiêu (%), ARPU mục tiêu, và ước tính chi phí vận hành năm 2. Từ đó PRD-PREMIUM mới có thể định nghĩa cụ thể 'hoà vốn' là gì.",
+    "lens": "market",
+    "severity": "blocker",
+    "why_it_dies": "Thị trường hẹn hò trực tuyến Việt Nam ước tính ~6.44M USD năm 2025 cho toàn ngành (Statista). Tinder đạt tỉ lệ chuyển đổi ~10.7% sau nhiều năm xây dựng network effect. Một tân binh với 100k MAU và tỉ lệ chuyển đổi thực tế 3-5% ở mức giá Vietnam-tier (~3-5 USD/tháng) tạo ra khoảng 15-25k USD MRR. Nếu chi phí thực tế cao hơn, BRD-G3 vỡ mà không có cơ chế cảnh báo sớm trong spec."
+  },
+  {
+    "critique": "Danh sách đối thủ trong BRD gồm Tinder, Bumble, Hẹn, Fika — bỏ sót Tantan, ứng dụng hẹn hò tập trung vào người dùng châu Á đang mở rộng sang Đông Nam Á (ra mắt TanTan Tribe tại Singapore tháng 12/2024, đang mở sang Malaysia, Thailand và các nước láng giềng). Tantan được nhắc đến trong các danh sách app hẹn hò Việt Nam hiện tại và chia sẻ đúng phân khúc người dùng châu Á mà spec xác định là lợi thế.",
+    "evidence": "BRD:26",
+    "fix": "Thêm Tantan (và cân nhắc Facebook Dating) vào `competitors:` trong BRD với threat level rõ ràng. Cập nhật `competitive_parity` trong PRD-MATCH và PRD-SAFETY để phản ánh vị thế so với đối thủ này.",
+    "lens": "market",
+    "severity": "major",
+    "why_it_dies": "Tantan đang chủ động tái định vị sang phân khúc 'kết nối châu Á có chiều sâu văn hoá'. Nếu Tantan Tribe đẩy mạnh vào Việt Nam với định vị tương tự và có sẵn tập người dùng châu Á lớn hơn, luận điểm 'bản địa hoá' của spec bị xói mòn mà không có kịch bản phòng thủ."
+  },
+  {
+    "critique": "Cơ chế lõi PRD-MATCH (khám phá hồ sơ, quẹt thích/bỏ qua, tạo match khi hai phía cùng thích) được đánh giá `parity` với Tinder và `behind` với Bumble. Đây là toàn bộ trải nghiệm người dùng năm 1 — AI gợi ý và premium đều ở `horizon: later`. Điểm khác biệt được tuyên bố trong VISION ('đo bằng kết nối thật thay vì match') không được thể hiện bằng bất kỳ tính năng `must/should` nào trong phạm vi `now/next`; nó chỉ là cam kết đo lường nội bộ, không phải trải nghiệm người dùng có thể cảm nhận.",
+    "evidence": "PRD-MATCH:22",
+    "fix": "Xác định ít nhất một tính năng `must/should` trong phạm vi `now/next` thể hiện được sự khác biệt 'kết nối thật' mà người dùng có thể cảm nhận ngay (ví dụ: icebreaker tự động sau match, giới hạn số match đồng thời, hoặc badge 'đang nhắn tin'). Không có hook trải nghiệm rõ ràng, tuyên bố định vị chỉ là marketing copy.",
+    "lens": "market",
+    "severity": "major",
+    "why_it_dies": "Người dùng không chọn app vì north-star metric nội bộ — họ chọn vì trải nghiệm khác biệt ngay khi dùng. Nếu màn hình quẹt trông và hoạt động giống Tinder (parity), premium chưa có, AI chưa có, không có lý do hành vi nào để người dùng rời Tinder sang — đặc biệt khi Tinder đã dẫn đầu top grossing Việt Nam (Similarweb, tháng 3/2026) với network effect lớn hơn nhiều."
+  },
+  {
+    "critique": "Khuôn mẫu User Story sử dụng tiêu đề cột tiếng Anh (\"As a | I want | so that\") nhưng sau đó là bản dịch tiếng Việt (\"Với vai trò | Tôi muốn | để\"). Cấu trúc này gây mất cân bằng đọc: một dòng có hai cặp nhãn, một tiếng Anh một tiếng Việt.",
+    "evidence": "PRD-MATCH-E1-S1:29",
+    "fix": "Loại bỏ các nhãn tiếng Anh ở dòng 28. Sử dụng cấu trúc chỉ tiếng Việt:\n\n**Với vai trò:** người dùng độc thân (P-URBAN / P-PROVINCE)  \n**Tôi muốn:** xem các hồ sơ được gợi ý và quẹt thích hoặc bỏ qua  \n**Để:** tôi có thể tạo match với người tôi quan tâm.\n\nNhư vậy cân bằng với phần \"Tiêu chí chấp nhận\" (Acceptance Criteria) ở dưới.",
+    "lens": "craft",
+    "severity": "minor",
+    "why_it_dies": "Người dùng (PO không kỹ thuật) sẽ bị phân tán bởi nhãn tiêu đề kép. Cấu trúc này làm giảm rõ ràng vì không rõ liệu nên đọc tiếng Anh hay tiếng Việt. Các phần tiếp theo (Acceptance Criteria) không có nhãn kép, nên dòng 28 trở thành ngoại lệ."
+  },
+  {
+    "critique": "Tiêu chí chấp nhận (AC) dòng 18 sử dụng cụm từ \"một chồng tối thiểu 10 hồ sơ gợi ý đã tải sẵn\". Từ \"gợi ý\" ở đây là tính từ, nhưng trên toàn ancestry, \"gợi ý\" thường là danh từ hoặc động từ (\"đưa gợi ý\", \"nhận gợi ý\", \"chất lượng gợi ý\"). Cấu trúc \"hồ sơ gợi ý\" là trợ từ không tự nhiên với tiếng Việt.",
+    "evidence": "PRD-MATCH-E1-S1:18",
+    "fix": "Thay thế \"một chồng tối thiểu 10 hồ sơ gợi ý đã tải sẵn\" bằng:\n\n\"Khi mở màn hình khám phá, người dùng thấy một chồng tối thiểu 10 hồ sơ được gợi ý và đã tải sẵn.\"\n\nCách này phù hợp với cách dùng từ \"được gợi ý\" ở Vision (dòng 43: \"hồ sơ được gợi ý\") và PRD (dòng 51: \"hồ sơ gợi ý\", nhưng trong ngữ cảnh khác).",
+    "lens": "craft",
+    "severity": "minor",
+    "why_it_dies": "Cụm từ này khó hiểu. Người đọc có thể hiểu nhầm \"gợi ý\" là một loại hồ sơ đặc biệt, thay vì \"hồ sơ được gợi ý (bởi hệ thống)\". Nó cũng tạo sự không nhất quán: Vision và PRD dùng \"hồ sơ được gợi ý\" (động cơ bị động) trong các mô tả tương tự, nhưng ở đây là \"hồ sơ gợi ý\" (tính từ bị động hạn chế)."
+  },
+  {
+    "critique": "Tiêu chí chấp nhận dòng 20 nói \"hệ thống tạo match và hiển thị thông báo match cho cả hai trong vòng 5 giây\". Cụm \"thông báo match\" sử dụng \"match\" như một danh từ (thông báo về sự match), nhưng không rõ là thông báo gì cụ thể. Đoạn AC này cũng không đề cập đến điều kiện \"cả hai phía cùng thích\" xảy ra cách nào — là tức thì hay có độ trễ?",
+    "evidence": "PRD-MATCH-E1-S1:20",
+    "fix": "Thay thế bằng:\n\n\"Khi cả hai phía cùng thích nhau, hệ thống tạo match và gửi thông báo push cho cả hai người dùng trong vòng 5 giây kể từ lần thích thứ hai được ghi nhận.\"\n\nCách này rõ ràng hơn về:\n- Loại thông báo (push notification)\n- Điểm tính thời gian (từ lần thích thứ hai)",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "Không rõ ràng về hành vi hệ thống. Nếu người dùng A quẹt thích và người dùng B quẹt thích cùng lúc, hay cả hai đã thích từ trước, thì thông báo gửi bao giờ? Thời gian 5 giây có ý nghĩa gì? AC này giả định \"khi cả hai phía cùng thích\" là tức thì, nhưng không rõ là tức thì từ nhìn của ai (người A hay người B)."
+  },
+  {
+    "critique": "Tiêu chí chấp nhận dòng 19 nói \"Quẹt phải ghi nhận lượt thích; quẹt trái ghi nhận bỏ qua; cả hai phản hồi dưới 300ms\". Từ \"phản hồi\" (response) không rõ ràng — nó ám chỉ \"thời gian xử lý API\", \"thời gian hiển thị UI\", hay \"thời gian người dùng cảm nhận\"? Ngoài ra, \"ghi nhận\" là động từ hơi trừu tượng; hệ thống làm gì cụ thể (lưu vào database, gửi signal)?",
+    "evidence": "PRD-MATCH-E1-S1:19",
+    "fix": "Thay thế bằng:\n\n\"Quẹt phải: ghi nhận lượt thích (lưu vào database); quẹt trái: ghi nhận bỏ qua (lưu vào database). Cả hai hành động phải hoàn thành trong 300ms tính từ lúc người dùng nhả tay khỏi màn hình.\"\n\nNếu muốn rõ hơn về phía người dùng:\n\n\"...hoàn thành và hiển thị phản hồi UI (ví dụ: hồ sơ tiếp theo lên sân) trong 300ms.\"",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "QA/dev không rõ cách đo \"phản hồi dưới 300ms\". Là latency từ người dùng touch đến khi dữ liệu lưu xong? Từ touch đến khi UI cập nhật? Tiêu chuẩn này không thể kiểm chứng một cách khách quan mà không có định nghĩa rõ ràng về điểm đo."
+  },
+  {
+    "critique": "Cụm từ \"hàng triệu match ảo không bao giờ dẫn tới một cuộc trò chuyện thật\" xuất hiện ở Vision dòng 24 với bối cảnh vấn đề (problem statement). Ở PRD-MATCH dòng 31, AC của story lại nói \"Khi cả hai phía cùng thích, hệ thống tạo match\" — tức là story này TẠO thêm match. Nếu match ảo là vấn đề, tại sao lại tạo match mà không có bất kỳ cơ chế gì để đảm bảo nó dẫn tới cuộc trò chuyện thật?",
+    "evidence": "VISION:24,PRD-MATCH:31",
+    "fix": "Thêm một AC để rõ trách nhiệm của story này:\n\n\"Khi match được tạo, cả hai người dùng nhận thông báo và được dẫn tới màn hình nhắn tin để bắt đầu cuộc trò chuyện.\"\n\nHoặc, nếu nhắn tin là PRD khác (PRD-CHAT), thì rõ ràng hóa scope ở epic:\n\n\"Scope story này: tạo match hai chiều. Tiếp nối: PRD-CHAT xử lý việc bắt đầu cuộc trò chuyện để biến match thành kết nối thật.\"",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "Mâu thuẫn này gây hoài nghi: story này có thực sự giải quyết vấn đề core hay là đang tạo ra cùng một vấn đề (match ảo)? Nếu north-star (Vision dòng 51) là \"cặp đôi duy trì nhắn tin liên tục từ 7 ngày trở lên\", nhưng AC chỉ yêu cầu tạo match, thì match này sẽ bị lãng quên như thế nào?"
+  }
+]

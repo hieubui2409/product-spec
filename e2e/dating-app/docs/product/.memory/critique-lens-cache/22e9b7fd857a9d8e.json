@@ -1,0 +1,154 @@
+[
+  {
+    "critique": "The vision's north-star is sustained 7-day back-and-forth conversations and explicitly rejects match count as a vanity metric (VISION:51-52), but the only persona-engagement business goal, BRD-G2, measures `weekly-match-rate` — '20% of active users create >=1 match per week' — which is a raw match-count metric. The core-value PRD-MATCH then optimizes its success directly to this match-count goal (PRD-MATCH:15,72). The whole build is steered by a metric one layer below the connection the product claims to sell.",
+    "evidence": "BRD-G2:57",
+    "fix": "Add or replace a BRD goal that measures the north-star directly (e.g. % of matches that become a sustained 7+ day conversation), and re-point PRD-MATCH / PRD-CHAT success metrics to it; keep weekly-match-rate only as a leading funnel indicator, not the persona-success goal.",
+    "lens": "product",
+    "severity": "blocker",
+    "why_it_dies": "Teams build to the metric they are measured on. If the headline persona goal counts matches, the product will optimize swipe-to-match volume and reproduce the 'millions of dead matches' the vision was founded to escape — shipping the competitor it set out to beat, while the 7-day-conversation north-star goes unowned by any BRD goal."
+  },
+  {
+    "critique": "PRD-EVENTS-E1-S3 specifies organizing and selling tickets to nationwide music concerts inside the app (artist line-ups, multi-tier ticketing, QR check-in, genre filters). None of the three personas (busy urban single, thin-pool province single, overseas Vietnamese) is hiring a dating app to buy concert tickets, and no BRD goal or vision pain maps to running a live-entertainment ticketing business. The PRD itself labels it gold-plating and solution-first (PRD-EVENTS-E1-S3:43).",
+    "evidence": "PRD-EVENTS-E1-S3:18",
+    "fix": "Delete the story (or demote it to a one-line idea in a parking-lot doc, not an authored story with acceptance criteria). Do not carry an out-of-scope, persona-less feature as a drafted, AC-complete artifact.",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "A fully-specified concert-ticketing story signals it is a real candidate to build. It is an entire separate business (artist ops, venue security, ticket fraud) with zero line to the 7-day-conversation north-star; pursuing it splits the team off the core connection loop that is not yet proven."
+  },
+  {
+    "critique": "PRD-MATCH's scope explicitly excludes AI recommendations and 'why recommended' explanations, deferring them to PRD-AIREC next cycle (PRD-MATCH:64; PRD-AIREC:77). Yet the must / core-value story PRD-MATCH-E1-S2 requires a recommendation engine that beats a random control by >=20% via A/B test with p<0.05 (PRD-MATCH-E1-S2:38) and a 'why recommended this person?' explanation (PRD-MATCH-E1-S2:22) — exactly the deferred AIREC capability, now smuggled into a now/must story.",
+    "evidence": "PRD-MATCH-E1-S2:38",
+    "fix": "Strip the recommendation-lift A/B criterion and the 'why recommended' AC from PRD-MATCH-E1-S2; keep S2 to deterministic hard-filter quality (age/distance/intent matching, active-profile freshness). Move the model-driven ranking + explanation to PRD-AIREC where they already live.",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "A core-value must story silently carries a could/later capability the spec said it would not build this cycle. The build team either over-builds an ML recommender to hit an A/B-lift acceptance gate that cannot pass with a cold-start user base, or quietly drops the AC — both rot the spec's credibility and blow the now-cycle scope."
+  },
+  {
+    "critique": "PRD-PREMIUM-E1-S2 sells a paid 'boost' that prioritizes a user's profile for more visibility for 30 minutes. The value proposition sold is quantity of exposure (be seen by more people), which is the volume game the vision positions against in favor of quality-over-quantity connection. PRD-PREMIUM's own risk register flags that paid features can erode the free experience, yet ships boost as a should-have revenue feature.",
+    "evidence": "PRD-PREMIUM-E1-S2:34",
+    "fix": "Either reframe the premium gain around the core value (e.g. surface-to-verified-serious-users, not raw reach) or explicitly record a PO decision accepting the north-star tension; do not ship a reach-for-pay mechanic as an unexamined should.",
+    "lens": "product",
+    "severity": "major",
+    "why_it_dies": "Boost monetizes the same swipe-volume dynamic the product claims to reject, and rewards paying users with reach rather than rewarding sustained conversation. It can lift ARPU short-term while pulling the experience away from the 7-day-connection north-star, undermining the one differentiator the brand is built on."
+  },
+  {
+    "critique": "PRD-AIREC-E1-S1 is a 'so that I create more matches per week' story (PRD-AIREC-E1-S1:30) for an AI ranking layer the PRD itself calls a me-too feature that lands behind Tinder and Bumble (PRD-AIREC:41-45). Its acceptance gates depend on having >=20 swipes of interaction data per user and sustained-message signals — data the product has no proven path to accumulate until the core loop succeeds. The riskiest assumption (enough real interaction data to beat distance-ranking) is named but unowned.",
+    "evidence": "PRD-AIREC-E1-S1:30",
+    "fix": "Keep it could/later (already done) but add an explicit go/no-go gate: do not start PRD-AIREC until PRD-CHAT shows a measurable volume of sustained 7-day conversations to train on, and the story's 'so that' is re-anchored to sustained connection, not match count.",
+    "lens": "product",
+    "severity": "minor",
+    "why_it_dies": "Effort goes to a delighter that, by the spec's own admission, will be worse than incumbents on day one and whose data precondition may never materialize at the scale needed. It is the classic over-served feature competing on a dimension the product cannot win, while the must-be (reliable chat that produces 7-day conversations) carries the real value."
+  },
+  {
+    "critique": "Both acceptance criteria in PRD-CHAT-E1-S3 express subjective sensations only: AC line 18 says the experience 'must be smooth' (mượt mà) and AC line 19 says the UI 'displays quickly and does not lag' — neither contains a numeric observable outcome (frame rate, render time, scroll jank threshold). There is no measurement that could produce a binary pass or fail.",
+    "evidence": "PRD-CHAT-E1-S3:18",
+    "fix": "Replace both ACs with measurable Given-When-Then entries. Example AC1: 'Given the user is scrolling the message list, when 100 consecutive frames are rendered, then fewer than 5% drop below 60 fps on the reference device (mid-range Android, e.g. Redmi Note).' Example AC2: 'Given the conversation is opened, when the first 50 messages load, then the time-to-interactive is ≤ 1.5 seconds measured at p95 on a 4G connection.' Add a test device and network profile to the story frontmatter as a testability fixture.",
+    "lens": "tech",
+    "severity": "blocker",
+    "why_it_dies": "A test author has no threshold to assert against. The sprint cannot be accepted or rejected on this story; it will be shipped with the AC permanently 'interpreted' by whoever demos it. The story is also unsizeable as written — an engineer cannot estimate effort toward an undefined quality bar."
+  },
+  {
+    "critique": "PRD-CHAT-E1-S4 contains two ACs that are absolute guarantees without a mechanism: line 18 asserts conversations must be 'absolutely safe' (an toàn tuyệt đối) and line 19 asserts the system must 'completely protect' users from bad behavior (bảo vệ người dùng hoàn toàn). No specific threat, detection mechanism, response action, or SLA is named. The story is marked moscow:should and size:M, yet it implicitly demands an unbounded safety contract.",
+    "evidence": "PRD-CHAT-E1-S4:18",
+    "fix": "Split into discrete, testable stories, each with one mechanism per safety dimension. Examples: (a) 'End-to-end encryption: Given a message is sent, when it is stored server-side, then the stored payload is encrypted and only decryptable with keys held by the sender/receiver — verifiable via server-side log inspection.' (b) 'Abuse blocking: Given User A blocks User B, when B attempts to send a message, then the server rejects it with a 403 and no message is stored.' Retire the current story or replace it with a link to the split stories.",
+    "lens": "tech",
+    "severity": "blocker",
+    "why_it_dies": "The story cannot be tested, sized, or accepted in a sprint. Any implementation will trivially claim compliance (the system does something when bad behavior occurs). Downstream, this story will block release if a safety incident occurs post-launch, because the AC was always vacuously true. The implicit scope (content moderation? encryption? abuse detection?) is hidden from estimators."
+  },
+  {
+    "critique": "One of the five acceptance criteria in the quality-recommendation story requires the system to produce a statistically significant A/B test outcome: 'the swipe-right-to-match rate on system-recommended profiles must be higher by at least 20% vs. the random-recommendation control group, measured via A/B test with p < 0.05.' A/B test results with p < 0.05 require weeks to months of live traffic and a statistical analysis pipeline — they are not a sprint-deliverable acceptance condition.",
+    "evidence": "PRD-MATCH-E1-S2:21",
+    "fix": "Move the A/B test outcome to a success metric on the PRD or a separate experiment epic with its own lifecycle. Replace the AC with a testable pre-launch proxy: 'Given the recommendation model is deployed, when a 100-profile batch is scored in the staging dataset with known labels, then the model's precision@10 is at least X% above the distance-only baseline.' Define the holdout experiment as a separate task owned by the data team, not as a story AC.",
+    "lens": "tech",
+    "severity": "major",
+    "why_it_dies": "The story cannot be accepted at sprint review. The team cannot determine done-ness until a long-running experiment concludes, coupling the story's lifecycle to traffic volume and elapsed calendar time. This also means the story is not Independent (it depends on user traffic) and not Estimable (no engineer can size 'reach statistical significance'). The story will be permanently in limbo."
+  },
+  {
+    "critique": "The face-verification story mandates liveness detection and face-matching at a ≥90% confidence threshold (AC line 18, 20) within 60 seconds, yet neither the story frontmatter, the parent epic PRD-SAFETY-E1, nor the PRD-SAFETY contain a depends_on declaration for a face-comparison or liveness service. PRD-SAFETY line 71 defers only government-API verification; liveness face-match remains a must-have with no vendor, SDK, or in-house service identified.",
+    "evidence": "PRD-SAFETY-E1-S1:18",
+    "fix": "Add 'depends_on: [FACE-MATCH-SERVICE]' (or the chosen vendor's ID) to PRD-SAFETY-E1-S1 and PRD-SAFETY frontmatter. Add a prerequisite story or spike: 'Evaluate and select a liveness + face-comparison vendor/SDK; define integration contract and SLA.' Add an NFR AC: 'Given a labeled test set of N face pairs with known match/mismatch ground truth, when the service is evaluated, then precision and recall at the 90% threshold are documented and accepted by the PO.' Until the spike is done and the vendor is named, this story cannot be estimated.",
+    "lens": "tech",
+    "severity": "major",
+    "why_it_dies": "The story silently assumes a face-matching pipeline exists. Without a named service dependency, the team will either discover mid-sprint that vendor selection, procurement, and integration are required (massively expanding scope), or they will stub it and ship unverified. The 90% threshold also cannot be validated without a labeled test dataset, which is not mentioned anywhere in the spec."
+  },
+  {
+    "critique": "The seat-reservation story specifies decrement-by-1 semantics on booking (AC line 18) and increment-by-1 on cancellation (AC line 21), but contains no AC covering the concurrent-booking scenario: two users simultaneously pressing 'Giữ chỗ' on the last available seat can both read a positive remaining-count and both successfully decrement, resulting in oversell. The happy-path AC does not distinguish between the optimistic-read state and the post-commit state.",
+    "evidence": "PRD-EVENTS-E1-S2:18",
+    "fix": "Add an AC: 'Given two users simultaneously attempt to book the last available seat, when both requests are processed, then exactly one receives a confirmation and the other receives a seat-unavailable error — the final remaining count is 0 and no negative capacity is possible.' Annotate the story with a note: 'Implementation must use an atomic decrement or row-level lock (e.g. SELECT FOR UPDATE or compare-and-swap) to prevent oversell.' This is a spec-level change; the implementation choice remains with the team.",
+    "lens": "tech",
+    "severity": "minor",
+    "why_it_dies": "Without a concurrency AC, the implementation will default to a naive decrement with no lock, and the oversell condition will only be discovered in load testing or at a live event. Fixing it post-launch requires a schema change or advisory lock, which is significantly more expensive. The story also fails the Testable criterion of INVEST because the edge path (concurrent last seat) is not specified."
+  },
+  {
+    "critique": "BRD-G3 targets premium revenue sufficient for operational break-even by Year 2, but neither BRD-G3 nor PRD-PREMIUM defines a pricing tier, a target conversion rate, or a minimum ARPU floor. The BRD-G3 body is empty. Vietnam’s dating-services ARPU is approximately USD 8.15 per user per year (Statista 2025); at 100k MAU and the industry-benchmark freemium conversion range of 2–5%, annual premium revenue would be in the range of USD 16k–40k — an amount that is likely insufficient to cover the operational cost of a real-time messaging infrastructure (PRD-CHAT) plus a human-review safety queue (PRD-SAFETY).",
+    "evidence": "BRD:22",
+    "fix": "Add to BRD-G3 or PRD-PREMIUM: (a) a monthly subscription price range in VND anchored to the Vietnam market (compare Tinder Gold ~149k–199k VND/month), (b) a target premium-conversion-rate range such as 3–6% of MAU, and (c) a derived annual-revenue estimate explicitly compared against projected Year 2 operating costs. If the math does not close, the horizon:later tag on PRD-PREMIUM must be revisited or a secondary revenue stream (ads, in-app coins) must be specified. Source: https://www.statista.com/outlook/emo/dating-services/vietnam",
+    "lens": "market",
+    "severity": "blocker",
+    "why_it_dies": "Without a pricing model and a conversion-rate target grounded in the Vietnam market, BRD-G3 is an aspiration without a viable path. The spec cannot be used to validate whether the premium feature set (view-who-liked-me, boost) will generate enough revenue to break even, making the Year 2 break-even goal unverifiable and the investment case for PRD-PREMIUM unsupported."
+  },
+  {
+    "critique": "The BRD rates COMP-FIKA (Fika) as threat: low. However, Fika already operates mandatory manual identity verification with approximately 40% rejection rate, a 16-personality-type matching layer, values-based dealbreakers, and IRL offline events in Vietnam as core free-tier features. PRD-SAFETY claims competitive_parity ahead of COMP-HEN for verification, but COMP-FIKA is absent from PRD-SAFETY’s competitive_parity table entirely. The spec’s primary differentiator — ‘authentic connection measured by sustained conversation, not match count’ — is also Fika’s stated core positioning.",
+    "evidence": "BRD:42",
+    "fix": "Re-evaluate COMP-FIKA threat level to med or high for PRD-SAFETY and the safety-first positioning. Add COMP-FIKA to PRD-SAFETY competitive_parity with an honest assessment (parity or behind on manual verification strictness). Identify and foreground what Ghép Đôi Việt does that Fika does not: national scope for P-PROVINCE and P-RETURNEE is a real differentiator Fika lacks — lean into that in the BRD market context rather than identity verification, where Fika already has a head-start. Source: https://vietcetera.com/en/fika-asias-first-female-focused-ai-social-and-dating-app-raises-16m-in-seed-funding",
+    "lens": "market",
+    "severity": "major",
+    "why_it_dies": "If Fika is underweighted as threat: low, the spec’s safety-first identity verification moat (PRD-SAFETY) and ‘authentic connection’ positioning are more contested than the BRD acknowledges. A new entrant arriving after Fika with a similar positioning but without Fika’s head-start in manual verification rigor and personality matching will face a harder acquisition story for the same target users, especially P-URBAN women who are Fika’s primary audience."
+  },
+  {
+    "critique": "BRD-G1 targets 100k MAU in Year 1 with a swipe-discovery mechanic (PRD-MATCH) that is functionally identical to Tinder and Bumble. The spec does not address JTBD-competition for P-PROVINCE (tỉnh lẻ users with thin local pools): the realistic alternative for this persona is not Tinder but Facebook groups, Zalo chat, or natural social introduction. The BRD acknowledges the thin-pool risk in PRD-MATCH but does not address why a P-PROVINCE user would install and remain active long enough to reach a first match when swipe stacks will be nearly empty at launch.",
+    "evidence": "BRD:56",
+    "fix": "Add a JTBD-competition section to the BRD or PRD-MATCH that explicitly names the do-nothing and Zalo/Facebook-groups alternative for P-PROVINCE, and specifies a cold-start tactic such as geographic seeding, invite incentives, or a minimum-viable-pool threshold below which the product surfaces an interest-signal or waiting-list flow instead of an empty swipe stack. Tie BRD-G1’s 100k MAU target to a per-persona acquisition assumption so the figure is falsifiable.",
+    "lens": "market",
+    "severity": "major",
+    "why_it_dies": "Without a credible cold-start strategy for the provinces, the 100k MAU goal depends implicitly on P-URBAN density in Hanoi/HCM, where Tinder is already ranked the top dating app on Google Play Vietnam. If P-PROVINCE fails to activate, the national positioning collapses into a Hanoi/HCM-only app competing head-to-head against Tinder with no moat. The northstar metric (sustained conversation >=7 days) is also unreachable if users churn before a first match. Source: https://www.similarweb.com/top-apps/google/vietnam/dating/"
+  },
+  {
+    "critique": "PRD-EVENTS is correctly scoped out with well-reasoned rationale, but the spec frames offline events solely as an internal gold-plating risk without recognizing that COMP-FIKA — rated threat: low in the BRD — already runs IRL events as a core positioning feature. The App Store listing title for Fika is ‘Fika: Matchmaker & IRL Events’ as of 2025–2026, making offline events a competitive battleground rather than purely an internal scope concern.",
+    "evidence": "PRD-EVENTS:44",
+    "fix": "Add a competitive note to PRD-EVENTS’ risk section flagging that COMP-FIKA already competes on IRL events positioning. Keeping scope: out is correct for now, but add a re-evaluation trigger: if Fika’s events feature shows measurable retention lift in public signals within 12 months, escalate the events horizon from later to next. Simultaneously, reconsider COMP-FIKA’s threat rating in the BRD. Source: https://apps.apple.com/us/app/fika-matchmaker-irl-events/id1528449006",
+    "lens": "market",
+    "severity": "minor",
+    "why_it_dies": "Dismissing events as gold-plating without noting that a competitor uses events as a retention and acquisition hook leaves a strategic blind spot. If IRL events prove to be a meaningful retention mechanism in Vietnam, the spec has no re-evaluation trigger."
+  },
+  {
+    "critique": "The non-functional requirement states 'Độ trễ gửi tin nhắn thấp' (low message delay) without specifying a numeric threshold. 'Thấp' (low) is an unmeasurable comparative adjective that leaves ambiguity about acceptable latency.",
+    "evidence": "PRD-CHAT:70",
+    "fix": "Replace with a concrete SLA: 'Độ trễ gửi tin nhắn tối đa dưới 2 giây trên kết nối 3G tiêu chuẩn Việt Nam, cân đối với kích thước gói ~50KB' or provide a latency percentile target (e.g., p95 < 1.5s).",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "During implementation, the team cannot verify 'low' objectively. Is 500ms low? 1s? 2s? Without a number, acceptance becomes subjective and builds risk of unmet expectations between PO and dev team."
+  },
+  {
+    "critique": "The acceptance criteria use English term 'liveness' (lines 20, 36) in a Vietnamese spec without translation or definition. Giả mạo liveness = 'spoofing liveness detection', but the Vietnamese reader does not see a Vietnamese equivalent or explanation of what 'liveness' means technically.",
+    "evidence": "PRD-SAFETY-E1-S1:20,36",
+    "fix": "Define once in the parent PRD-SAFETY section: 'Liveness = xác minh người sống (phát hiện video/hình ảnh giả) qua nhận dạng động tác selfie.' Then use only the Vietnamese term in stories, or pair: 'liveness (xác minh người sống)' on first mention in each artifact.",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "Non-Vietnamese speakers or those unfamiliar with biometric terminology may misinterpret 'liveness' as something else (e.g., 'being live/online'). Spec is bilingual by accident, not design, forcing readers to context-switch or guess."
+  },
+  {
+    "critique": "The PRD uses 'phù hợp hơn' (more suitable/fitting) and 'thông minh hơn' (smarter) without concrete metrics. Example: 'ưu tiên những hồ sơ có khả năng dẫn tới kết nối phù hợp hơn' (line 37) and 'một thứ tự gợi ý thông minh hơn' (line 39). These are subjective quality claims with no measurement basis.",
+    "evidence": "PRD-AIREC:37-38,39,50",
+    "fix": "Rewrite with explicit metrics: 'hồ sơ có khả năng cao dẫn tới match chuyển thành nhắn tin duy trì (tỉ lệ match→7-day-conversation >= 15%)' and 'thứ tự gợi ý tối ưu hóa theo tỉ lệ match-to-sustained-chat, không theo số match thô'.",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "The team cannot define 'more fitting' or 'smarter' in acceptance criteria. How is a suggestion 'more fitting' than another? What makes ranking 'smarter'? Without a metric (e.g., 'match-to-conversation conversion rate'), the feature becomes unmeasurable and success becomes opinion-based."
+  },
+  {
+    "critique": "The spec uses 'realtime' (English, lines 33, 54) inconsistently: once as 'realtime' (Latin script), once as '​theo thời gian thực' (Vietnamese). Within the same artifact, the term oscillates between languages without explanation or consistent terminology choice.",
+    "evidence": "PRD-CHAT:33,54",
+    "fix": "Choose one: either use only Vietnamese '​theo thời gian thực' throughout PRD-CHAT and child stories, or adopt a bilingual convention (e.g., '​theo thời gian thực (realtime)' on first mention, then Vietnamese only). Document this choice in a spec glossary at the top of VISION or PRODUCT.",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "Terminology drift across the spec (eng+vi mixing) creates friction for translation, localization QA, and cross-language spec readers. Vietnamese stakeholders see English jargon without Vietnamese glossary; English readers expect Latin script. Spec appears hastily stitched rather than deliberately bilingual."
+  },
+  {
+    "critique": "Non-functional requirement (line 85) states 'Hạn mức miễn phí phải đủ rộng để trải nghiệm lõi còn dùng được mà không trả phí.' The phrase 'đủ rộng' (sufficiently broad) is a vague comparative. What is 'broad'? 10 likes/day? 20? For how long?",
+    "evidence": "PRD-PREMIUM:50-51,85",
+    "fix": "Specify the free tier floor explicitly: 'Hạn mức miễn phí tối thiểu: 20 lượt thích/ngày, khám phá không giới hạn, ghép đôi + nhắn tin miễn phí khi đã match. Người dùng mới nhận 48 giờ thử premium miễn phí.' Then measure 'đủ rộng' by retention metric: 'Người dùng miễn phí không quá 7 ngày trong 30 ngày đầu vẫn >= 40% chuyển đổi sang premium.'",
+    "lens": "craft",
+    "severity": "major",
+    "why_it_dies": "Without a floor (minimum daily/weekly likes allowed free), the team guesses. A tight limit may churn users before they feel core value (anti-goal in BRD); a loose limit may not push conversion. The spec asserts a constraint but leaves its enforcement to interpretation."
+  }
+]

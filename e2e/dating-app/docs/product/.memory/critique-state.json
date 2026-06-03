@@ -1,0 +1,17 @@
+{
+  "all": {
+    "blocker_count": 4,
+    "drift_since": 0,
+    "lang": "vi",
+    "last_ts": "2026-06-03T04:44:49+00:00",
+    "lens_findings_hash": "196b1f155bf4b30f",
+    "level": 9,
+    "provenance_hash": "30dfa9175360a17d",
+    "register": {
+      "dialect": "bac",
+      "gender": "m",
+      "profanity": "strong"
+    },
+    "report": "docs/product/critique/voice-ladder9-vi-lvl9.md"
+  }
+}
