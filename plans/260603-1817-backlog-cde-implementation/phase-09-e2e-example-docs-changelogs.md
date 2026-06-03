@@ -15,7 +15,8 @@ dependencies: [1, 2, 3, 4, 5, 6, 7, 8]
 
 ## Overview
 Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in an external folder
-(scripts + LLM, real data), captured as (2) the **refreshed canonical example**, then (3) a **docs sweep**
+(real workflow + scripts + LLM; the seed product idea is **imaginary/synthetic**), captured as (2) the
+**refreshed canonical example**, then (3) a **docs sweep**
 (root + skill docs) and **changelog backfill** for all three skills.
 
 ## Requirements
@@ -35,7 +36,11 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 - Capture: the deterministic script outputs (assertable) + a human-observed checklist of the LLM steps (interview/critique/apply-critique quality). The script half can become a repeatable E2E smoke script; the LLM half is a release checklist.
 
 ### B. Refresh the canonical example (synergy with red-team H2)
-- Use the E2E run's REAL artifacts (with real frontmatter + `body_hash`) to refresh `product-spec/examples/` and `product-spec-critique/examples/`. **The example is whatever the workflow actually produced** — not a hand-polished mock — so it stays faithful to real tool output. The refreshed critique example now carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2). Keep a hand-authored note only where illustration is clearer.
+- **The E2E input product idea is IMAGINARY/synthetic (PO 2026-06-03)** — a realistic-but-fictional product, NOT confidential data. So "real" here = real workflow + real script/LLM execution producing real artifacts; the seed idea is made up. This removes any leak risk in committing/bundling the example.
+- Use the E2E run's REAL artifacts (real frontmatter + `body_hash`) to refresh `product-spec/examples/` and `product-spec-critique/examples/`. **The example is whatever the workflow actually produced** — not a hand-polished mock. The refreshed critique example carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2).
+- **Still curate (not a raw scratch dump):** copy the artifact set (BRD/PRD/epic/story/critique report/audit), NOT `.memory/` scratch, `.session.md`, or machine-specific paths — keep the bundle lean.
+- **Freeze the product-spec + critique example pair together** (both from the same run) so the E1 fixture's `body_hash` stays consistent; a later edit to one desyncs the hash.
+- **Bilingual:** examples have EN + VI — produce both (two runs or a translated pass) so the example set isn't single-language.
 
 ### C. Docs sweep (root + skill)
 - **Root `CLAUDE.md`**: update the product-spec + critique operating guides for every new surface — `--apply-critique`, `--viz audit`, `--summary --audience`, `--discover`, `goal_without_metric`, strengthened lens prompts, E5 versioning + verifier. Update the workflow-pointers tables.
@@ -62,7 +67,7 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 
 ## Success Criteria
 - [ ] A real E2E run completed in an external folder **by following the workflow references** (not hand-built), exercising EVERY new surface (E1/C9/E4/E2/goal_without_metric/strengthened lenses) — script + LLM — with outputs + any workflow-doc defects recorded and fixed.
-- [ ] Both `examples/` refreshed from real artifacts; critique example carries frontmatter and serves as E1's freshness fixture (H2 closed).
+- [ ] Both `examples/` refreshed from real (imaginary-seed) artifacts, curated (no scratch/.memory/.session), EN+VI, product-spec+critique frozen as a pair; critique example carries frontmatter and serves as E1's freshness fixture (H2 closed).
 - [ ] Root `CLAUDE.md` + `README.md` and all per-skill `SKILL.md`/`GUIDE-EN`/`GUIDE-VI`/`README` updated for the new surfaces.
 - [ ] `product-spec` + `product-spec-critique` CHANGELOGs backfilled from git log; `claude-pack` CHANGELOG updated for the bundle.
 - [ ] Script-half E2E is repeatable; LLM-half is a documented checklist (explicitly not a CI gate). Full existing suite still green.
@@ -72,6 +77,8 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 - Risk: changelog double-work vs Phase 1 → Phase 1 scaffolds, Phase 9 backfills; do not recreate the files.
 - Risk: real run hits product-spec's no-network rule → product-spec stays offline; only the critique market lens may use web (its existing behavior).
 - Risk: external-folder run leaks into the repo → run in a temp dir; commit only the curated refreshed examples, not the scratch run.
+- Data-leak risk: NONE — the E2E seed is an imaginary/synthetic product by design (PO), safe to commit + bundle.
+- Fixture desync risk: the product-spec + critique examples are a frozen pair from one run (E1 body_hash fixture) — don't edit one without the other.
 
 ## Open question
 - Numbering: added as **Phase 9** (next contiguous). PO referred to it as "phase 10" — confirm whether a separate Phase 9 (e.g. a cook/test gate) should be inserted and this renumbered to 10.
