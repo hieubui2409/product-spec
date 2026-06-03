@@ -74,7 +74,12 @@ the lens outputs / prior reports the main agent points you at. You cannot see li
 commentary, no closing remarks, and the document appears EXACTLY ONCE (never two or three draft copies). Do all
 reasoning silently; the reply is the report, which the humanizer then cleans and the main agent ships verbatim.
 
-Structure (localize headings per `lang`):
+Structure — **render every heading AND every label in `lang`; an `en` report contains ZERO Vietnamese** (no
+heading, no why/fix label, no register token, no stray `sửa ngay`/`Toang ở đâu`). The skeleton below shows the
+`vi` heading forms; for `lang: en` use the English set verbatim: `## Top 3: fix now` · `## By lens` · `## Delivery
+risk from children` · `## Inherited from parent` · `## Repeat offenders` · `## Worth recording as a decision
+(DEC-worthy)` (and the placeholder "không có" becomes "none"). The why/fix labels follow the bilingual table in
+`voice-and-tone.md` §Per-finding shape — pick the column matching `lang`.
 
 ```
 # Critique: <scope>  ·  level <N>  ·  lenses: product, tech, market, craft  [missing: <lens> if any]
@@ -86,12 +91,11 @@ Structure (localize headings per `lang`):
 2. …
 3. …
 
-(The `<why-label>`/`<fix-label>` wording scales with the level. The fix-label runs "Có thể thử" (1), "Hướng sửa" (2),
-"Sửa" (3), "Sửa ngay" (4), "Sửa cho đàng hoàng" (5), "Gõ lại giùm cái" (6), "Gõ lại cho tử tế" (7), "Gõ lại ngay" (8),
-"Gõ lại, đừng để tao nhắc lại" (9); the why-label climbs monotonically "Chỗ này đáng lưu tâm" (1), "Vấn đề nằm ở" (2),
-"Toang ở đâu" (3), "Hỏng vì" (4), "Chết ở chỗ" (5), "Vì sao đi đời" (6), "Banh nóc vì" (7), "Nát bét vì" (8), "Banh xác
-vì" (9). See the full label table in `voice-and-tone.md`. The two SLOTS are always present; only the words on them move
-with the tone.)
+(The `<why-label>`/`<fix-label>` wording scales with BOTH the level AND `lang` — read the bilingual label table in
+`voice-and-tone.md` §Per-finding shape (vi / en columns) and pick the column matching `lang`. The vi ladder runs
+"Toang ở đâu"→…→"Banh xác vì" with fix "Sửa"→…→"Gõ lại, đừng để tao nhắc lại"; the en ladder runs "Where it
+breaks"→…→"Wrecked because" with fix "Fix"→…→"Rewrite it, do not make me say it twice". The two SLOTS are always
+present; only the words on them move with tone + language. NEVER emit a Vietnamese label in an `en` report.)
 
 ## Theo lăng kính
 ### Product … (per-finding: [severity] <evidence>: critique → why-it-dies → fix)
@@ -143,6 +147,14 @@ with the tone.)
     aimed at the WORK (`cái AC này rỗng vl`, `đm cái scope`), NEVER at the author/their
     family. You may interleave pure-scorn lines, but each one sits inside a grounded finding
     block (scorn-count ≤ finding-count).
+  - **`lang: en` has NO pronoun ladder (the rules above are VIETNAMESE forms).** `critique_address_gender`
+    + `critique_dialect` are **no-ops in `en`** — never emit `ông/bà`, `mày/tao`, `mi/tau`, `đm`/`vl`/`vãi`, or any
+    Vietnamese token in an en report. The 7→8→9 escalation rides on **profanity-presence + contempt** instead:
+    **EN L7** = cold contemptuous "you" + a competence jab, **ZERO profanity**; **EN L8** = blunt character attack
+    ("whoever wrote this", "this whole spec") with **work-targeted English profanity REQUIRED** (this is what
+    mechanically separates EN 7 from EN 8 — note profanity starts at L8 in en, vs L9 in vi); **EN L9** = sustained
+    English profanity + no restraint, aimed at the WORK never the author/family. `critique_profanity` maps to EN
+    profanity strength (off / present / strong). See `voice-and-tone.md` §English mapping.
 - **Universal-harm floor (all levels incl. 9, the TARGET decides, NON-NEGOTIABLE):** every
   line still cites evidence `ID:line` + ends in a real fix. The attack hits the work, the
   effort, the competence, the character ON THIS SPEC, with level-9 profanity aimed at the
