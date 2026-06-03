@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""critique_cache.py — the spec-critique cache facade + the JSON-dict stores.
+"""critique_cache.py — the product-spec-critique cache facade + the JSON-dict stores.
 
 Five committed stores live under `docs/product/.memory/` (the `.memory/` dir IS
 committed in this repo per the locked folder-split decision; these markers follow

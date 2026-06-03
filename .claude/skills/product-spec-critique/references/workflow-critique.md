@@ -1,6 +1,6 @@
 # workflow-critique — the executable orchestration
 
-Load this whenever `/spec-critique` runs. It is the 6-step flow the main agent executes. The lens agents +
+Load this whenever `/product-spec-critique` runs. It is the 6-step flow the main agent executes. The lens agents +
 consolidator are READ-ONLY (they propose); only the main agent writes (the report, the snapshot, the optional DEC).
 
 ## 0. Early-exit guards (before spawning ANY agent)
@@ -86,13 +86,13 @@ The lens agents are the judgment layer; validate verdicts are supplementary ammo
 
 ```bash
 ./.claude/skills/.venv/bin/python3 \
-  .claude/skills/spec-critique/scripts/critique_scan.py \
+  .claude/skills/product-spec-critique/scripts/critique_scan.py \
   --root <project> --scope <scope> --lang <lang> --level <N> \
   [--fresh] [--no-inherit] [--no-rollup] [--inherit deep]
 ```
 
 Pass the resolved `--level` so the bundle's `provenance` verdict compares against the right level/register. Write the
-bundle JSON to a SCRATCH path **outside** the fence, `$TMPDIR/spec-critique-bundle-<ts>.json` (it is scratch, not a spec
+bundle JSON to a SCRATCH path **outside** the fence, `$TMPDIR/product-spec-critique-bundle-<ts>.json` (it is scratch, not a spec
 artifact; never under `docs/product/`). The bundle's top-level keys + the `digest` list shape are documented in
 SKILL.md ("The bundle contract"); the new keys are `provenance`, `inherited_context`, `descendant_rollup`.
 
@@ -229,7 +229,7 @@ Write the humanized markdown from step 5b (not the raw consolidator draft).
 4. **Snapshot**, refresh the drift marker:
    ```bash
    ./.claude/skills/.venv/bin/python3 \
-     .claude/skills/spec-critique/scripts/critique_scan.py --root <project> --snapshot --scope <scope>
+     .claude/skills/product-spec-critique/scripts/critique_scan.py --root <project> --snapshot --scope <scope>
    ```
 5. **Critique-state (the provenance fast-path source).** Record the per-scope marker so the NEXT run's fast-path
    can decide reuse without reading this report:

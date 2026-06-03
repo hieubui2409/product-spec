@@ -1,6 +1,6 @@
-"""pytest scaffolding for the spec-critique script suite.
+"""pytest scaffolding for the product-spec-critique script suite.
 
-Kept minimal: it only puts `spec-critique/scripts` on sys.path so the test modules
+Kept minimal: it only puts `product-spec-critique/scripts` on sys.path so the test modules
 can `import critique_scan`. Reusable helpers live in `critique_test_support.py` (a
 uniquely-named module so a combined run with product-spec's own `conftest.py`
 cannot collide on the module name).

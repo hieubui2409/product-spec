@@ -1,6 +1,6 @@
 # voice-and-tone — the nine-level critique voice (vi + en)
 
-The point of spec-critique is a voice that is honest and sarcastic but always hands the PO a fix. This file is the one
+The point of product-spec-critique is a voice that is honest and sarcastic but always hands the PO a fix. This file is the one
 home for that voice. The lens agents and the consolidator render at the active `--level` (default 5) in the active
 `--lang`. Levels run from 1 to 9. Levels 6 to 9 are dangerous, opt-in-only (see the redline and the danger gate in
 `workflow-critique.md`); the default and every professional use stays within 1 to 5. Levels 7 to 9 escalate harshness
@@ -133,7 +133,7 @@ Levels 7 to 9 push past level 6 along the **pronoun ladder**, not by inventing a
 roasts the author's effort and care. Level 7 keeps that and adds the confrontational `ông/tôi` address while widening
 the attack to **competence** ("làm sản phẩm không tới, tư duy non"), not just effort. Level 8 drops to the street
 register `mày/tao` and adds **character** ("kiểu người làm gì cũng nửa vời"). Level 9 keeps `mày/tao`, removes every
-INTERNAL restraint spec-critique still held, the polite pronoun, the no-profanity rule, the effort-only scope, and
+INTERNAL restraint product-spec-critique still held, the polite pronoun, the no-profanity rule, the effort-only scope, and
 turns on **work-targeted profanity**. What "removes restraints" does NOT touch is the universal-harm floor below: that
 holds at 9 even with the PO's consent. It is the one line no level crosses.
 

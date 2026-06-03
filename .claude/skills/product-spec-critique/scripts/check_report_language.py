@@ -8,7 +8,7 @@ Vietnamese structural labels ("Toang ở đâu", "## Theo lăng kính") and Viet
 register tokens ("đm", "mày/tao") leak into `lang: en` reports. This script catches
 that class of leak early.
 
-It is **ADVISORY ONLY** — it prints findings and ALWAYS exits 0. spec-critique never
+It is **ADVISORY ONLY** — it prints findings and ALWAYS exits 0. product-spec-critique never
 gates CI (opinion + web + voice = non-deterministic); this is a reviewer aid, not a
 gate. It scans the BODY only (frontmatter `body_hash` hex is skipped) and reports the
 line number + the offending Vietnamese-bearing tokens so a human can judge.

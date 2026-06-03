@@ -23,7 +23,7 @@ End-to-end workflow the LLM follows for the **product / brd / prd / epic / story
 `detail_level` controls **how verbose the product-spec output is** — the vision narrative, PRD prose, story
 descriptions, AC, and how many interview follow-ups to ask. It is a closed enum (`concise` / `standard` / `verbose`,
 default `standard`) living in `preferences.yaml` (`scripts/preferences.py`). It is SEPARATE from `critique_detail_level`
-(which sizes the `cleanmatic:spec-critique` report) — setting one never affects the other, so "verbose specs + concise
+(which sizes the `cleanmatic:product-spec-critique` report) — setting one never affects the other, so "verbose specs + concise
 critiques" is a valid combo.
 
 ### Seed it (once, early)

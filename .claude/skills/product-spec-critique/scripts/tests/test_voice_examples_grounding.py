@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-SKILL_DIR = Path(__file__).resolve().parents[2]  # .../spec-critique
+SKILL_DIR = Path(__file__).resolve().parents[2]  # .../product-spec-critique
 EXAMPLES = SKILL_DIR / "examples"
 ACME = (
     SKILL_DIR.parent

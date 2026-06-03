@@ -7,7 +7,7 @@ bundle_name: claude-pack
 skills:
 - product-spec
 - claude-pack
-- spec-critique
+- product-spec-critique
 agents:
 - memory-harvester.md
 - product-critic.md
@@ -18,7 +18,7 @@ agents:
 - critique-humanizer.md
 hooks:
 - memory_gap_hook.py
-- spec_critique_nudge.py
+- product_spec_critique_nudge.py
 rules:
 - primary-workflow.md
 - development-rules.md

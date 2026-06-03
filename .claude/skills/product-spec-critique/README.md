@@ -1,4 +1,4 @@
-# cleanmatic:spec-critique
+# cleanmatic:product-spec-critique
 
 User-invocable Claude skill that gives a product spec an **honest, brutal critique**, across four lenses
 (product / tech / market / craft), in a sarcastic-but-grounded voice. It **consumes** the spec written by
@@ -9,12 +9,12 @@ a why-it-dies, and a fix. It **never edits the spec** and **never gates CI**.
 ## How it differs from `--validate`
 
 `product-spec --validate` is reproducible, warm, PO-facing, and CI-gateable, pass/fail on structure + core-value.
-`/spec-critique` is the opposite by design: **opinionated, non-deterministic** (LLM judgment + web research + a 9-level
+`/product-spec-critique` is the opposite by design: **opinionated, non-deterministic** (LLM judgment + web research + a 9-level
 voice), and therefore kept OUT of the CI gate. It is a *consumer* of validate, not a replacement.
 
 ## Install
 
-spec-critique adds **no new dependency**, it reuses the shared skill venv (`.claude/skills/.venv`) created by
+product-spec-critique adds **no new dependency**, it reuses the shared skill venv (`.claude/skills/.venv`) created by
 `cleanmatic:product-spec`.
 
 ```bash
@@ -29,10 +29,10 @@ committed `.claude/settings.json`. Windows: `install.ps1` (`-CritiqueHook` / `-C
 ## Quickstart
 
 ```
-/spec-critique PRD-CHECKOUT          # critique one PRD (its full ancestry is pulled as context)
-/spec-critique                       # critique the whole spec (scope=all, expensive)
-/spec-critique PRD-CHECKOUT --craft --level 4   # editorial-only, savage
-/spec-critique --interactive         # pick scope + lenses + level interactively
+/product-spec-critique PRD-CHECKOUT          # critique one PRD (its full ancestry is pulled as context)
+/product-spec-critique                       # critique the whole spec (scope=all, expensive)
+/product-spec-critique PRD-CHECKOUT --craft --level 4   # editorial-only, savage
+/product-spec-critique --interactive         # pick scope + lenses + level interactively
 ```
 
 ## Flags

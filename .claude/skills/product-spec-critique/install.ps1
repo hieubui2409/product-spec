@@ -1,6 +1,6 @@
-# install.ps1 — one-shot installer for cleanmatic:spec-critique (Windows).
+# install.ps1 — one-shot installer for cleanmatic:product-spec-critique (Windows).
 #
-# spec-critique REUSES the shared skill venv (.claude\skills\.venv) created by
+# product-spec-critique REUSES the shared skill venv (.claude\skills\.venv) created by
 # cleanmatic:product-spec — it adds NO new runtime dependency (stdlib + pyyaml).
 #
 # Usage:
@@ -9,7 +9,7 @@
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Dev
 #       + dev deps (pytest) if product-spec's list is present
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -CritiqueHook
-#       opt-in: register spec_critique_nudge.py into .claude\settings.local.json
+#       opt-in: register product_spec_critique_nudge.py into .claude\settings.local.json
 #   powershell -ExecutionPolicy Bypass -File .\install.ps1 -CritiqueHookShared
 #       same, but target the committed .claude\settings.json
 #
@@ -46,7 +46,7 @@ function Get-MergePython {
 }
 
 # Idempotent, non-destructive Stop-hook merge. Parses with python (never string
-# patch), adds the entry only when absent (matched by spec_critique_nudge.py).
+# patch), adds the entry only when absent (matched by product_spec_critique_nudge.py).
 $CritiqueHookMergePy = @'
 import json, os
 from pathlib import Path
@@ -56,9 +56,9 @@ PROJ = '"$CLAUDE_PROJECT_DIR"'
 interp = '.claude/skills/.venv/Scripts/python.exe' if os.name == 'nt' \
     else '.claude/skills/.venv/bin/python3'
 PY = f'{PROJ}/{interp}'
-HOOK = f'{PROJ}/.claude/hooks/spec_critique_nudge.py'
+HOOK = f'{PROJ}/.claude/hooks/product_spec_critique_nudge.py'
 STOP_CMD = f'{PY} {HOOK}'
-MARK = 'spec_critique_nudge.py'
+MARK = 'product_spec_critique_nudge.py'
 
 def load(path):
     if not path.exists():
@@ -107,7 +107,7 @@ function Invoke-CritiqueHook {
         default    { Ok $out }
     }
     Write-Host ""
-    Write-Host "  To remove later: delete the spec_critique_nudge.py entry from the Stop array of $rel."
+    Write-Host "  To remove later: delete the product_spec_critique_nudge.py entry from the Stop array of $rel."
 }
 
 if ($CritiqueHook -or $CritiqueHookShared) {
@@ -154,7 +154,7 @@ Write-Host ""
 Write-Host "─────────────────────────────────────────────────────"
 Write-Host "Install complete. Next: invoke the skill in Claude Code:"
 Write-Host ""
-Write-Host "    /spec-critique"
+Write-Host "    /product-spec-critique"
 Write-Host ""
 Write-Host "Opt-in drift nudge:  .\install.ps1 -CritiqueHook"
 Write-Host "─────────────────────────────────────────────────────"

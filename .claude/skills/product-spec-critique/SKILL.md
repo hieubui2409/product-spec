@@ -1,5 +1,5 @@
 ---
-name: cleanmatic:spec-critique
+name: cleanmatic:product-spec-critique
 description: "Brutal, sarcastic-but-grounded critique of a product spec (Vision/BRD/PRD/Epic/Story) across 4 lenses (product/tech/market/craft) via dedicated read-only sub-agents + an opus consolidator. Consumes cleanmatic:product-spec output; reuses its --validate findings as ammo, then adds the why-it-dies / market / craft judgment validate deliberately omits. Non-deterministic by design (opinion + web + voice), kept OUT of the reproducible --validate CI gate. Never edits artifacts; writes one critique report."
 user-invocable: true
 when_to_use: "Invoke when a product owner wants an honest, opinionated critique of an existing spec, 'tear this apart', 'is this any good', 'what would a skeptic say', across product value, feasibility, market, and writing craft. NOT for drafting/validating a spec (that is cleanmatic:product-spec); this only critiques what already exists."
@@ -11,7 +11,7 @@ metadata:
   version: "1.0.0"
 ---
 
-# cleanmatic:spec-critique
+# cleanmatic:product-spec-critique
 
 A **consumer** skill that critiques the spec produced by `cleanmatic:product-spec`. It reads the spec's
 structure + `--validate` verdicts as *ammunition*, then fans out four read-only lens critics
@@ -33,7 +33,7 @@ This skill only critiques what `product-spec` already wrote under `docs/product/
 
 ## How it differs from `product-spec --validate`
 
-| | `--validate` (product-spec) | `/spec-critique` (this skill) |
+| | `--validate` (product-spec) | `/product-spec-critique` (this skill) |
 |---|---|---|
 | Output | pass/fail findings, reproducible | opinionated critique, non-deterministic |
 | Voice | warm, PO-facing, neutral | sarcastic, brutal-but-grounded, 9 levels |
@@ -150,11 +150,11 @@ inherited_context[], descendant_rollup{}, parse_errors[]`.
 > ⚙️ **Venv bootstrap (first run):** before invoking any script, check the shared interpreter exists
 > (`./.claude/skills/.venv/bin/python3` on POSIX, `.claude\skills\.venv\Scripts\python.exe` on Windows). If it is
 > **missing**, do NOT silently fail or fall back to system Python, ask the user via **AskUserQuestion** to confirm
-> running an installer (`product-spec/install.sh` or `spec-critique/install.sh`, both idempotent, both reuse the
-> SAME shared venv). Run only on approval, then retry. spec-critique adds no new runtime dependency.
+> running an installer (`product-spec/install.sh` or `product-spec-critique/install.sh`, both idempotent, both reuse the
+> SAME shared venv). Run only on approval, then retry. product-spec-critique adds no new runtime dependency.
 
-> 🪝 **Opt-in drift nudge hook:** `spec-critique/install.sh --critique-hook` registers the advisory Stop hook
-> `spec_critique_nudge.py` into `.claude/settings.local.json` (gitignored; `--critique-hook-shared` → committed
+> 🪝 **Opt-in drift nudge hook:** `product-spec-critique/install.sh --critique-hook` registers the advisory Stop hook
+> `product_spec_critique_nudge.py` into `.claude/settings.local.json` (gitignored; `--critique-hook-shared` → committed
 > `settings.json`). After a `--validate`, if the spec drifted ≥ `critique_drift_threshold` nodes since the last
 > critique, it nudges (once per session), never auto-runs, never blocks. Opt-in only; never auto-registered.
 

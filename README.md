@@ -6,12 +6,12 @@ A small collection of **Claude Code skills** by cleanmatic. Three skills ship he
 | Skill | For whom | What it does |
 |---|---|---|
 | **[`product-spec`](.claude/skills/product-spec/)** | Non-technical **Product Owners** | Interview-driven product spec hierarchy (**Vision → 1 BRD → many PRDs → Epics → Stories with AC**) with strict traceability, validation, and visualization — in plain language, no code required. Bilingual EN/VI. |
-| **[`spec-critique`](.claude/skills/spec-critique/)** | **Product Owners** | An opinionated, brutal-but-grounded tear-down of a `product-spec` spec across four lenses (product/tech/market/craft). Says what `--validate` cannot: why it would die, where it sits in the market, whether the writing holds up. Nine voice levels, never edits the spec, never gates CI. Bilingual EN/VI. |
+| **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owners** | An opinionated, brutal-but-grounded tear-down of a `product-spec` spec across four lenses (product/tech/market/craft). Says what `--validate` cannot: why it would die, where it sits in the market, whether the writing holds up. Nine voice levels, never edits the spec, never gates CI. Bilingual EN/VI. |
 | **[`claude-pack`](.claude/skills/claude-pack/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
 
 > 📘 **Usage guides (every use case as a sample conversation):**
 > - product-spec — [`GUIDE-VI.md`](.claude/skills/product-spec/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec/GUIDE-EN.md) (English)
-> - spec-critique — [`GUIDE-VI.md`](.claude/skills/spec-critique/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/spec-critique/GUIDE-EN.md) (English)
+> - product-spec-critique — [`GUIDE-VI.md`](.claude/skills/product-spec-critique/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec-critique/GUIDE-EN.md) (English)
 > - claude-pack — [`GUIDE-VI.md`](.claude/skills/claude-pack/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/claude-pack/GUIDE-EN.md) (English)
 
 The three skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by any installer).
@@ -74,16 +74,16 @@ Then invoke from Claude Code:
 - No auto-flipping an `approved` decision — contradictions are surfaced for you to resolve (Keep / Change / Hybrid).
 - No internet at runtime — after install, everything runs on your machine (one caveat: if Mermaid failed to vendor at install time, Mermaid **graph** views fall back to a CDN script at browser-render; re-run the installer to vendor it — ASCII and body views never reach a CDN).
 
-> 💬 **Want an opinion, not just a pass/fail?** [`spec-critique`](.claude/skills/spec-critique/) (below) tears the same
+> 💬 **Want an opinion, not just a pass/fail?** [`product-spec-critique`](.claude/skills/product-spec-critique/) (below) tears the same
 > spec apart and tells you whether it is worth building. Optional: install its post-validate drift nudge with
-> `spec-critique/install.sh --critique-hook` to be reminded (once per session) when the spec has changed enough to be
+> `product-spec-critique/install.sh --critique-hook` to be reminded (once per session) when the spec has changed enough to be
 > worth re-critiquing.
 
 ---
 
-## `spec-critique` — for Product Owners
+## `product-spec-critique` — for Product Owners
 
-`--validate` tells you the spec is structurally sound. `spec-critique` tells you whether it is any **good** — an
+`--validate` tells you the spec is structurally sound. `product-spec-critique` tells you whether it is any **good** — an
 honest, sarcastic, brutal-but-grounded tear-down across four lenses (product / tech / market / craft). It reuses the
 validate findings as ammo, then says what validate cannot: why this would die in the market, whether it is a me-too,
 whether the writing actually holds up. It **never edits your spec** and is **never** in a CI gate (it is opinion + web
@@ -93,15 +93,15 @@ research + voice, non-deterministic by design).
 
 | You want to… | Run |
 |---|---|
-| An honest read on the whole spec | `/cleanmatic:spec-critique` (or `all`) |
-| Tear apart one feature (PRD / epic / story) | `/cleanmatic:spec-critique PRD-CHECKOUT` |
-| Only the market angle (or product / tech / craft) | `/cleanmatic:spec-critique --market` |
-| Pick scope + lenses + intensity interactively | `/cleanmatic:spec-critique --interactive` |
-| Dial the voice from gentle to brutal | `/cleanmatic:spec-critique --level 1..9` |
+| An honest read on the whole spec | `/cleanmatic:product-spec-critique` (or `all`) |
+| Tear apart one feature (PRD / epic / story) | `/cleanmatic:product-spec-critique PRD-CHECKOUT` |
+| Only the market angle (or product / tech / craft) | `/cleanmatic:product-spec-critique --market` |
+| Pick scope + lenses + intensity interactively | `/cleanmatic:product-spec-critique --interactive` |
+| Dial the voice from gentle to brutal | `/cleanmatic:product-spec-critique --level 1..9` |
 | Make it harsher without re-analysing | bump `--level` on an unchanged spec — only the voice re-renders, the analysis is reused |
-| Re-judge from scratch after a fix | `/cleanmatic:spec-critique PRD-CHECKOUT --fresh` |
-| Refresh competitor research | `/cleanmatic:spec-critique --refresh-web` |
-| Ignore the parent's prior findings | `/cleanmatic:spec-critique PRD-CHECKOUT-E1-S1 --no-inherit` |
+| Re-judge from scratch after a fix | `/cleanmatic:product-spec-critique PRD-CHECKOUT --fresh` |
+| Refresh competitor research | `/cleanmatic:product-spec-critique --refresh-web` |
+| Ignore the parent's prior findings | `/cleanmatic:product-spec-critique PRD-CHECKOUT-E1-S1 --no-inherit` |
 
 Every finding cites a real `ID:line`, says why it dies, and ends with a concrete fix — no free-floating insults.
 
@@ -121,10 +121,10 @@ your family, no self-harm or sexual content. The rule is the target of the line,
 
 ### Deep links
 
-- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/spec-critique/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/spec-critique/GUIDE-EN.md)
-- **README:** [`.claude/skills/spec-critique/README.md`](.claude/skills/spec-critique/README.md)
-- **Operating contract:** [`.claude/skills/spec-critique/SKILL.md`](.claude/skills/spec-critique/SKILL.md)
-- **The voice (all 9 levels + the floor):** [`references/voice-and-tone.md`](.claude/skills/spec-critique/references/voice-and-tone.md)
+- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/product-spec-critique/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/product-spec-critique/GUIDE-EN.md)
+- **README:** [`.claude/skills/product-spec-critique/README.md`](.claude/skills/product-spec-critique/README.md)
+- **Operating contract:** [`.claude/skills/product-spec-critique/SKILL.md`](.claude/skills/product-spec-critique/SKILL.md)
+- **The voice (all 9 levels + the floor):** [`references/voice-and-tone.md`](.claude/skills/product-spec-critique/references/voice-and-tone.md)
 
 ### What it does NOT do
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""critique_blob_cache.py — the two file-per-key spec-critique stores.
+"""critique_blob_cache.py — the two file-per-key product-spec-critique stores.
 
   * web-cache (web-cache/<url-hash>.json) — market-lens URL fetch cache + TTL.
   * lens-cache (critique-lens-cache/<lens_findings_hash>.json) — the FULL

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# install.sh — one-shot installer for the cleanmatic:spec-critique skill.
+# install.sh — one-shot installer for the cleanmatic:product-spec-critique skill.
 #
-# spec-critique REUSES the shared skill venv (.claude/skills/.venv) created by
+# product-spec-critique REUSES the shared skill venv (.claude/skills/.venv) created by
 # cleanmatic:product-spec — it adds NO new runtime dependency (stdlib + pyyaml).
 # This installer:
 #   1. Ensures the shared venv exists (reuse if present; create + install pyyaml
@@ -13,14 +13,14 @@
 # Usage:
 #   ./install.sh                       # ensure shared venv only (no hooks)
 #   ./install.sh --dev                 # + dev deps (pytest) if product-spec's list is present
-#   ./install.sh --critique-hook       # opt-in: register spec_critique_nudge.py into
+#   ./install.sh --critique-hook       # opt-in: register product_spec_critique_nudge.py into
 #                                      #   .claude/settings.local.json (gitignored)
 #   ./install.sh --critique-hook-shared
 #                                      # same, but target the committed .claude/settings.json
 #
 # The drift-nudge hook is OPT-IN ONLY and NEVER auto-registered. A plain install
 # (or the bundled recipient installer) does NOT touch your hooks. To remove it
-# later, delete the spec_critique_nudge.py entry from the Stop array of the
+# later, delete the product_spec_critique_nudge.py entry from the Stop array of the
 # settings file you registered into.
 
 set -euo pipefail
@@ -29,7 +29,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SKILLS_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 PROJECT_DIR="$( cd "$SKILLS_DIR/../.." && pwd )"
 VENV_DIR="$SKILLS_DIR/.venv"
-# spec-critique adds no deps; reuse product-spec's requirements when present.
+# product-spec-critique adds no deps; reuse product-spec's requirements when present.
 PSP_REQUIREMENTS="$SKILLS_DIR/product-spec/scripts/requirements.txt"
 PSP_REQUIREMENTS_DEV="$SKILLS_DIR/product-spec/scripts/requirements-dev.txt"
 
@@ -64,7 +64,7 @@ pick_python() {
 # Opt-in advisory drift-nudge hook: idempotent, non-destructive settings merge.
 # Stop-only (the hook's cheap gate uses last_validated/last_critique stats, so it
 # needs no PostToolUse touched-flag). Parses with python (NEVER string-replace),
-# adds the Stop entry only when absent (matched by the spec_critique_nudge.py
+# adds the Stop entry only when absent (matched by the product_spec_critique_nudge.py
 # basename), preserves all unrelated hooks. NEVER auto-registers.
 # ---------------------------------------------------------------------------
 critique_hook_merge() {
@@ -82,9 +82,9 @@ target = Path(os.environ["SETTINGS_TARGET"])
 # time, the documented Claude Code resolver, not at install time.
 PROJ = '"$CLAUDE_PROJECT_DIR"'
 PY = f'{PROJ}/.claude/skills/.venv/bin/python3'
-HOOK = f'{PROJ}/.claude/hooks/spec_critique_nudge.py'
+HOOK = f'{PROJ}/.claude/hooks/product_spec_critique_nudge.py'
 STOP_CMD = f'{PY} {HOOK}'
-MARK = 'spec_critique_nudge.py'
+MARK = 'product_spec_critique_nudge.py'
 
 
 def load(path):
@@ -140,7 +140,7 @@ do_critique_hook() {
         *)       ok "$out" ;;
     esac
     echo ""
-    echo "  To remove later: delete the spec_critique_nudge.py entry from the Stop"
+    echo "  To remove later: delete the product_spec_critique_nudge.py entry from the Stop"
     echo "  array of $rel."
 }
 
@@ -190,7 +190,7 @@ echo ""
 echo "─────────────────────────────────────────────────────"
 echo "Install complete. Next: invoke the skill in Claude Code:"
 echo ""
-echo "    /spec-critique"
+echo "    /product-spec-critique"
 echo ""
 echo "Opt-in drift nudge:  ./install.sh --critique-hook"
 echo "─────────────────────────────────────────────────────"

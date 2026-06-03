@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""critique_drift.py — the snapshot + drift modes of spec-critique.
+"""critique_drift.py — the snapshot + drift modes of product-spec-critique.
 
 `write_snapshot` persists the per-node body_hash baseline (`last_critique.json`);
 `compute_drift` counts body_hash changes vs that baseline (live build, or the

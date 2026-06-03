@@ -1,4 +1,4 @@
-# Using `cleanmatic:spec-critique` (English)
+# Using `cleanmatic:product-spec-critique` (English)
 
 A guide for **product owners**. Each use-case is a sample dialogue over the sample spec
 `product-spec/examples/acme-shop`. The natural-language way (just say it) is preferred; the flag form is the equivalent.
@@ -6,7 +6,7 @@ A guide for **product owners**. Each use-case is a sample dialogue over the samp
 ## What it is, and how it differs from `--validate`
 
 `--validate` (in `product-spec`) is a **structural** check: missing AC, orphans, core-value drift, pass/fail, neutral
-warm voice, CI-gateable. `spec-critique` is the deliberate opposite: it **critiques**, opinionated, sarcastic, uses web
+warm voice, CI-gateable. `product-spec-critique` is the deliberate opposite: it **critiques**, opinionated, sarcastic, uses web
 research, so it is **never** in the CI gate. It *consumes* validate's findings as ammo, then says what validate
 **cannot**: why-it-dies, market, writing craft, cross-lens.
 
@@ -44,21 +44,21 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 > **Assistant:** Runs `critique_scan` (fresh structural checks + cached verdicts), fans out 4 lenses in parallel,
 > merges via the consolidator, writes `docs/product/critique/<ts>-all.md`. Note: `all` scope is expensive (opus×2 + web).
 >
-> Flag form: `/spec-critique all` or `/spec-critique`.
+> Flag form: `/product-spec-critique all` or `/product-spec-critique`.
 
 ### 2. Critique one branch (PRD / epic / story)
 
-> **You:** "Pick apart the checkout PRD." → `/spec-critique PRD-CHECKOUT`. Even for a single story, the **full ancestry**
+> **You:** "Pick apart the checkout PRD." → `/product-spec-critique PRD-CHECKOUT`. Even for a single story, the **full ancestry**
 > (epic → PRD → goal → vision) is pulled as judgment context, a story only means something against the intent above it.
 
 ### 3. Pick lenses
 
-> **You:** "Only the market angle." → `/spec-critique --market`. Four lens flags: `--product` `--tech` `--market`
+> **You:** "Only the market angle." → `/product-spec-critique --market`. Four lens flags: `--product` `--tech` `--market`
 > `--craft`. No flag = all four.
 
 ### 4. Interactive
 
-> **You:** "Let me choose the scope and intensity first." → `/spec-critique --interactive` → asks 3 questions: scope,
+> **You:** "Let me choose the scope and intensity first." → `/product-spec-critique --interactive` → asks 3 questions: scope,
 > lenses, level.
 
 ### 5. Change the voice level
@@ -91,14 +91,14 @@ anyway, so when it fires it runs at full power.
 ### The two "detail" levels are independent (spec vs critique)
 
 - `detail_level` (set in `cleanmatic:product-spec`) sizes the SPEC you write (`concise`/`standard`/`verbose`).
-- `critique_detail_level` (for `spec-critique`) sizes the CRITIQUE report (`concise` = top-3 + one line per lens;
+- `critique_detail_level` (for `product-spec-critique`) sizes the CRITIQUE report (`concise` = top-3 + one line per lens;
   `verbose` = full per-lens + longer why-it-dies).
 
 Setting one never affects the other. "Verbose specs + concise critiques" is valid. Both default to `standard`.
 
 ### 6. Offline (`--no-web`)
 
-> **You:** "Don't search the web, judge from the spec." → `/spec-critique --no-web`. With no BRD `competitors:` and
+> **You:** "Don't search the web, judge from the spec." → `/product-spec-critique --no-web`. With no BRD `competitors:` and
 > `--no-web`, the market lens **flags "missing competitive grounding"** rather than inventing competitors.
 
 ### 7. Repeat offenses / prior reports

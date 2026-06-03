@@ -1,4 +1,4 @@
-"""Tests for the opt-in ADVISORY Stop hook `.claude/hooks/spec_critique_nudge.py`.
+"""Tests for the opt-in ADVISORY Stop hook `.claude/hooks/product_spec_critique_nudge.py`.
 
 The hook nudges (never blocks) when the spec drifted >= threshold node bodies since
 the last critique, gated cheaply on "a --validate happened since the last critique".
@@ -21,12 +21,12 @@ from pathlib import Path
 from critique_test_support import make_proj, append_to, run_scan
 
 HOOK_PATH = (
-    Path(__file__).resolve().parents[4] / "hooks" / "spec_critique_nudge.py"
+    Path(__file__).resolve().parents[4] / "hooks" / "product_spec_critique_nudge.py"
 )
 
 
 def _load_hook():
-    spec = importlib.util.spec_from_file_location("spec_critique_nudge", HOOK_PATH)
+    spec = importlib.util.spec_from_file_location("product_spec_critique_nudge", HOOK_PATH)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -90,7 +90,7 @@ def test_nudge_fires_once_over_threshold(tmp_path, monkeypatch):
     assert rc == 0
     payload = json.loads(out)
     assert payload["hookSpecificOutput"]["hookEventName"] == "Stop"
-    assert "/spec-critique" in payload["hookSpecificOutput"]["additionalContext"]
+    assert "/product-spec-critique" in payload["hookSpecificOutput"]["additionalContext"]
     # Advisory contract: never a block decision.
     assert "decision" not in payload
 

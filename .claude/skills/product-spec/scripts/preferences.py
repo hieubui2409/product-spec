@@ -20,10 +20,10 @@ Keys (all optional in the file):
   prioritization       moscow | value-effort | manual
   dismissed_reminders  list of reminder keys the PO asked to stop seeing
   critique_drift_threshold  int >=1 (default 3) — node body_hash changes since the
-                       last critique before the opt-in spec-critique nudge fires.
+                       last critique before the opt-in product-spec-critique nudge fires.
                        Non-enum: load() passes it through verbatim (no int-check);
                        the consumer (critique_scan) coerces int() defensively.
-  critique_level       int 1..9 (default 5) — the cleanmatic:spec-critique default
+  critique_level       int 1..9 (default 5) — the cleanmatic:product-spec-critique default
                        voice level when no --level flag is given. Closed enum. Default 5
                        (no-mercy) is the last level before a mandated personal roast (6+);
                        a flagless run is level 5 + the standing-consent reminder.
@@ -50,11 +50,11 @@ Keys (all optional in the file):
                        tokens are IN/OUT) lives in voice-and-tone.md's IN/OUT table, not
                        here. Euphemistic minced oaths (đậu xanh) are IN there; only the
                        LITERAL family-target form (đụ má mày) is OUT.
-  critique_inherit     on | off (default on) — spec-critique cross-critique INHERIT
+  critique_inherit     on | off (default on) — product-spec-critique cross-critique INHERIT
                        (parent→child): surface a parent's prior blockers/DEC as the
                        child's inherited risk. ENUM-registered (not bare bool) so the
                        YAML off/on→token coercion below maps it back to "off"/"on".
-  critique_rollup      on | off (default on) — spec-critique descendant ROLLUP
+  critique_rollup      on | off (default on) — product-spec-critique descendant ROLLUP
                        (child→parent): aggregate critiqued children's verdicts onto the
                        parent ("3/5 stories unbuildable").
   critique_inherit_depth  nearest | deep (default nearest) — how far up the ancestry the
@@ -94,11 +94,11 @@ DEFAULTS: Dict[str, Any] = {
     "detail_level": "standard",
     "prioritization": "moscow",
     "dismissed_reminders": [],
-    # Consumed by cleanmatic:spec-critique (a separate skill). Non-enum scalar: the
+    # Consumed by cleanmatic:product-spec-critique (a separate skill). Non-enum scalar: the
     # read path below leaves it verbatim, so a hand-edited non-int degrades on the
     # consumer side (critique_scan coerces int()), never here.
     "critique_drift_threshold": 3,
-    # Default spec-critique voice level (1..9) when no --level is passed. Closed
+    # Default product-spec-critique voice level (1..9) when no --level is passed. Closed
     # enum below. Default 5 (no-mercy) = the last level before a mandated personal
     # roast (6+). A standing 5/6/7/8 is the PO's deliberate consent to that voice;
     # 9 is settable too but re-confirms per run + downgrades to 8 on decline (gate
@@ -114,7 +114,7 @@ DEFAULTS: Dict[str, Any] = {
     # Default = strong: level 9 already re-confirms with the PO on EVERY run, so when it
     # does fire, it runs at full power rather than a half-measure.
     "critique_profanity": "strong",
-    # spec-critique cross-critique context (both default ON, opt-out). ENUM on/off so
+    # product-spec-critique cross-critique context (both default ON, opt-out). ENUM on/off so
     # the YAML bool coercion below maps `critique_inherit: off` back to the "off" token.
     "critique_inherit": "on",
     "critique_rollup": "on",

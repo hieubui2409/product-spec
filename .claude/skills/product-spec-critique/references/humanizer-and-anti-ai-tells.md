@@ -6,7 +6,7 @@ single rulebook both humanizer gates use: the consolidator applies it while draf
 
 ---
 
-## How this applies to spec-critique (read this first)
+## How this applies to product-spec-critique (read this first)
 
 This is a critique skill, not an encyclopedia. Three carve-outs change how you apply the rules below:
 
@@ -128,7 +128,7 @@ longer ones that take their time. Let some mess in; perfect structure feels algo
 A clean human can hit several patterns with no AI involvement. Do not gut legitimate prose. On their own, these are not
 tells: perfect grammar; mixed casual and formal registers; plain or dry prose without the specific tells; formal
 vocabulary that is not on the §7 list; a single transition word; curly quotes alone; one em dash alone; unsourced
-claims. Look for clusters, not isolated hits. For spec-critique specifically, do not "fix" the sarcasm, the verbatim
+claims. Look for clusters, not isolated hits. For product-spec-critique specifically, do not "fix" the sarcasm, the verbatim
 spec quotes, the IDs, or the frontmatter keys.
 
 ## Signs of human writing (preserve these)
@@ -146,7 +146,7 @@ the prose alone; over-editing destroys what makes it sound human.
    word, an em dash, a calqued Vietnamese phrase, a robotic rhythm, a forced triple).
 4. Produce the final rewrite that fixes them and contains no em or en dashes.
 
-For spec-critique, the output of this process is the critique report itself: same findings, same grounding, same
+For product-spec-critique, the output of this process is the critique report itself: same findings, same grounding, same
 structure, same bite, only the machine-stiffness removed.
 
 ## Source

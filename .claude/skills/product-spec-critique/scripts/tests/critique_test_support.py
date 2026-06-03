@@ -1,8 +1,8 @@
-"""Plain helpers for the spec-critique script tests.
+"""Plain helpers for the product-spec-critique script tests.
 
 A UNIQUELY-named module (not `conftest`) so a combined pytest run across both the
-product-spec and spec-critique test dirs cannot collide on the `conftest` module
-name. spec-critique reuses product-spec's `valid-spec` fixture as the input tree.
+product-spec and product-spec-critique test dirs cannot collide on the `conftest` module
+name. product-spec-critique reuses product-spec's `valid-spec` fixture as the input tree.
 """
 
 import io
@@ -12,7 +12,7 @@ import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).resolve().parent.parent  # spec-critique/scripts
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent  # product-spec-critique/scripts
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 

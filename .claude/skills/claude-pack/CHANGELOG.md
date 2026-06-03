@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to the **claude-pack bundle** are documented here. The bundle ships three skills
-(`cleanmatic:product-spec`, `cleanmatic:spec-critique`, `cleanmatic:claude-pack`) plus their agents and
+(`cleanmatic:product-spec`, `cleanmatic:product-spec-critique`, `cleanmatic:claude-pack`) plus their agents and
 opt-in hooks. Tags `claude-pack-v*` version the bundle as a whole.
 Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: [semver](https://semver.org/).
 
@@ -10,19 +10,19 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 ## [1.1.0] — 2026-06-03
 
 The first release since v1.0.0. Three layers landed together on the way here:
-product-spec **memory-write enforcement**, spec-critique **lifecycle caching +
-cross-critique inheritance**, and spec-critique **bilingual-output hardening**. Additive
+product-spec **memory-write enforcement**, product-spec-critique **lifecycle caching +
+cross-critique inheritance**, and product-spec-critique **bilingual-output hardening**. Additive
 and backward-compatible; defaults preserve current behaviour. Sections below are grouped
 by theme; each carries its own Added/Changed.
 
 ---
 
-**Bilingual-output hardening (spec-critique).** The consolidator renders English reports
+**Bilingual-output hardening (product-spec-critique).** The consolidator renders English reports
 fully in English (a root-cause fix for a Vietnamese-leak regression), the English level-9
 voice has a concrete "sustained profanity" floor so it outscales level 8, and a new
 advisory language-purity check guards the leak class. Report-only.
 
-### Added — spec-critique
+### Added — product-spec-critique
 
 - **Advisory en-language-purity check** (`scripts/check_report_language.py`): flags a
   Vietnamese STRUCTURAL leak (heading/label/register denylist) in a `lang: en` report,
@@ -35,7 +35,7 @@ advisory language-purity check guards the leak class. Report-only.
   rejected on YAGNI grounds (a spec is critiqued in one language; the translation cost +
   native-quality loss are real, the saving illusory).
 
-### Changed — spec-critique
+### Changed — product-spec-critique
 
 - **English reports render fully in English.** The consolidate-agent contract was
   vi-only and contradicted `voice-and-tone.md`; headings, why/fix labels, and register
@@ -48,7 +48,7 @@ advisory language-purity check guards the leak class. Report-only.
 - **Descendant-rollup heading** renamed `Rủi ro giao hàng` → `Rủi ro bàn giao`
   (handover, not shipping) across the agent, the vi guide, and the language-check denylist.
 
-### Tests & fixtures — spec-critique
+### Tests & fixtures — product-spec-critique
 
 - **Regenerated the 18 voice-ladder reference fixtures** (vi + en, levels 1-9) via the
   genuine consolidate→humanize agents over a cached neutral lens run (no re-lens), with
@@ -56,16 +56,16 @@ advisory language-purity check guards the leak class. Report-only.
   Seeded a committed descendant-rollup demo from the real lvl9 blockers.
 - **Parametrized the grounding guard** over the 18 fixtures (graph-aware citation
   resolver, the ratio rule, a frontmatter contract check) and added the language-check
-  unit tests. spec-critique suite: 150 passing.
+  unit tests. product-spec-critique suite: 150 passing.
 
 ---
 
-**Lifecycle caching + cross-critique inheritance (spec-critique).** Re-running a critique
+**Lifecycle caching + cross-critique inheritance (product-spec-critique).** Re-running a critique
 reuses prior work (token savings, never a safety gate), and a critique can surface a
 parent's prior blockers onto a child (and a parent rolls up its critiqued children's
 verdicts). Includes a cross-skill touch to product-spec's preferences.
 
-### Added — spec-critique
+### Added — product-spec-critique
 
 - **Lifecycle caching (5 committed `.memory/` stores).** `critique-findings-index.json`
   (lossy evidence-ID query cache → inherit/repeat-offense), `critique-lens-cache/<hash>.json`

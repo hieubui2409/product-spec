@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""critique_scan.py — the spec-critique CLI entrypoint + public facade.
+"""critique_scan.py — the product-spec-critique CLI entrypoint + public facade.
 
 The deterministic, reuse-first bundle/snapshot/drift assembler for
-cleanmatic:spec-critique. NO LLM, NO re-analysis — it gathers existing signals into
+cleanmatic:product-spec-critique. NO LLM, NO re-analysis — it gathers existing signals into
 ONE JSON bundle the lens agents consume, manages the `last_critique.json` body_hash
 snapshot, and decides what a re-run may reuse. It NEVER judges quality (the lens
 agents' job).
@@ -57,7 +57,7 @@ from critique_signals import (  # noqa: F401
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    ap = argparse.ArgumentParser(description="spec-critique bundle/snapshot/drift assembler")
+    ap = argparse.ArgumentParser(description="product-spec-critique bundle/snapshot/drift assembler")
     ap.add_argument("--root", default=os.getcwd())
     ap.add_argument("--scope", default="all")
     ap.add_argument("--lang", default="vi")

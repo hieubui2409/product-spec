@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""spec_critique_nudge: opt-in, ADVISORY Stop hook for cleanmatic:spec-critique.
+"""product_spec_critique_nudge: opt-in, ADVISORY Stop hook for cleanmatic:product-spec-critique.
 
 After the PO runs `--validate`, if the spec has drifted by at least
 `critique_drift_threshold` node bodies since the last critique, this hook drops a
-ONE-LINE nudge suggesting `/spec-critique`. It never auto-runs the critique (token
+ONE-LINE nudge suggesting `/product-spec-critique`. It never auto-runs the critique (token
 + web cost) and, unlike `memory_gap_hook`, it NEVER blocks: a critique is opinion,
 not a hard gate. Output is `hookSpecificOutput.additionalContext` + exit 0, never a
 `decision: block`, never exit 2.
@@ -47,9 +47,9 @@ def _project_dir(stdin_cwd: Optional[str] = None) -> Optional[str]:
 
 
 def _critique_scan_path() -> Path:
-    """`.claude/hooks/spec_critique_nudge.py` -> `.claude/skills/spec-critique/scripts/critique_scan.py`."""
+    """`.claude/hooks/product_spec_critique_nudge.py` -> `.claude/skills/product-spec-critique/scripts/critique_scan.py`."""
     claude_dir = Path(__file__).resolve().parent.parent  # .claude/
-    return claude_dir / "skills" / "spec-critique" / "scripts" / "critique_scan.py"
+    return claude_dir / "skills" / "product-spec-critique" / "scripts" / "critique_scan.py"
 
 
 def _memory_dir(project_dir: str) -> Path:
@@ -71,7 +71,7 @@ def safe_id(session_id: str) -> str:
 def _nudge_marker_path(session_id: str, changed_count: int) -> Path:
     """Per-session + per-drift-bucket "already nudged" marker. A new drift count
     (more nodes changed since) re-arms the nudge; the same count stays silent."""
-    return _temp_dir() / f"spec-critique-nudged-{safe_id(session_id)}-{changed_count}"
+    return _temp_dir() / f"product-spec-critique-nudged-{safe_id(session_id)}-{changed_count}"
 
 
 def _nudge_already_shown(session_id: str, changed_count: int) -> bool:
@@ -141,7 +141,7 @@ def _run_drift(project_dir: str) -> Optional[Dict[str, Any]]:
 def _nudge_text(changed_count: int) -> str:
     return (
         f"spec đã đổi {changed_count} node kể từ lần critique gần nhất, "
-        "muốn nghe chửi thật? chạy `/spec-critique`."
+        "muốn nghe chửi thật? chạy `/product-spec-critique`."
     )
 
 

@@ -110,11 +110,11 @@ Run scripts via shared venv: `./.claude/skills/.venv/bin/python3 ./.claude/skill
 
 See `.claude/skills/product-spec/SKILL.md` — Failure & Drift Handling section.
 
-<!-- BEGIN: cleanmatic:spec-critique operating guide -->
+<!-- BEGIN: cleanmatic:product-spec-critique operating guide -->
 
-# Spec-Critique — LLM Operating Guide
+# Product-Spec-Critique — LLM Operating Guide
 
-Auto-loaded by Claude Code. Operates **`cleanmatic:spec-critique`** — opinionated critique of an existing product-spec across four lenses (product/tech/market/craft). Reuses `--validate` findings, surface what validate cannot (why-it-dies, market, craft). **Never edits spec; never gates CI** (opinion + web + voice = non-deterministic).
+Auto-loaded by Claude Code. Operates **`cleanmatic:product-spec-critique`** — opinionated critique of an existing product-spec across four lenses (product/tech/market/craft). Reuses `--validate` findings, surface what validate cannot (why-it-dies, market, craft). **Never edits spec; never gates CI** (opinion + web + voice = non-deterministic).
 
 **Script vs LLM split**: Script (`critique_scan.py`) assembles bundle (ancestry + digest + structural findings + cached verdicts), emits JSON, exits 0. LLM (lenses + consolidator + humanizer) judges + renders voice. Main agent orchestrates → writes ONE report under `docs/product/critique/<ts>-<scope>.md`.
 
@@ -124,11 +124,11 @@ Auto-loaded by Claude Code. Operates **`cleanmatic:spec-critique`** — opiniona
 
 **Lifecycle caching + cross-critique context (1.2.0)**: Provenance reuse (economic gate only, not safety), cross-context inheritance (parent→child), descendant rollup (child→parent), 3 new preferences (`critique_inherit`, `critique_rollup`, `critique_inherit_depth`). Caches committed in `.memory/`.
 
-**Workflow pointers (load on demand)**: see `.claude/skills/spec-critique/SKILL.md` for full references table.
+**Workflow pointers (load on demand)**: see `.claude/skills/product-spec-critique/SKILL.md` for full references table.
 
 **What this skill does NOT do**: No code generation, spec editing (report-only), CI gating, auto-memory (PO-confirmed `DEC` only), HTML/PDF (markdown only), auto-run `--validate`.
 
-<!-- END: cleanmatic:spec-critique operating guide -->
+<!-- END: cleanmatic:product-spec-critique operating guide -->
 
 <!-- BEGIN: cleanmatic:claude-pack operating guide -->
 

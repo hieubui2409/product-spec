@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""critique_cache_io.py — the shared IO chokepoint for the spec-critique caches.
+"""critique_cache_io.py — the shared IO chokepoint for the product-spec-critique caches.
 
 The memory dir resolver, the tolerant JSON reader, and the fenced canonical JSON
 writer that both `critique_cache` (index/state/humanized) and `critique_blob_cache`
@@ -30,7 +30,7 @@ def _fs_guard():
     psp = _psp_dir()
     if not psp.is_dir():
         raise ModuleNotFoundError(
-            f"product-spec scripts dir not found at {psp}. spec-critique reuses "
+            f"product-spec scripts dir not found at {psp}. product-spec-critique reuses "
             "product-spec's fs_guard; install product-spec first."
         )
     sd = str(psp)

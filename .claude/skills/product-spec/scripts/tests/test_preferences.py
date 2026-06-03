@@ -1,7 +1,7 @@
 """Tests for preferences.py — the PO-preferences memory store.
 
 Covers the existing defaults/enums plus the new non-enum `critique_drift_threshold`
-key (consumed by cleanmatic:spec-critique). The read path must never raise."""
+key (consumed by cleanmatic:product-spec-critique). The read path must never raise."""
 
 import sys
 from pathlib import Path
@@ -40,7 +40,7 @@ def test_defaults_when_no_file(tmp_path):
 
 def test_defaults_has_exactly_thirteen_keys(tmp_path):
     # Guards the DEFAULTS/ENUMS symmetry contract as keys are added. 13 = the original
-    # 10 + the 3 spec-critique cross-critique keys (critique_inherit/rollup/depth).
+    # 10 + the 3 product-spec-critique cross-critique keys (critique_inherit/rollup/depth).
     assert set(preferences.load(tmp_path)) == set(preferences.DEFAULTS)
     assert len(preferences.DEFAULTS) == 13
 
@@ -156,7 +156,7 @@ def test_bool_coercion_cannot_mismap_a_non_profanity_enum(tmp_path):
 
 
 def test_detail_levels_are_independent(tmp_path):
-    # detail_level (product-spec) and critique_detail_level (spec-critique) never bleed.
+    # detail_level (product-spec) and critique_detail_level (product-spec-critique) never bleed.
     _write_prefs(tmp_path, "detail_level: concise\ncritique_detail_level: verbose\n")
     prefs = preferences.load(tmp_path)
     assert prefs["detail_level"] == "concise"

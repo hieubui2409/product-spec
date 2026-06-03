@@ -1,16 +1,16 @@
-# Hướng dẫn dùng `cleanmatic:spec-critique` (Tiếng Việt)
+# Hướng dẫn dùng `cleanmatic:product-spec-critique` (Tiếng Việt)
 
 Tài liệu này dành cho người làm sản phẩm (product owner). Mỗi tình huống được kể lại như một đoạn hội thoại mẫu, chạy
 trên bộ spec ví dụ `product-spec/examples/acme-shop`. Bạn cứ nói bằng lời bình thường là được; phần ghi kèm cú pháp cờ
 chỉ là cách viết tương đương cho ai thích gõ lệnh.
 
-## spec-critique là gì, và khác `--validate` ở chỗ nào
+## product-spec-critique là gì, và khác `--validate` ở chỗ nào
 
 `--validate` của `product-spec` là một bài kiểm tra cấu trúc. Nó soi xem có thiếu tiêu chí nghiệm thu không, có hạng mục
 nào mồ côi không, có lệch giá trị cốt lõi không, rồi trả về đạt hoặc không đạt. Giọng của nó trung tính, ấm áp, và vì
 chạy được trong quy trình tích hợp tự động (CI) nên kết quả phải ổn định, lần nào cũng như lần nào.
 
-`spec-critique` cố tình đi ngược lại. Nó không chấm đạt hay trượt, nó chê. Nó có quan điểm, châm biếm, và còn tra cứu cả
+`product-spec-critique` cố tình đi ngược lại. Nó không chấm đạt hay trượt, nó chê. Nó có quan điểm, châm biếm, và còn tra cứu cả
 thị trường bên ngoài, nên nó không bao giờ được đưa vào cổng CI. Cách nó làm việc là mượn lại các phát hiện cấu trúc của
 `--validate` làm đạn, rồi nói thêm những điều mà `--validate` cố tình không nói: vì sao thứ này sẽ chết, nó đứng ở đâu
 trên thị trường, chữ nghĩa có rõ ràng không, và bốn lăng kính soi chéo nhau ra sao.
@@ -53,25 +53,25 @@ hay "cái này có phải đồ nhái không" là lúc nó phát huy tác dụng
 > lại thành một báo cáo, rồi ghi vào `docs/product/critique/<thời-gian>-all.md`. Lưu ý là quét toàn bộ khá tốn kém vì
 > phải chạy hai lượt mô hình opus cộng với tra cứu thị trường.
 >
-> Cách gõ tương đương: `/spec-critique all`, hoặc gọn hơn là `/spec-critique`.
+> Cách gõ tương đương: `/product-spec-critique all`, hoặc gọn hơn là `/product-spec-critique`.
 
 ### 2. Chê một nhánh: một PRD, một epic, hay một story
 
 > **Bạn:** "Soi cái PRD thanh toán xem có gì dở."
-> **Trợ lý:** `/spec-critique PRD-CHECKOUT`. Kể cả khi bạn chỉ định đúng một story, toàn bộ chuỗi tổ tiên của nó (epic,
+> **Trợ lý:** `/product-spec-critique PRD-CHECKOUT`. Kể cả khi bạn chỉ định đúng một story, toàn bộ chuỗi tổ tiên của nó (epic,
 > rồi PRD, rồi mục tiêu kinh doanh, rồi tầm nhìn) đều được kéo lên làm bối cảnh. Lý do là một story chỉ có nghĩa khi
 > được soi cùng với ý đồ ở các tầng phía trên.
 
 ### 3. Chọn lăng kính
 
 > **Bạn:** "Chỉ soi mặt thị trường thôi."
-> **Trợ lý:** `/spec-critique --market`. Có bốn cờ lăng kính: `--product`, `--tech`, `--market`, `--craft`. Không ghi cờ
+> **Trợ lý:** `/product-spec-critique --market`. Có bốn cờ lăng kính: `--product`, `--tech`, `--market`, `--craft`. Không ghi cờ
 > nào thì chạy cả bốn.
 
 ### 4. Hỏi đáp tương tác
 
 > **Bạn:** "Tôi muốn tự chọn phạm vi và độ gắt trước khi chạy."
-> **Trợ lý:** `/spec-critique --interactive`. Trợ lý sẽ hỏi ba câu ngắn: soi phạm vi nào, dùng lăng kính nào, và để mức
+> **Trợ lý:** `/product-spec-critique --interactive`. Trợ lý sẽ hỏi ba câu ngắn: soi phạm vi nào, dùng lăng kính nào, và để mức
 > mấy.
 
 ### 5. Đổi độ gắt của giọng
@@ -105,7 +105,7 @@ nên khi đã chạy thì cho chạy hết công suất.
 ### 6. Chạy ngoại tuyến, không tra mạng
 
 > **Bạn:** "Đừng tra mạng, cứ dựa trên spec mà chê."
-> **Trợ lý:** `/spec-critique --no-web`. Khi không tra mạng mà BRD lại không khai báo danh sách đối thủ, lăng kính thị
+> **Trợ lý:** `/product-spec-critique --no-web`. Khi không tra mạng mà BRD lại không khai báo danh sách đối thủ, lăng kính thị
 > trường sẽ gắn cờ "thiếu căn cứ cạnh tranh" chứ nhất quyết không bịa ra đối thủ.
 
 ### 7. Bắt lỗi lặp lại và đọc lại báo cáo cũ
@@ -208,7 +208,7 @@ từ) nằm đầy đủ trong `references/voice-and-tone.md`.
 Có hai tùy chọn độ chi tiết, **độc lập** với nhau:
 
 - `detail_level` (đặt trong `cleanmatic:product-spec`): spec bạn viết ra dài hay gọn (`concise`/`standard`/`verbose`).
-- `critique_detail_level` (đặt cho `spec-critique`): báo cáo critique dài hay gọn (`concise` = Top-3 + mỗi lăng kính một
+- `critique_detail_level` (đặt cho `product-spec-critique`): báo cáo critique dài hay gọn (`concise` = Top-3 + mỗi lăng kính một
   dòng; `verbose` = đầy đủ từng lăng kính + phân tích vì-sao-chết dài hơn).
 
 Đặt cái này không ảnh hưởng cái kia. "Spec đầy đủ + critique gọn" là một cấu hình hợp lệ. Cả hai mặc định `standard`.
@@ -224,7 +224,7 @@ lần trước và phần các điểm đáng ghi thành quyết định.
 
 ## Ranh giới
 
-spec-critique không sửa spec, nó chỉ ghi ra một báo cáo. Nó không phải cổng CI và không sinh ra mã nguồn. Mức 5 là mức
+product-spec-critique không sửa spec, nó chỉ ghi ra một báo cáo. Nó không phải cổng CI và không sinh ra mã nguồn. Mức 5 là mức
 mặc định nên chạy thẳng, không cảnh báo. Mức 6, 7, 8 bắt buộc cảnh báo + xác nhận khi gọi bằng cờ ad-hoc (nếu đặt sẵn
 trong tùy chọn thì chỉ nhắc một dòng mỗi lần, không hỏi lại), và không bao giờ dùng trong môi trường chuyên nghiệp.
 **Mức 9 thì luôn hỏi lại xác nhận mỗi lần chạy** dù đặt sẵn hay gõ cờ, từ chối thì tụt xuống mức 8. Lằn ranh

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""critique_common.py — shared low-level primitives for the spec-critique scripts.
+"""critique_common.py — shared low-level primitives for the product-spec-critique scripts.
 
 The single home for the cross-dir product-spec import, the UTC stamp, and the graph
 helpers (target resolution + body_hash maps + provenance fingerprint) that
@@ -25,7 +25,7 @@ _HASH_SENTINELS = frozenset({"none", "missing"})
 def _psp_dir() -> Path:
     """The product-spec `scripts/` dir, resolved relative to this file.
 
-    Layout: `.claude/skills/spec-critique/scripts/critique_common.py`
+    Layout: `.claude/skills/product-spec-critique/scripts/critique_common.py`
          -> `.claude/skills/product-spec/scripts/`. parents[2] is `.claude/skills/`."""
     return Path(__file__).resolve().parents[2] / "product-spec" / "scripts"
 
@@ -37,7 +37,7 @@ def _import_psp():
     psp = _psp_dir()
     if not psp.is_dir():
         raise ModuleNotFoundError(
-            f"product-spec scripts dir not found at {psp}. spec-critique reuses "
+            f"product-spec scripts dir not found at {psp}. product-spec-critique reuses "
             "product-spec's scripts; install product-spec first."
         )
     sd = str(psp)
