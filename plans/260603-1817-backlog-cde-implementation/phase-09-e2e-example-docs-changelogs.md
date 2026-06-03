@@ -31,14 +31,20 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 ## Architecture / approach
 ### A. Real E2E in an external folder (real data, script + LLM)
 - **Drive it THROUGH THE WORKFLOW, not by hand (PO 2026-06-03).** The run MUST follow the skills' actual workflow references end-to-end — `workflow-interview.md` (+ `interview-vision/brd/prd/epic/story`), `workflow-validate.md`, `workflow-critique.md`, `workflow-apply-critique.md`, `workflow-discover.md`, the viz/summary flows — invoking the real flags/menus exactly as a PO would. No hand-authoring artifacts, no shortcutting steps. This dogfoods the workflow docs themselves: if a workflow reference is wrong/stale, the run breaks and that IS a finding to fix.
-- In a temp dir OUTSIDE the repo, drive the full flow on a real product idea:
+- In a temp dir OUTSIDE the repo, drive the full flow on a synthetic product idea:
   `--product`/init → BRD → PRD → epic → story → `--validate`/`--strict` → critique (real lenses, LLM, may use web for market lens) → **E1 `--apply-critique`** → **C9 `--viz audit`** → **E4 `--summary --audience`** → **E2 `--discover`** seed → exercise **`goal_without_metric`** + strengthened lenses (Phase 8).
-- Capture: the deterministic script outputs (assertable) + a human-observed checklist of the LLM steps (interview/critique/apply-critique quality). The script half can become a repeatable E2E smoke script; the LLM half is a release checklist.
+- **Cover the FULL critique lifecycle (PO 2026-06-03), not just one linear pass:**
+  - **rerun + cache hit:** critique an artifact, then re-run unchanged → provenance/lens-cache reuse (economic gate); show the cache HIT.
+  - **fresh re-critique:** force a fresh run (`--fresh`/changed artifact) → cache MISS / re-judge; show invalidation.
+  - **inherit (parent→child):** critique a child artifact inheriting parent critique context (`critique_inherit`).
+  - **rollup (child→parent):** descendant rollup surfacing child findings up to the parent (`critique_rollup`).
+  - Exercise the `critique_inherit`/`critique_rollup`/`critique_inherit_depth` preferences.
+- Capture: the deterministic script outputs (assertable) + a human-observed checklist of the LLM steps (interview/critique/apply-critique quality) + the cache/inherit/rollup behavior observed. Script half → repeatable smoke; LLM half → release checklist.
 
 ### B. Refresh the canonical example (synergy with red-team H2)
 - **The E2E input product idea is IMAGINARY/synthetic (PO 2026-06-03)** — a realistic-but-fictional product, NOT confidential data. So "real" here = real workflow + real script/LLM execution producing real artifacts; the seed idea is made up. This removes any leak risk in committing/bundling the example.
-- Use the E2E run's REAL artifacts (real frontmatter + `body_hash`) to refresh `product-spec/examples/` and `product-spec-critique/examples/`. **The example is whatever the workflow actually produced** — not a hand-polished mock. The refreshed critique example carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2).
-- **Still curate (not a raw scratch dump):** copy the artifact set (BRD/PRD/epic/story/critique report/audit), NOT `.memory/` scratch, `.session.md`, or machine-specific paths — keep the bundle lean.
+- **REMOVE the old hand-authored examples and REPLACE them wholesale (PO 2026-06-03)** with the E2E material — delete `product-spec/examples/*` + `product-spec-critique/examples/*` and populate from the real run. Not a merge/refresh: the workflow-produced artifacts ARE the new examples. **The example is whatever the workflow actually produced** — not a hand-polished mock. The new critique example carries frontmatter → becomes the **E1 freshness test fixture** Phase 3 needs (closes H2).
+- **Curate, but KEEP the critique `.memory/` caches:** the committed critique caches (lens-cache, blob-cache, provenance, judgments under `docs/product/.memory/`) ARE the demonstration of the cache/inherit/rollup lifecycle AND the skill commits them by design — include them. Exclude only genuinely transient scratch (`.session.md`, machine-absolute paths, OS temp noise). Include the spec artifacts + critique reports + audit output + the critique caches.
 - **Freeze the product-spec + critique example pair together** (both from the same run) so the E1 fixture's `body_hash` stays consistent; a later edit to one desyncs the hash.
 - **Bilingual:** examples have EN + VI — produce both (two runs or a translated pass) so the example set isn't single-language.
 
@@ -53,21 +59,21 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 
 ## Related Code Files
 - Create: an external-folder E2E smoke script (script-half, repeatable) + a release-checklist doc for the LLM half (under `product-spec/` or the plan reports)
-- Modify: `product-spec/examples/*`, `product-spec-critique/examples/*` (refresh from real run)
+- Delete + replace: `product-spec/examples/*`, `product-spec-critique/examples/*` (remove old hand-authored, populate from the real E2E run incl. critique `.memory/` caches)
 - Modify: root `CLAUDE.md`, root `README.md`
 - Modify: `product-spec/{SKILL.md,GUIDE-EN.md,GUIDE-VI.md,README.md}`, `product-spec-critique/{SKILL.md,GUIDE-EN.md,GUIDE-VI.md,README.md}`
 - Modify: `product-spec/CHANGELOG.md`, `product-spec-critique/CHANGELOG.md` (backfill), `claude-pack/CHANGELOG.md` (bundle update)
 
 ## Implementation Steps
-1. Run the full E2E in an external temp folder on real data **by following the workflow references step-by-step** (interview→validate→critique→apply-critique→discover→viz→summary), invoking real flags/menus; scripts via venv python + LLM steps. Record script outputs + LLM-step observations + **any workflow-doc defect the run exposes** (fix those docs as part of step 3).
-2. Refresh both `examples/` from the real workflow-produced artifacts (real frontmatter/body_hash); wire the critique example as E1's freshness fixture (closes H2).
+1. Run the full E2E in an external temp folder on a synthetic idea **by following the workflow references step-by-step** (interview→validate→critique→apply-critique→discover→viz→summary), invoking real flags/menus; scripts via venv python + LLM steps. **Include the critique lifecycle cases: rerun→cache-hit, fresh→cache-miss, inherit (parent→child), rollup (child→parent).** Record script outputs + LLM observations + cache/inherit/rollup behavior + **any workflow-doc defect the run exposes** (fix those docs in step 3).
+2. **Delete the old examples; populate both `examples/` wholesale from the real run** (spec artifacts + critique reports + audit + the critique `.memory/` caches; drop transient scratch). Wire the critique example as E1's freshness fixture (closes H2).
 3. Sweep docs: root `CLAUDE.md` + `README.md`; each skill's `SKILL.md`/`GUIDE-EN`/`GUIDE-VI`/`README`. Every new flag/view/check + strengthened lens reflected.
 4. Backfill `product-spec` + `product-spec-critique` CHANGELOGs from git log (keepachangelog, themed); update `claude-pack` CHANGELOG for the bundle.
 5. Capture the E2E as: a repeatable script-half smoke + a human release checklist (state plainly the LLM half is not a CI gate).
 
 ## Success Criteria
-- [ ] A real E2E run completed in an external folder **by following the workflow references** (not hand-built), exercising EVERY new surface (E1/C9/E4/E2/goal_without_metric/strengthened lenses) — script + LLM — with outputs + any workflow-doc defects recorded and fixed.
-- [ ] Both `examples/` refreshed from real (imaginary-seed) artifacts, curated (no scratch/.memory/.session), EN+VI, product-spec+critique frozen as a pair; critique example carries frontmatter and serves as E1's freshness fixture (H2 closed).
+- [ ] A real E2E run completed in an external folder **by following the workflow references** (not hand-built), exercising EVERY new surface (E1/C9/E4/E2/goal_without_metric/strengthened lenses) **AND the full critique lifecycle (rerun→cache-hit, fresh→cache-miss, inherit, rollup)** — script + LLM — with outputs + cache/inherit behavior + any workflow-doc defects recorded and fixed.
+- [ ] Old examples DELETED; both `examples/` populated wholesale from the real (imaginary-seed) run — spec artifacts + critique reports + audit + critique `.memory/` caches; transient scratch dropped; EN+VI; product-spec+critique frozen as a pair; critique example carries frontmatter and serves as E1's freshness fixture (H2 closed).
 - [ ] Root `CLAUDE.md` + `README.md` and all per-skill `SKILL.md`/`GUIDE-EN`/`GUIDE-VI`/`README` updated for the new surfaces.
 - [ ] `product-spec` + `product-spec-critique` CHANGELOGs backfilled from git log; `claude-pack` CHANGELOG updated for the bundle.
 - [ ] Script-half E2E is repeatable; LLM-half is a documented checklist (explicitly not a CI gate). Full existing suite still green.
@@ -76,7 +82,7 @@ Three deliverables: (1) a **real, full E2E run** of both product-spec* skills in
 - Risk: treating the LLM E2E as a deterministic gate → it is NOT; document it as dogfood/checklist (the script half is the only repeatable assertion).
 - Risk: changelog double-work vs Phase 1 → Phase 1 scaffolds, Phase 9 backfills; do not recreate the files.
 - Risk: real run hits product-spec's no-network rule → product-spec stays offline; only the critique market lens may use web (its existing behavior).
-- Risk: external-folder run leaks into the repo → run in a temp dir; commit only the curated refreshed examples, not the scratch run.
+- Risk: external-folder run leaks into the repo → run in a temp dir; commit the curated example (spec + critique reports + audit + critique `.memory/` caches), drop transient scratch (`.session.md`, machine paths).
 - Data-leak risk: NONE — the E2E seed is an imaginary/synthetic product by design (PO), safe to commit + bundle.
 - Fixture desync risk: the product-spec + critique examples are a frozen pair from one run (E1 body_hash fixture) — don't edit one without the other.
 
