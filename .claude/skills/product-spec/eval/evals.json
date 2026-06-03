@@ -253,6 +253,19 @@
         {"id": "revalidate-unchanged-zero-rejudge", "_gating": "structural", "text": "After a first --validate populates .memory/judgments.json, judgment_cache --check for each node of the UNCHANGED valid-spec returns fresh:true (the body_hash key matches), so the second --validate writes no new verdict — 0 re-judges (the batch-store/key-reuse path)."},
         {"id": "fence-slip-recorded-3e", "_gating": "llm_advisory", "text": "The engine records a 3E self-correction (behavioral_memory → .memory/self-corrections.json) for the surfaced fence breach so the slip is not forgotten. Advisory: the write is LLM-behavioral (the honest ceiling — enforcement raises the consideration-rate, not the write-quality); this grades whether the slip actually gets captured rather than waved off."}
       ]
+    },
+    {
+      "id": 19,
+      "_assertion_type": "structural",
+      "_note": "C11 Half-B: the goal_without_metric check (error). A BRD goal whose metrics is empty or missing must be flagged; a goal with >=1 metric must stay silent. Deterministic + reproducible + enforced by strict_gate (exit 2). Fixture metric-less-goal carries BRD-G1 (has [north-star], silent), BRD-G2 (metrics: [], flagged), BRD-G3 (no metrics key, flagged).",
+      "prompt": "Run --validate against fixtures/metric-less-goal. The BRD has one goal with a metric and two goals without (one empty list, one missing the key). The validation must flag exactly the two metric-less goals with goal_without_metric (error) and stay silent on the goal that has a metric.",
+      "expected_output": "check_consistency.py emits a goal_without_metric error for BRD-G2 and BRD-G3 and NONE for BRD-G1; strict_gate.py exits 2 (errors present).",
+      "files": ["fixtures/metric-less-goal"],
+      "assertions": [
+        {"id": "goal-without-metric-flagged", "_gating": "structural", "text": "check_consistency.check over fixtures/metric-less-goal emits a goal_without_metric finding (severity error) for BRD-G2 (metrics: []) and BRD-G3 (no metrics key)."},
+        {"id": "goal-with-metric-silent", "_gating": "structural", "text": "No goal_without_metric finding is emitted for BRD-G1, which carries metrics: [north-star]."},
+        {"id": "strict-gate-blocks", "_gating": "structural", "text": "strict_gate.collect_findings over the fixture yields at least one error-severity goal_without_metric finding, so strict_gate exits 2."}
+      ]
     }
   ]
 }

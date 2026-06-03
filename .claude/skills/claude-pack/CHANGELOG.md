@@ -5,7 +5,27 @@ All notable changes to the **claude-pack bundle** are documented here. The bundl
 opt-in hooks. Tags `claude-pack-v*` version the bundle as a whole.
 Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: [semver](https://semver.org/).
 
+> **Release discipline (E5).** Each of the 3 skills keeps its own `CHANGELOG.md` + frontmatter
+> `metadata.version` (truth-of-record). On every release: bump the affected skill's
+> `metadata.version` + add its CHANGELOG entry, then bump this bundle changelog. CI gate
+> `verify_skill_versions.py` fails the release if any `metadata.version` is missing/malformed.
+> Skill versions are independent of the bundle tag by design — no cross-version equality is asserted.
+
 ## [Unreleased]
+
+### Added
+- **Skill-version release gate (E5)** — `scripts/verify_skill_versions.py` asserts each skill's nested
+  `metadata.version` is present + semver; wired into `claude-pack-release.yml` before the build (drift
+  fails the release). Each of the 3 skills now keeps its own `CHANGELOG.md`.
+- **Cross-skill CI (D12)** — `product-spec-ci.yml` + `product-spec-critique-ci.yml` (1 OS × 2 Python,
+  path-filtered, per-skill-dir scoped; critique offline-enforced) and `cross-skill-bug-class.yml`
+  running the `bug_class`-marked safety/robustness invariants per skill. `bug_class` registered in all
+  3 pytest configs (product-spec + critique gain a `pyproject.toml`).
+
+### Notes
+- Bundle now ships product-spec's new `--apply-critique` / `--viz audit` / `--summary --audience` /
+  `--discover` surfaces + `goal_without_metric` validate check, and critique's strengthened
+  assumption-rigor lens prompts (see each skill's CHANGELOG).
 
 ## [1.1.0] — 2026-06-03
 

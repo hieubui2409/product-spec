@@ -58,6 +58,7 @@ TYPE_TEMPLATE = {
     "epic": "epic.md",
     "story": "story.md",
     "exec_summary": "exec-summary.md",
+    "release_notes": "release-notes.md",
     "sign_off": "sign-off.md",
     "change_log_entry": "change-log-entry.md",
 }
@@ -70,6 +71,7 @@ OUTPUT_PATH_FOR_TYPE = {
     "epic": "epics/{id}.md",
     "story": "stories/{id}.md",
     "exec_summary": "exec-summary.md",
+    "release_notes": "release-notes.md",
 }
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "assets" / "templates"

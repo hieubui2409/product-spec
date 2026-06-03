@@ -142,6 +142,7 @@ def test_empty_selection_rejected(tmp_root):
     assert sel == []
 
 
+@pytest.mark.bug_class  # cross-skill invariant: symlink dropped from bundle
 def test_symlink_dropped(tmp_root, tmp_path):
     """symlink in selection dropped + WARN."""
     skill = tmp_root / ".claude" / "skills" / "sample-skill"

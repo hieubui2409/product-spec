@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "C11 assumption-rigor (strengthen lenses) + goal_without_metric"
-status: pending
+status: done
 priority: P2
 effort: "0.75d"
 dependencies: []

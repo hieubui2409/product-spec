@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "E4 stakeholder brief (via --summary --audience)"
-status: pending
+status: done
 priority: P3
 effort: "0.5d"
 dependencies: []

@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "E5 per-skill release identity"
-status: pending
+status: done
 priority: P2
 effort: "0.5d"
 dependencies: []

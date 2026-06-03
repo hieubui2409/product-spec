@@ -32,9 +32,11 @@ in plain language, no code required from you. Bilingual: English and Vietnamese.
 | Decompose a long brain-dump into a clean spec | `/cleanmatic:product-spec --auto` |
 | Check the spec for orphans, missing AC, drift | `/cleanmatic:product-spec --validate` |
 | Sign off a BRD/PRD/Epic/Story | `/cleanmatic:product-spec --approve` |
-| Get a 1-page exec summary | `/cleanmatic:product-spec --summary` |
-| Draw the spec tree / roadmap / coverage map | `/cleanmatic:product-spec --viz <view>` |
+| Get a 1-page exec summary | `/cleanmatic:product-spec --summary` (add `--audience release-notes` for "what changed since last approved") |
+| Draw the spec tree / roadmap / coverage map / audit trail | `/cleanmatic:product-spec --viz <view>` (incl. `--viz audit`) |
 | Apply a change without losing prior decisions | `/cleanmatic:product-spec --update` |
+| Turn a critique report into recorded decisions | `/cleanmatic:product-spec --apply-critique <report>` |
+| Seed a new spec from raw transcripts/notes | `/cleanmatic:product-spec --discover <path(s)>` |
 
 Output lives in `docs/product/` inside your project — markdown files with rich YAML metadata. The skill never writes
 outside `docs/product/`.

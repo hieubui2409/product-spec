@@ -11,6 +11,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
+from render_common import _hashable
 from spec_graph import children_of, parents_of, HORIZON_ORDER
 
 
@@ -41,13 +42,7 @@ def _mark(node: Dict[str, Any], text: str) -> str:
     return f"{text} *" if _is_deferred(node) else text
 
 
-def _hashable(v: Any) -> str:
-    """Coerce frontmatter values that should be enum scalars to a string."""
-    if v is None:
-        return "?"
-    if isinstance(v, (list, dict, set)):
-        return f"?{v!r}"
-    return str(v)
+# _hashable imported from render_common (see import block above).
 
 
 def _ascii_product_name(graph: Dict[str, Any]) -> str:

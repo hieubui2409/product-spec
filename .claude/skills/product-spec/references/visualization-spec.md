@@ -28,6 +28,7 @@ The views × formats matrix, the graph-JSON shape consumed by every renderer, an
 | `delta` | `--viz delta [--snapshot <name>]` | diff between two graph snapshots from `docs/product/visuals/.snapshots/`. |
 | `board` | `--viz board [--group-by status\|horizon\|moscow] [--layers …]` | kanban: columns = the group field, cards = goal/PRD/epic/story; client-side search + facet filters (status/moscow/horizon/persona/layer); click a card → its sanitized body. Default `--format html`. |
 | `explorer` | `--viz explorer [--layers …]` | one page, in-page toggle across **Tree** (collapsible nav) / **Flat-tabs** (per layer) / **Table-tree** (treegrid w/ metadata columns); shared search + facets; last mode persisted to `localStorage`. Default `--format html`. |
+| `audit` | `--viz audit [--format ascii\|md] [--lang en\|vi]` | **governance trail** (C9): chronological join of change-log · approval metadata · stale-approvals · decision register → *when · artifact · action · who-approved · what-drifted · DEC*. Reuses `status.py` loaders (DRY). Source disagreement (an approval/stale flag with no change-log/DEC corroboration) renders an explicit **`unreconciled`** row — never dropped (H7). **ASCII + `md` only — NO HTML emitter this phase** (off the XSS watch). Assembler: `assemble_audit_trail.py`. |
 
 ## View × Format Matrix
 

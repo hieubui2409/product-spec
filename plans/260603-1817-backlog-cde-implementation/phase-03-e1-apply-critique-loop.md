@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "E1 apply-critique loop"
-status: pending
+status: done
 priority: P1
 effort: "3d"
 dependencies: [2]

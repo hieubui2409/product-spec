@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "C9 audit-trail view (--viz audit)"
-status: pending
+status: done
 priority: P2
 effort: "1d"
 dependencies: []

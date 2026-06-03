@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import safety_check
 
 
@@ -92,6 +94,7 @@ def test_optional_paths():
     assert not opt
 
 
+@pytest.mark.bug_class  # cross-skill invariant: case-insensitive secret drop
 def test_case_insensitive_exact_drops():
     """Uppercase / mixed-case exact basenames must drop (.ENV, ID_RSA, etc.)."""
     for path in (".ENV", ".Env", "some/.ENV", "ID_RSA", "ID_Ed25519", ".NETRC", ".Pgpass"):

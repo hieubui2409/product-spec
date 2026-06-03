@@ -13,7 +13,7 @@ Each row: framework → the diagnostic question to ask the spec → the failure 
 | **Value Prop Canvas** | Which stated pain does it relieve / gain does it create (per vision/BRD)? | Feature mapped to no pain or gain anywhere upstream. |
 | **Kano** | Must-be, performance, or delighter? | Gold-plating a delighter while a must-be is missing. |
 | **RICE-integrity** | Do reach/impact claims square with the persona set + BRD goals? | A `must` story serving a persona the BRD never names as a buyer. |
-| **Riskiest-assumption** | What single unproven belief, if wrong, kills this? | No assumption named; the spec assumes success. |
+| **Riskiest-assumption** | What single unproven belief, if wrong, kills this? **The finding MUST state it as "unproven belief X → if wrong, Y happens"** — name the assumption AND its failure consequence, never just that one exists. | No assumption named, OR an assumption named with no stated consequence; the spec assumes success. |
 | **Opportunity-solution-tree** | Problem-first or solution-first? | AC describes a UI mechanism with no problem behind it. |
 
 Headline catches: **feature nobody needs · fake persona vs BRD buyer · gold-plating · solution-first**.
@@ -26,7 +26,7 @@ Headline catches: **feature nobody needs · fake persona vs BRD buyer · gold-pl
 |-----------|---------------------|-------------------|
 | **INVEST** | Independent, Negotiable, Valuable, Estimable, Small, Testable? | A story bundling three features; one no engineer could size. |
 | **Given-When-Then testability** | Can each AC become a deterministic test? | AC with no observable outcome ("works well", "is fast"). |
-| **Hidden dependencies** | Does it silently assume another story/system exists? | AC referencing data/flows defined nowhere upstream; empty `depends_on` but needs a prerequisite. |
+| **Hidden dependencies** | Does it silently assume another story/system exists? **The finding MUST name the silently-assumed system/story AND the failure when it is absent** (not merely flag a missing link). | AC referencing data/flows defined nowhere upstream; empty `depends_on` but needs a prerequisite — with no stated consequence of the gap. |
 | **Complexity-vs-value** | Build effort vs the value in ancestry? | A `could`/delighter demanding the hardest integration. |
 | **NFR gaps** | Are perf/security/scale/error-paths present where they matter? | An auth/payment story with only happy-path AC. |
 

@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "D11 _hashable consolidation (scoped down)"
-status: pending
+status: done
 priority: P3
 effort: "0.25d"
 dependencies: []

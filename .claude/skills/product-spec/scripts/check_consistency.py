@@ -187,6 +187,21 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             elif len(ac) < 2:
                 findings.append(_f("low_ac_count", "warn", n, f"Story has {len(ac)} acceptance criteria; >=2 recommended.", count=len(ac)))
 
+        # A BRD goal must carry at least one success metric (frontmatter-and-id-spec:
+        # `metrics` "required, >=1 metric slug"). Iterate `type:goal` nodes (metrics are
+        # populated onto goal nodes by spec_graph._node_from_goal) — NOT the LIST_FIELDS
+        # type loop, which only checks shape. `error` mirrors missing_ac. A non-empty list
+        # passes; None/[] fails. (An invalid non-list `metrics` is already an invalid_type.)
+        if ntype == "goal":
+            metrics = n.get("metrics")
+            # Fire on a missing key (None) OR an empty list; stay silent on a non-empty list.
+            # (Parenthesized for clarity — a non-list `metrics` is already an invalid_type above.)
+            if metrics is None or (isinstance(metrics, list) and not metrics):
+                findings.append(_f(
+                    "goal_without_metric", "error", n,
+                    f"BRD goal {nid} has no success metric; at least one metric slug is required.",
+                ))
+
     findings.extend(_status_inconsistency(graph))
     findings.extend(_version_inconsistency(graph))
     findings.extend(_self_reference(graph))

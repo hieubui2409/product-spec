@@ -31,6 +31,9 @@ jobs:
       - name: Install
         run: bash .claude/skills/claude-pack/install.sh --dev
 
+      - name: Verify skill versions (E5 release identity)
+        run: .claude/skills/.venv/bin/python .claude/skills/claude-pack/scripts/verify_skill_versions.py
+
       - name: Build deterministic tarball
         env:
           SOURCE_DATE_EPOCH: ${{ steps.epoch.outputs.value }}

@@ -18,6 +18,10 @@ resolve them as `render_ascii.<name>`.
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
+# `_hashable` lives in render_common (was byte-identically duplicated here and in
+# render_ascii_board); imported so existing `render_ascii._hashable` call sites keep working.
+from render_common import _hashable
+
 from i18n_labels import label
 from spec_graph import (
     CHANGED_FIELDS,
@@ -185,19 +189,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     return "\n".join(lines)
 
 
-def _hashable(v: Any) -> str:
-    """Coerce frontmatter values that should be enum scalars to a string.
-
-    A PO who writes `status: [draft]` (list) or some other unhashable shape
-    would otherwise crash dict indexing. Render the unexpected shape verbatim
-    so the validator can flag `unknown_enum` separately, but never blow up
-    the viz renderer.
-    """
-    if v is None:
-        return "?"
-    if isinstance(v, (list, dict, set)):
-        return f"?{v!r}"
-    return str(v)
+# _hashable imported from render_common at module top (see import note above).
 
 
 def _scalar(v: Any) -> str:

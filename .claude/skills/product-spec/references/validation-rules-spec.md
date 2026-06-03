@@ -23,6 +23,7 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 | `unaddressed_parent` | script | warn | a parent (epic/PRD) with zero inbound child edges of the expected type (BRD goals with zero PRDs use `orphan_brd_goal` instead) | "{id} has no {child_type} addressing it (gap-analysis input)." |
 | `missing_ac` | script | error | a story with empty / missing `acceptance_criteria` | "Story {id} has no acceptance criteria." |
 | `low_ac_count` | script | warn | a story with `len(acceptance_criteria) < 2` | "Story {id} has fewer than 2 acceptance criteria ({count})." |
+| `goal_without_metric` | script | error | a BRD goal (`type: goal`) whose `metrics` is empty or missing (frontmatter-and-id-spec requires ≥1 metric slug) | "BRD goal {id} has no success metric; at least one metric slug is required." |
 | `dup_id` | script | error | two artifacts sharing the same `id` | "Duplicate ID {id} in {files}." |
 | `invalid_id` | script | error | an `id` not matching the parent-scoped grammar | "ID {id} does not match expected pattern {pattern}." |
 | `unknown_enum` | script | error | a closed-enum field with a value outside the allowed set (incl. a `risks[]` entry's `impact`/`likelihood` ∈ {low,med,high} or `status` ∈ {open,mitigated,accepted}) | "{file}: field {field} value '{value}' not in {allowed}." |

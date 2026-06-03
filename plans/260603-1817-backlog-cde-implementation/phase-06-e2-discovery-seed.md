@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "E2 discovery seed (--discover)"
-status: pending
+status: done
 priority: P2
 effort: "1.5d"
 dependencies: [3]

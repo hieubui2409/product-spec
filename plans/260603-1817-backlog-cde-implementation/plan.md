@@ -1,7 +1,7 @@
 ---
 title: "Backlog C/D/E implementation — close the PO pipeline"
 description: ""
-status: pending
+status: in-progress
 priority: P2
 branch: "claude/agent-naming-conventions-cd70n"
 tags: []
@@ -58,16 +58,16 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [E5 per-skill release identity](./phase-01-e5-per-skill-release-identity.md) | Pending |
-| 2 | [D12 cross-skill CI gate](./phase-02-d12-cross-skill-ci-gate.md) | Pending |
-| 3 | [E1 apply-critique loop](./phase-03-e1-apply-critique-loop.md) | Pending |
-| 4 | [C9 audit-trail view](./phase-04-c9-audit-trail-view.md) | Pending |
-| 5 | [E4 stakeholder brief mode](./phase-05-e4-stakeholder-brief-mode.md) | Pending |
-| 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Pending |
-| 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Pending |
-| 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Pending |
-| 9 | [9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase](./phase-09-e2e-example-docs-changelogs.md) | Pending |
-| 10 | [9b — docs sweep + changelog backfill](./phase-10-docs-sweep-changelog-backfill.md) | Pending |
+| 1 | [E5 per-skill release identity](./phase-01-e5-per-skill-release-identity.md) | Done |
+| 2 | [D12 cross-skill CI gate](./phase-02-d12-cross-skill-ci-gate.md) | Done |
+| 3 | [E1 apply-critique loop](./phase-03-e1-apply-critique-loop.md) | Done |
+| 4 | [C9 audit-trail view](./phase-04-c9-audit-trail-view.md) | Done |
+| 5 | [E4 stakeholder brief mode](./phase-05-e4-stakeholder-brief-mode.md) | Done |
+| 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Done |
+| 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Done |
+| 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Done |
+| 9 | [9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase](./phase-09-e2e-example-docs-changelogs.md) | Partial (deterministic contracts done; live LLM regen deferred — see issues.md D1) |
+| 10 | [9b — docs sweep + changelog backfill](./phase-10-docs-sweep-changelog-backfill.md) | Partial (surfaces+changelogs done; GUIDE deep-sweep deferred — see issues.md D2) |
 
 ## Dependencies
 

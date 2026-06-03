@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "D12 cross-skill CI gate"
-status: pending
+status: done
 priority: P1
 effort: "1.5d"
 dependencies: [1]

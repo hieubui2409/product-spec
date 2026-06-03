@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase"
-status: pending
+status: partial
 priority: P1
 effort: "2d"
 dependencies: [1, 2, 3, 4, 5, 6, 7, 8]

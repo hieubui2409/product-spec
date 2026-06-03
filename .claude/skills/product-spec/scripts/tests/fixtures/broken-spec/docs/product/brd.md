@@ -11,10 +11,10 @@ goals:
   - id: BRD-G1
     title: "Goal 1"
     status: approved
-    metrics: []
+    metrics: [g1-metric]
   - id: BRD-G2
     title: "Goal 2 — never addressed (orphan_brd_goal expected)"
     status: approved
-    metrics: []
+    metrics: [g2-metric]
 ---
 # BRD

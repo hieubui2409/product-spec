@@ -44,8 +44,10 @@ For each flag, load the relevant reference from `.claude/skills/product-spec/ref
 | `--story`                                                                          | `workflow-interview.md` (+ `interview-story.md`)    |
 | `--validate`, `--strict`, `--approve`, `--summary`                                 | `workflow-validate.md`                              |
 | `--decision` (list/record a PO ruling `DEC-<n>`)                                   | `workflow-validate.md`                              |
+| `--apply-critique <report>` (critique return-edge → Keep/Change/Defer → `DEC-<n>`) | `workflow-apply-critique.md` (+ `scripts/parse_critique_report.py`) |
 | `--status`                                                                         | `workflow-status.md`                                |
 | `--auto`                                                                           | `workflow-auto.md`                                  |
+| `--discover <path(s)>` (ingest raw upstream text → candidate persona/problem seeds) | `workflow-discover.md` (+ `scripts/ingest_raw_inputs.py`) |
 | `--update`                                                                         | `workflow-update.md`                                |
 | `--viz` (incl. `board`/`explorer`), `--format`, `--lang`, `--group-by`, `--layers` | `visualization-spec.md` (+ `scripts/visualize.py`)  |
 | `--export`, `--layers`, `--depth`, `--compact-mode`                                | `workflow-export.md` (+ `scripts/render_export.py`) |

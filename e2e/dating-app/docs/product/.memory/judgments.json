@@ -2,7 +2,7 @@
   "cache_version": "1",
   "entries": {
     "core_value_alignment|PRD-CHAT-E1-S3|0e54d9bf|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "check": "core_value_alignment",
@@ -10,7 +10,7 @@
       }
     },
     "core_value_alignment|PRD-CHAT-E1-S4|628c183c|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "check": "core_value_alignment",
@@ -18,28 +18,28 @@
       }
     },
     "core_value_drift|BRD-G1|none|en|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "MAU is a reach/scale metric; legitimate business goal but only indirectly tied to the sustained-real-connection core value (a vanity-adjacent count).",
         "verdict": "weak"
       }
     },
     "core_value_drift|BRD-G2|none|en|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Closest goal to core value; match creation is the first step toward sustained connection, directly on the north-star path.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|BRD-G3|none|en|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Revenue/break-even is a sustainability goal, not a connection-quality goal; legitimate but tangential to the core value.",
         "verdict": "weak"
       }
     },
     "core_value_drift|PRD-AIREC-E1-S1|917f7bc9|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "check": "core_value_drift",
@@ -47,7 +47,7 @@
       }
     },
     "core_value_drift|PRD-AIREC-E1|a2c8a061|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "check": "core_value_drift",
@@ -55,7 +55,7 @@
       }
     },
     "core_value_drift|PRD-AIREC|c258d8fd|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "check": "core_value_drift",
@@ -63,35 +63,35 @@
       }
     },
     "core_value_drift|PRD-CHAT-E1-S1|8943eb03|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "Reliable realtime send/receive is the literal mechanism of sustained conversation; 'so that we keep a real conversation instead of stopping at a match'."
       }
     },
     "core_value_drift|PRD-CHAT-E1-S2|8c751c9f|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "Match-gating protects the 'real connection' promise (safe space, no stranger spam) which underpins sustained trust-based messaging."
       }
     },
     "core_value_drift|PRD-CHAT-E1|eb20b520|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "Epic turns each match into a real conversation channel feeding the 7-day north-star; mau-monthly -> BRD-G1 traced."
       }
     },
     "core_value_drift|PRD-CHAT|1cfc4161|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "PRD-CHAT directly realizes the north-star: it is the surface where matched couples message back and forth (7+ days). Prose names the metric explicitly and rejects 'match ao' (fake match)."
       }
     },
     "core_value_drift|PRD-CHAT|8431d127|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:57:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "check": "core_value_drift",
@@ -99,7 +99,7 @@
       }
     },
     "core_value_drift|PRD-EVENTS-E1-S3|3b04bb23|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "core_value_drift",
         "note": "Concert organization and ticketing is an entertainment-events business (artist ops, ticket sales, crowd safety) that does not measure couples sustaining messaging >=7 days. This is solution-first drift more severe than meetup seat-holding, as the story prose itself states. Verdict off; correctly held scope:out/could/later pending explicit PO weigh-against-north-star.",
@@ -107,7 +107,7 @@
       }
     },
     "core_value_drift|PRD-EVENTS-E1|e3aabc84|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "off",
         "check": "core_value_drift",
@@ -115,7 +115,7 @@
       }
     },
     "core_value_drift|PRD-EVENTS|1733e335|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "core_value_drift",
         "note": "Core value is sustained real connection measured by couples exchanging messages >=7 days/month. Offline events measure attendance, not sustained messaging; the PRD's only metric (mau-monthly) is explicitly an indirect proxy. The PRD itself self-flags this as solution-first/gold-plating and parks it scope:out/could/later. Off-core, but honestly surfaced and parked, not silently drifting.",
@@ -123,7 +123,7 @@
       }
     },
     "core_value_drift|PRD-EVENTS|d38c051c|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "off",
         "check": "core_value_drift",
@@ -131,133 +131,133 @@
       }
     },
     "core_value_drift|PRD-MATCH-E1-S1|0ebcb5e1|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Discovery+swipe+match is on the direct path to a sustained conversation.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|PRD-MATCH-E1-S2|cfc87b23|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T05:35:20+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Optimizes suggestion quality toward real matches (dormant-profile filtering, hard-criteria match, measured match-lift) — feeds the sustained-real-connection north-star, not a detour.",
         "result": "aligned"
       }
     },
     "core_value_drift|PRD-MATCH-E1-S2|e98127fb|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Recommendation quality is intended to drive real matches/connections; intent aligns with core value even though the AC quality is poor.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|PRD-MATCH-E1|982249bd|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Frames matching as the foundation for real connection; consistent with core value.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|PRD-MATCH|6ef8ad25|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Explicitly frames discovery/swipe/match as the first step toward a sustained real conversation per the north-star.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|PRD-PREMIUM-E1-S1|e5f44b06|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "note": "Premium gate on see-who-liked-you; the relike-creates-match AC touches the connection core but the story's primary driver is conversion, not retained messaging."
       }
     },
     "core_value_drift|PRD-PREMIUM-E1-S2|82cd5b3b|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "note": "Boost raises visibility (ARPU driver); only indirectly linked to retained real connection."
       }
     },
     "core_value_drift|PRD-PREMIUM-E1|019f8b55|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "note": "Revenue epic; serves break-even (BRD-G3), only indirectly tied to retained-connection north-star."
       }
     },
     "core_value_drift|PRD-PREMIUM|26b9a8eb|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "weak",
         "note": "Core value = retained real connection (7+ day messaging). Premium is the revenue layer (horizon:later) that funds the core; prose itself acknowledges it does not drive north-star and must not erode free core. Supports indirectly, not aligned directly. Not off."
       }
     },
     "core_value_drift|PRD-SAFETY-E1-S1|1c73ea43|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "verified badge raises match quality -> sustained messaging"
       }
     },
     "core_value_drift|PRD-SAFETY-E1-S2|169b4b79|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "removing fraud/catfish protects the real-connection promise"
       }
     },
     "core_value_drift|PRD-SAFETY-E1|afee85f3|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "verification badge + report tooling underpins real-connection trust"
       }
     },
     "core_value_drift|PRD-SAFETY|1b1dc2cb|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "alignment": "aligned",
         "note": "trust/verification is a direct enabler of sustained real connection"
       }
     },
     "core_value_drift|PRODUCT|12f8eb81|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "core_value field is the authoritative source; one-liner restates 'real connection not fake match'.",
         "verdict": "aligned"
       }
     },
     "core_value_drift|VISION|44634e30|vi|cv:a5bbd219": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Directly states success measured by sustained real conversations, not match count — mirrors core_value verbatim in intent.",
         "verdict": "aligned"
       }
     },
     "invest_quality|BRD-G1|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Goal is measurable (100k MAU, 1-year horizon) with metric mau-monthly bound.",
         "verdict": "ok"
       }
     },
     "invest_quality|BRD-G2|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Measurable (20% of active users create >=1 match/week) with weekly-match-rate metric.",
         "verdict": "ok"
       }
     },
     "invest_quality|BRD-G3|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Measurable via premium-conversion-rate + arpu, year-2 break-even target.",
         "verdict": "ok"
       }
     },
     "invest_quality|PRD-AIREC-E1-S1|917f7bc9|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "Strong INVEST: persona-anchored user story, size L, 4 Given/When/Then AC each independently testable — ranked ordering with concrete 20-profile threshold, cold-start empty-state guard, signal capture, and a 2s/20-profile perf bound on common VN devices. Independent, Valuable, Estimable, Testable.",
@@ -265,7 +265,7 @@
       }
     },
     "invest_quality|PRD-AIREC-E1|a2c8a061|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "Epic mirrors PRD scope cleanly: goal, business context (PRD+BRD links), success criteria, in/out scope. Single open risk (insufficient interaction data) with measurable-improvement mitigation. Coherent, estimable, testable.",
@@ -273,7 +273,7 @@
       }
     },
     "invest_quality|PRD-AIREC|c258d8fd|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "PRD is well-scoped: clear problem framing, honest me-too positioning, MoSCoW with explicit empty Must/Should and concrete Could items, NFR addresses cold-start fallback. Negotiable/Valuable/Estimable/Small/Testable all met at PRD altitude.",
@@ -281,35 +281,35 @@
       }
     },
     "invest_quality|PRD-CHAT-E1-S1|8943eb03|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Full INVEST: independent, negotiable, valuable (sustains conversation), estimable (size M), small, testable. AC are Given/When/Then with hard thresholds (2s deliver, 1s sent-status, offline requeue, last-50 ordering).",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-CHAT-E1-S2|8c751c9f|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Match-gating story; AC cover happy path, unmatched-reject (server-side, nothing stored), and unmatch-closes-thread-in-5s. Testable, small (size S).",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-CHAT-E1|eb20b520|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Epic goal + success criteria are concrete and independently verifiable (match-gated chat; unmatched cannot message).",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-CHAT|1cfc4161|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "PRD scope is crisp: 1-1 chat gated by match status, realtime text + delivery/read state, retry queue. Valuable, testable, sized via child stories.",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-CHAT|8431d127|vi|": {
-      "stored_at": "2026-06-02T01:57:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "PRD-level: clear problem (match without chat = fake match), personas mapped to needs, MoSCoW partitioned, NFRs (VN mobile latency, multi-session sync), metric->goal traceable. Negotiable/Valuable/Estimable hold at PRD altitude.",
@@ -317,7 +317,7 @@
       }
     },
     "invest_quality|PRD-EVENTS-E1-S1|40cb8605|vi|": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "pass": true,
@@ -325,7 +325,7 @@
       }
     },
     "invest_quality|PRD-EVENTS-E1-S2|a8852e0b|vi|": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "pass": true,
@@ -333,7 +333,7 @@
       }
     },
     "invest_quality|PRD-EVENTS-E1-S3|3b04bb23|vi|": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "Independent, Testable (5 concrete observable AC: 4-ticket max, 10-min hold, e-ticket+QR, 24h reminder, sold-out disable, city/genre filter), Estimable (size L). Fails Small (L, spans discovery, ticketing, hold logic, QR, reminders, filters) and Valuable is weak against the product north-star (concert ticketing is an entertainment-events line, not sustained-messaging connection). Story is craft-sound but oversized and off-core.",
@@ -341,7 +341,7 @@
       }
     },
     "invest_quality|PRD-EVENTS|1733e335|vi|": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest_quality",
         "note": "PRD scope is well-bounded (Must/Should empty, explicit Won't-this-round list, single indirect metric) and the value proposition is honestly hedged. INVEST as a PRD-level container is coherent and estimable, but Valuable is weak: it is self-declared scope:out/could/later and its only metric (mau-monthly) is acknowledged as an indirect proxy that does not measure the north-star. Negotiable and small-enough only because nothing is committed this round.",
@@ -349,70 +349,70 @@
       }
     },
     "invest_quality|PRD-MATCH-E1-S1|0ebcb5e1|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Strong INVEST: testable, valuable, sized M; AC is concrete and verifiable (>=10 profiles, <300ms swipe, <5s match notice, explicit empty-state).",
         "verdict": "ok"
       }
     },
     "invest_quality|PRD-MATCH-E1-S2|cfc87b23|vi|": {
-      "stored_at": "2026-06-02T05:35:20+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Well-formed INVEST story: 5 testable, quantified AC (p95 latency, 3/4 hard-criteria match, 30% active-user floor, +20% match-lift A/B p<0.05, explainability affordance). Independent, valuable, estimable at size L.",
         "result": "pass"
       }
     },
     "invest_quality|PRD-MATCH-E1-S2|e98127fb|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Fails the Testable in INVEST: AC 'hệ thống ghép đôi nhanh và chính xác' and 'người dùng cảm thấy gợi ý phù hợp' are subjective, unmeasurable, and unverifiable. Needs quantified criteria (latency target, a measurable relevance/acceptance signal).",
         "verdict": "weak"
       }
     },
     "invest_quality|PRD-MATCH-E1|982249bd|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Epic has clear goal, business-context links (PRD-MATCH, BRD-G2), success criteria tied to weekly-match-rate, and explicit in/out scope.",
         "verdict": "ok"
       }
     },
     "invest_quality|PRD-MATCH|6ef8ad25|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "PRD has overview, personas, flows, full MoSCoW, NFRs, and metric-to-goal mapping; well-formed and independent.",
         "verdict": "ok"
       }
     },
     "invest_quality|PRD-PREMIUM-E1-S1|e5f44b06|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "S1 see-who-liked-you: 4 Given/When/Then AC, testable, sized M; instant-match-on-relike AC loops back to the connection core.",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-PREMIUM-E1-S2|82cd5b3b|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "S2 timed boost: concrete AC (exactly 30 min, countdown, post-summary, non-paid block); independent, testable, sized M.",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-PREMIUM-E1|019f8b55|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "PRD-PREMIUM-E1: scope in/out crisp, success criteria measurable (conversion + ARPU), independent and small enough.",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-PREMIUM|26b9a8eb|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "PRD-PREMIUM: MoSCoW well-sorted, honest me-too competitive framing, metrics tie cleanly to BRD-G3. Negotiable/Valuable/Testable hold at PRD level.",
         "rating": "pass"
       }
     },
     "invest_quality|PRD-SAFETY-E1-S1|1c73ea43|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "invest": "pass",
         "note": "4 Given/When/Then AC, concrete thresholds (60s, >=90%, 3/24h, ID delete 24h); I/N/V/E(M)/S/T all hold",
@@ -420,7 +420,7 @@
       }
     },
     "invest_quality|PRD-SAFETY-E1-S2|169b4b79|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "invest": "pass",
         "note": "4 concrete AC (3s confirm, 10s queue, 5-report threshold, 24h dedup); I/N/V/E(S)/S/T all hold",
@@ -428,7 +428,7 @@
       }
     },
     "invest_quality|PRD-SAFETY-E1|afee85f3|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "invest": "n/a",
         "note": "epic goal/context/success-criteria/scope in+out all present",
@@ -436,7 +436,7 @@
       }
     },
     "invest_quality|PRD-SAFETY|1b1dc2cb|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "invest": "n/a",
         "note": "PRD-level; MoSCoW/NFR/metrics->BRD all present and crisp",
@@ -444,21 +444,21 @@
       }
     },
     "invest_quality|PRODUCT|12f8eb81|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Thin-labels-only doc; DRY (core_value lives in frontmatter, body deliberately blank). Personas and one-liner consistent with vision.",
         "verdict": "ok"
       }
     },
     "invest_quality|VISION|44634e30|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Vision narrative is coherent; problem, 3 distinct personas, value-prop and north-star all present and mutually consistent.",
         "verdict": "ok"
       }
     },
     "invest|PRD-CHAT-E1-S3|0e54d9bf|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest",
         "note": "Independent/Small/Estimable OK, but not Testable: AC use 'mượt mà', 'nhanh', 'không giật lag' with no measurable threshold (latency/fps). Title and AC restate each other.",
@@ -466,7 +466,7 @@
       }
     },
     "invest|PRD-CHAT-E1-S4|628c183c|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "invest",
         "note": "Not Small (safety spans a large surface) and not Testable: 'an toàn tuyệt đối' / 'bảo vệ hoàn toàn' are absolutes that cannot be verified. Needs concrete behaviors (block/report/filter) and bounded scope.",
@@ -474,28 +474,28 @@
       }
     },
     "vagueness|BRD-G1|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Quantified target and timeframe; not vague.",
         "verdict": "ok"
       }
     },
     "vagueness|BRD-G2|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Specific percentage and cadence.",
         "verdict": "ok"
       }
     },
     "vagueness|BRD-G3|none|en|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "'Operational break-even by year 2' is a concrete financial milestone.",
         "verdict": "ok"
       }
     },
     "vagueness|PRD-AIREC-E1-S1|917f7bc9|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "AC are numeric and observable (>=20 profiles, <20 profiles, within 2 seconds, never-empty discovery). No untestable 'fast/relevant/smart' language; thresholds pinned.",
@@ -503,7 +503,7 @@
       }
     },
     "vagueness|PRD-AIREC-E1|a2c8a061|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "Success criteria are measurable (weekly match rate vs distance-only baseline; default ordering when data insufficient). Scope boundaries explicit. No vague verbs.",
@@ -511,7 +511,7 @@
       }
     },
     "vagueness|PRD-AIREC|c258d8fd|vi|": {
-      "stored_at": "2026-06-02T03:10:06+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "Concrete: discovery-ranking by model score vs distance-only, signal capture for training, sane default ordering for cold-start. Quantifiable success via weekly-match-rate->BRD-G2. No hand-wavy 'smart/AI-powered' filler left unscoped.",
@@ -519,21 +519,21 @@
       }
     },
     "vagueness|PRD-CHAT-E1-S1|8943eb03|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Every AC carries a measurable threshold; no weasel words.",
         "rating": "none"
       }
     },
     "vagueness|PRD-CHAT-E1-S2|8c751c9f|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "AC are binary/measurable (reject, nothing stored, close within 5s).",
         "rating": "none"
       }
     },
     "vagueness|PRD-CHAT-E1-S3|0e54d9bf|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "AC are unfalsifiable adjectives ('phải mượt mà', 'hiển thị nhanh'). No concrete success measure; AC echo the story title.",
@@ -541,7 +541,7 @@
       }
     },
     "vagueness|PRD-CHAT-E1-S4|628c183c|vi|": {
-      "stored_at": "2026-06-02T02:58:40+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "'an toàn tuyệt đối', 'hành vi xấu', 'bảo vệ người dùng hoàn toàn' are undefined absolutes (gold-plating). No concrete trigger or system response specified.",
@@ -549,21 +549,21 @@
       }
     },
     "vagueness|PRD-CHAT-E1|eb20b520|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Goal/scope unambiguous; in/out scope enumerated explicitly.",
         "rating": "low"
       }
     },
     "vagueness|PRD-CHAT|1cfc4161|vi|": {
-      "stored_at": "2026-06-02T02:40:26+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Requirements concrete. Only the NFR 'low latency on common VN mobile networks' lacks a number, acceptable at PRD altitude since S1 AC pins 2s/1s.",
         "rating": "low"
       }
     },
     "vagueness|PRD-CHAT|8431d127|vi|": {
-      "stored_at": "2026-06-02T01:57:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "Concrete scope and requirements; only NFR latency is qualitative ('low latency') which is acceptable at PRD level since stories carry the numeric thresholds.",
@@ -571,7 +571,7 @@
       }
     },
     "vagueness|PRD-EVENTS-E1-S1|40cb8605|vi|": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "rationale": "Không có từ mơ hồ (should/fast/intuitive); mọi tiêu chí đều định lượng (50km, 3 giây, 4G, empty-state cụ thể).",
@@ -579,7 +579,7 @@
       }
     },
     "vagueness|PRD-EVENTS-E1-S2|a8852e0b|vi|": {
-      "stored_at": "2026-06-02T02:14:18+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "rationale": "Không có thuật ngữ mơ hồ; bất biến số chỗ và ngưỡng thời gian (2 giây) đều cụ thể, kiểm thử được.",
@@ -587,7 +587,7 @@
       }
     },
     "vagueness|PRD-EVENTS-E1-S3|3b04bb23|vi|": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "Acceptance criteria are specific and measurable (max 4 tickets, 10-minute temporary hold, electronic ticket with QR check-in, 24h reminder, sold-out label + disabled button, filter by city and genre pop/indie/EDM/nhac-tre). No hand-wavy 'fast/easy/intuitive' language; each AC is observable.",
@@ -595,7 +595,7 @@
       }
     },
     "vagueness|PRD-EVENTS|1733e335|vi|": {
-      "stored_at": "2026-06-02T03:21:13+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "check": "vagueness",
         "note": "Low vagueness. MoSCoW buckets are explicit (incl. an empty-with-reason Must), Won't-this-round is enumerated, the gold-plating/solution-first risk is named in prose with concrete rationale, and the metric-to-goal mapping flags its own indirectness. Nothing material left to interpretation.",
@@ -603,105 +603,105 @@
       }
     },
     "vagueness|PRD-MATCH-E1-S1|0ebcb5e1|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Every AC carries a measurable threshold or observable behavior; not vague.",
         "verdict": "ok"
       }
     },
     "vagueness|PRD-MATCH-E1-S2|cfc87b23|vi|": {
-      "stored_at": "2026-06-02T05:35:20+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Not vague: every AC is measurable with explicit thresholds and statistical criteria; no weasel words.",
         "result": "pass"
       }
     },
     "vagueness|PRD-MATCH-E1-S2|e98127fb|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Both AC are hand-wavy adjectives ('fast and accurate', 'feels suitable') with no threshold; cannot be tested or signed off as written.",
         "verdict": "vague"
       }
     },
     "vagueness|PRD-MATCH-E1|982249bd|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Scope boundaries are explicit (messaging, identity-verify, AI-rec out of scope).",
         "verdict": "ok"
       }
     },
     "vagueness|PRD-MATCH|6ef8ad25|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Concrete flows and explicit Won't-this-round scope (AI rec deferred to PRD-AIREC).",
         "verdict": "ok"
       }
     },
     "vagueness|PRD-PREMIUM-E1-S1|e5f44b06|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "AC concrete: blurred-count for non-paid, full sorted list for paid, unlock within 5s, instant match on relike.",
         "rating": "clear"
       }
     },
     "vagueness|PRD-PREMIUM-E1-S2|82cd5b3b|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "AC concrete: exact 30-min window, countdown + view-count display, post-boost summary, non-paid block.",
         "rating": "clear"
       }
     },
     "vagueness|PRD-PREMIUM-E1|019f8b55|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Goal and success criteria concrete; no weasel terms.",
         "rating": "clear"
       }
     },
     "vagueness|PRD-PREMIUM|26b9a8eb|vi|": {
-      "stored_at": "2026-06-02T02:27:15+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Quantified where it counts (boost 30 min, sync immediate); payment-gateway deferral named explicitly as build-team choice, not vague hand-wave.",
         "rating": "clear"
       }
     },
     "vagueness|PRD-SAFETY-E1-S1|1c73ea43|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "all AC quantified and testable",
         "rating": "low"
       }
     },
     "vagueness|PRD-SAFETY-E1-S2|169b4b79|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "thresholds and dedup window explicit",
         "rating": "low"
       }
     },
     "vagueness|PRD-SAFETY-E1|afee85f3|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "scope boundaries explicit, success criteria measurable",
         "rating": "low"
       }
     },
     "vagueness|PRD-SAFETY|1b1dc2cb|vi|": {
-      "stored_at": "2026-06-02T01:44:51+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "concrete flows: liveness selfie vs ID, report->moderation queue",
         "rating": "low"
       }
     },
     "vagueness|PRODUCT|12f8eb81|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Labels are crisp and specific; no hand-wavy prose.",
         "verdict": "ok"
       }
     },
     "vagueness|VISION|44634e30|vi|": {
-      "stored_at": "2026-06-02T01:26:16+00:00",
+      "stored_at": "2026-06-03T00:00:00+00:00",
       "verdict": {
         "note": "Concrete framing (real-connection vs vanity-match); north-star quantified (7+ day back-and-forth chats).",
         "verdict": "ok"

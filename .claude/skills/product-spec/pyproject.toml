@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["scripts/tests"]
+python_files = "test_*.py"
+addopts = "-q --strict-markers"
+markers = [
+  "bug_class: cross-cutting safety/robustness invariant selected across skills by the cross-skill CI gate (D12).",
+]

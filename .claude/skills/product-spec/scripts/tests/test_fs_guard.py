@@ -76,6 +76,7 @@ def test_path_assert_blocks_sibling_of_docs_product(tmp_path):
         assert_under_docs_product(target, root)
 
 
+@pytest.mark.bug_class  # cross-skill invariant: symlink-escape refusal
 def test_path_assert_blocks_symlink_escape(tmp_path):
     root = tmp_path
     outside = tmp_path / "outside"

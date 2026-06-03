@@ -2,14 +2,14 @@
   "PRD-CHAT-E1-S1": {
     "blocker_count": 0,
     "lang": "vi",
-    "last_ts": "2026-06-03T00:00:00",
+    "last_ts": "2026-06-03T00:00:00+00:00",
     "lens_findings_hash": null,
     "level": 5
   },
   "PRD-CHAT-E1-S2": {
     "blocker_count": 0,
     "lang": "vi",
-    "last_ts": "2026-06-03T00:00:00",
+    "last_ts": "2026-06-03T00:00:00+00:00",
     "lens_findings_hash": null,
     "level": 5
   },
@@ -17,7 +17,7 @@
     "blocker_count": 4,
     "drift_since": 0,
     "lang": "vi",
-    "last_ts": "2026-06-03T04:44:49+00:00",
+    "last_ts": "2026-06-03T00:00:00+00:00",
     "lens_findings_hash": "196b1f155bf4b30f",
     "level": 9,
     "provenance_hash": "30dfa9175360a17d",

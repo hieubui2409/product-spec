@@ -218,6 +218,7 @@ def test_dup_id_sentinel_invalid_id_not_reported():
     assert dup_findings == [], f"Expected no dup_id for sentinel, got {dup_findings}"
 
 
+@pytest.mark.bug_class  # cross-skill invariant: id-collision sentinel integrity (untracked-asset class)
 def test_dup_id_real_collision_still_reported():
     """A genuine ID collision on a real (non-sentinel) ID must still be reported."""
     graph = _minimal_graph_with_nodes([

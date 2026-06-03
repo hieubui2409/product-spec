@@ -39,8 +39,10 @@ import render_explorer
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "dashboard", "board", "explorer")
-FORMATS = ("ascii", "mermaid", "html")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "dashboard", "board", "explorer", "audit")
+# `md` is accepted ONLY for the `audit` governance view (ASCII + markdown, no HTML this phase);
+# requesting it for any other view is rejected with a friendly note.
+FORMATS = ("ascii", "mermaid", "html", "md")
 # Legal `--layers` tokens for the body viewers (artifact TYPE, matching the CLI
 # help + card type badge). Distinct from the EXPORT doc-layer vocab (vision,brd,…).
 # Single source: render_ascii._BOARD_CARD_TYPES owns this list; mirroring it here
@@ -240,6 +242,27 @@ def main() -> int:
              "(a `*` marker on graph views; a card on board/explorer).",
     )
     args = ap.parse_args()
+
+    # C9 audit governance view: self-contained ASCII+md assembler (no graph dispatch,
+    # no HTML emitter — keeps the view registry off the XSS watch this phase).
+    if args.view == "audit":
+        import assemble_audit_trail
+        afmt = args.format or "ascii"
+        if afmt in ("html", "mermaid"):
+            print(f"note: 'audit' is ASCII+md only; rendering ascii "
+                  f"(requested --format {afmt} has no audit form).", file=sys.stderr)
+            afmt = "ascii"
+        data = assemble_audit_trail.assemble(Path(args.root).resolve())
+        if afmt == "md":
+            print(assemble_audit_trail.render_markdown(data, args.lang))
+        else:
+            print(assemble_audit_trail.render_ascii(data, args.lang))
+        return 0
+
+    # `md` is audit-only — reject it for every other view (keeps each surface's help honest).
+    if args.format == "md":
+        print("--format md is only valid for --view audit.", file=sys.stderr)
+        return 2
 
     # Resolve the per-view default format: body viewers + the HTML-native
     # multi-dim/matrix views default to html; the other graph views to ascii.

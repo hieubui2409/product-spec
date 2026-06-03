@@ -34,8 +34,10 @@ CLI:
 """
 
 import argparse
+import contextlib
 import datetime as dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -47,6 +49,46 @@ from encoding_utils import configure_utf8_console
 from fs_guard import assert_under_docs_product
 
 configure_utf8_console()
+
+
+# A rationale line that is a bare `---` fence would split decisions.md into a phantom
+# record under _RECORD_RE; a line that is a `## DEC-<n>` heading could smuggle a fake
+# decision heading. Both are neutralized on write (C3). We backslash-escape them: the
+# content is preserved + markdown-correct (`\---`, `\## ` render literally) while the
+# line no longer matches the line-anchored record/heading patterns.
+_INJ_FENCE_RE = re.compile(r"(?m)^(---+\s*)$")
+_INJ_DEC_HEADING_RE = re.compile(r"(?m)^(##\s+DEC-)")
+
+
+def sanitize_rationale(rationale: str) -> str:
+    """Neutralize record-fence / DEC-heading injection in PO/finding-supplied rationale,
+    preserving the text. See the module note above for the threat (C3)."""
+    out = _INJ_FENCE_RE.sub(r"\\\1", rationale)
+    out = _INJ_DEC_HEADING_RE.sub(r"\\\1", out)
+    return out
+
+
+@contextlib.contextmanager
+def _register_lock(root):
+    """Best-effort exclusive file lock so alloc-id + append happen as ONE critical
+    section (C4 — closes the TOCTOU window where two looped allocs could collide).
+    POSIX uses fcntl.flock; on platforms without it the lock degrades to a no-op
+    (single-PO desktop use), which is the prior behaviour, not a regression."""
+    lock_path = Path(root) / "docs" / "product" / ".decision_register.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fh = open(lock_path, "w")
+    try:
+        try:
+            import fcntl
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        except (ImportError, OSError):
+            pass  # no flock on this platform → degrade to no-op
+        yield
+    finally:
+        with contextlib.suppress(Exception):
+            import fcntl
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        fh.close()
 
 
 class DecisionError(ValueError):
@@ -230,7 +272,7 @@ def append_decision(
         )
 
     record = _render_record(
-        dec_id, title, rationale,
+        dec_id, title, sanitize_rationale(rationale),
         date or dt.date.today().isoformat(),
         affects, supersedes, status,
     )
@@ -290,12 +332,41 @@ def _supersede_in_place(root, dec_id: str) -> bool:
     return flipped["hit"]
 
 
+def append_alloc(
+    root,
+    title: str,
+    rationale: str,
+    affects: str = "",
+    supersedes: str = "",
+    date: Optional[str] = None,
+    status: str = "active",
+) -> Dict[str, Any]:
+    """Allocate the next id AND append in ONE locked critical section (C4).
+
+    The apply-critique loop never holds an allocated id across a PO-interaction gap —
+    it gathers the ruling first, then calls this once to alloc+append atomically. On a
+    dup-id race (shouldn't happen under the lock, but defended) `append_decision` raises
+    and we return `{"written": false, ...}` so the loop can abort/retry — never silently
+    drop a ruling. Returns a dict mirroring the CLI JSON."""
+    with _register_lock(root):
+        dec_id = alloc_id(root)
+        path = append_decision(
+            root, dec_id=dec_id, title=title, rationale=rationale,
+            affects=affects, supersedes=supersedes, date=date, status=status,
+        )
+        if supersedes:
+            _supersede_in_place(root, supersedes)
+    return {"id": dec_id, "path": str(Path(path).relative_to(Path(root).resolve())), "written": True}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--alloc-id", action="store_true", help="print the next free DEC-<n>")
     mode.add_argument("--append", action="store_true", help="append a decision record")
+    mode.add_argument("--append-alloc", action="store_true",
+                      help="atomic: alloc the next id AND append in one locked critical section")
     mode.add_argument("--list", action="store_true", help="print active decisions as JSON")
     ap.add_argument("--id", help="decision id (with --append); default = alloc")
     ap.add_argument("--title")
@@ -311,6 +382,13 @@ def main() -> int:
             return 0
         if args.list:
             print(json.dumps({"active": list_active(root)}, indent=2, ensure_ascii=False))
+            return 0
+        if args.append_alloc:
+            result = append_alloc(
+                root, title=args.title or "", rationale=args.rationale or "",
+                affects=args.affects, supersedes=args.supersedes,
+            )
+            print(json.dumps(result, ensure_ascii=False))
             return 0
         # --append
         dec_id = args.id or alloc_id(root)

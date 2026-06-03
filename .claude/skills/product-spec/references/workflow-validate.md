@@ -277,6 +277,19 @@ When generating reports or summaries:
 3. Call `generate_templates.py --type exec_summary --values <json> --write` to render `docs/product/exec-summary.md`.
 4. Optionally render an HTML version: `visualize.py --view tree --format html --root <root>` and bundle.
 
+### `--audience` modifier (E4)
+
+`--summary` takes an optional `--audience` flavor (NO new top-level flag — DRY over this same value-assembly path; M1: `generate_templates.render()` is token-substitution, so reuse the value path that BUILDS the token values, then render):
+
+- **`--audience exec`** (default) — exactly the flow above. Byte-for-byte the current exec one-pager.
+- **`--audience release-notes`** — "what changed since the last approved snapshot". Build the
+  `{{changes_since_approved}}` value from the C9 audit trail:
+  `assemble_audit_trail.since_last_approved(root)` → `render_release_delta_md(delta, lang)`. Fill the
+  `release_notes` template: `generate_templates.py --type release_notes --values <json> --write` →
+  `docs/product/release-notes.md`. Bilingual via session `lang`.
+  - **Dependency:** `release-notes` needs the audit trail (Phase 4); `exec` is independent and ships
+    without it. If the audit trail is unavailable, only `release-notes` is gated — `exec` always works.
+
 ## `--decision` Flow
 
 `--decision` is the PO's manual entry point into the Decision Register — the same register the Contradiction Protocol auto-writes (above). Use it to log a standalone ruling that did not arise from a contradiction (e.g. "we will NOT support multi-currency in v1"), so the choice is recorded once and never re-debated.
