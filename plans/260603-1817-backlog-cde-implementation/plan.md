@@ -123,3 +123,20 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | A7 | Citation `:87`→`:84`; evidence-mirror is no-op | Medium | **Accept** — corrected/dropped |
 
 PO rulings: cut new lens + strengthen existing lenses; `goal_without_metric` = `error` with fixture/eval updates; keep Phase 8 (retitled). Phase 8 effort M→0.75d after lens cut.
+
+## Validation Log
+
+### Session — 2026-06-03
+Verification pass SKIPPED per validate-workflow guard (`## Red Team Review` already present with `file:line` evidence from 2 rounds; no `[UNVERIFIED]` tags). 4 critical questions on genuine remaining decision points.
+
+| Q | Decision | Effect |
+|---|----------|--------|
+| MVP scope | **Build all 8 phases** this round (no MVP cut) | No change |
+| `goal_without_metric` severity | **`error`** — PO confirms no real in-flight specs with metric-less goals are affected | Phase 8 unchanged (error stays) |
+| `--discover` input | **Files AND directories** (bounded recursion); fences retained — *rolled back from files-only same session per PO* | Phase 6: dir input walked with depth/count cap, every file still fenced |
+| E1 sequencing | **One full phase** (hardening not split off) | Phase 3 unchanged |
+
+**Phase propagation:** Phase 6 updated (`<!-- Updated: Validation Session 1 - accept files + directories (bounded recursion), fences retained -->`).
+
+### Whole-Plan Consistency Sweep
+Re-read plan.md + all 8 phases. Only Phase 6 changed (accepts files + bounded-recursion dirs, all security fences retained); no other phase references `--discover` input shape. Phase 6 "path(s)" wording consistent. No stale terms, no contradictory claims, no superseded decisions left. **Zero unresolved contradictions.**

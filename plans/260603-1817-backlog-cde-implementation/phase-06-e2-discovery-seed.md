@@ -8,6 +8,7 @@ dependencies: [3]
 ---
 
 # Phase 6: E2 discovery seed (`product-spec --discover`)
+<!-- Updated: Validation Session 1 - accept files + directories (bounded recursion), fences retained -->
 
 > **Kept as a separate flag after red-team (2026-06-03)** — `--discover` (ingest upstream raw text →
 > candidate seeds) is semantically distinct from `--auto` (decompose a finished brain-dump into the
@@ -34,7 +35,8 @@ start. Never auto-commits — the interview confirms field-by-field.
   - Resolve each input path; **reject traversal/symlink-escape outside the project root** (reuse `_is_within`).
   - **Extension allow-list**: `.md`, `.txt` only (reject everything else).
   - **Exclude dotfiles** (never read `.env`/`.aws`/`.ssh`/etc.).
-  - **Size cap** per file + bounded recursion if a directory is given; **echo the resolved file list back to the PO for confirm before reading**.
+  - **Files AND directories accepted** (PO validation 2026-06-03, rolled back to allow dirs) — a directory is walked with **bounded recursion** (depth + file-count cap), each discovered file still passing the fence/allow-list/dotfile/size filters below.
+  - **Size cap** per file + bounded recursion for directory inputs; **echo the resolved file list back to the PO for confirm before reading** (the confirm step is the safety net for dir inputs that fan out).
 - Output: a draft seed presented at interview start ("found these — confirm/edit/reject") feeding V1/V2. PO confirms each before anything is written. GATE-NEVER-ASSUME: no persona written without explicit confirm.
 
 ## Related Code Files
@@ -45,15 +47,15 @@ start. Never auto-commits — the interview confirms field-by-field.
 
 ## Implementation Steps
 > **TDD:** write step 5 tests FIRST (incl. the fence/secret tests + the no-auto-commit gate test), confirm fail, implement to green, re-run full suite.
-1. `ingest_raw_inputs.py`: path resolve + `_is_within` fence + `.md/.txt` allow-list + dotfile exclusion + size cap + (bounded) dir recursion; echo resolved list for PO confirm; emit a draft scaffold.
+1. `ingest_raw_inputs.py`: path resolve + `_is_within` fence + `.md/.txt` allow-list + dotfile exclusion + size cap + **bounded directory recursion (depth + file-count cap)**; echo resolved list for PO confirm; emit a draft scaffold.
 2. `workflow-discover.md`: candidate-synthesis rules, confirm/edit/reject handoff into Vision, GATE-NEVER-ASSUME enforcement.
 3. Register flag + menu + plain-language description.
 4. Update E1 coupling note (none — independent of apply-critique except both ingest; this phase depends on [3] only for shared fence patterns if reused).
-5. Tests: traversal/symlink rejected; dotfile (`.env`) skipped; non-`.md/.txt` rejected; oversize rejected; ingest fixture transcripts → candidate draft; **gate test: NO persona committed without a confirm step**.
+5. Tests: traversal/symlink rejected; **directory input walked with bounded recursion (depth/count cap enforced)**; dotfile (`.env`) skipped even inside a dir; non-`.md/.txt` rejected; oversize rejected; ingest fixture transcripts → candidate draft; **gate test: NO persona committed without a confirm step**.
 
 ## Success Criteria
 - [ ] `--discover <files>` reads only `_is_within` + `.md/.txt` + non-dotfile + size-capped inputs; resolved list echoed for confirm.
-- [ ] Traversal/symlink/dotfile/oversize/wrong-ext all rejected (tested) — no secret disclosure path.
+- [ ] Traversal/symlink/dotfile/oversize/wrong-ext rejected (tested); **directory inputs walked with bounded recursion (depth/count cap)**, each file still fenced — no secret disclosure path.
 - [ ] Candidate seeds the Vision interview; nothing written to PRODUCT.md/vision.md without confirmation (gate test).
 - [ ] Scope stays tight (no entity-extraction/clustering gold-plating); no network. Tests pass; full suite green.
 
