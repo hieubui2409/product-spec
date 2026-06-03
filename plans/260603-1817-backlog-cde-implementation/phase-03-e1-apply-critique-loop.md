@@ -69,7 +69,9 @@ when a Change overturns a prior Keep on the same fingerprint, so exactly one act
 3. `decision_register.py`: add `--append-alloc` (lock + alloc + append in one process); add rationale sanitization (reject `^---`/`^## DEC-` lines / literal-block).
 4. `workflow-apply-critique.md`: per-finding Keep/Change/Defer interview; resume-marker read/write; GATE re-approval with `--supersedes`; freshness-warning UX (bilingual).
 5. Register flag + no-flag menu + CLAUDE.md pointer.
-6. Tests: read-fence (traversal/symlink rejected); injection fixture (finding text with `---` fence → no phantom DEC); atomic alloc (no dup id under simulated concurrent/looped alloc); resume (interrupt → re-run skips resolved, no dup DEC); GATE re-approval **bypass test** (Change without fresh owner+date FAILS); `--supersedes` flips prior DEC to superseded; `body_hash:None` warns; cache-JSON parse on a real frontmatter'd fixture generated via the actual critique path; bilingual report.
+6. Tests: read-fence (traversal/symlink rejected); injection fixture (finding text with `---` fence → no phantom DEC); atomic alloc (no dup id under simulated concurrent/looped alloc); resume (interrupt → re-run skips resolved, no dup DEC); GATE re-approval **bypass test** (Change without fresh owner+date FAILS); `--supersedes` flips prior DEC to superseded; `body_hash:None` warns; cache-JSON parse on a real frontmatter'd fixture; bilingual report.
+
+> **Freshness fixture source (Phase-9 red-team H2/H5):** the committed `/e2e/dating-app/` critique reports already carry frontmatter + `body_hash` → use them as the freshness fixture (do NOT hand-author one). If this phase builds before Phase 9, copy a minimal frontmatter'd critique fixture from `/e2e/dating-app/`; Phase 9 (9a) later curates/supersedes it.
 
 ## Success Criteria
 - [ ] Findings resolved from the lens-cache JSON (fingerprinted); prose fallback only when cache absent.

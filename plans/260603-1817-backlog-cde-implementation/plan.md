@@ -66,7 +66,8 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Pending |
 | 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Pending |
 | 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Pending |
-| 9 | [Capstone — real E2E + full example + docs sweep + changelogs](./phase-09-e2e-example-docs-changelogs.md) | Pending |
+| 9 | [9a — E2E (selectively extend /e2e/dating-app) + lv5 acme showcase](./phase-09-e2e-example-docs-changelogs.md) | Pending |
+| 10 | [9b — docs sweep + changelog backfill](./phase-10-docs-sweep-changelog-backfill.md) | Pending |
 
 ## Dependencies
 
@@ -78,7 +79,7 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 
 **Independent:** Phase 7 (D11 cleanup).
 
-**Phase 9 (capstone)** `dependencies: [1..8]` — real E2E + example refresh + docs sweep + changelog backfill run LAST, after every feature lands. DRY note: Phase 1 *scaffolds* the product-spec*/CHANGELOGs; Phase 9 *backfills* them from git log. The refreshed real critique example also serves as Phase 3's E1 freshness fixture (closes red-team H2).
+**Phase 9 (9a)** `dependencies: [1..8]` — selectively extend the already-committed `/e2e/dating-app/` run (keep valid artifacts, recreate only what new features touch) + add a lv5 acme showcase (lv7-9 safety fixtures kept untouched). The committed `/e2e/dating-app/` critique reports (frontmatter-bearing) serve as **Phase 3's E1 freshness fixture** — resolving the ordering inversion (closes red-team H2). **Phase 10 (9b)** `dependencies: [9]` — docs sweep + changelog backfill (Phase 1 scaffolds the CHANGELOGs; 9b backfills them by commit-subject-scope + `--follow`, NOT raw path log — red-team H5).
 
 **Cross-plan:** none. Prior plans (`260528-…product-spec-skill`, `260602-…spec-critique-*`, `260529-…claude-pack-skill`, etc.) are shipped features this plan extends; no blocking relationship.
 
@@ -143,3 +144,25 @@ Verification pass SKIPPED per validate-workflow guard (`## Red Team Review` alre
 
 ### Whole-Plan Consistency Sweep
 Re-read plan.md + all 8 phases. Only Phase 6 changed (accepts files + bounded-recursion dirs, all security fences retained); no other phase references `--discover` input shape. Phase 6 "path(s)" wording consistent. No stale terms, no contradictory claims, no superseded decisions left. **Zero unresolved contradictions.**
+
+## Red Team Review (cont.)
+
+### Session — 2026-06-03 (Phase 9 capstone)
+2 reviewers (Failure-Mode, Assumption-Destroyer). 2 Critical · 5 High · 2 Medium. Report: `reports/from-code-reviewer-to-planner-red-team-phase9-capstone-review-report.md`. Pivoted the phase.
+
+| # | Finding | Sev | Disposition |
+|---|---------|-----|-------------|
+| C1/C2 | Wholesale-delete reds committed tests incl. a SAFETY harm-floor grounding contract | Critical | **Accept** — PO: keep lv7-9 safety fixtures+test untouched; acme showcase = additive lv5; no wholesale delete |
+| H1 | `/e2e/dating-app/` already committed (full run + caches) — unreconciled | High | **Accept** — PO: selectively extend it (keep/recreate), don't redo |
+| H2 | Phase-3 freshness fixture ordering inversion (circular) | High | **Accept** — dating-app critique reports (frontmatter) = Phase 3 fixture |
+| H3 | inherit/rollup OFF by default + never exercised | High | **Accept** — explicit prefs-on + parent→child→parent named nodes |
+| H4 | 2 driving workflow refs net-new (apply-critique/discover) | High | **Accept** — `[1..8]` gate mandatory; ref grouping fixed |
+| H5 | Changelog backfill mis-attributable (contaminated path history) | High | **Accept** — 9b: subject-scope + `--follow`, not raw path log |
+| M1 | Committed caches: timestamps + abs paths + web-scraped text | Med | **Accept** — scrub ts/paths, exclude web-cache; "leak NONE" corrected |
+| M2 | Bilingual two-run vs freeze-pair body_hash contradiction | Med | **Accept** — one canonical-lang fixture (default vi) |
+| M3 | "Repeatable script smoke" needs LLM artifacts → vacuous | Med | **Accept** — reframed as fixture-replay asserting real values |
+
+PO rulings: keep acme lv7-9 safety fixtures untouched + add lv5 acme showcase; selectively extend `/e2e/dating-app`; **split Phase 9 → 9a (E2E+examples, phase 9) + 9b (docs+changelog, phase 10)**. Test impact minimized (safety grounding untouched; golden re-baseline only if files added).
+
+### Whole-Plan Consistency Sweep (Phase 9)
+Re-read all 10 phases. Phase 9 split into 9/10; Phase 3 freshness-fixture source now points at `/e2e/dating-app/` (inversion resolved); plan table + dependencies updated. No phase still claims "wholesale delete" or "lv7-9 regenerate". **Zero unresolved contradictions.**
