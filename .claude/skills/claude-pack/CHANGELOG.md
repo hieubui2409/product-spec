@@ -7,6 +7,50 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-06-03
+
+Hardens spec-critique's bilingual output and ships the regenerated reference fixtures.
+The consolidator now renders English reports fully in English (a root-cause fix for a
+Vietnamese-leak regression), the English level-9 voice has a concrete "sustained
+profanity" floor so it outscales level 8, and a new advisory language-purity check
+guards the leak class. Report-only, additive, backward-compatible.
+
+### Added — spec-critique
+
+- **Advisory en-language-purity check** (`scripts/check_report_language.py`): flags a
+  Vietnamese STRUCTURAL leak (heading/label/register denylist) in a `lang: en` report,
+  separated from review-only signals (vi glosses, proper nouns, quoted Vietnamese source
+  text — legitimate when the source spec is Vietnamese). Never gates (advisory, exit 0).
+  Confirms the 18 committed fixtures carry zero structural leak.
+- **lens-per-language design decision** recorded in `voice-and-tone.md`: language is a
+  source-anchored IDENTITY axis (a lang change re-lenses; it is part of provenance),
+  level is the render-time axis. A shared neutral-interlingua lens was considered and
+  rejected on YAGNI grounds (a spec is critiqued in one language; the translation cost +
+  native-quality loss are real, the saving illusory).
+
+### Changed — spec-critique
+
+- **English reports render fully in English.** The consolidate-agent contract was
+  vi-only and contradicted `voice-and-tone.md`; headings, why/fix labels, and register
+  are now lang-conditioned, with an explicit EN register mapping (dialect/gender are
+  no-ops in en; profanity-presence separates L7/L8/L9). Fixes Vietnamese headings/labels
+  and (at L9) Vietnamese profanity leaking into en reports.
+- **EN level-9 sustained-profanity floor made concrete:** work-targeted profanity in
+  >=2 distinct finding blocks PLUS >=1 standalone scorn line, strictly heavier than L8's
+  single beat (the mechanical EN L7→L8→L9 boundary).
+- **Descendant-rollup heading** renamed `Rủi ro giao hàng` → `Rủi ro bàn giao`
+  (handover, not shipping) across the agent, the vi guide, and the language-check denylist.
+
+### Tests & fixtures — spec-critique
+
+- **Regenerated the 18 voice-ladder reference fixtures** (vi + en, levels 1-9) via the
+  genuine consolidate→humanize agents over a cached neutral lens run (no re-lens), with
+  frontmatter + the committed lifecycle caches (lens-cache, findings-index, state).
+  Seeded a committed descendant-rollup demo from the real lvl9 blockers.
+- **Parametrized the grounding guard** over the 18 fixtures (graph-aware citation
+  resolver, the ratio rule, a frontmatter contract check) and added the language-check
+  unit tests. spec-critique suite: 150 passing.
+
 ## [1.2.0] — 2026-06-03
 
 Adds the **lifecycle caching + cross-critique inheritance** layer to spec-critique:
