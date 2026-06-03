@@ -37,6 +37,16 @@
 | 9 | 9a E2E | ⚠️ **partial** — see deferral D1 below |
 | 10 | 9b docs sweep + changelog | ⚠️ **partial** — see deferral D2 below |
 
+## Code review (single consolidated pass, 2026-06-03)
+- 🔴→✅ **CRITICAL — `--discover` directory-walk symlink escape (FIXED, commit 2b50e12).** `_walk_dir`
+  passed un-resolved `iterdir()` entries to the lexical fence → a symlink inside a walked dir pointing
+  outside root was read (verified exploit leaked `/tmp` content). Fixed by resolve-then-fence on every
+  walked entry + 2 regression tests (walked symlinked file + dir). Exploit re-run → blocked, 0 leak.
+- ✅ Other 6 invariants verified holding (read-fence, injection-sanitize, GATE reapproval, audit
+  unreconciled, goal_without_metric precedence, viz md/audit gating). 2 LOW observations already
+  resolved (audit dead-boolean simplified pre-commit; `except (DecisionError, Exception)` is
+  pre-existing, out of scope).
+
 ## Open decisions / deferrals (interview later)
 
 - 🟡 **D1 — Phase 9 LLM-driven critique regeneration deferred.** The deterministic Phase-9 contracts ARE
