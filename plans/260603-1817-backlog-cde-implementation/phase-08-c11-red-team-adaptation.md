@@ -1,72 +1,66 @@
 ---
 phase: 8
-title: "C11 red-team adaptation (assumption lens + deterministic gaps)"
+title: "C11 assumption-rigor (strengthen lenses) + goal_without_metric"
 status: pending
 priority: P2
-effort: "1.5d"
-dependencies: [3]
+effort: "0.75d"
+dependencies: []
 ---
 
-# Phase 8: C11 — adapt ck-plan red-team into the spec ecosystem (split: judgment → critique, structural → validate)
+# Phase 8: C11 — assumption-rigor via existing lenses + `goal_without_metric`
 
-> Added 2026-06-03 per PO. Brings the ck-plan red-team *discipline* into product-spec, **split by determinism**
-> so `--validate` stays a reproducible CI gate and the hostile judgment lives where non-determinism already lives.
+> **Revised after Phase-8 red-team (2026-06-03).** The original "add a 5th Assumption-Destroyer lens" was
+> CUT: it duplicates the existing product **Riskiest-assumption** + tech **Hidden-dependencies/assume-success**
+> frameworks (gold-plating — the same DRY test that cut Scope/Security/Failure). Intent ("adapt the red-team
+> assumption discipline") is met by **strengthening the existing lens prompts** — a prompt edit, zero new
+> agent, no +25% cost, no consolidator/manifest rewrite. Half B (`goal_without_metric`) survives, with fixes.
 
 ## Overview
-ck-plan red-team spawns hostile reviewer lenses + an evidence-required adjudication. We adapt it **split**:
-- **Half A (non-deterministic judgment) → `product-spec-critique`:** add ONE new lens — **Assumption-Destroyer** — to the existing 4 (product/tech/market/craft). It is the only ck-plan lens critique lacks.
-- **Half B (deterministic structural risk) → `product-spec --validate`:** add only the genuinely-missing script-able checks (the catalog already covers most). Keep the script-vs-LLM split sacred.
+Two small, justified changes — no new lens, no new sub-agent:
+- **Half A (prompt edit):** sharpen the EXISTING product/tech lens framework rows so every named assumption carries an explicit "if this is wrong → consequence" clause (the red-team assumption discipline, inside lenses that already own it).
+- **Half B (deterministic check):** add `goal_without_metric` to `--validate` — the one real gap the inventory left.
 
-## Why only the Assumption-Destroyer lens (not all 4 ck-plan lenses)
-| ck-plan lens | Adapt? | Reason |
-|---|---|---|
-| **Assumption Destroyer** | ✅ add to critique | critique has no "which unstated assumption kills this" lens — genuine gap |
-| Scope & Complexity Critic | ❌ skip | **gold-plating: `product-critic` already catches "features nobody needs / gold-plating / fake personas"; `market-critic` catches "me-too / no moat."** A Scope lens duplicates them — the very YAGNI violation it would flag. |
-| Security Adversary | ❌ skip | code/impl-level; the spec tool generates no code |
-| Failure Mode Analyst | ❌ skip | runtime/race-level; out of a product-spec's scope |
+## Half A — strengthen existing lenses (NO new lens)
+The assumption angle is already owned (`lens-frameworks.md:16` product Riskiest-assumption; `:29,33` tech
+Hidden-deps / assume-success). Edit those rows to **require an explicit failure-consequence clause**:
+- Product Riskiest-assumption: finding MUST state *"unproven belief X → if wrong, Y happens"* (not just name the assumption).
+- Tech Hidden-dependencies / assume-success: finding MUST name the silently-assumed system/story AND the failure when it's absent.
+- This is a prompt/reference edit only. **NOT touched:** `.claude/agents/` roster, `pack.manifest.yaml`, packaging test, consolidator (N<4 stays), `--product/tech/market/craft` flag set, lens count in docs. No E1 coupling (lens-cache is lens-agnostic — A5) → `dependencies: []`.
 
-## Half B = exactly ONE net-new deterministic check: `goal_without_metric`
-The validate catalog already owns most structural-risk checks — `orphan_*`, `missing_ac`, `low_ac_count`,
-`risk_blindspot`, `gold_plating` (LLM), `vagueness` (LLM — "should/easy/fast"), `invest_quality`,
-`semantic_duplication`, `contradiction`. The inventory leaves **one real gap**, and Half B builds it:
-
-**`goal_without_metric`** — a BRD goal whose `metrics` list is empty or missing.
-- **Verified gap:** `frontmatter-and-id-spec.md:87` declares goal `metrics` **"required, ≥1 metric slug"**, but no script enforces it. `metrics` appears only in `check_consistency.py:88` `LIST_FIELDS` (a *type* check) — an empty/missing list passes validate today. A goal with no measurable target is exactly the "unstated assumption" a red-team catches; here it is fully deterministic.
-- **This check WILL be built** (not conditional). It is the sole Half-B deliverable.
-- **DRY boundary (not a hedge):** do NOT re-implement weasel-word / gold-plating / INVEST — those are already owned. Half B adds `goal_without_metric` and nothing else.
+## Half B — `goal_without_metric` (corrected)
+A BRD goal whose `metrics` is empty or missing.
+- **Verified gap:** spec says goal `metrics` "required, ≥1 metric slug" (`frontmatter-and-id-spec.md:84`) but nothing enforces it (`metrics` at `check_consistency.py:88` is an artifact-level `LIST_FIELDS` *type* check only). No catalog row exists.
+- **Correct code anchor (A4):** goal `metrics` are populated by `spec_graph._node_from_goal:176` onto `type: goal` nodes. Implement by iterating `graph["nodes"]` for `n["type"]=="goal"` with empty/missing `metrics` — NOT beside the `LIST_FIELDS` type loop.
+- **Severity `error`** (mirrors `missing_ac`) — PO decision. Because `error` would turn the shipped `broken-spec` fixture + its eval RED, this phase MUST also (B1):
+  - give `broken-spec`'s goals real `metrics` (both are `metrics:[]` today, `brd.md:11-18`) so the fixture only triggers its intended findings;
+  - seed a **dedicated new fixture** with a metric-less goal + its own eval entry asserting `goal_without_metric`;
+  - update `evals.json` expected-findings sets accordingly (the broken-spec eval at `:30-31` asserts "exactly those issues").
 
 ## Requirements
-- Functional: critique gains an Assumption-Destroyer lens (read-only sub-agent, same evidence `ID:line` + voice discipline as the other 4); validate gains the `goal_without_metric` deterministic check.
-- Non-functional: critique half stays OUT of the CI gate (non-deterministic); validate half stays script-only + reproducible. No network in validate.
-
-## Architecture
-- **Half A (critique):** new `assumption-critic` sub-agent mirroring the existing 4 critics' contract (reads the `critique_scan` bundle, emits `{lens:"assumption", evidence:ID:line, critique, why_it_dies, fix, severity}`), consumed by the existing consolidator + humanizer + voice levels. Lens question: *"what must be true for this to work that the spec never states — and what happens when it isn't?"* (riskiest-assumption framing). No new orchestration — reuse the bundle + consolidator.
-- **Half B (validate):** add `goal_without_metric` to the `validation-rules-spec.md` catalog + implement in `check_consistency.py` (where goal `metrics`/`LIST_FIELDS` already live) as a **script** finding: trigger = a `type: goal` node whose `metrics` is missing or an empty list; message = "BRD goal {id} declares no metric." **Severity `error`** (mirrors `missing_ac` — a parent with zero measurable target is a hard gap; the spec marks `metrics` required). Flows through the existing `strict_gate.py` (exit 2 on error). Closed-field/graph only — no prose judgment.
-- **Coupling with Phase 3 (E1):** the apply-critique parser reads the lens-cache JSON keyed by lens; it MUST tolerate the new `assumption` lens. Hence `dependencies: [3]` — land E1's parser first (or update it here).
+- Functional: existing product/tech lens prompts require an explicit assumption-consequence clause; `--validate` gains `goal_without_metric` (error) over goal nodes.
+- Non-functional: NO new lens/agent/flag; validate half script-only + reproducible + in `strict_gate.py`; no network.
 
 ## Related Code Files
-- Create: `.claude/skills/product-spec-critique/` — assumption-critic sub-agent definition + reference (mirror an existing lens critic, e.g. `product-critic`)
-- Modify: critique `SKILL.md` (register 5th lens), consolidator prompt (accept 5 lenses, tolerate N<5 already supported)
-- Modify (Half B): `product-spec/references/validation-rules-spec.md` (add `goal_without_metric` catalog row) + `product-spec/scripts/check_consistency.py` (implement the check next to the existing `metrics` handling at `:88`)
-- Modify: E1 `parse_critique_report.py` (Phase 3) — accept `assumption` lens key
-- Reference: `.claude/skills/ck-plan/references/red-team-personas.md` (evidence-discipline pattern to mirror)
+- Modify: `product-spec-critique/references/lens-frameworks.md` (sharpen Riskiest-assumption + Hidden-deps rows)
+- Modify: `product-spec/scripts/check_consistency.py` (add `goal_without_metric` over `type:goal` nodes), `product-spec/references/validation-rules-spec.md` (catalog row)
+- Modify: `product-spec/scripts/tests/fixtures/broken-spec/docs/product/brd.md` (give goals real metrics)
+- Create: a new metric-less-goal fixture + `product-spec/eval/evals.json` entry; update broken-spec expected set
+- Explicitly NOT touched: `.claude/agents/*`, `pack.manifest.yaml`, packaging tests, consolidator, lens flags/docs
 
 ## Implementation Steps
-> **TDD:** write the lens-output + new-rule tests FIRST, confirm fail, implement to green, re-run full suite.
-1. Half A: author `assumption-critic` mirroring `product-critic`'s contract; register as 5th lens; confirm consolidator tolerates 5 (and still N<5).
-2. Half B: implement `goal_without_metric` in `check_consistency.py` (missing/empty `metrics` on a `type: goal` node → error finding); add the catalog row to `validation-rules-spec.md`; confirm it surfaces via `strict_gate.py` (exit 2).
-3. Update E1 parser (Phase 3) to accept the `assumption` lens key (or note it as a Phase-3 acceptance item if 3 not yet built).
-4. Tests: assumption-critic emits valid findings on a fixture spec (EN/VI); consolidator renders 5 lenses; `goal_without_metric` fires on a metric-less goal, stays silent on a goal with ≥1 metric, and is reproducible (deterministic ordering); `strict_gate.py` exits 2 when a goal lacks a metric; E1 parses an assumption-lens finding.
+> **TDD:** write Half-B tests FIRST (incl. the new fixture + eval), confirm fail, implement to green, re-run full suite.
+1. Half A: edit the two `lens-frameworks.md` rows to require the consequence clause; no other lens surface touched.
+2. Half B: implement `goal_without_metric` in `check_consistency.py` iterating `type:goal` nodes (missing/empty `metrics` → error); add the catalog row.
+3. Fix fixtures/evals: real metrics on broken-spec goals; new metric-less fixture + eval; update broken-spec expected set.
+4. Confirm `strict_gate.py` exits 2 on the metric-less fixture; confirm broken-spec eval passes unchanged otherwise.
 
 ## Success Criteria
-- [ ] critique runs a 5th **Assumption-Destroyer** lens via the existing sub-agent/consolidator/voice pipeline; stays out of CI.
-- [ ] NO Scope/Security/Failure lens added (justified as duplicative/out-of-scope).
-- [ ] Half B ships `goal_without_metric` (missing/empty goal `metrics` → error), reproducible + enforced by `strict_gate.py`; nothing already-covered (vagueness/gold_plating/INVEST) re-added.
-- [ ] E1 parser tolerates the new lens key.
-- [ ] New tests pass; full existing suite green.
+- [ ] product/tech lens prompts require an explicit "assumption → consequence" clause; NO new lens/agent/flag added.
+- [ ] `goal_without_metric` (error) fires on a `type:goal` node with empty/missing metrics, silent on goals with ≥1 metric, reproducible, enforced by `strict_gate.py`.
+- [ ] broken-spec fixture given real metrics; new metric-less fixture + eval added; `evals.json` expected sets updated; **full suite + evals green** (no false reds from the new error).
+- [ ] No `.claude/agents`/manifest/consolidator/flag/doc changes (blast radius zero beyond the listed files).
 
 ## Risk Assessment
-- Risk: Half B scope-creep re-implementing `vagueness`/`gold_plating` → the DRY boundary is explicit: Half B = `goal_without_metric` only.
-- Risk: `goal_without_metric` as `error` fails existing specs that omit goal metrics → acceptable (the spec already marks metrics required); if it breaks real in-flight specs, downgrade to `warn` is a one-line change, but default is `error`.
-- Risk: 5th lens dilutes critique's voice/cost → it reuses the same consolidator/humanizer, marginal cost; gate behind the existing lens-selection if critique supports per-lens opt-in.
-- Coupling with Phase 3: if E1 ships first, this only adds a lens key; if this ships first, E1 must include `assumption` from day one.
+- Risk: `error` severity breaking fixtures/evals → addressed head-on by step 3 (the whole point of B1).
+- Risk: prompt edit (Half A) drifts lens voice → keep it to the consequence-clause requirement; no scope change to the lens.
+- Half A duplication risk is eliminated by NOT adding a lens; the rigor lives where assumptions already belong.

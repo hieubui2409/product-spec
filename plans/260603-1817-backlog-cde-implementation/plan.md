@@ -27,11 +27,11 @@ Grounded by `plans/reports/research-260603-1758-backlog-cde-grounding-report.md`
 
 **Excluded:** C10 (parked — awaits task-tracker choice), E3 (deferred — product not in market).
 
-**Phase 8 (C11)** added 2026-06-03: adapt the ck-plan red-team *discipline* into the spec ecosystem,
-**split by determinism** — an Assumption-Destroyer lens into `product-spec-critique` (non-deterministic
-home) + only genuinely-missing deterministic checks into `--validate` (which already covers most). The
-other 3 ck-plan lenses are deliberately NOT adapted (Scope = duplicates critique's product/market lens;
-Security/Failure = code/runtime-level, out of a spec's scope).
+**Phase 8 (C11)** added 2026-06-03, **revised after its own red-team**: adapt the red-team *assumption
+discipline* — but NOT as a new lens (that duplicates the existing product **Riskiest-assumption** + tech
+**Hidden-deps** frameworks). Instead **strengthen those existing lens prompts** (require an explicit
+"assumption → consequence" clause) + add the one missing deterministic check `goal_without_metric` to
+`--validate`. No new lens/agent/flag. (All 4 ck-plan lenses now judged already-covered or out-of-scope.)
 
 ### Non-negotiable constraints (every phase)
 - product-spec stays **non-technical-PO-facing** + **NO network at runtime**; **no code generation**.
@@ -65,14 +65,14 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | 5 | [E4 stakeholder brief mode](./phase-05-e4-stakeholder-brief-mode.md) | Pending |
 | 6 | [E2 discovery seed](./phase-06-e2-discovery-seed.md) | Pending |
 | 7 | [D11 micro-util consolidation](./phase-07-d11-micro-util-consolidation.md) | Pending |
-| 8 | [C11 red-team adaptation (assumption lens + deterministic gaps)](./phase-08-c11-red-team-adaptation.md) | Pending |
+| 8 | [C11 assumption-rigor (strengthen lenses) + goal_without_metric](./phase-08-c11-red-team-adaptation.md) | Pending |
 
 ## Dependencies
 
 **Hard (declared in phase frontmatter — reconciled with red-team F8):**
 - Phase 1 → Phase 2 (`[1]`): CI gate verifies the E5 version verifier.
 - Phase 2 → Phase 3 (`[2]`): E1 lands on the CI gate.
-- Phase 3 → Phase 6, Phase 8 (`[3]`): E2 reuses E1's read-fence pattern; C11's assumption-lens key must be in E1's parser.
+- Phase 3 → Phase 6 (`[3]`): E2 reuses E1's read-fence pattern. (Phase 8 no longer depends on Phase 3 — the lens-cache is lens-agnostic and no new lens is added.)
 - Phase 4 → Phase 5 **release-notes flavor only** (`[4]`): the `--summary --audience release-notes` delta needs the C9 trail. **`--audience exec` is independent and carries Phase 5** — so Phase 5 frontmatter is `dependencies: []` with this conditional noted (avoids the F8 "soft prose vs hard frontmatter" contradiction).
 
 **Independent:** Phase 7 (D11 cleanup).
@@ -107,3 +107,19 @@ Phase 2 (D12 CI gate) lands first so every later phase's red/green cycle is also
 | — | Dep frontmatter vs "soft" prose contradiction | Med | reconciled above |
 
 **Whole-plan consistency sweep:** flag-surface decisions (H8) propagated to Phases 4/5/6 + Dependencies; test-anchor reworded plan-wide; D11 title/scope + E1 effort (S→3d) + D12 effort (S-M→1.5d) updated. No unresolved contradictions.
+
+### Session — 2026-06-03 (Phase 8 / C11)
+2 reviewers (Scope, Assumption-Destroyer). 3 Critical · 3 High · 1 Medium. Report: `reports/from-code-reviewer-to-planner-red-team-phase8-c11-review-report.md`.
+
+| # | Finding | Sev | Disposition |
+|---|---------|-----|-------------|
+| A1 | Assumption-lens duplicates product Riskiest-assumption + tech Hidden-deps | Critical | **Accept** — lens CUT; strengthen existing lens prompts instead |
+| A2 | Lens agents live in `.claude/agents/`+manifest+test, not skill subtree | Critical | Moot (lens cut) |
+| A3 | Consolidator hardcodes 4 lenses; "N<5" false (N<4) | Critical | Moot (lens cut) |
+| B1 | `goal_without_metric: error` reds broken-spec fixture + eval | Critical | **Accept** — PO chose `error` + mandatory fixture/eval updates |
+| A4 | Wrong code anchor (`check_consistency:88` vs `spec_graph._node_from_goal:176`) | High | **Accept** — re-anchored to goal nodes |
+| A5 | E1 coupling overstated (lens-cache is lens-agnostic) | High | **Accept** — Phase 8 `dependencies: []` |
+| A6 | 5th-lens edit surfaces undercounted | High | Moot (lens cut) |
+| A7 | Citation `:87`→`:84`; evidence-mirror is no-op | Medium | **Accept** — corrected/dropped |
+
+PO rulings: cut new lens + strengthen existing lenses; `goal_without_metric` = `error` with fixture/eval updates; keep Phase 8 (retitled). Phase 8 effort M→0.75d after lens cut.
