@@ -27,6 +27,14 @@ product-spec-critique **1.1.0** (unchanged), claude-pack **0.2.0** (unchanged).
 - **End-of-session forcing-function** folded into the existing Closing-the-Loop batch (PO-confirmed,
   no auto-write). Full detail in product-spec's CHANGELOG `[2.2.0]`.
 
+### Documentation (all 3 skills)
+- **Guides restructured** — every `GUIDE-EN.md`/`GUIDE-VI.md` now leads with a Core-concepts mental model,
+  a Learning path, and an Important-caveats section, then groups the use cases into approachability tiers
+  (the per-flag sample conversations are preserved). EN/VI parity kept.
+- **READMEs bilingual** — each skill `README.md` rewritten into English + Tiếng Việt sections with a
+  "things to know before you start" quickstart + learning path; the root `README.md` gains a Tiếng Việt
+  section and the engagement-knob row.
+
 ### Changed
 - **Removed the non-functional `--all` flag** — it errored on use and ran against the curated-distribution
   design; use the manifest or `--skills <list>`.

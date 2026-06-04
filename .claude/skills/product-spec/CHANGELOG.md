@@ -38,6 +38,13 @@ PO engagement-profile knobs. Additive + backward-compatible (13 → 15 preferenc
 - **`preferences.py` schema** — `DEFAULTS`/`ENUMS` gain the 2 closed-enum keys (15 keys total). The
   defaults count guard moves 13 → 15.
 
+### Documentation
+- **Guide + README restructured** — `GUIDE-EN.md`/`GUIDE-VI.md` now lead with Core concepts, a Learning
+  path, and Important caveats, then group the use cases into five approachability tiers (Build / Keep-healthy
+  / Share / Tune / Governance-memory); the per-flag sample conversations are preserved. `README.md` rewritten
+  into English + Tiếng Việt sections with a 6-must-knows quickstart and learning path. The engagement knobs
+  are documented end-to-end (`workflow-interview.md` → Engagement profile, with EN/VI seed-question prose).
+
 ### Notes
 - **Cut from this round** (red-team + validate): `standing_reminders` (privacy / prompt-injection),
   `--reflect engagement-profile` harvest (no deterministic anchor signal), and critique wiring (marginal
