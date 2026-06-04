@@ -2,6 +2,12 @@
 
 User-invocable Claude skill for **non-technical product owners**: interview-driven product spec hierarchy (Vision → 1 BRD → many PRDs → Epics → Stories) with strict traceability, validation, and visualization. No code in prose, no engineering jargon.
 
+> 🇬🇧 **English** below · 🇻🇳 **Tiếng Việt** ở nửa dưới (cuộn xuống mục **Tiếng Việt**).
+
+---
+
+## English
+
 ## Install
 
 ```bash
@@ -66,3 +72,45 @@ Full walkthroughs with sample conversations: **[`GUIDE-EN.md`](./GUIDE-EN.md) / 
 - Top of `SKILL.md` — flags table + no-flag menu + output contract.
 - `../../../CLAUDE.md` (repo-root) — operating principles loaded automatically by Claude Code.
 - `references/frontmatter-and-id-spec.md` — canonical YAML schema and parent-scoped ID grammar (`BRD-G1`, `PRD-AUTH`, `PRD-AUTH-E1`, `PRD-AUTH-E1-S1`).
+
+---
+
+## Tiếng Việt
+
+Skill Claude (do người dùng gọi) cho **product owner không chuyên kỹ thuật**: dựng cây tài liệu sản phẩm theo phỏng vấn (Tầm nhìn → 1 BRD → nhiều PRD → Epic → Story) với truy vết chặt, kiểm tra, và trực quan hóa. Không code trong văn bản, không thuật ngữ kỹ thuật.
+
+### Cài đặt
+
+```bash
+./install.sh
+```
+
+Cài một phát (chạy lại được nhiều lần). Cần Python 3.11+ và curl/wget. Bộ cài: (1) tạo venv riêng cho skill ở `../.venv/`; (2) cài `pyyaml`; (3) nhúng sẵn Mermaid + marked + DOMPurify để xuất HTML ngoại tuyến. Thêm `--dev` để cài `pytest` và chạy test; thêm `--memory-hook` để bật lời nhắc bộ nhớ (mặc định tắt, không bao giờ tự bật).
+
+### Bắt đầu nhanh
+
+Gọi từ Claude Code, rồi **nói bằng ngôn ngữ sản phẩm bình thường** — không cần nhớ lệnh:
+
+```
+/cleanmatic:product-spec
+```
+
+Không kèm cờ, skill phát hiện trạng thái `docs/product/` và hiện menu (khởi tạo, BRD/PRD mới, thêm story, kiểm tra, trực quan hóa, ký duyệt, tóm tắt).
+
+### 6 điều cần biết trước khi bắt đầu
+
+1. **Đây là một cây có truy vết.** Tầm nhìn → **một** BRD → **nhiều** PRD → Epic → Story. Mỗi tầng liên kết lên cha bằng mã, nên mọi story đều truy được về mục tiêu kinh doanh nó phục vụ.
+2. **Một nhà cho mỗi dữ kiện (DRY).** Persona ở `PRODUCT.md`, mục tiêu ở BRD, **tiêu chí nghiệm thu chỉ ở story**, đối thủ khai một lần ở BRD. Dữ kiện tham chiếu theo mã, không lặp lại.
+3. **Cấu trúc là dữ liệu; câu chữ là của bạn.** Máy đọc frontmatter (mã, `status`, `scope`, `metrics`) làm nguồn-sự-thật và **không bao giờ ghi đè văn bạn viết** — khi `--update` nó gắn cờ phần ảnh hưởng rồi hỏi.
+4. **Không gì được duyệt hay đảo ngược âm thầm.** `approved` cần người duyệt + ngày tường minh; mâu thuẫn với tài liệu đã duyệt luôn dừng lại để bạn chọn **Giữ / Đổi / Kết hợp**.
+5. **Tùy chọn chỉ hỏi một lần.** Ngôn ngữ, mức chi tiết, và **hồ sơ tương tác** (`interview_rigor` + `action_prompting`) được hỏi sớm rồi không hỏi lại — đổi qua `--lang` hoặc `preferences.py --set`.
+6. **Chạy hoàn toàn ngoại tuyến; song ngữ EN/VI.** Mọi thứ chạy cục bộ sau khi cài; mã và khóa frontmatter giữ tiếng Anh, phần văn thì bản địa hóa.
+
+### Lộ trình học (đừng học hết cờ một lúc)
+
+- **Ngày 1 — xương sống:** `khởi tạo → BRD → một PRD → một epic → một story → --validate`. Một lát cắt mỏng đó dạy bạn cả skill.
+- **Tuần 1:** `--approve`, `--update`, `--status`, rồi `--viz` / `--summary` / `--export` để chia sẻ. Đặt `--lang` + hồ sơ tương tác sớm.
+- **Khi đã quen:** Sổ Quyết Định (`--decision`), `--apply-critique`, lượt Bộ nhớ trong validate, `--reflect`, hook nhắc tùy chọn.
+- **Lối tắt:** dán một "bãi ý tưởng" và để `--auto` tự phân rã (vẫn hỏi bạn ở mọi chỗ chia tách mơ hồ).
+
+Hướng dẫn đầy đủ kèm hội thoại mẫu: **[`GUIDE-VI.md`](./GUIDE-VI.md)**. Bảng cờ lệnh đầy đủ ở phần **English** bên trên (token cờ giữ tiếng Anh).
