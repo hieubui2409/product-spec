@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""assemble_audit_trail — C9 governance audit view (`--viz audit`).
+"""assemble_audit_trail — the governance audit view (`--viz audit`).
 
 A read-only chronological join of data the skill ALREADY captures — change-log, approval
 metadata, stale approvals, decision register — into one table: *when · artifact · action ·
@@ -8,11 +8,12 @@ who-approved · what-drifted · DEC*. Deterministic struct here; the LLM only na
 DRY: reuses `status.build_status` for the stale-approval + baseline facts rather than re-reading
 snapshots, and `decision_register.parse_decisions` for the DEC rows.
 
-H7 — source-disagreement rule: the four sources have NO referential integrity. When an approval or
+Source-disagreement rule: the four sources have NO referential integrity. When an approval or
 a stale-approval flag has NO corroborating change-log entry or DEC, the row is emitted as an explicit
 ``unreconciled`` event — never silently dropped. An audit that hides an inconsistency is worse than none.
 
-ASCII + markdown only — NO HTML emitter is wired this phase (keeps the view registry off the XSS watch).
+This module assembles the data + renders ASCII / markdown only. The HTML fragment lives in
+`render_html.audit`, which escapes every dynamic field server-side (no injection channel here).
 """
 
 from __future__ import annotations

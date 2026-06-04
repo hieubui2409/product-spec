@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""parse_critique_report — deterministic struct half of `--apply-critique` (E1).
+"""parse_critique_report — deterministic struct half of `--apply-critique`.
 
 The critique return-edge consumes a product-spec-critique report and walks each finding
 with the PO (Keep / Change+re-approve / Defer), recording rulings in the Decision Register.
@@ -7,16 +7,16 @@ This script does ONLY the deterministic, testable work; the LLM owns the per-fin
 interview + prose judgment (see references/workflow-apply-critique.md).
 
 What it does:
-  1. READ-FENCE the report path (H3): resolve + contain under `<root>/docs/product/critique/`.
+  1. READ-FENCE the report path: resolve + contain under `<root>/docs/product/critique/`.
      `fs_guard` is write-only, so we reuse its `_is_within` for the read side. Traversal /
      symlink-escape is refused with a friendly error — no raw read of arbitrary paths.
-  2. Resolve findings from the STRUCTURED lens-cache (H1), NOT the humanized prose. The report
+  2. Resolve findings from the STRUCTURED lens-cache, NOT the humanized prose. The report
      frontmatter carries `lens_findings_hash` → `docs/product/.memory/critique-lens-cache/<hash>.json`
      (a verbatim list of `{lens,evidence,critique,fix,severity,why_it_dies}`). Prose is bilingual +
      repeats IDs, so regex over it is unreliable. Prose fallback only when the cache is absent.
   3. Emit a deterministic per-finding FINGERPRINT = sha8(lens + artifact_id + normalized critique) —
      the stable key for dedup, resume, and DEC cross-reference (findings have no native id).
-  4. FRESHNESS with None-handling (H2): compare the artifact's current `body_hash` against the
+  4. FRESHNESS with None-handling: compare the artifact's current `body_hash` against the
      critique-time per-node `body_hash` in the report frontmatter. If the report predates freshness
      tracking (`body_hash` absent or None for the artifact) → `freshness: "unknown"` so the loop WARNS
      ("re-critique or proceed without staleness check") rather than silently skipping.
@@ -142,7 +142,7 @@ _PLACEHOLDER_APPROVERS = {"", "tbd", "todo", "<owner>", "owner", "none", "n/a", 
 
 
 def reapproval_ok(approved_by: Optional[str], approved_at: Optional[str], dec_date: str):
-    """Deterministic GATE-NO-SILENT-REVERSAL guard for a Change on an `approved` artifact (C5).
+    """Deterministic GATE-NO-SILENT-REVERSAL guard for a Change on an `approved` artifact.
 
     A Change ruling may only be written when a FRESH re-approval exists:
       * `approved_by` is a real, non-placeholder owner, AND

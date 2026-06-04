@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""apply_critique_progress — resume markers for `--apply-critique` (E1, C4).
+"""apply_critique_progress — resume markers for `--apply-critique`.
 
 Per-finding progress keyed by the deterministic fingerprint → `{dec, disposition}`, stored at
 `docs/product/.memory/apply-critique/<lens_findings_hash>.json`. The loop records each resolved
