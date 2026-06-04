@@ -1,4 +1,4 @@
-"""Tests for product-spec core scripts (Phase 5).
+"""Tests for product-spec core scripts.
 
 Exercises frontmatter_parser, spec_graph, check_traceability, check_consistency,
 build_traceability_matrix, generate_templates against two fixture specs:
@@ -347,7 +347,7 @@ personas: [a, b, c, d]
 
 def test_w3_n8_session_md_gitignore_warn(tmp_path):
     """N-8: a `.gitignore` excluding `.session.md` produces a warn —
-    brainstorm §16 mandates the session file be committed for cross-machine
+    the session file must be committed for cross-machine
     resume."""
     proj = tmp_path / "proj"
     (proj / "docs" / "product").mkdir(parents=True)

@@ -15,11 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 1 OS × 2 Python (D12).
+        # 1 OS × 2 Python.
         python: ['3.11', '3.13']
     runs-on: ubuntu-latest
     env:
-      # Offline enforcement (Security F7): the conftest autouse guard blocks any
+      # Offline enforcement: the conftest autouse guard blocks any
       # socket connect under this flag so a future net call fails loudly.
       CK_OFFLINE: '1'
     steps:

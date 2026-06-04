@@ -1,5 +1,4 @@
-"""Phase 4 — COMPETITION dimension: the `competitive_drift` LLM check, SCRIPT half
-(goal G-E3, design R2 / trade-off T2 / §0.1).
+"""COMPETITION dimension: the `competitive_drift` LLM check, SCRIPT half.
 
 `competitive_drift` ("this PRD is losing its competitive edge") is an LLM-judgment
 warn — a sensory call no enum-match makes. To stop the classic over-flag
@@ -11,9 +10,9 @@ and its CLI:
   - the script RESOLVES the PRD's ID-keyed `competitive_parity` map against the
     BRD's DRY competitor identity home (`graph['competitors']`) into NAME-bearing
     rows and pre-computes `competitors_with_data` (real, non-`none` verdicts) and
-    `all_behind_competitors` — the LLM NEVER counts or re-parses brd.md (F6).
+    `all_behind_competitors` — the LLM NEVER counts or re-parses brd.md.
   - `eligible = scope=='core-value' AND competitors_with_data>=2` is the anchored
-    gate (design §0.1); a PRD failing it is emitted `eligible: false` so the LLM
+    gate; a PRD failing it is emitted `eligible: false` so the LLM
     returns `missing_anchor` instead of flagging on a lone `behind`.
   - an eligible PRD with EVERY real parity `behind` (all_behind == data count) is
     surfaced WITH all anchors so the LLM can flag it citing data (true-positive).
@@ -21,7 +20,7 @@ and its CLI:
     LLM returns `{finding: null}` (must-not-flag) — the SCRIPT never decides.
 
 The flag/no-flag JUDGMENT itself is graded by the LLM evals (eval/evals.json ids
-11-13); these tests assert only the deterministic script contract (G-B1 split).
+11-13); these tests assert only the deterministic script contract (Script-vs-LLM split).
 Subprocess + direct-call style, mirroring test_time_realism.py.
 """
 
@@ -117,7 +116,7 @@ def _anchor_for(proj: Path, prd_id: str):
 
 
 # ── true-positive: eligible core-value PRD, every real parity behind ─────────
-# Rule (§0.1): flag only if scope==core-value AND competitors_with_data>=2 AND
+# Rule: flag only if scope==core-value AND competitors_with_data>=2 AND
 # every real (non-none) parity == behind.
 
 def test_anchor_true_positive_eligible_and_all_behind(tmp_path):
@@ -232,7 +231,7 @@ lang: en
     assert types == {"prd"}, f"only PRDs anchored: {[(a['artifact_id'], a['type']) for a in anchors]}"
 
 
-# ── determinism: resolved anchors are byte-stable across runs (G-A4) ──────────
+# ── determinism: resolved anchors are byte-stable across runs ────────────────
 
 def test_anchors_deterministic_and_sorted(tmp_path):
     proj = _scaffold(tmp_path, _COMP_ACME, _COMP_SHOPIFY)
@@ -243,7 +242,7 @@ def test_anchors_deterministic_and_sorted(tmp_path):
     g = build_graph(proj)
     first = build_anchors(g)
     second = build_anchors(g)
-    assert first == second, "anchors must be reproducible (G-A4)"
+    assert first == second, "anchors must be reproducible"
     # Sorted by artifact_id (A before B) regardless of file read order, and the
     # resolved parity rows are sorted by competitor_id (stable cited_data).
     assert [a["artifact_id"] for a in first] == ["PRD-A", "PRD-B"]
@@ -256,7 +255,7 @@ def test_anchors_deterministic_and_sorted(tmp_path):
 
 def test_backcompat_no_competitors_empty_anchors(tmp_path):
     """A v1 spec with no BRD competitors and no parity map yields no anchors and
-    does not crash (G-A2)."""
+    does not crash."""
     proj = _scaffold(tmp_path)  # no competitors
     _write_prd(proj, "p.md", "PRD-P", scope="core-value", parity=None)
     g = build_graph(proj)

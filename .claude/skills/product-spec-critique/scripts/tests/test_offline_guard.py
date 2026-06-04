@@ -1,4 +1,4 @@
-"""test_offline_guard — proves the D12 offline enforcement blocks real network use.
+"""test_offline_guard — proves the offline enforcement blocks real network use.
 
 The critique skill is runtime-offline by contract. Under ``CK_OFFLINE`` the conftest
 autouse guard must make a deliberate socket connect fail loudly; without it the guard

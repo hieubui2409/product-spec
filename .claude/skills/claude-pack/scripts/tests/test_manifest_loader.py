@@ -382,7 +382,7 @@ def test_semver_re_accepts_valid_versions():
 
 def test_validate_relative_to_accepts_valid_nested_skill(tmp_root):
     """relative_to-based containment must NOT emit false E021 for a valid, deeply
-    nested skill directory (C10 fix: replaced string-prefix with relative_to)."""
+    nested skill directory (replaced string-prefix with relative_to)."""
     # Create a legitimate nested skill dir.
     skill_dir = tmp_root / ".claude" / "skills" / "my-skill" / "scripts"
     skill_dir.mkdir(parents=True, exist_ok=True)
@@ -401,7 +401,7 @@ def test_validate_relative_to_accepts_valid_nested_skill(tmp_root):
 
 def test_userinfo_scrub_strips_password_with_at_in_it():
     """Regex `[^/]*@` must consume up to the LAST '@' so a password like
-    'p@ss' in 'user:p@ss@host' is fully stripped (C10 fix)."""
+    'p@ss' in 'user:p@ss@host' is fully stripped."""
     import re
     # Replicate the exact regex from manifest_io.py
     _sub = lambda url: re.sub(r"(://)[^/]*@", r"\1", url)

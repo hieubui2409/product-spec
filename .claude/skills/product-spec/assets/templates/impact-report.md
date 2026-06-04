@@ -6,11 +6,11 @@ The impact-pass is the per-CHANGE propagation surface (downstream() + LLM
 interpretation), distinct from the per-ARTIFACT validation-catalog checks
 (risk_blindspot / time_realism / competitive_drift). Keep them separate.
 
-Structure (report §5.2):
+Structure:
   changed set → spec_graph.downstream() [deterministic] → for each affected node
   the LLM tags {dim_touched, one_liner, action}. An affected node that is
   `approved` AND contradicted runs the contradiction protocol (keep/change/hybrid)
-  — the engine NEVER auto-flips an approved artifact (G-A3).
+  — the engine NEVER auto-flips an approved artifact.
 
 The affected-node table rows are produced by the LLM annotation pass; this
 template fixes only the heading + column order so every impact report is

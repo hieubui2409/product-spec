@@ -1,20 +1,20 @@
-"""Phase 3 — TIME/DEPENDENCIES, trade-off T1 (cycle safety FIRST).
+"""TIME/DEPENDENCIES — cycle safety FIRST.
 
 The `depends_on: [ID]` edge permits a circular dependency (A->B->C->A), which is
-meaningless for a product spec. Per design-report §0.1 (T1) and goal G-D3, a
+meaningless for a product spec. A
 `dep_cycle` detector plus cycle-safe renderers are a HARD PREREQUISITE built and
 tested BEFORE the edge is parsed into the graph.
 
 This module is the RED spec for:
   - `check_traceability.find_dep_cycles(adj)` — iterative 3-color DFS over an
     adjacency map. Returns the cycle PATH including the repeated closing node
-    (`["A","B","A"]`). Sorted iteration -> deterministic output (G-A4).
+    (`["A","B","A"]`). Sorted iteration -> deterministic output.
   - the `dep_cycle` finding (error) emitted by `check_traceability.check()` with
     `context.cycle` carrying the path.
   - every NEW renderer that walks `depends_on` terminating on a cyclic graph
-    (visited-set guard) — NO hang, NO RecursionError (G-D3).
+    (visited-set guard) — NO hang, NO RecursionError.
 
-All checks here are deterministic Python — no LLM, no judgment (G-B1).
+All checks here are deterministic Python — no LLM, no judgment.
 Mirrors the fixture-build + finding-set assertion style of test_scripts.py.
 """
 
@@ -104,7 +104,7 @@ def test_cycle_plus_valid_dangling():
 
 def test_find_cycles_long_chain():
     """~2000-node linear chain must NOT raise RecursionError — the detector is
-    iterative (explicit stack), not recursive (G-D3 / design-report F4)."""
+    iterative (explicit stack), not recursive."""
     from check_traceability import find_dep_cycles
     n = 2000
     adj = {f"N{i}": [f"N{i+1}"] for i in range(n)}
@@ -114,7 +114,7 @@ def test_find_cycles_long_chain():
 
 
 def test_find_cycles_deterministic():
-    """Sorted iteration -> identical output across runs (G-A4 determinism)."""
+    """Sorted iteration -> identical output across runs (determinism)."""
     from check_traceability import find_dep_cycles
     adj = {"B": ["C"], "A": ["B"], "C": ["A"]}
     first = find_dep_cycles(adj)
@@ -216,7 +216,7 @@ def test_dep_cycle_finding_shape(tmp_path):
 
 def test_renderer_terminates_on_cycle(tmp_path):
     """Render the HTML `time` view on a graph with a depends_on cycle; it must
-    return a string and NOT hang / RecursionError (G-D3, trade-off T1)."""
+    return a string and NOT hang / RecursionError."""
     import render_html
 
     proj = _scaffold(tmp_path)

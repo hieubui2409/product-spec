@@ -174,9 +174,9 @@ A one-screen reminder of the operating protocol these guardrails sit on top of:
   deterministic structural truth; your judgment goes on top of their findings.
 - **Frontmatter is the source-of-truth.** Structure comes from parsed YAML, never from headings or prose.
 - **DRY.** One authoritative home per fact; everything else is a cross-reference by ID.
-- **No silent reversal.** GATE-NO-SILENT-REVERSAL — see §4.
+- **No silent reversal.** GATE-NO-SILENT-REVERSAL — see "The two named GATEs" below.
 - **Never overwrite manual prose.** On any update, flag the affected nodes and ask before regenerating. Default is
   flag-only; regeneration is opt-in per node.
-- **Never assume.** GATE-NEVER-ASSUME — see §4.
+- **Never assume.** GATE-NEVER-ASSUME — see "The two named GATEs" below.
 
 When a guardrail and a flag-specific workflow seem to disagree, the guardrail wins — it is the safety floor.

@@ -53,7 +53,7 @@ configure_utf8_console()
 
 # A rationale line that is a bare `---` fence would split decisions.md into a phantom
 # record under _RECORD_RE; a line that is a `## DEC-<n>` heading could smuggle a fake
-# decision heading. Both are neutralized on write (C3). We backslash-escape them: the
+# decision heading. Both are neutralized on write. We backslash-escape them: the
 # content is preserved + markdown-correct (`\---`, `\## ` render literally) while the
 # line no longer matches the line-anchored record/heading patterns.
 _INJ_FENCE_RE = re.compile(r"(?m)^(---+\s*)$")
@@ -62,7 +62,7 @@ _INJ_DEC_HEADING_RE = re.compile(r"(?m)^(##\s+DEC-)")
 
 def sanitize_rationale(rationale: str) -> str:
     """Neutralize record-fence / DEC-heading injection in PO/finding-supplied rationale,
-    preserving the text. See the module note above for the threat (C3)."""
+    preserving the text. See the module note above for the threat."""
     out = _INJ_FENCE_RE.sub(r"\\\1", rationale)
     out = _INJ_DEC_HEADING_RE.sub(r"\\\1", out)
     return out
@@ -71,7 +71,7 @@ def sanitize_rationale(rationale: str) -> str:
 @contextlib.contextmanager
 def _register_lock(root):
     """Best-effort exclusive file lock so alloc-id + append happen as ONE critical
-    section (C4 — closes the TOCTOU window where two looped allocs could collide).
+    section (closes the TOCTOU window where two looped allocs could collide).
     POSIX uses fcntl.flock; on platforms without it the lock degrades to a no-op
     (single-PO desktop use), which is the prior behaviour, not a regression."""
     lock_path = Path(root) / "docs" / "product" / ".decision_register.lock"
@@ -341,7 +341,7 @@ def append_alloc(
     date: Optional[str] = None,
     status: str = "active",
 ) -> Dict[str, Any]:
-    """Allocate the next id AND append in ONE locked critical section (C4).
+    """Allocate the next id AND append in ONE locked critical section.
 
     The apply-critique loop never holds an allocated id across a PO-interaction gap —
     it gathers the ruling first, then calls this once to alloc+append atomically. On a

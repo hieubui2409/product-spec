@@ -1,8 +1,8 @@
-"""Phase-3 tests: F1 read-once Export (md + html).
+"""Tests for read-once Export (md + html).
 
 Markdown is deterministic (asserted by exact two-call equality + content); the
 content hash drives a stable, collision-free filename; html embeds the doc as an
-inert JSON island rendered through the Phase-2 sanitize chokepoint.
+inert JSON island rendered through the sanitize chokepoint.
 """
 
 import json
@@ -102,7 +102,7 @@ def test_compact_mode_struct_has_no_llm_markers():
     assert "<!-- COMPACT:" not in doc
 
 
-# ---------- --compact-mode llm + --format html is rejected (F5) ----------
+# ---------- --compact-mode llm + --format html is rejected ----------
 
 def test_compact_llm_with_html_is_rejected(tmp_path):
     proj = tmp_path / "proj"
@@ -114,7 +114,7 @@ def test_compact_llm_with_html_is_rejected(tmp_path):
     assert out.suffix == ".md"
 
 
-# ---------- --export VISION renders one section / one anchor (F8) ----------
+# ---------- --export VISION renders one section / one anchor ----------
 
 def test_export_vision_single_anchor():
     doc = _doc(select="VISION", depth="context")

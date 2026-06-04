@@ -212,8 +212,8 @@ def test_viewer_no_layers_empty_is_allowed(tmp_path, capsys):
 
 def test_llm_compact_bodyless_story_renders_ac_once():
     """A bodyless story under --compact-mode llm must show its AC exactly once — not
-    the struct-skeleton count AND the explicit list (the C5 full-branch fix had a
-    sibling gap in the llm branch)."""
+    the struct-skeleton count AND the explicit list (the llm branch had a sibling
+    gap where AC could render twice)."""
     entry = {"id": "S", "type": "story", "verbosity": "struct", "body": "", "ac": ["Alpha", "Beta"]}
     out = render_export._section_body(entry, "llm")
     assert out.count("**Acceptance criteria:**") == 1

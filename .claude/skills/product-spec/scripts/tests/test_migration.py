@@ -1,27 +1,27 @@
-"""Phase 5 — Impact Engine & Migration (TDD RED).
+"""Impact Engine & Migration (TDD RED).
 
-Covers the two deterministic, script-owned surfaces of Phase 5 (the LLM-driven
+Covers the two deterministic, script-owned surfaces (the LLM-driven
 impact annotation + contradiction protocol are exercised by the `impact-pass`
-eval, not here — Script-vs-LLM split, goal G-B1):
+eval, not here — Script-vs-LLM split):
 
   1. `migrate_multidim_fields.py` — brings a v1 spec up to the v2 schema by
      adding the new dimension fields as EMPTY placeholders:
          PRD  → risks: [], target_date: null, depends_on: [], competitive_parity: {}
          Epic → risks: [], target_date: null, depends_on: []
          BRD  → competitors: []
-     Contract (phase-05 §Migration / Q57/Q60):
+     Contract:
        - dry-run default: report which files lack which fields; write NOTHING.
        - --apply: write placeholders; copy each touched original → `*.bak` first.
        - status: approved files are NEVER written — deferred to a
          `confirm_required` list (PO confirms per item; LLM drives the
-         AskUserQuestion). This is goal G-A3 / G-F3 (no-auto-edit-approved).
+         AskUserQuestion). This is the no-auto-edit-approved guarantee.
        - idempotent + deterministic: a second --apply run is a no-op (the fields
          are already present), so the `.bak` from the first run is not clobbered
          with an already-migrated copy.
 
   2. change-log entry schema — the writer/template must carry BOTH
-     `affected_set` (ALREADY present — do NOT re-add, design report F13) AND the
-     new `dims` field (the ONLY field this phase adds — goal G-F2).
+     `affected_set` (ALREADY present — do NOT re-add) AND the
+     new `dims` field (the ONLY field this adds).
 
 Mirrors the subprocess + JSON-stdout style of test_scripts.py and the
 fixture-build style of test_risk_complete.py.
@@ -185,7 +185,7 @@ def test_migration_adds_placeholders(tmp_path):
 
 def test_migration_dry_run_writes_nothing(tmp_path):
     """Dry-run (default, no --apply) reports the gaps but mutates NO files and
-    creates NO .bak — the report is advisory only (phase-05 §Migration)."""
+    creates NO .bak — the report is advisory only."""
     proj = _v1_spec(tmp_path)
     prod = proj / "docs" / "product"
     prd = prod / "prds" / "auth.md"
@@ -203,7 +203,7 @@ def test_migration_dry_run_writes_nothing(tmp_path):
 
 # ---------------------------------------------------------------------------
 # test_migration_skips_approved — an `approved` artifact is NEVER edited; it is
-# deferred to the `confirm_required` list (goal G-A3 / G-F3).
+# deferred to the `confirm_required` list (no-auto-edit-approved).
 # ---------------------------------------------------------------------------
 
 def test_migration_skips_approved(tmp_path):
@@ -218,7 +218,7 @@ def test_migration_skips_approved(tmp_path):
 
     # The approved PRD must NOT be written and NOT be backed up.
     assert prd.read_text(encoding="utf-8") == before, \
-        "approved artifact must NOT be auto-edited (G-A3)"
+        "approved artifact must NOT be auto-edited"
     assert "risks" not in parse_file(prd)["frontmatter"], \
         "approved artifact must keep its v1 frontmatter untouched"
     assert not (prod / "prds" / "auth.md.bak").exists(), \
@@ -272,14 +272,14 @@ def test_migration_idempotent(tmp_path):
 
 # ---------------------------------------------------------------------------
 # test_changelog_schema — the change-log entry carries BOTH `affected_set`
-# (already present — do NOT re-add, F13) AND the new `dims` field (G-F2).
+# (already present — do NOT re-add) AND the new `dims` field.
 # Asserted against the template that generate_templates.py renders for
 # --type change_log_entry (the change-log writer).
 # ---------------------------------------------------------------------------
 
 def test_changelog_schema():
     """The change-log-entry template must expose both an `affected_set` field
-    (pre-existing) and a NEW `dims` field — the only field Phase 5 adds.
+    (pre-existing) and a NEW `dims` field — the only field this adds.
 
     Discriminating RED assertion: today the template carries `affected_set`
     but has no `dims` line/token, so a rendered entry can never declare which
@@ -289,11 +289,11 @@ def test_changelog_schema():
 
     # `affected_set` is the pre-existing field — must remain (no regression).
     assert "{{affected_set}}" in tmpl_text or "affected_set" in tmpl_text, \
-        "change-log-entry.md must keep the existing `affected_set` field (F13: do not drop)"
+        "change-log-entry.md must keep the existing `affected_set` field (do not drop)"
 
     # `dims` is the new field this phase adds (RED today: not present).
     assert "{{dims}}" in tmpl_text or "dims" in tmpl_text.lower(), \
-        "change-log-entry.md must gain a `dims` field (the dimensions touched) — G-F2"
+        "change-log-entry.md must gain a `dims` field (the dimensions touched)"
 
 
 def test_changelog_renders_dims_value():
@@ -330,7 +330,7 @@ def test_changelog_renders_dims_value():
 
 # ---------------------------------------------------------------------------
 # test_migration_type_scoping — the migration must write each v2 field ONLY onto
-# the artifact types whose phase-3/4 guards accept it, so a migrated spec never
+# the artifact types whose per-type guards accept it, so a migrated spec never
 # trips the very `invalid_type`/`unknown_ref` errors those phases define:
 #   - depends_on / target_date / risks → PRD + Epic
 #   - competitive_parity → PRD ONLY (an Epic/BRD must NOT gain it)
@@ -353,7 +353,7 @@ def test_migration_type_scoping(tmp_path):
     # competitive_parity is PRD-only — the Epic and BRD must NOT gain it.
     assert "competitive_parity" in prd_fm, "PRD must gain competitive_parity"
     assert "competitive_parity" not in epic_fm, \
-        "Epic must NOT gain competitive_parity (PRD-only — phase-4 guard rejects it on an epic)"
+        "Epic must NOT gain competitive_parity (PRD-only — the per-type guard rejects it on an epic)"
     assert "competitive_parity" not in brd_fm, "BRD must NOT gain competitive_parity"
 
     # competitors is BRD-only — neither the PRD nor the Epic may gain it.
@@ -378,13 +378,13 @@ def test_migration_type_scoping(tmp_path):
 
 # ---------------------------------------------------------------------------
 # test_impact_report_template_exists — the per-change impact report skeleton must
-# exist with the columns the impact-pass fills (G-F2). The LLM composes the body;
+# exist with the columns the impact-pass fills. The LLM composes the body;
 # the template fixes the heading + table shape so every report is uniform.
 # ---------------------------------------------------------------------------
 
 def test_impact_report_template_exists():
     tmpl = TEMPLATES / "impact-report.md"
-    assert tmpl.exists(), "assets/templates/impact-report.md must exist (G-F2)"
+    assert tmpl.exists(), "assets/templates/impact-report.md must exist"
     text = tmpl.read_text(encoding="utf-8")
     # The report carries the change-set, the dimension union, and the per-node
     # annotation table (node / dim_touched / interpretation / action).

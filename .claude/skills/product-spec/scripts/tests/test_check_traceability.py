@@ -1,17 +1,17 @@
-"""Phase 3 — TIME/DEPENDENCIES traceability checks (goal G-D2).
+"""TIME/DEPENDENCIES traceability checks.
 
 The new `depends_on: [ID]` edge joins the dangling family already owned by
 check_traceability (beside `dangling_link`): a `depends_on` pointing at a
 non-existent ID is `dep_dangling` (error). Same home as the cycle detector
 (`find_dep_cycles` / `dep_cycle`) so the whole graph-walk dependency family
-lives in one module (design-report build-order 3b).
+lives in one module.
 
 RED spec for:
   - `dep_dangling` (error) when `depends_on` names an absent ID.
   - no `dep_dangling` when every `depends_on` target resolves.
-  - back-compat (G-A2): a v1 spec with no `depends_on` produces no dep findings.
+  - back-compat: a v1 spec with no `depends_on` produces no dep findings.
 
-Deterministic Python, no LLM (G-B1). Fixture + finding-set style of test_scripts.
+Deterministic Python, no LLM. Fixture + finding-set style of test_scripts.
 """
 
 import sys
@@ -113,7 +113,7 @@ lang: en
 
 
 def test_v1_spec_no_depends_on_produces_no_dep_findings(tmp_path):
-    """Back-compat (G-A2): a v1 PRD with no depends_on field at all yields no
+    """Back-compat: a v1 PRD with no depends_on field at all yields no
     dep_dangling / dep_cycle findings — the new edge is optional, absence is a
     clean empty default."""
     proj = _scaffold(tmp_path)

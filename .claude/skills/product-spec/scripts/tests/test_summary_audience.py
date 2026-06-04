@@ -1,8 +1,8 @@
-"""test_summary_audience — E4 `--summary --audience exec|release-notes` deterministic seam.
+"""test_summary_audience — `--summary --audience exec|release-notes` deterministic seam.
 
 exec = current --summary (regression: the exec_summary template + path are untouched). release-notes
-= a since-last-approved delta from the C9 audit trail, filled into a new release_notes template via the
-SAME render path. No new top-level flag, no new assembler (M1: reuse the value path, not token-sub misuse).
+= a since-last-approved delta from the governance audit trail, filled into a new release_notes template via the
+SAME render path. No new top-level flag, no new assembler (reuse the value path, not token-sub misuse).
 """
 
 from __future__ import annotations

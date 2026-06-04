@@ -9,7 +9,7 @@ The check catalog, the script-vs-LLM ownership split, severity levels, and the f
 | **Script** | Anything answerable by parsing YAML, traversing a graph, counting fields, or matching against a closed enum. |
 | **LLM** | Anything requiring reading prose, weighing meaning, or judging quality. |
 
-If a check needs to *understand* the words, it's LLM. If it can be answered by walking edges or counting items, it's script. **No exceptions.** This rule is enforced by the script code review gate (Phase 5) — any heuristic in a script that judges quality must be removed.
+If a check needs to *understand* the words, it's LLM. If it can be answered by walking edges or counting items, it's script. **No exceptions.** This rule is enforced by the script code review gate — any heuristic in a script that judges quality must be removed.
 
 ## Check Catalog
 
@@ -40,7 +40,7 @@ If a check needs to *understand* the words, it's LLM. If it can be answered by w
 | `dep_dangling` | script | error | a `depends_on` target that does not resolve to a real artifact — same dangling family as `dangling_link` (lives in `check_traceability`) | "{id} depends_on unknown artifact {ref}." |
 | `dep_order` | script | warn | A `depends_on` B but A's `target_date` is BEFORE B's — A is due before the prerequisite it waits on (deterministic; fires only when BOTH dates parse) | "{id} target_date {a} is before its prerequisite {b} target_date {b_date}." |
 | `time_child_late` | script | warn | a child's `target_date` is AFTER its parent's (an epic due after its PRD finishes) — deterministic date compare, fires only when BOTH dates parse | "{id} target_date {c} is after parent {pid} target_date {p}." |
-| `overdue` | script (`time_advisory.py --today`, OUTSIDE the `--validate` gate) | advisory | an artifact whose `target_date` is strictly before `--today` (default real today; pinnable for reproducibility) — consumes the wall clock so it is deliberately NOT a structural gate (keeps G-A4) | "{id} target_date {td} is before today {today} (overdue by {n} days)." |
+| `overdue` | script (`time_advisory.py --today`, OUTSIDE the `--validate` gate) | advisory | an artifact whose `target_date` is strictly before `--today` (default real today; pinnable for reproducibility) — consumes the wall clock so it is deliberately NOT a structural gate (keeps the gate byte-reproducible) | "{id} target_date {td} is before today {today} (overdue by {n} days)." |
 | `session_md_gitignored` | script | warn | `docs/product/.session.md` matched by a `.gitignore` rule — session state is meant to be committed (resumable across PO sessions) | "docs/product/.session.md is gitignored; session state must be committed." |
 | `invest_quality` | LLM | warn | a story failing INVEST (Independent, Negotiable, Valuable, Estimable, Small, Testable) | "Story {id}: INVEST concern — {dimension}: {explanation}." |
 | `vagueness` | LLM | warn | a story or PRD requirement using vague language ("should", "easy", "fast") without quantification | "{id}: vague language — '{phrase}'. Suggest quantification." |
@@ -96,7 +96,7 @@ Score + 1-line rationale included in the finding. The PO confirms the `scope: co
    "eligible": true}
   ```
 
-  `days_remaining = (target_date − today).days` and `child_story_count` (a graph traversal) are computed **here, by the script** — the LLM does NO date arithmetic. `today_date` comes from the pinnable `--today` (default real today; **evals/tests PIN it** so the anchor — and the gate — is reproducible, keeping G-A4). When `target_date` or `size` is absent the anchor is still emitted with that field null and `eligible: false`.
+  `days_remaining = (target_date − today).days` and `child_story_count` (a graph traversal) are computed **here, by the script** — the LLM does NO date arithmetic. `today_date` comes from the pinnable `--today` (default real today; **evals/tests PIN it** so the anchor — and the gate — is reproducible). When `target_date` or `size` is absent the anchor is still emitted with that field null and `eligible: false`.
 
 - **LLM half** — apply this FIXED rule to each anchor (no prose, no velocity speculation):
 
@@ -126,7 +126,7 @@ This mirrors the Script-vs-LLM split (CLAUDE.md): the structural numbers are det
    "incomplete": true, "eligible": true}
   ```
 
-  `competitors_with_data` (the count of parity entries whose value is NOT `none`), the resolved competitor NAMES, and `all_behind_competitors` are computed **here, by the script** — the LLM does NO counting and never re-parses `brd.md` (F6). `none` parity means "tracked, no verdict yet" and is **not** a data point. A parity KEY that does not resolve to a BRD competitor is dropped from the resolved block (its `unknown_ref` error is the consistency check's job) so the LLM never sees a phantom competitor. `eligible = (scope == "core-value" AND competitors_with_data >= 2)` — the anchored gate. PRDs with no `competitive_parity` map are not emitted (a v1 PRD is not a drift unit). Output is sorted by `artifact_id` → deterministic (G-A4). The script NEVER decides flag/no-flag.
+  `competitors_with_data` (the count of parity entries whose value is NOT `none`), the resolved competitor NAMES, and `all_behind_competitors` are computed **here, by the script** — the LLM does NO counting and never re-parses `brd.md`. `none` parity means "tracked, no verdict yet" and is **not** a data point. A parity KEY that does not resolve to a BRD competitor is dropped from the resolved block (its `unknown_ref` error is the consistency check's job) so the LLM never sees a phantom competitor. `eligible = (scope == "core-value" AND competitors_with_data >= 2)` — the anchored gate. PRDs with no `competitive_parity` map are not emitted (a v1 PRD is not a drift unit). Output is sorted by `artifact_id` → deterministic. The script NEVER decides flag/no-flag.
 
 - **LLM half** — apply this FIXED rule to each anchor (no prose, no market speculation):
 
@@ -144,11 +144,11 @@ This mirrors `time_realism` exactly: the structural resolution + counting is det
 
 ## Impact-Pass LLM Scaffold (per-change propagation — distinct from the catalog checks)
 
-The **impact-pass** answers "I changed X — what downstream is affected, and how?" It runs on `--update` (one explicit `changed_id`) AND on `--validate` (change-set derived from the snapshot delta — `workflow-validate.md → Step 2.5`). It is **per-CHANGE propagation**, NOT a per-ARTIFACT quality check — keep it separate from `risk_blindspot`/`time_realism`/`competitive_drift` so neither bloats the other (report §5.4). The split:
+The **impact-pass** answers "I changed X — what downstream is affected, and how?" It runs on `--update` (one explicit `changed_id`) AND on `--validate` (change-set derived from the snapshot delta — `workflow-validate.md → Step 2.5`). It is **per-CHANGE propagation**, NOT a per-ARTIFACT quality check — keep it separate from `risk_blindspot`/`time_realism`/`competitive_drift` so neither bloats the other. The split:
 
-- **Script half (deterministic — G-B1)** — `spec_graph.downstream(graph, changed_id)` returns the transitive child closure (iterative, cycle-safe). On `--validate` the change-set itself is deterministic: the `delta` view's added ∪ changed nodes between the two most-recent `.snapshots/` (`spec_graph.diff_graphs` for added/removed + `spec_graph.changed_nodes` for the per-node field diff — the single home for the tracked-field set `spec_graph.CHANGED_FIELDS`, the same rule `render_ascii.delta` displays); no previous snapshot → empty change-set → no impact-pass. The script NEVER interprets.
+- **Script half (deterministic)** — `spec_graph.downstream(graph, changed_id)` returns the transitive child closure (iterative, cycle-safe). On `--validate` the change-set itself is deterministic: the `delta` view's added ∪ changed nodes between the two most-recent `.snapshots/` (`spec_graph.diff_graphs` for added/removed + `spec_graph.changed_nodes` for the per-node field diff — the single home for the tracked-field set `spec_graph.CHANGED_FIELDS`, the same rule `render_ascii.delta` displays); no previous snapshot → empty change-set → no impact-pass. The script NEVER interprets.
 
-- **LLM half (judgment — G-B2)** — for each affected node, emit one annotation record:
+- **LLM half (judgment)** — for each affected node, emit one annotation record:
 
   ```json
   {"node": "PRD-AUTH-E1-S1", "dim_touched": "ac",
@@ -161,7 +161,7 @@ The **impact-pass** answers "I changed X — what downstream is affected, and ho
   - `action` — a concrete suggestion: `review` / `review AC` / `re-estimate` / `split` / `re-approve` / `no-op`.
   - **Conservative default:** a node reachable but plausibly unaffected → `action: no-op` with a one-liner saying so; do not invent downstream damage.
 
-- **Approved + contradicted** → if an affected node is `status: approved` AND the change contradicts its content, run the **Contradiction Protocol** below (keep/change/hybrid). The impact-pass NEVER auto-flips an approved artifact (G-A3) — this is the deal-breaker the `impact-pass` eval's approved branch gates.
+- **Approved + contradicted** → if an affected node is `status: approved` AND the change contradicts its content, run the **Contradiction Protocol** below (keep/change/hybrid). The impact-pass NEVER auto-flips an approved artifact — this is the deal-breaker the `impact-pass` eval's approved branch gates.
 
 - **Output** — the annotation records become the rows of `docs/product/impact/<ts>.md` (skeleton `assets/templates/impact-report.md`) and the `dims` (the union of `dim_touched`) + `affected_set` of the change-log entry.
 
@@ -223,7 +223,7 @@ Detail: No PRDs address this goal. Either drop, defer, or write a PRD.
 ## What This Spec Does NOT Define
 
 - The exact prose template for the human report — that's the LLM's job.
-- The order of script invocations — that's `workflow-validate.md` (Phase 7).
+- The order of script invocations — that's `workflow-validate.md`.
 - The interactive flow on `contradiction` — that's `workflow-validate.md`.
 - The change-set derivation + report-write steps of the impact-pass — those are `workflow-validate.md → Step 2.5` (`--validate`) and `workflow-update.md → Steps 2/3/6` (`--update`); this spec defines only the LLM annotation rule.
-- Eval rubric for the LLM judgment checks — that's `eval/evals.json` (Phase 8).
+- Eval rubric for the LLM judgment checks — that's `eval/evals.json`.

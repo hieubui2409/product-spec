@@ -1,4 +1,4 @@
-# Workflow — `--export` (F1 read-once Export)
+# Workflow — `--export` (read-once Export)
 
 Assemble a spec slice into **one self-contained doc** (markdown or print-ready HTML) for stakeholders, a single-pass read, or an LLM feed. Built on the deterministic assembler (`scripts/assemble_digest.py`, `build_digest`), which powers `--export` only. The `--viz board` / `--viz explorer` viewers build their own payloads (`render_board` / `render_explorer`) and do **not** share the digest — they filter by artifact type (`goal,prd,epic,story`), whereas `--export --layers` uses doc-layer buckets (`vision,brd,prd,epic,story`).
 
@@ -24,7 +24,7 @@ Run via the repo venv:
 
 **No silent-empty doc.** `render_export.py` exits non-zero (writing nothing) when: a selection names an ID that resolves to nothing (typo, wrong case, deleted node); a selection resolves to no artifacts at all; `--layers` names a token outside `vision,brd,prd,epic,story` (e.g. a typo, or a viewer-vocab `goal`); a non-`all` selection is filtered to empty by `--layers` (e.g. `--export VISION --layers prd`); or `--export all` whose `--layers` strips all pre-existing content (e.g. `--export all --layers story` on a spec with no stories). The stderr message names the offending value and the valid set. It never writes a frontmatter-only doc (CLAUDE.md: no silent failure). Only `--export all` on a genuinely empty/fresh spec (nothing to filter) is the one allowed-empty case.
 
-### `--layers` precedence (owner-locked, D2) + the H5 warning
+### `--layers` precedence (owner-locked) + the context-less-doc warning
 
 `--layers` is authoritative: an excluded type is dropped **even if it is the selected root's own type**. To avoid a silently context-less doc, the assembler emits a **provenance warning** in the doc header when this happens.
 

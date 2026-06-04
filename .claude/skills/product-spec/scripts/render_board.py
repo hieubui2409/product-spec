@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-render_board — F2 `--viz board` html writer. A self-contained kanban: columns =
+render_board — `--viz board` html writer. A self-contained kanban: columns =
 the chosen group field (status|horizon|moscow), cards = goal/PRD/epic/story
 artifacts, click a card → its sanitized body in a panel, plus client-side search
 and facet filters.
 
-Security (red-team H3): the server emits ONLY an inert JSON data island; the
+Security: the server emits ONLY an inert JSON data island; the
 client builds every card via safe DOM APIs (textContent / dataset) for metadata
 and the sanitize chokepoint (psRenderMarkdown) for bodies, so neither body nor
 attribute payloads can inject. No Mermaid here (board carries none by design).

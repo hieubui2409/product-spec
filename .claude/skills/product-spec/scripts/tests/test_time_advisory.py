@@ -1,8 +1,8 @@
-"""Phase 3 — TIME dimension: the `overdue` advisory (goal G-D5, design Q52).
+"""TIME dimension: the `overdue` advisory.
 
 `overdue` (target_date < today) is NON-deterministic by nature — it consumes the
 wall clock — so it lives OUTSIDE the `--validate` structural gate to keep that
-gate byte-reproducible (G-A4). It ships as a standalone `time_advisory.py` that
+gate byte-reproducible. It ships as a standalone `time_advisory.py` that
 takes a pinnable `--today <ISO>` and emits an advisory JSON.
 
 This module is the RED spec for that script:
@@ -13,7 +13,7 @@ This module is the RED spec for that script:
     (it is not a gate).
 
 Subprocess-style, mirroring strict_gate / generate_templates tests in
-test_scripts.py. No LLM, no judgment — pure date comparison (G-B1).
+test_scripts.py. No LLM, no judgment — pure date comparison.
 """
 
 import json
@@ -109,7 +109,7 @@ def test_time_advisory_not_overdue_when_future(tmp_path):
 
 
 def test_time_advisory_no_target_date_silent(tmp_path):
-    """A PRD with NO target_date is never overdue (the field is optional, G-D1)."""
+    """A PRD with NO target_date is never overdue (the field is optional)."""
     proj = _scaffold(tmp_path)
     (proj / "docs" / "product" / "prds" / "x.md").write_text("""---
 id: PRD-X

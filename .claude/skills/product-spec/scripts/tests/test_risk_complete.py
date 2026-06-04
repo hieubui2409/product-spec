@@ -1,4 +1,4 @@
-"""Phase 2 — Risk Hardening (TDD RED).
+"""Risk Hardening (TDD RED).
 
 Closes two grounded bugs and adds two deterministic script warns:
   - bug #3: `prds/*.md` never carried a `risks:` frontmatter key, so
@@ -11,7 +11,7 @@ Closes two grounded bugs and adds two deterministic script warns:
   - `risk_high_ratio` (>50% of risks are `high`) — deterministic ratio, script.
   - `risk_blindspot` (epic with >=5 child stories and 0 risks) — deterministic
     child-story count via the graph, script (NOT LLM — keeps the
-    Script-vs-LLM split, design report RT1 F1 / goal G-B1).
+    Script-vs-LLM split).
 
 `mitigation` (free text) + `status` (open|mitigated|accepted) are new optional
 fields that must parse and pass through into the graph `risks[]` objects so the
@@ -137,7 +137,7 @@ risks:
 
 
 # ---------------------------------------------------------------------------
-# G-C1 — PRD risks render in --viz risk alongside epic risks (closes bug #3).
+# PRD risks render in --viz risk alongside epic risks (closes bug #3).
 # ---------------------------------------------------------------------------
 
 def test_prd_risk_in_graph(tmp_path):
@@ -190,7 +190,7 @@ risks:
 
 
 # ---------------------------------------------------------------------------
-# G-C2 — impact / likelihood / status enum-validated (closes bug #4).
+# Impact / likelihood / status enum-validated (closes bug #4).
 # ---------------------------------------------------------------------------
 
 def test_risk_impact_typo(tmp_path):
@@ -248,7 +248,7 @@ risks:
 
 def test_risk_status_enum(tmp_path):
     """`status: closed` (not in open|mitigated|accepted) must raise
-    `unknown_enum`. The risk-entry `status` is a NEW enum (G-C3) distinct
+    `unknown_enum`. The risk-entry `status` is a NEW enum distinct
     from the artifact-level draft|review|approved status."""
     proj = _scaffold(tmp_path)
     _write_prd(proj, """---
@@ -274,7 +274,7 @@ risks:
 def test_risk_bad_shape(tmp_path):
     """A risk entry that is not a dict (e.g. `risks: ["just a string"]`) must
     raise `invalid_type` — reusing the EXISTING `invalid_type` finding rather
-    than inventing a new `invalid_shape` (design report RT1 F7).
+    than inventing a new `invalid_shape`.
 
     Today `_risks()` silently skips non-dict entries and `LIST_FIELDS` only
     checks that `risks` is itself a list, so a string element passes clean.
@@ -301,7 +301,7 @@ risks: ["just a string"]
 
 
 # ---------------------------------------------------------------------------
-# G-C3 — mitigation + status parse + surface (graph passthrough → HTML grid).
+# Mitigation + status parse + surface (graph passthrough → HTML grid).
 # ---------------------------------------------------------------------------
 
 def test_risk_mitigation_status_passthrough(tmp_path):
@@ -335,10 +335,10 @@ risks:
 
 
 def test_risk_html_grid_surfaces_mitigation_and_status():
-    """G-C3 RENDERED surface: the HTML risk view is an HTML-native <table>
+    """RENDERED surface: the HTML risk view is an HTML-native <table>
     (NOT the ASCII matrix in <pre>) whose cell drill-down surfaces each risk's
-    description + mitigation + status — design report Q44 (risk-grid HTML-native)
-    + goal G-G3. The data-layer passthrough above is dead until a consumer shows
+    description + mitigation + status (a dedicated HTML-native risk grid).
+    The data-layer passthrough above is dead until a consumer shows
     it; render_html.risk() is that consumer.
     """
     g = build_graph(_HTML_GRID_PROJ())
@@ -349,7 +349,7 @@ def test_risk_html_grid_surfaces_mitigation_and_status():
     assert "<pre>| Impact" not in html_body, "risk HTML must not fall back to the ASCII <pre> grid"
 
     # Drill-down surfaces description + mitigation + status (escaped) for the
-    # high/high risk — the whole point of G-C3.
+    # high/high risk — the whole point of the mitigation/status surface.
     assert "Third-party OAuth dependency" in html_body, "risk description missing from HTML grid"
     assert "Fallback provider on standby" in html_body, "mitigation missing from HTML grid drill-down"
     # status appears as a label/badge text.
@@ -357,7 +357,7 @@ def test_risk_html_grid_surfaces_mitigation_and_status():
 
 
 def test_risk_html_grid_escapes_spec_text():
-    """G-A4 / injection guard: spec-derived risk text is HTML-escaped server-side
+    """Injection guard: spec-derived risk text is HTML-escaped server-side
     (the risk view is NOT a body view — it inlines no DOMPurify/marked — so any
     `<`/`>` in a PO's description/mitigation must be neutralized at render time,
     same chokepoint discipline as the heatmap <pre> path)."""
@@ -381,7 +381,7 @@ risks:
 
 
 def test_risk_html_grid_deterministic():
-    """G-A4: same graph → byte-identical HTML grid body (no timestamp inside the
+    """Same graph → byte-identical HTML grid body (no timestamp inside the
     fragment; the timestamp lives only in the page chrome written by .write())."""
     g = build_graph(_HTML_GRID_PROJ())
     assert render_html.risk(g) == render_html.risk(g)
@@ -413,8 +413,8 @@ def test_risk_view_html_dispatch_is_native_table(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# G-C4 — risk_high_ratio (>50% high) + risk_blindspot (>=5 story, 0 risk).
-#         Both deterministic counts — script, NOT LLM (G-B1).
+# risk_high_ratio (>50% high) + risk_blindspot (>=5 story, 0 risk).
+#         Both deterministic counts — script, NOT LLM.
 # ---------------------------------------------------------------------------
 
 def test_risk_high_ratio(tmp_path):
@@ -507,7 +507,7 @@ def test_risk_blindspot(tmp_path):
     """An epic with >=5 child stories and 0 risks → `risk_blindspot` warn.
 
     Deterministic: the child-story count comes from the graph edges, NOT an
-    LLM judgment (design report RT1 F1; goal G-B1 keeps this in the script
+    LLM judgment (the Script-vs-LLM split keeps this in the script
     layer). Threshold is the commented const RISK_BLINDSPOT_MIN_STORIES = 5.
     """
     proj = _scaffold(tmp_path)
@@ -599,7 +599,7 @@ acceptance_criteria:
 
 
 # ---------------------------------------------------------------------------
-# G-A2 — back-compat guard. A v1 PRD with NO `risks:` key must validate clean
+# Back-compat guard. A v1 PRD with NO `risks:` key must validate clean
 #        (no error, empty risk set). Green today; must STAY green after the
 #        new fields land. (This is a regression guard, not a RED case.)
 # ---------------------------------------------------------------------------

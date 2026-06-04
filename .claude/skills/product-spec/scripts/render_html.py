@@ -141,8 +141,8 @@ def _escape(s: str) -> str:
 
 # ── HTML-native risk grid (impact × likelihood) ─────────────────────────────
 #
-# The risk view is the one graph view Mermaid can't express cleanly (design
-# report Q44: matrix/heatmap/risk-grid = HTML-native table). It is NOT a body
+# The risk view is the one graph view Mermaid can't express cleanly
+# (matrix/heatmap/risk-grid = HTML-native table). It is NOT a body
 # view: risk fields are short structured scalars + free-text, rendered as a
 # server-escaped <table> through _escape() — the SAME chokepoint discipline as
 # the heatmap/persona <pre> path. It therefore inlines NO marked/DOMPurify and
@@ -199,7 +199,7 @@ def risk(graph: Dict[str, Any]) -> str:
 
     Each cell shows its risk count; a non-empty cell expands (<details>) to the
     description + mitigation + status of every risk it holds — the rendered
-    surface for G-C3's mitigation/status (dead data until shown). Risks whose
+    surface for each risk's mitigation/status (dead data until shown). Risks whose
     impact/likelihood are absent/typo'd land in an `(unrated)` overflow row so
     they are never silently dropped (the enum typo is separately flagged by
     check_consistency). Returns a self-contained fragment (scoped <style> + the
@@ -383,10 +383,10 @@ def persona(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) 
 # ── HTML-native competition view (parity matrix + threat heatmap) ───────────
 #
 # Like the risk grid, the competition view is an HTML-native <table> Mermaid
-# can't express cleanly (design report Q30/Q44). It is NOT a body view: every
+# can't express cleanly. It is NOT a body view: every
 # competitor name / id / parity / threat is a short structured value escaped
 # server-side through _escape() — the SAME chokepoint discipline as the risk
-# grid (G-A4). It inlines NO marked/DOMPurify and NO Mermaid runtime; it routes
+# grid. It inlines NO marked/DOMPurify and NO Mermaid runtime; it routes
 # through visualize.py's "html"/"risk-grid"-style native path, never Mermaid.
 #
 # Competitor IDENTITY is the BRD's DRY home (graph["competitors"]); per-PRD
@@ -488,11 +488,11 @@ def competition(graph: Dict[str, Any], lang: str = "en") -> str:
 
     Delegates resolution of competitors+PRDs+cell_lookup to
     render_ascii.resolve_competition (single home for the resolution rule; this
-    wires the C9 DRY hoist so render_html no longer re-implements the resolver).
+    wires the shared DRY hoist so render_html no longer re-implements the resolver).
     Returns a self-contained fragment (scoped <style> + the two tables);
-    deterministic — no timestamp inside the fragment (G-A4). Renders an empty
+    deterministic — no timestamp inside the fragment. Renders an empty
     placeholder when no competitors exist so a v1 spec can still request the view
-    (G-A2). Every spec-derived value is escaped server-side (no DOMPurify/marked)."""
+    (back-compat). Every spec-derived value is escaped server-side (no DOMPurify/marked)."""
     import render_ascii as _ra
     competitors, prds, cell_lookup = _ra.resolve_competition(graph)
     matrix = _competition_matrix(competitors, prds, lang, cell_lookup=cell_lookup)
@@ -535,13 +535,13 @@ _COMPETITION_CSS = (
 )
 
 
-# ── HTML-native governance audit trail (C9) ────────────────────────────────
+# ── HTML-native governance audit trail ─────────────────────────────────────
 #
 # The audit view joins free-text governance fields (who_approved, DEC title,
 # change-log "what drifted") that are higher injection-risk than the structured
 # graph views — so EVERY dynamic value is escaped server-side through _escape()
-# before assembly (no DOMPurify/marked, no href channel). This is the gate the
-# XSS-watch (C8) required before the view could grow an HTML form.
+# before assembly (no DOMPurify/marked, no href channel). This is the
+# XSS-watch gate required before the view could grow an HTML form.
 _AUDIT_CSS = (
     "<style>"
     ".audit-table{border-collapse:collapse;width:100%;max-width:60rem;}"
@@ -556,12 +556,12 @@ _AUDIT_CSS = (
 
 
 def audit(data: Dict[str, Any], lang: str = "en") -> str:
-    """HTML-native governance audit trail (C9): a chronological table.
+    """HTML-native governance audit trail: a chronological table.
 
     `data` is the dict from `assemble_audit_trail.assemble` (events list). Returns a
     self-contained fragment (scoped <style> + <table>). EVERY spec/PO-derived value is
     escaped server-side via _escape() — the unreconciled rows are flagged with a class +
-    a marker, never dropped. Deterministic: no timestamp inside the fragment (G-A4)."""
+    a marker, never dropped. Deterministic: no timestamp inside the fragment."""
     from assemble_audit_trail import _AUDIT_LABELS  # lazy: no import cycle
     lab = _AUDIT_LABELS.get(lang, _AUDIT_LABELS["en"])
     events = data.get("events", [])
@@ -589,16 +589,16 @@ def audit(data: Dict[str, Any], lang: str = "en") -> str:
     )
 
 
-# ── HTML-native multi-dimensional dashboard (HTML-only; PO decision §0.2) ───
+# ── HTML-native multi-dimensional dashboard (HTML-only) ─────────────────────
 #
-# The dashboard is the new HTML-only multi-dim view (G-G1): ONE self-contained
+# The dashboard is the HTML-only multi-dim view: ONE self-contained
 # page that stacks the existing HTML-native fragments — roadmap-by-horizon +
 # risk grid + competition (parity matrix + threat heatmap) — so a PO sees TIME,
 # RISK, and COMPETITION at a glance without opening three files. It composes the
 # already-escaped builders (risk()/competition()) plus a small roadmap table; it
 # adds NO new escaping surface and NO Mermaid runtime (every fragment is plain
 # server-escaped HTML, the SAME chokepoint discipline as the risk/competition
-# grids). Deterministic — no timestamp inside the fragment (G-A4).
+# grids). Deterministic — no timestamp inside the fragment.
 
 def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
     """An HTML-native roadmap/deadline table for the dashboard: PRD/Epic/Story
@@ -643,7 +643,7 @@ def _dashboard_roadmap(graph: Dict[str, Any], lang: str = "en") -> str:
 
 def dashboard(graph: Dict[str, Any], lang: str = "en") -> str:
     """HTML-only multi-dim dashboard: roadmap + risk grid + competition, stacked
-    on one page (G-G1). Reuses the already-escaped HTML-native builders, so the
+    on one page. Reuses the already-escaped HTML-native builders, so the
     fragment is self-contained and carries no Mermaid runtime. Deterministic."""
     return (
         _DASHBOARD_CSS
@@ -679,7 +679,7 @@ _DASHBOARD_CSS = (
 # Body-bearing HTML outputs render artifact markdown bodies CLIENT-SIDE through
 # the chokepoint  DOMPurify.sanitize(marked.parse(md))  (defined in
 # _viewer-head.html as psRenderMarkdown). The server NEVER injects body HTML; it
-# ships bodies as an inert JSON data island. Two enumerated sinks (red-team H3):
+# ships bodies as an inert JSON data island. Two enumerated sinks:
 #   1. the embedded-JSON body channel  → escaped via embed_spec_data()
 #   2. attribute-context values (data-*, aria-label, id) → built client-side via
 #      safe DOM APIs (textContent / dataset) and/or _escape() for server tokens.
@@ -688,7 +688,7 @@ _DASHBOARD_CSS = (
 
 
 # The sanitize chokepoint, shipped INSIDE the {{markdown_libs}} block (body views
-# only) so legacy graph views inline no marked/DOMPurify code at all (H4). Always
+# only) so legacy graph views inline no marked/DOMPurify code at all. Always
 # defined — when the libs are absent it FAILS CLOSED to escaped text, never a CDN.
 _BODY_RENDER_JS = (
     "\nfunction psRenderMarkdown(md){"
@@ -696,7 +696,7 @@ _BODY_RENDER_JS = (
     "return '<pre class=\"ps-fallback\">'+psEscapeHtml(md)+'</pre>';}"
     # Shared detail-panel controls for board + explorer. Defined HERE (body-view
     # only) — not in the shared head — because they call psRenderMarkdown, so the
-    # 9 legacy graph views stay free of any sanitizer reference (H4 gating). Each
+    # 9 legacy graph views stay free of any sanitizer reference. Each
     # body shell registers its id->record map via psRegisterDetail(byId); inert in
     # the linear export (it has no #ps-detail). Body is the only innerHTML sink.
     "\nvar psDetailById={},psDetailCache={};"
@@ -1000,7 +1000,7 @@ def assemble(
     # The `time` view (TIME dimension) builds its own body from the graph when no
     # body text is supplied: a CYCLE-SAFE Mermaid gantt + depends_on annotations
     # (render_mermaid.time uses a visited-set walk, so a circular depends_on chain
-    # terminates instead of hanging this renderer — trade-off T1 / G-D3). Imported
+    # terminates instead of hanging this renderer). Imported
     # lazily: render_mermaid imports render_ascii, neither imports render_html, so
     # there is no import cycle, but the lazy import keeps module-load order simple.
     if view == "time" and not view_text:
@@ -1042,10 +1042,10 @@ def assemble(
         # ALL product-spec HTML (graph/native + board/explorer/export) looks identical.
         # EXTEND-only: every prior token + the RAW-footer_note invariant are
         # preserved; legacy views still inline NO SKILL sanitizer — no bodies, so
-        # no {{markdown_libs}} block and no psRenderMarkdown chokepoint (H4). NB the
+        # no {{markdown_libs}} block and no psRenderMarkdown chokepoint. NB the
         # mermaid-format payload bundles Mermaid's OWN internal DOMPurify for SVG
         # sanitization; that third-party copy is not a body-render sink and is
-        # exempt from H4 — the contract is "no skill body-sanitizer", not "no
+        # exempt from the symmetric-gating rule — the contract is "no skill body-sanitizer", not "no
         # vendor lib named DOMPurify".
         "viewer_head": viewer_head(),
         # Hover-on-ID: an inert id→{title,meta} island + the client scanner that

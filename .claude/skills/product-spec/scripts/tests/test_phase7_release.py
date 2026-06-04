@@ -1,18 +1,18 @@
-"""Phase 7 — Docs & 2.0.0 release gates (TDD RED).
+"""Docs & 2.0.0 release gates (TDD RED).
 
-The final phase makes the v2 multi-dimensional schema authoritative everywhere
+Makes the v2 multi-dimensional schema authoritative everywhere
 and bumps the skill to the major **2.0.0**. These are the *structural* pytest
-cases the phase spec's "Tests First" table names:
+cases:
 
-  - test_version_consistency  (G-H2) — the skill version is 2.0.0 in SKILL.md
+  - test_version_consistency — the skill version is 2.0.0 in SKILL.md
         frontmatter and NO skill doc still declares the old 1.1.0.
-  - test_acme_shop_validate   (G-H4 / G-A1) — the worked example examples/acme-shop
+  - test_acme_shop_validate — the worked example examples/acme-shop
         has been MIGRATED to v2 (carries real risk/time/competition data) AND
         still validates with 0 structural errors.
-  - test_i18n_new_labels      (G-H1) — every new view/enum label localizes under
+  - test_i18n_new_labels — every new view/enum label localizes under
         --lang vi (VI is native-reviewed for natural wording).
 
-Back-compat (G-A2, eval `backcompat-v1-spec`) is graded by the eval runner, not
+Back-compat (eval `backcompat-v1-spec`) is graded by the eval runner, not
 here; the structural half — a v1 spec (no v2 fields) building + validating clean
 — is already covered by the per-dimension "absence is clean" cases
 (test_check_consistency.py / test_competition.py / test_risk_complete.py).
@@ -47,7 +47,7 @@ TARGET_VERSION = "2.1.0"
 STALE_VERSION = "1.1.0"
 
 # The five v2 frontmatter schema additions this major bump introduces. The
-# migrated example must exercise them so the docs show v2 in action (Q42).
+# migrated example must exercise them so the docs show v2 in action.
 V2_NODE_FIELDS = ("risks", "target_date", "depends_on", "competitive_parity")
 
 
@@ -104,7 +104,7 @@ def test_version_consistency():
 
 
 # ---------------------------------------------------------------------------
-# G-H4 / G-A1 — examples/acme-shop migrated to v2 + green --validate.
+# examples/acme-shop migrated to v2 + green --validate.
 # The example must (a) carry real v2 data across the new dimensions and
 # (b) produce 0 structural errors from the consistency + traceability checks.
 # ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ def test_acme_shop_validate():
         f"(migrated example); missing: {missing}. present: {sorted(present)}"
     )
 
-    # (b) still validates clean — 0 structural errors (G-A1 / G-H4).
+    # (b) still validates clean — 0 structural errors.
     findings = check_cons(g) + check_trace(g)
     errors = [f for f in findings if f.get("severity") == "error"]
     assert errors == [], (

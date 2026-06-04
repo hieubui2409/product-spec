@@ -3,10 +3,10 @@
 competitive_drift_anchors — SCRIPT half of the `competitive_drift` LLM check
 (COMPETITION dimension).
 
-`competitive_drift` is an LLM-judgment warn (Script-vs-LLM split: G-B2) — "this
+`competitive_drift` is an LLM-judgment warn (Script-vs-LLM split) — "this
 PRD is losing its competitive edge" is a sensory call no enum-match can make. But
 to stop the LLM hallucinating ("mất lợi thế" is the classic over-flag), the design
-(R2 / report §0.1) pins the LLM to STRUCTURED, SCRIPT-precomputed anchors and
+pins the LLM to STRUCTURED, SCRIPT-precomputed anchors and
 forbids it from inventing a competitor or a parity verdict:
 
     {artifact_id, file, type, scope,
@@ -16,11 +16,11 @@ forbids it from inventing a competitor or a parity verdict:
 The script RESOLVES the PRD's ID-keyed `competitive_parity` map against the BRD's
 DRY competitor identity home (`graph['competitors']`) into NAME-bearing rows, and
 pre-computes `competitors_with_data` (the count of parity entries whose value is
-NOT `none`) — the LLM does NO counting and never re-parses brd.md (F6). The LLM
+NOT `none`) — the LLM does NO counting and never re-parses brd.md. The LLM
 only applies the fixed AND-rule against these numbers (see the scaffold in
 references/validation-rules-spec.md → "competitive_drift LLM Scaffold").
 
-The anchored rule (design line 19 / §0.1): a PRD is flag-ELIGIBLE only when it is
+The anchored rule: a PRD is flag-ELIGIBLE only when it is
 `scope: core-value` AND has `competitors_with_data >= 2` real parity verdicts. The
 LLM then flags only if EVERY resolved, real (non-`none`) parity is `behind` —
 which the script also pre-lists as `all_behind_competitors`. Anything short of
@@ -32,8 +32,8 @@ judgment). A PRD that cannot meet the rule (wrong scope, < 2 data points) is sti
 emitted with `eligible: false` so the LLM returns `{finding: null}` without
 inventing data — the explicit anti-hallucination case.
 
-Scope: PRDs (the unit that carries BOTH `scope` and `competitive_parity`, report
-§5.1). Epics/stories have no parity map and are skipped. A parity KEY that does
+Scope: PRDs (the unit that carries BOTH `scope` and `competitive_parity`).
+Epics/stories have no parity map and are skipped. A parity KEY that does
 not resolve to a BRD competitor is dropped from the resolved block (the structural
 `unknown_ref` error is the consistency check's job, NOT this feeder's) so the LLM
 never sees a phantom competitor.
@@ -61,7 +61,7 @@ configure_utf8_console()
 
 # A PRD must be on the product's core value AND carry at least this many real
 # parity verdicts before the drift judgment is even eligible — the anchored
-# anti-hallucination gate (design §0.1). `none` parity does NOT count as data.
+# anti-hallucination gate. `none` parity does NOT count as data.
 _MIN_COMPETITORS_WITH_DATA = 2
 
 
@@ -73,7 +73,7 @@ def build_anchors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     whose verdict is `behind` as `all_behind_competitors`. Eligibility (scope ==
     core-value AND competitors_with_data >= 2) is pre-computed so the LLM returns
     `missing_anchor`/no-flag deterministically. Sorted by artifact_id → stable
-    order (G-A4). The SCRIPT never decides flag/no-flag — only the numbers."""
+    order (byte-deterministic). The SCRIPT never decides flag/no-flag — only the numbers."""
     names = competitor_id_to_name(graph)
     anchors: List[Dict[str, Any]] = []
     for n in graph["nodes"]:

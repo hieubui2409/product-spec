@@ -1,8 +1,8 @@
-"""test_apply_critique — E1 deterministic-half contracts (encodes every red-team fix).
+"""test_apply_critique — deterministic-half contracts (encodes every hardening fix).
 
-Covers: read-side path fence (H3), lens-cache JSON parse + fingerprint (H1), freshness
-with None-handling (H2), atomic alloc (C4), rationale injection neutralization (C3),
-resume markers (C4), and the GATE-bypass guard surface (C5 lives in the loop; the
+Covers: read-side path fence, lens-cache JSON parse + fingerprint, freshness
+with None-handling, atomic alloc, rationale injection neutralization,
+resume markers, and the GATE-bypass guard surface (the bypass guard lives in the loop; the
 deterministic seam tested here is that a Change DEC is only written when the loop has
 already established a fresh approval — modeled via append_alloc returning written:true
 only on a clean append).
@@ -43,7 +43,7 @@ def _write_report(root: Path, name: str, frontmatter: str, body: str = "# critiq
     return p
 
 
-# --------------------------------------------------------------------------- read-fence (H3)
+# --------------------------------------------------------------------------- read-fence
 
 def test_read_fence_rejects_traversal(tmp_path):
     root = _make_root(tmp_path)
@@ -76,7 +76,7 @@ def test_read_fence_allows_real_report(tmp_path):
     assert resolved == rep.resolve()
 
 
-# --------------------------------------------------------------------------- cache parse + fingerprint (H1)
+# --------------------------------------------------------------------------- cache parse + fingerprint
 
 def test_parses_findings_from_lens_cache(tmp_path):
     root = _make_root(tmp_path)
@@ -109,7 +109,7 @@ def test_cache_absent_sets_prose_fallback(tmp_path):
     assert "manual prose walk" in out["note"]
 
 
-# --------------------------------------------------------------------------- freshness None-handling (H2)
+# --------------------------------------------------------------------------- freshness None-handling
 
 def test_freshness_unknown_when_report_predates_tracking(tmp_path):
     root = _make_root(tmp_path)
@@ -135,7 +135,7 @@ def test_freshness_unknown_when_body_hash_is_none(tmp_path):
     assert out["findings"][0]["freshness"] == "unknown"
 
 
-# --------------------------------------------------------------------------- atomic alloc (C4)
+# --------------------------------------------------------------------------- atomic alloc
 
 def test_append_alloc_no_dup_under_looped_alloc(tmp_path):
     root = _make_root(tmp_path)
@@ -154,7 +154,7 @@ def test_append_alloc_reports_written_true(tmp_path):
     assert res["written"] is True and res["id"] == "DEC-1"
 
 
-# --------------------------------------------------------------------------- injection (C3)
+# --------------------------------------------------------------------------- injection
 
 def test_rationale_fence_injection_neutralized(tmp_path):
     root = _make_root(tmp_path)
@@ -175,7 +175,7 @@ def test_sanitize_escapes_dangerous_lines():
         assert not line.startswith("## DEC-")
 
 
-# --------------------------------------------------------------------------- resume markers (C4)
+# --------------------------------------------------------------------------- resume markers
 
 def test_resume_skips_resolved_fingerprints(tmp_path):
     root = _make_root(tmp_path)
@@ -197,7 +197,7 @@ def test_progress_write_fenced(tmp_path):
         prog.record_resolution(root, "../../../../../../tmp/escape", "fp", "DEC-1", "keep")
 
 
-# --------------------------------------------------------------------------- GATE re-approval bypass (C5)
+# --------------------------------------------------------------------------- GATE re-approval bypass
 
 def test_gate_blocks_change_without_fresh_owner():
     # Placeholder owner → rejected.
@@ -220,7 +220,7 @@ def test_gate_allows_fresh_reapproval():
     assert ok is True
 
 
-# --------------------------------------------------------------------------- supersede flips prior (C5 seam)
+# --------------------------------------------------------------------------- supersede flips prior
 
 def test_supersedes_flips_prior_to_superseded(tmp_path):
     root = _make_root(tmp_path)

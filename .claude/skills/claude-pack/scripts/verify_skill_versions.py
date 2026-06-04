@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""verify_skill_versions — E5 release-identity gate.
+"""verify_skill_versions — release-identity gate.
 
 Reads each skill's SKILL.md frontmatter nested ``metadata.version`` and asserts it
 exists and matches semver (``MAJOR.MINOR.PATCH``). Scope is shape + presence ONLY:

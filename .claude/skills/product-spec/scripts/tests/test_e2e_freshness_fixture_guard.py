@@ -1,8 +1,8 @@
-"""test_e2e_freshness_fixture_guard — Phase 9 (9a): lock the committed `/e2e/dating-app/`
-critique run as Phase 3's E1 freshness fixture, and guard it against desync.
+"""test_e2e_freshness_fixture_guard — lock the committed `/e2e/dating-app/`
+critique run as the freshness fixture, and guard it against desync.
 
-Resolves the Phase-3/Phase-9 ordering inversion (red-team H2/H5): the dating-app critique reports
-(frontmatter-bearing, with `body_hash` + `lens_findings_hash`) ARE the E1 freshness fixture — no
+The dating-app critique reports
+(frontmatter-bearing, with `body_hash` + `lens_findings_hash`) ARE the freshness fixture — no
 hand-authored one. These tests:
 
   * DESYNC GUARD — every committed report's `lens_findings_hash` MUST resolve to a committed
@@ -54,7 +54,7 @@ def test_every_report_hash_resolves_to_committed_cache():
     unresolved = [(p.name, h) for p, h in pairs if h not in committed]
     assert unresolved == [], (
         f"freshness-fixture DESYNC: these reports reference a lens-cache that isn't committed "
-        f"{unresolved}. Regenerate + commit the paired cache (Phase-9 selective-extend rule)."
+        f"{unresolved}. Regenerate + commit the paired cache (selective-extend rule)."
     )
 
 
@@ -64,7 +64,7 @@ def test_fixture_replay_asserts_real_values():
     out = pcr.parse_report(report, E2E)
     assert out["cache_present"] is True, "fixture replay must hit the committed lens-cache, not pass vacuously"
     assert out["findings"], "expected ≥1 fingerprinted finding from the committed cache"
-    # Every finding carries the deterministic struct E1 depends on.
+    # Every finding carries the deterministic struct the freshness check depends on.
     for f in out["findings"]:
         assert f["fingerprint"] and len(f["fingerprint"]) == 8
         assert f["lens"]
@@ -72,7 +72,7 @@ def test_fixture_replay_asserts_real_values():
 
 
 def test_caches_have_no_live_timestamps():
-    # Commit-hygiene (M1): committed caches must carry the canonical scrubbed timestamp, never a
+    # Commit-hygiene: committed caches must carry the canonical scrubbed timestamp, never a
     # real run time (which would churn the example on every regeneration + leak run timing). Only
     # ISO-timestamp-shaped values are in scope — a `last_ts` set to a report-stem LABEL
     # (e.g. "260603-prd-chat-lvl5") is not a wall-clock leak and is left as-is by the scrub.
@@ -83,10 +83,10 @@ def test_caches_have_no_live_timestamps():
             if not iso.match(m.group(2)):
                 continue  # non-ISO label (e.g. report stem) — not a timestamp leak
             assert m.group(2) == "2026-06-03T00:00:00+00:00", (
-                f"un-scrubbed timestamp {m.group(0)} in {os.path.basename(f)} — re-run the Phase-9 scrub"
+                f"un-scrubbed timestamp {m.group(0)} in {os.path.basename(f)} — re-run the timestamp scrub"
             )
 
 
 def test_no_web_cache_committed():
-    # web-cache holds third-party scraped text — never shipped (M1).
+    # web-cache holds third-party scraped text — never shipped.
     assert not (E2E / "docs" / "product" / ".memory" / "web-cache").exists()

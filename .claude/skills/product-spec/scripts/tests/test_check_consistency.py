@@ -1,19 +1,19 @@
-"""Phase 3 — TIME/DEPENDENCIES consistency checks (goal G-D1, G-D4, plus
+"""TIME/DEPENDENCIES consistency checks (target_date + time_child_late, plus
 dep_order + the depends_on type-guard).
 
 All checks here are PURE structural / date comparisons — no wall clock, no LLM
-(G-A4 determinism + G-B1 split). The wall-clock `overdue` advisory is a separate
+(deterministic + Script-vs-LLM split). The wall-clock `overdue` advisory is a separate
 script (test_time_advisory.py), deliberately OUTSIDE this gate.
 
 RED spec for:
-  - G-D1  `target_date` (ISO) parses onto PRD + Epic graph nodes; optional.
-  - G-D4  `time_child_late` (warn) when a child's target_date is AFTER its
+  - `target_date` (ISO) parses onto PRD + Epic graph nodes; optional.
+  - `time_child_late` (warn) when a child's target_date is AFTER its
           parent's (an epic due after its PRD is incoherent).
   - dep_order (warn) when A depends_on B but A.target_date < B.target_date
           (you can't finish A before its prerequisite B).
   - type-guard: a NON-EMPTY `depends_on` on a story (wrong artifact type;
           depends_on is PRD+Epic only) reuses the EXISTING `invalid_type`
-          finding — NOT a new check id (design-report build-order 3b / F7).
+          finding — NOT a new check id.
 
 Fixture + finding-set assertion style of test_scripts.py / test_risk_complete.py.
 """
@@ -75,7 +75,7 @@ def _node(graph, node_id):
 
 
 # ---------------------------------------------------------------------------
-# G-D1 — target_date parses onto PRD + Epic nodes; optional.
+# target_date parses onto PRD + Epic nodes; optional.
 # ---------------------------------------------------------------------------
 
 
@@ -110,7 +110,7 @@ target_date: 2026-08-15
 
 
 def test_target_date_optional_absence_is_clean(tmp_path):
-    """G-D1 / G-A2: a PRD with no target_date validates with no error and the
+    """Back-compat: a PRD with no target_date validates with no error and the
     node's target_date is falsy (None/absent)."""
     proj = _scaffold(tmp_path)
     (proj / "docs" / "product" / "prds" / "a.md").write_text("""---
@@ -129,7 +129,7 @@ lang: en
 
 
 # ---------------------------------------------------------------------------
-# G-D4 — time_child_late (warn): child target_date AFTER parent target_date.
+# time_child_late (warn): child target_date AFTER parent target_date.
 # ---------------------------------------------------------------------------
 
 
@@ -329,9 +329,9 @@ lang: en
 
 
 # ---------------------------------------------------------------------------
-# Phase 4 — COMPETITION consistency checks (G-E1 enum + unknown_ref + COMP-ID
+# COMPETITION consistency checks (enum + unknown_ref + COMP-ID
 # grammar + malformed-shape→invalid_type). All deterministic enum / ref / shape
-# checks — no LLM (G-B1). The `competitive_drift` LLM warn is graded by the eval
+# checks — no LLM. The `competitive_drift` LLM warn is graded by the eval
 # runner, not here.
 #
 # Competitor identity is the BRD's DRY home: a `competitors:` list of
@@ -341,7 +341,7 @@ lang: en
 #   - parity value ∈ {ahead, parity, behind, none}    → unknown_enum
 #   - every parity KEY must resolve to a graph competitor id → else unknown_ref
 #   - a parity value that is a list/dict, or a competitors[] entry that is not a
-#     mapping → reuse the EXISTING invalid_type (NOT a new invalid_shape; F7)
+#     mapping → reuse the EXISTING invalid_type (NOT a new invalid_shape)
 #   - competitor id must match the COMP-<SLUG> grammar → invalid_id
 # ---------------------------------------------------------------------------
 
@@ -473,7 +473,7 @@ competitive_parity:
 def test_competitor_invalid_id_grammar(tmp_path):
     """A competitor id that violates the `COMP-<SLUG>` grammar (e.g. lowercase /
     missing prefix) → `invalid_id` error. Parent-scoped ID grammar discipline,
-    same family as PRD/epic/story id validation (G-A1)."""
+    same family as PRD/epic/story id validation."""
     proj = _scaffold(tmp_path)
     _write_brd_with_competitors(proj, (
         "  - id: acme\n"               # not COMP-<SLUG>
@@ -492,7 +492,7 @@ def test_competitor_invalid_id_grammar(tmp_path):
 def test_competitor_bad_shape_reuses_invalid_type(tmp_path):
     """A competitors[] entry that is not a mapping (e.g. a bare string) must
     reuse the EXISTING `invalid_type` finding — NOT a new `invalid_shape`
-    (design report F7, same discipline as malformed risks[])."""
+    (same discipline as malformed risks[])."""
     proj = _scaffold(tmp_path)
     _write_brd_with_competitors(proj, '  - "just a string"\n')
     _, findings = _checks(proj)
@@ -508,7 +508,7 @@ def test_competitor_bad_shape_reuses_invalid_type(tmp_path):
 
 def test_parity_value_bad_shape_reuses_invalid_type(tmp_path):
     """A parity VALUE that is not a scalar enum (e.g. a list) must reuse the
-    EXISTING `invalid_type` (F7) rather than crash the enum check."""
+    EXISTING `invalid_type` rather than crash the enum check."""
     proj = _scaffold(tmp_path)
     _write_brd_with_competitors(proj, _ACME_OK)
     (proj / "docs" / "product" / "prds" / "auth.md").write_text("""---

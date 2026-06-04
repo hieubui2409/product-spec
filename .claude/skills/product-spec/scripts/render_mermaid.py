@@ -106,8 +106,8 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         node_label = _safe_label_lines(n["id"], n.get("title") or "")
         sid = _safe_id(n["id"])
         # Deferred nodes get the `deferred` classDef so the PO can see at a
-        # glance which nodes are out-of-scope-but-still-tracked (§15 amendment:
-        # default-show with marker, --filter-wont opt-in hide).
+        # glance which nodes are out-of-scope-but-still-tracked (default show
+        # with marker, --filter-wont opt-in hide).
         if _is_deferred(n):
             lines.append(f'  {sid}["{node_label} *"]:::deferred')
         else:
@@ -116,7 +116,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
         if not (_visible(e["from"]) and _visible(e["to"])):
             continue
         lines.append(f"  {_safe_id(e['from'])} --> {_safe_id(e['to'])}")
-    # Sort goal ids for cross-format parity with the ASCII tree (G-A4: byte-deterministic).
+    # Sort goal ids for cross-format parity with the ASCII tree (byte-deterministic).
     goal_ids = sorted(nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid))
     for gid in goal_ids:
         lines.append(f"  {_safe_id(gid)} --> PRODUCT")
@@ -284,19 +284,19 @@ def risk(graph: Dict[str, Any]) -> str:
 
 def competition(graph: Dict[str, Any]) -> str:
     # The competition view (parity matrix + threat heatmap) is HTML-native by
-    # design (Q30/Q44) — Mermaid can't express the comp×PRD matrix cleanly. Fall
+    # design — Mermaid can't express the comp×PRD matrix cleanly. Fall
     # back to a plain markdown fence around the ASCII grid (same convention as
     # risk/heatmap/persona). The html dispatch routes to render_html.competition.
     return f"```\n{ascii_competition(graph)}\n```"
 
 
 def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
-    """Mermaid `gantt` for the TIME dimension (design Q47): each PRD/Epic is a
+    """Mermaid `gantt` for the TIME dimension: each PRD/Epic is a
     task, grouped into now/next/later sections, dated by `target_date` when set.
 
     The depends_on relationships are surfaced as a deterministic, CYCLE-SAFE
     ordering (visited-set walk) plus a `%%` dependency annotation — gantt has no
-    cross-task arrow, and a circular chain must not hang the renderer (T1/G-D3).
+    cross-task arrow, and a circular chain must not hang the renderer.
 
     `filter_wont=True` drops deferred (moscow=wont / scope=out) tasks, parity
     with roadmap and the ASCII `time` view.
@@ -371,9 +371,9 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
 def delta(current: Dict[str, Any], baseline: Dict[str, Any]) -> str:
     """Mermaid delta: node ADD/REMOVE + PRODUCT drift only. A field-only edit (e.g.
     a story's status flip with no add/remove) renders as '(no changes)' here —
-    per-field node diffs appear in the ascii/html delta, not this graph view. (Not
-    a C5 regression: the pre-C5 mermaid delta had no per-field loop either; the
-    diff_graphs refactor preserved that scope.)"""
+    per-field node diffs appear in the ascii/html delta, not this graph view. This
+    node-level-only scope is intentional: the Mermaid delta has never carried a
+    per-field loop."""
     d = diff_graphs(current, baseline)  # shared added/removed + product-change set-math
     lines = [
         "flowchart TB",

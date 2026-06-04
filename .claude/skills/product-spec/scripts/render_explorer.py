@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-render_explorer — F2 `--viz explorer` html writer. One self-contained page with
+render_explorer — `--viz explorer` html writer. One self-contained page with
 an in-page mode toggle across three layouts that share search + facet filters:
 
   • Tree       — collapsible <details> nav + click → sanitized body (default mode)

@@ -7,8 +7,8 @@ plain-text string. Zero dependencies; safe in any terminal.
 
 Deferred items (moscow=wont or scope=out) get a trailing `*` marker so the
 PO can see at a glance which nodes are out-of-scope-but-still-tracked. The
-`filter_wont` kwarg lets the caller hide them entirely (per the brainstorm
-§15 amendment: default show-with-marker, opt-in filter).
+`filter_wont` kwarg lets the caller hide them entirely (default
+show-with-marker, opt-in filter).
 
 Board/explorer renderers and shared card-selection helpers live in
 render_ascii_board and are re-exported here so all callers continue to
@@ -149,7 +149,7 @@ def _counts_footer(graph: Dict[str, Any]) -> str:
 
 
 def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> str:
-    """Minimal, deterministic TEXT-SUMMARY tree (PO decision §0.2 — DOWNGRADE,
+    """Minimal, deterministic TEXT-SUMMARY tree (a DOWNGRADE,
     not removal): the heavy box-drawing graph-art is gone; HTML/Mermaid render the
     rich hierarchy now. This keeps the zero-dependency terminal/CI path alive as a
     compact structure + counts summary.
@@ -174,7 +174,7 @@ def tree(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     lines.append(f"{label('product', lang)}: {_ascii_product_name(graph)}")
 
     # Walk goal(1) -> prd(2) -> epic(3) -> story(4), sorted by id at each depth so
-    # the output is byte-deterministic (G-A4). Depth drives the 2-space indent.
+    # the output is byte-deterministic. Depth drives the 2-space indent.
     goal_ids = sorted(nid for nid, n in nodes_by_id.items() if n.get("type") == "goal" and _visible(nid))
     for gid in goal_ids:
         lines.append(_summary_line(nodes_by_id.get(gid), gid, 1))
@@ -310,7 +310,7 @@ def _dep_safe_order(graph: Dict[str, Any]) -> List[str]:
 
     Iterative post-order with a visited-set guard — the SAME guard as
     spec_graph._closure (`if x in seen: continue`) — so a circular chain
-    (A→B→A) terminates instead of hanging the renderer (trade-off T1 / G-D3).
+    (A→B→A) terminates instead of hanging the renderer.
     A cycle simply degrades to sorted order for its nodes. Kept local to
     render_ascii (not imported from render_mermaid) so the ASCII path stays
     zero-dependency and the module graph stays acyclic (render_mermaid imports
@@ -345,8 +345,8 @@ def time(graph: Dict[str, Any], lang: str = "en", filter_wont: bool = False) -> 
     the `target_date` (or `(no date)`) and any `depends_on` prerequisites.
 
     Rows are emitted in a CYCLE-SAFE dep order (prerequisites before dependents
-    where acyclic; a circular chain degrades to sorted order, never hangs —
-    trade-off T1 / G-D3). Deferred items keep the `*` marker unless
+    where acyclic; a circular chain degrades to sorted order, never hangs).
+    Deferred items keep the `*` marker unless
     `filter_wont` drops them (parity with roadmap)."""
     order_index = {nid: i for i, nid in enumerate(_dep_safe_order(graph))}
 
@@ -498,7 +498,7 @@ def competition(graph: Dict[str, Any]) -> str:
     """Text parity matrix + threat list for the COMPETITION dimension.
 
     The competition view is HTML-native by design (parity matrix + threat
-    heatmap; G-E2). This ASCII form is the terminal/CI fallback the dispatcher
+    heatmap). This ASCII form is the terminal/CI fallback the dispatcher
     reaches for `--format ascii|mermaid` (mirroring risk's ASCII fallback): rows
     = competitor names, cols = PRD ids, cells = the parity enum (blank when
     unset); a trailing threat column shows each competitor's threat tier.

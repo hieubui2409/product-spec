@@ -91,8 +91,8 @@ LIST_FIELDS = (
     "acceptance_criteria",
 )
 
-# Soft cap surfaced as a warn during PO interview. Brainstorm §3 + §11 +
-# interview-vision V2 set "cap 2-4 (soft)".
+# Soft cap surfaced as a warn during PO interview. The interview-vision V2
+# question sets "cap 2-4 (soft)".
 PERSONA_SOFT_CAP = 4
 
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
@@ -281,7 +281,7 @@ def _self_reference(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Warn when a `.gitignore` pattern likely excludes `.session.md`.
 
-    §16 mandates `.session.md` be committed for cross-machine resume.
+    `.session.md` must be committed for cross-machine resume.
     Best-effort only; a false positive is acceptable since the finding is `warn`.
     """
     findings: List[Dict[str, Any]] = []
@@ -309,7 +309,7 @@ def _session_md_gitignore(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "file": ".gitignore",
                 "detail": (
                     f".gitignore pattern {p!r} likely excludes docs/product/.session.md. "
-                    f"§16 requires the session file to be committed for cross-machine resume."
+                    f"The session file must be committed for cross-machine resume."
                 ),
                 "context": {"pattern": p},
             })

@@ -1,6 +1,6 @@
 <!--
 TEMPLATE: release-notes.md — `--summary --audience release-notes` output.
-"What changed since the last approved snapshot", pulled from the C9 audit trail.
+"What changed since the last approved snapshot", pulled from the audit trail.
 Same source-of-truth + render path as the exec one-pager; different audience.
 Bilingual headers.
 -->

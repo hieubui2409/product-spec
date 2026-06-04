@@ -67,7 +67,7 @@ function psToggleTheme(){
 function psEscapeHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 /* NOTE: the markdown sanitize chokepoint is NOT defined here. It is
    body-view-only and ships inside the markdown-libs script block, so the 9
-   legacy graph views inline NO sanitizer code (red-team H4 symmetric gating).
+   legacy graph views inline NO sanitizer code (symmetric gating).
    The generic helpers below are shared by every view. */
 function psReadSpecData(){
   var el=document.getElementById("ps-spec-data");
@@ -77,5 +77,5 @@ function psReadSpecData(){
 /* The detail-panel controls (psOpenDetail/psCloseDetail + Escape) are NOT here:
    they call the sanitize chokepoint, so they ship in the body-view-only script
    block (render_html._BODY_RENDER_JS) to keep the 9 legacy graph views free of
-   any sanitizer reference (red-team H4 symmetric gating). */
+   any sanitizer reference (symmetric gating). */
 </script>

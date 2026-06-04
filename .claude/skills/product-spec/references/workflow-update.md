@@ -21,7 +21,7 @@ Ask: "Which artifact has changed? (default: the most recently edited)"
 ./.claude/skills/.venv/bin/python3 scripts/spec_graph.py --root <root> --downstream <changed_id>
 ```
 
-The script returns the set of node IDs whose frontmatter transitively references `changed_id` — the iterative `downstream()` closure (cycle-safe via its visited-set; see `spec_graph.downstream`). Example: changing `PRD-AUTH` returns `{PRD-AUTH-E1, PRD-AUTH-E1-S1, ...}`. This is the **deterministic** half of the impact-pass (G-B1): graph traversal only, no judgment.
+The script returns the set of node IDs whose frontmatter transitively references `changed_id` — the iterative `downstream()` closure (cycle-safe via its visited-set; see `spec_graph.downstream`). Example: changing `PRD-AUTH` returns `{PRD-AUTH-E1, PRD-AUTH-E1-S1, ...}`. This is the **deterministic** half of the impact-pass: graph traversal only, no judgment.
 
 ### Step 3 — Annotate + flag for PO review (impact-pass, part 2: LLM)
 

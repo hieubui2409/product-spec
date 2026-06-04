@@ -110,7 +110,7 @@ inherited_context[], descendant_rollup{}, parse_errors[]`.
 - `provenance` = `{reuse: none|full|consolidate_only|relens, ...}` — the lifecycle reuse verdict. `full` →
   report already current; `consolidate_only` → reuse the lens-cache array, re-render at the new level (carries
   `lens_findings_hash`); `relens` → some node changed (`changed_ids`); `none` → fresh run. ECONOMIC gate, not a safety
-  gate; `--fresh` forces `none`. The orchestrator branches on it (see `workflow-critique.md` §3a).
+  gate; `--fresh` forces `none`. The orchestrator branches on it (see the provenance-branch step in `workflow-critique.md`).
 - `inherited_context` (parent→child) + `descendant_rollup` (child→parent) — cross-critique context, consumed by
   the **consolidator ONLY** (lenses stay blind, anti-anchoring). Inherited items render in a separate section and are
   NEVER added to the severity tally. Both empty on run 1 / when `--no-inherit` / `--no-rollup`.

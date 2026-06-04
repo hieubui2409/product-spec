@@ -10,4 +10,4 @@ personas: [team]
 
 # Realism Demo
 
-Fixture product for the `time_realism` LLM eval (G-D6).
+Fixture product for the `time_realism` LLM eval.

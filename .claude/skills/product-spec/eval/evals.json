@@ -53,7 +53,7 @@
     },
     {
       "id": 4,
-      "prompt": "Run F1 read-once Export on the valid fixture spec: render_export.py --export PRD-AUTH --format md. The doc must be deterministic, contain a TOC, ordered sections (vision/BRD context before the PRD before its stories), and include the story's acceptance criteria.",
+      "prompt": "Run read-once Export on the valid fixture spec: render_export.py --export PRD-AUTH --format md. The doc must be deterministic, contain a TOC, ordered sections (vision/BRD context before the PRD before its stories), and include the story's acceptance criteria.",
       "expected_output": "A single markdown doc under docs/product/exports/ with provenance frontmatter, a Contents list, sections in hierarchy order, and AC items for the story.",
       "files": ["fixtures/valid-spec"],
       "assertions": [
@@ -65,7 +65,7 @@
     },
     {
       "id": 5,
-      "prompt": "Render the F2 board viewer: visualize.py --view board (default --format html). Columns group by status; cards are goal/PRD/epic/story; artifact bodies render client-side through the sanitize chokepoint.",
+      "prompt": "Render the board viewer: visualize.py --view board (default --format html). Columns group by status; cards are goal/PRD/epic/story; artifact bodies render client-side through the sanitize chokepoint.",
       "expected_output": "A self-contained board-<ts>.html under docs/product/visuals/ with an inert JSON data island, column structure, vendored marked+DOMPurify, and no <div class=\"mermaid\"> wrapper.",
       "files": ["fixtures/valid-spec"],
       "assertions": [
@@ -77,7 +77,7 @@
     },
     {
       "id": 6,
-      "prompt": "Render the F2 explorer viewer: visualize.py --view explorer (default --format html). It must offer all three modes (Tree / Flat-tabs / Table-tree) with a mode toggle persisted to localStorage, shared search + facet filters, and sanitized bodies.",
+      "prompt": "Render the explorer viewer: visualize.py --view explorer (default --format html). It must offer all three modes (Tree / Flat-tabs / Table-tree) with a mode toggle persisted to localStorage, shared search + facet filters, and sanitized bodies.",
       "expected_output": "A self-contained explorer-<ts>.html with three mode containers, a toggle bar, a search box, a treegrid, and the sanitize chokepoint; ASCII fallback equals the tree render.",
       "files": ["fixtures/valid-spec"],
       "assertions": [
@@ -101,7 +101,7 @@
     {
       "id": 8,
       "_assertion_type": "llm_advisory",
-      "_note": "G-D6 (T2) true-positive. `time_realism` is an LLM-judgment warn anchored to SCRIPT-precomputed numbers (time_realism_anchors.py --today pins the wall clock so the anchor is reproducible). The script half (anchor math, eligibility) is graded deterministically by test_time_realism.py; THIS eval grades only the LLM JUDGMENT — does it flag the over-threshold epic AND cite the anchors? The rule (design R2): flag only if size=='L' AND child_story_count>=6 AND days_remaining<21.",
+      "_note": "time_realism true-positive. `time_realism` is an LLM-judgment warn anchored to SCRIPT-precomputed numbers (time_realism_anchors.py --today pins the wall clock so the anchor is reproducible). The script half (anchor math, eligibility) is graded deterministically by test_time_realism.py; THIS eval grades only the LLM JUDGMENT — does it flag the over-threshold epic AND cite the anchors? The rule: flag only if size=='L' AND child_story_count>=6 AND days_remaining<21.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Pre-compute anchors via scripts/time_realism_anchors.py, then apply the time_realism scaffold in references/validation-rules-spec.md. Epic PRD-ROADMAP-E1 is size L, has 6 child stories, target_date 2026-06-15 (days_remaining 14).",
       "expected_output": "A time_realism warn finding for PRD-ROADMAP-E1 whose context.cited_data carries size=L, child_story_count=6, days_remaining=14, target_date, horizon, plus threshold_crossed. No date math performed by the LLM (days_remaining comes from the anchor).",
       "files": ["fixtures/time-realism-spec"],
@@ -114,7 +114,7 @@
     {
       "id": 9,
       "_assertion_type": "llm_advisory",
-      "_note": "G-D6 (T2) must-not-flag. The conservative default: when the anchors are below the rule on any dimension, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-ROADMAP-E2 is eligible (size + target_date present) but small / far-future.",
+      "_note": "time_realism must-not-flag. The conservative default: when the anchors are below the rule on any dimension, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-ROADMAP-E2 is eligible (size + target_date present) but small / far-future.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E2 is size S, has 2 child stories, target_date 2026-12-31 (days_remaining 213) — below the rule on every dimension.",
       "expected_output": "No time_realism finding for PRD-ROADMAP-E2 (the LLM returns {finding: null, reason: 'below_threshold'}).",
       "files": ["fixtures/time-realism-spec"],
@@ -126,7 +126,7 @@
     {
       "id": 10,
       "_assertion_type": "llm_advisory",
-      "_note": "G-D6 (T2) missing-anchor. Without a target_date the script cannot compute days_remaining, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of inventing a date — the explicit anti-hallucination case.",
+      "_note": "time_realism missing-anchor. Without a target_date the script cannot compute days_remaining, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of inventing a date — the explicit anti-hallucination case.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E3 is size L with 8 child stories but has NO target_date.",
       "expected_output": "No time_realism flag for PRD-ROADMAP-E3; the LLM returns {finding: null, reason: 'missing_anchor'} because days_remaining is null. It must NOT fabricate a date or flag on size+stories alone.",
       "files": ["fixtures/time-realism-spec"],
@@ -138,7 +138,7 @@
     {
       "id": 11,
       "_assertion_type": "llm_advisory",
-      "_note": "G-E3 (T2) true-positive. `competitive_drift` is an LLM-judgment warn anchored to SCRIPT-resolved parity (competitive_drift_anchors.py resolves the PRD's ID-keyed competitive_parity map against the BRD competitor identity home and pre-computes competitors_with_data + all_behind_competitors). The script half (resolution, counting, eligibility) is graded deterministically by test_competitive_drift.py; THIS eval grades only the LLM JUDGMENT — does it flag the all-behind core-value PRD AND cite the anchors? The rule (design §0.1): flag only if scope=='core-value' AND competitors_with_data>=2 AND every real parity=='behind'.",
+      "_note": "competitive_drift true-positive. `competitive_drift` is an LLM-judgment warn anchored to SCRIPT-resolved parity (competitive_drift_anchors.py resolves the PRD's ID-keyed competitive_parity map against the BRD competitor identity home and pre-computes competitors_with_data + all_behind_competitors). The script half (resolution, counting, eligibility) is graded deterministically by test_competitive_drift.py; THIS eval grades only the LLM JUDGMENT — does it flag the all-behind core-value PRD AND cite the anchors? The rule: flag only if scope=='core-value' AND competitors_with_data>=2 AND every real parity=='behind'.",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. Pre-compute anchors via scripts/competitive_drift_anchors.py, then apply the competitive_drift scaffold in references/validation-rules-spec.md. PRD-CHECKOUT is scope core-value and is `behind` on BOTH tracked competitors (Acme Commerce, Shopify) — 2 real verdicts, all behind.",
       "expected_output": "A competitive_drift warn finding for PRD-CHECKOUT whose context.cited_data carries scope=core-value, competitors_with_data=2, all_behind_competitors=[Acme Commerce, Shopify], and competitive_parity, plus threshold_crossed. No parity invented by the LLM (the verdicts come from the anchor).",
       "files": ["fixtures/competitive-drift-spec"],
@@ -151,7 +151,7 @@
     {
       "id": 12,
       "_assertion_type": "llm_advisory",
-      "_note": "G-E3 (T2) must-not-flag (borderline). The conservative default: when an eligible PRD has at least one real parity that is NOT behind, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-SEARCH is eligible (scope core-value AND 2 real verdicts) but one verdict is `parity`, not `behind`.",
+      "_note": "competitive_drift must-not-flag (borderline). The conservative default: when an eligible PRD has at least one real parity that is NOT behind, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-SEARCH is eligible (scope core-value AND 2 real verdicts) but one verdict is `parity`, not `behind`.",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-SEARCH is scope core-value with 2 real verdicts, but COMP-SHOPIFY is `parity` (not `behind`) — the rule 'every real parity == behind' does not hold.",
       "expected_output": "No competitive_drift finding for PRD-SEARCH (the LLM returns {finding: null, reason: 'below_threshold'}).",
       "files": ["fixtures/competitive-drift-spec"],
@@ -163,7 +163,7 @@
     {
       "id": 13,
       "_assertion_type": "llm_advisory",
-      "_note": "G-E3 (T2) missing-anchor. Without the anchored gate (scope core-value AND >=2 real verdicts) the rule cannot be evaluated, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of flagging on a lone `behind` — the explicit anti-hallucination case. PRD-REPORTS is scope `in` AND has only 1 real verdict (COMP-NICHE is `none`).",
+      "_note": "competitive_drift missing-anchor. Without the anchored gate (scope core-value AND >=2 real verdicts) the rule cannot be evaluated, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of flagging on a lone `behind` — the explicit anti-hallucination case. PRD-REPORTS is scope `in` AND has only 1 real verdict (COMP-NICHE is `none`).",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-REPORTS is scope `in` (NOT core-value) and has only 1 real verdict — COMP-NICHE is `none`, which is not a data point.",
       "expected_output": "No competitive_drift flag for PRD-REPORTS; the LLM returns {finding: null, reason: 'missing_anchor'} because it is not core-value and has <2 real verdicts. It must NOT flag on the single `behind` alone.",
       "files": ["fixtures/competitive-drift-spec"],
@@ -175,7 +175,7 @@
     {
       "id": 14,
       "_assertion_type": "llm_advisory",
-      "_note": "G-F1 + G-A3 impact-pass. The per-CHANGE propagation pass runs on --update AND --validate (distinct from the per-ARTIFACT catalog checks). The DETERMINISTIC half is graded structurally: on --validate the change-set is the delta view's added∪changed nodes between the two most-recent .snapshots/ (spec_graph.diff_graphs + the per-node status/scope/moscow/horizon/size diff in render_ascii.delta), and downstream() gives the affected set — both pure graph functions. The LLM half (graded advisory) tags each affected node {dim_touched∈{scope,risk,time,competition,ac,traceability}, one_liner, action} per references/validation-rules-spec.md → Impact-Pass LLM Scaffold, writes docs/product/impact/<ts>.md, and — for the APPROVED affected node PRD-AUTH-E1 whose content contradicts the change — surfaces the contradiction protocol (keep/change/hybrid) and NEVER auto-flips (the G-A3 approved branch). Fixture: PRD-AUTH was pulled from horizon:next (seeded baseline snapshot) to horizon:now; downstream = {PRD-AUTH-E1 (approved, contradicted), PRD-AUTH-E1-S1 (draft)}.",
+      "_note": "impact-pass. The per-CHANGE propagation pass runs on --update AND --validate (distinct from the per-ARTIFACT catalog checks). The DETERMINISTIC half is graded structurally: on --validate the change-set is the delta view's added∪changed nodes between the two most-recent .snapshots/ (spec_graph.diff_graphs + the per-node status/scope/moscow/horizon/size diff in render_ascii.delta), and downstream() gives the affected set — both pure graph functions. The LLM half (graded advisory) tags each affected node {dim_touched∈{scope,risk,time,competition,ac,traceability}, one_liner, action} per references/validation-rules-spec.md → Impact-Pass LLM Scaffold, writes docs/product/impact/<ts>.md, and — for the APPROVED affected node PRD-AUTH-E1 whose content contradicts the change — surfaces the contradiction protocol (keep/change/hybrid) and NEVER auto-flips (the no-auto-edit-approved branch). Fixture: PRD-AUTH was pulled from horizon:next (seeded baseline snapshot) to horizon:now; downstream = {PRD-AUTH-E1 (approved, contradicted), PRD-AUTH-E1-S1 (draft)}.",
       "prompt": "Run --validate against fixtures/impact-pass-spec, then run the impact-pass. The seeded previous snapshot in docs/product/visuals/.snapshots/ has PRD-AUTH at horizon:next; the live spec has horizon:now — so the snapshot delta change-set is {PRD-AUTH}. Run downstream(PRD-AUTH) and annotate each affected node with {dim_touched, one_liner, action}; write docs/product/impact/<ts>.md; the approved epic PRD-AUTH-E1 (which still mandates email+password, contradicting the PRD's new passwordless scope) must trigger the contradiction protocol.",
       "expected_output": "An impact report under docs/product/impact/ listing PRD-AUTH-E1 and PRD-AUTH-E1-S1 with a dim_touched, a one-liner, and a suggested action each; a change-log entry carrying affected_set + dims; and the contradiction protocol (keep/change/hybrid) surfaced for the APPROVED PRD-AUTH-E1 — never auto-flipped to draft.",
       "files": ["fixtures/impact-pass-spec"],
@@ -183,28 +183,28 @@
         {"id": "impact-change-set-from-snapshot-delta", "_gating": "structural", "text": "The change-set on --validate is derived from the snapshot delta: between the live graph and the seeded previous snapshot, the delta view reports PRD-AUTH changed (horizon next->now). spec_graph.diff_graphs(current, previous) added==[] and the per-node field diff flags PRD-AUTH; no previous snapshot would yield an empty change-set (no impact-pass)."},
         {"id": "impact-downstream-correct", "_gating": "structural", "text": "spec_graph.downstream(graph, 'PRD-AUTH') == {'PRD-AUTH-E1', 'PRD-AUTH-E1-S1'} — the affected set the impact report annotates."},
         {"id": "impact-report-lists-nodes-dims-action", "_gating": "llm_advisory", "text": "The impact report (docs/product/impact/<ts>.md) lists each affected node with a dim_touched (from the closed enum), a 1-line interpretation, and a suggested action; the change-log entry carries affected_set and a dims union."},
-        {"id": "impact-approved-contradiction-surfaced", "_gating": "llm_advisory", "text": "The APPROVED affected node PRD-AUTH-E1 (content contradicts the new passwordless scope) triggers the contradiction protocol (keep/change/hybrid) — the engine surfaces it and NEVER auto-flips PRD-AUTH-E1 to draft (G-A3). The draft story PRD-AUTH-E1-S1 is flagged for AC review with no contradiction protocol."},
+        {"id": "impact-approved-contradiction-surfaced", "_gating": "llm_advisory", "text": "The APPROVED affected node PRD-AUTH-E1 (content contradicts the new passwordless scope) triggers the contradiction protocol (keep/change/hybrid) — the engine surfaces it and NEVER auto-flips PRD-AUTH-E1 to draft. The draft story PRD-AUTH-E1-S1 is flagged for AC review with no contradiction protocol."},
         {"id": "impact-snapshot-write-no-crash", "_gating": "structural", "text": "spec_graph.py --root fixtures/impact-pass-spec --snapshot writes a snapshot without a JSON-serialization crash even though the spec carries target_date (datetime.date) fields — write_snapshot serializes dates via default=str."}
       ]
     },
     {
       "id": 15,
       "_assertion_type": "structural",
-      "_note": "G-F3 migration. migrate_multidim_fields.py lifts a v1 spec to the v2 schema with EMPTY placeholders, backs up each touched original to *.bak, and DEFERS approved artifacts to a confirm_required list (never auto-edited — G-A3). Per-type scoping is strict so the migration never writes a field onto a type whose phase-3/4 guard would reject it: PRD→risks/target_date/depends_on/competitive_parity; Epic→risks/target_date/depends_on (NO competitive_parity); BRD→competitors. Idempotent (2nd --apply is a no-op; first .bak preserved). Fixture: draft PRD/Epic/BRD migrate; approved PRD-BILLING defers.",
+      "_note": "migration. migrate_multidim_fields.py lifts a v1 spec to the v2 schema with EMPTY placeholders, backs up each touched original to *.bak, and DEFERS approved artifacts to a confirm_required list (never auto-edited). Per-type scoping is strict so the migration never writes a field onto a type whose validation guard would reject it: PRD→risks/target_date/depends_on/competitive_parity; Epic→risks/target_date/depends_on (NO competitive_parity); BRD→competitors. Idempotent (2nd --apply is a no-op; first .bak preserved). Fixture: draft PRD/Epic/BRD migrate; approved PRD-BILLING defers.",
       "prompt": "Run migrate_multidim_fields.py --root fixtures/migration-spec (dry-run, then --apply). The draft PRD-AUTH, epic PRD-AUTH-E1, and the BRD lack the v2 fields; PRD-BILLING is approved.",
       "expected_output": "Dry-run reports the three draft files in would_migrate and PRD-BILLING in confirm_required, writing nothing. --apply adds empty placeholders to the three draft files (PRD gets all four incl. competitive_parity; Epic gets three, NO competitive_parity; BRD gets competitors) with a *.bak for each, leaves PRD-BILLING byte-unchanged with no .bak, and a 2nd --apply is a no-op.",
       "files": ["fixtures/migration-spec"],
       "assertions": [
         {"id": "migration-dry-run-writes-nothing", "_gating": "structural", "text": "The default (no --apply) run writes no file and creates no .bak; the report lists prds/auth.md, epics/PRD-AUTH-E1.md, and brd.md in would_migrate and PRD-BILLING in confirm_required."},
         {"id": "migration-apply-scoped-placeholders", "_gating": "structural", "text": "--apply gives prds/auth.md risks:[]/target_date:null/depends_on:[]/competitive_parity:{}; epics/PRD-AUTH-E1.md risks:[]/target_date:null/depends_on:[] and NO competitive_parity; brd.md competitors:[] — the migration never writes a field onto a type whose guard would reject it."},
-        {"id": "migration-backs-up-and-defers-approved", "_gating": "structural", "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (G-A3 no-auto-edit-approved)."},
+        {"id": "migration-backs-up-and-defers-approved", "_gating": "structural", "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (no-auto-edit-approved)."},
         {"id": "migration-idempotent", "_gating": "structural", "text": "A second --apply is a no-op (fields already present) and does not clobber the first-run .bak. Always exits 0 (analytical-script CLI contract)."}
       ]
     },
     {
       "id": 16,
       "_assertion_type": "structural",
-      "_note": "G-A2 back-compat. A pre-v2 spec — NO risks/target_date/depends_on/competitive_parity node fields and NO BRD competitors: key at all — must still parse, validate clean, and visualize with no error after the 2.0.0 schema additions (the new fields are optional). Proves the major bump is additive, not a hard break. Fixture backcompat-v1-spec is a complete v1 hierarchy (PRODUCT/vision/BRD/PRD/Epic/Story).",
+      "_note": "back-compat. A pre-v2 spec — NO risks/target_date/depends_on/competitive_parity node fields and NO BRD competitors: key at all — must still parse, validate clean, and visualize with no error after the 2.0.0 schema additions (the new fields are optional). Proves the major bump is additive, not a hard break. Fixture backcompat-v1-spec is a complete v1 hierarchy (PRODUCT/vision/BRD/PRD/Epic/Story).",
       "prompt": "Run check_consistency.py and check_traceability.py against fixtures/backcompat-v1-spec (a v1 spec authored before the v2 multi-dimensional schema), then render visualize.py for the tree, risk, competition, dashboard, and time views.",
       "expected_output": "Both checkers emit zero error-severity findings; the graph carries an empty competitors list and no v2 node fields; every view renders without crashing (the v2 dimension views degrade gracefully on absent data).",
       "files": [
@@ -219,7 +219,7 @@
         {
           "id": "backcompat-no-v2-fields",
           "_gating": "structural",
-          "text": "The graph from spec_graph.build_graph has an empty competitors list and no node carries a truthy risks/target_date/depends_on/competitive_parity — confirming the fixture is a genuine pre-v2 spec, so the new fields are proven optional (G-A2)."
+          "text": "The graph from spec_graph.build_graph has an empty competitors list and no node carries a truthy risks/target_date/depends_on/competitive_parity — confirming the fixture is a genuine pre-v2 spec, so the new fields are proven optional."
         },
         {
           "id": "backcompat-visualizes",

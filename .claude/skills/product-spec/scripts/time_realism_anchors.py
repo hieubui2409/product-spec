@@ -2,9 +2,9 @@
 """
 time_realism_anchors — SCRIPT half of the `time_realism` LLM check (TIME dimension).
 
-`time_realism` is an LLM-judgment warn (Script-vs-LLM split: G-B2) — "this deadline
+`time_realism` is an LLM-judgment warn (Script-vs-LLM split) — "this deadline
 is unrealistic for this scope" is a sensory call no regex can make. But to stop the
-LLM hallucinating ("phi thực tế" is the classic over-flag), the design (R2) pins the
+LLM hallucinating ("phi thực tế" is the classic over-flag), the design pins the
 LLM to STRUCTURED, SCRIPT-precomputed anchors and forbids it from doing any date math:
 
     {artifact_id, file, type, size, horizon, target_date, today_date,
@@ -16,14 +16,14 @@ references/validation-rules-spec.md → "time_realism LLM scaffold").
 
 `today_date` comes from a pinnable `--today <ISO>` (default = real today). Evals/tests
 PIN it so the anchor — and therefore the gate's reproducibility — is deterministic
-(design F3 / goal G-D6). This is the SAME pinning contract as time_advisory.py.
+(no wall-clock value in the output). This is the SAME pinning contract as time_advisory.py.
 
 This script emits ONLY anchors — it never decides flag/no-flag (that is the LLM's
 judgment). An epic missing any anchor needed by the rule (no `target_date`, or no
 `size`) is emitted with that field null and `eligible: false` so the LLM returns
 `{finding: null, reason: "missing_anchor"}` without inventing data.
 
-Scope: epics (the size+story-count unit the rule is defined on, design R2). A PRD has
+Scope: epics (the size+story-count unit the rule is defined on). A PRD has
 no `size` and is not the realism unit, so it is skipped.
 
 Pure data assembly — no LLM, no judgment, no wall-clock side effects beyond the
@@ -57,7 +57,7 @@ def build_anchors(graph: Dict[str, Any], today: dt.date) -> List[Dict[str, Any]]
     `days_remaining` is computed here (target_date − today). When `target_date` or
     `size` is absent the anchor is still emitted (with that field null) but marked
     `eligible: false`, so the LLM returns `missing_anchor` instead of fabricating a
-    date. Sorted by artifact_id → deterministic order for a pinned --today (G-A4)."""
+    date. Sorted by artifact_id → deterministic order for a pinned --today."""
     child_counts = matching_child_counts(graph)
     anchors: List[Dict[str, Any]] = []
     for n in graph["nodes"]:

@@ -139,7 +139,7 @@ holds at 9 even with the PO's consent. It is the one line no level crosses.
 
 ## Register config: gender, dialect, profanity (levels 7 to 9)
 
-The harsh levels read three register knobs from `preferences.yaml` (Phase-1 schema). They are surface-form choices, not
+The harsh levels read three register knobs from `preferences.yaml`. They are surface-form choices, not
 new permissions, the floor is identical whatever they are set to.
 
 | Pref | Values | Default | Applies at | Surface form |

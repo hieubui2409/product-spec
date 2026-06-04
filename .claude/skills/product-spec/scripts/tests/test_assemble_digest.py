@@ -1,8 +1,8 @@
-"""Tests for the Phase-1 shared assembler: spec_graph.ancestors() + the
+"""Tests for the shared digest assembler: spec_graph.ancestors() + the
 assemble_digest digest model.
 
-Uses the valid-spec fixture, which now carries vision.md AND brd.md (red-team
-C1b): the assembler must surface Vision + BRD as prepended singletons, NOT via
+Uses the valid-spec fixture, which now carries vision.md AND brd.md: the
+assembler must surface Vision + BRD as prepended singletons, NOT via
 the ancestor edge walk (they are not graph nodes).
 """
 
@@ -176,7 +176,7 @@ def test_compact_fields_brd_lists_goal_titles():
     assert "ARR" in fields["goals"] or "repeat" in fields["goals"].lower()
 
 
-# ---------- selection guards: no silent-empty doc (F3/F6) ----------
+# ---------- selection guards: no silent-empty doc ----------
 
 def test_unresolved_selection_raises_listing_bad_and_valid_ids():
     graph, artifacts = _graph_and_artifacts()
@@ -204,7 +204,7 @@ def test_export_all_on_empty_spec_is_allowed_empty():
     assert assemble_digest.build_digest(graph, [], select="all", depth="context") == []
 
 
-# ---------- context singletons: emit-once + dedup (F4/F8) ----------
+# ---------- context singletons: emit-once + dedup ----------
 
 def test_export_vision_renders_vision_exactly_once():
     graph, artifacts = _graph_and_artifacts()

@@ -5,7 +5,7 @@ All notable changes to the **claude-pack bundle** are documented here. The bundl
 opt-in hooks. Tags `claude-pack-v*` version the bundle as a whole.
 Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: [semver](https://semver.org/).
 
-> **Release discipline (E5).** Each of the 3 skills keeps its own `CHANGELOG.md` + frontmatter
+> **Release discipline.** Each of the 3 skills keeps its own `CHANGELOG.md` + frontmatter
 > `metadata.version` (truth-of-record). On every release: bump the affected skill's
 > `metadata.version` + add its CHANGELOG entry, then bump this bundle changelog. CI gate
 > `verify_skill_versions.py` fails the release if any `metadata.version` is missing/malformed.
@@ -15,10 +15,10 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [1.2.0] — 2026-06-04
 
-Backlog C/D/E ships: product-spec gains `--apply-critique` / `--viz audit` (ascii·md·html) /
+Pipeline-closure release: product-spec gains `--apply-critique` / `--viz audit` (ascii·md·html) /
 `--summary --audience` / `--discover` / the `goal_without_metric` validate check / `_hashable`
 consolidation; product-spec-critique gains strengthened assumption-rigor lens prompts; the bundle
-gains the E5 skill-version release gate + cross-skill CI. **Also finalizes the
+gains the skill-version release gate + cross-skill CI. **Also finalizes the
 `agent-naming-conventions` rename** (skill / sub-agents / hook). Skill versions this release:
 product-spec **2.1.0**, product-spec-critique **1.1.0**, claude-pack **0.2.0**.
 
@@ -32,10 +32,10 @@ product-spec **2.1.0**, product-spec-critique **1.1.0**, claude-pack **0.2.0**.
 - Untracked the ck-managed `release-manifest.json` (regenerated locally; not repo source).
 
 ### Added
-- **Skill-version release gate (E5)** — `scripts/verify_skill_versions.py` asserts each skill's nested
+- **Skill-version release gate** — `scripts/verify_skill_versions.py` asserts each skill's nested
   `metadata.version` is present + semver; wired into `claude-pack-release.yml` before the build (drift
   fails the release). Each of the 3 skills now keeps its own `CHANGELOG.md`.
-- **Cross-skill CI (D12)** — `product-spec-ci.yml` + `product-spec-critique-ci.yml` (1 OS × 2 Python,
+- **Cross-skill CI** — `product-spec-ci.yml` + `product-spec-critique-ci.yml` (1 OS × 2 Python,
   path-filtered, per-skill-dir scoped; critique offline-enforced) and `cross-skill-bug-class.yml`
   running the `bug_class`-marked safety/robustness invariants per skill. `bug_class` registered in all
   3 pytest configs (product-spec + critique gain a `pyproject.toml`).

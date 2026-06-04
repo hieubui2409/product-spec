@@ -1,5 +1,5 @@
-"""Phase-2 tests: single-pass token engine (C2), vendored marked+DOMPurify
-(L12 fail-closed), the embedded-JSON body channel + attribute sinks (H3), and
+"""Tests for the single-pass token engine, vendored marked+DOMPurify
+(fail-closed), the embedded-JSON body channel + attribute sinks, and
 the shared design-system substrate.
 
 The client-side sanitize chokepoint (DOMPurify.sanitize(marked.parse(md))) runs
@@ -72,7 +72,7 @@ def test_viewer_head_failclose_has_no_cdn_sanitizer():
     assert "<script src" not in head.lower()
 
 
-# ---------- embedded-JSON body channel (H3 sink #1) ----------
+# ---------- embedded-JSON body channel (injection sink #1) ----------
 
 def test_embed_spec_data_neutralizes_close_tag_breakout():
     payload = {"PRD-X": {"body": "</script><script>alert(1)</script>"}}
@@ -86,7 +86,7 @@ def test_embed_spec_data_neutralizes_close_tag_breakout():
 
 
 def test_embed_spec_data_neutralizes_comment_primer_render_break():
-    # F10/R2: an unclosed `<!--` that mentions `<script` would, untreated, drive
+    # An unclosed `<!--` that mentions `<script` would, untreated, drive
     # the WHATWG script-data-double-escaped state and swallow the page bootstrap
     # (blank render). Escaping ALL `<` neutralizes the primer + the `<script`.
     payload = {"PRD-X": {"body": "<!-- a stray <script tag mention, no close"}}
@@ -112,7 +112,7 @@ def test_embed_spec_data_is_deterministic():
     assert render_html.embed_spec_data(p) == render_html.embed_spec_data(p)
 
 
-# ---------- attribute-context sinks (H3 sink #2) ----------
+# ---------- attribute-context sinks (injection sink #2) ----------
 
 def test_escape_neutralizes_attribute_payload():
     payload = '"><script>alert(1)</script>'
@@ -147,7 +147,7 @@ def test_body_render_values_present_path():
     assert "ve-card" in vals["viewer_head"]  # design system present
 
 
-# ---------- H4: symmetric gating — legacy views carry NO markdown libs ----------
+# ---------- symmetric gating — legacy views carry NO markdown libs ----------
 
 def test_legacy_assemble_does_not_embed_skill_sanitizer():
     """H4: legacy graph views render NO bodies, so they ship neither the skill's

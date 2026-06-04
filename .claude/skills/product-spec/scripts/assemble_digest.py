@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-assemble_digest — deterministic, script-owned core for the F1 `--export` doc.
+assemble_digest — deterministic, script-owned core for the `--export` doc.
 Turns (selection + layer-filter + depth) into an ordered digest model. No HTML,
 no LLM, no I/O beyond the parsed artifacts.
 
-`build_digest` powers `--export` only. The F2 board/explorer viewers build their
+`build_digest` powers `--export` only. The board/explorer viewers build their
 OWN payloads (render_board / render_explorer) and do not call build_digest; the
 sole thing they once shared — the `LAYER_FOR_TYPE` map — they no longer use
 either (they filter by artifact type via render_ascii._filter_by_layers). Keep

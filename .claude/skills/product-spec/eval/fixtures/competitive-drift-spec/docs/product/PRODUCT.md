@@ -10,6 +10,6 @@ personas: [merchant]
 
 # Parity Demo
 
-Fixture product for the `competitive_drift` LLM eval (G-E3). Competitor identity
+Fixture product for the `competitive_drift` LLM eval. Competitor identity
 lives ONCE in the BRD; each PRD references competitors by ID via a
 `competitive_parity` map. The drift judgment is anchored to those parity verdicts.

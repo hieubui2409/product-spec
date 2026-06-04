@@ -13,7 +13,7 @@ keep every renderer branch-free, and silence the PRD/Epic "warn-if-missing" nois
 without inventing data the PO never entered. The PO fills real values later via the
 interview flags.
 
-Contract (Script-vs-LLM split / G-B1 — structural only, no judgment):
+Contract (Script-vs-LLM split — structural only, no judgment):
   - Dry-run is the DEFAULT (no --apply): report which files lack which v2 fields;
     write NOTHING; create NO `.bak`.
   - --apply: insert the missing placeholder lines into the existing frontmatter
@@ -21,7 +21,7 @@ Contract (Script-vs-LLM split / G-B1 — structural only, no judgment):
     after copying the original to `<file>.bak` first.
   - status: approved files are NEVER written — they are deferred to a
     `confirm_required` list (the LLM drives the per-item AskUserQuestion). This is
-    the no-auto-edit-approved guarantee (G-A3 / G-F3).
+    the no-auto-edit-approved guarantee.
   - Idempotent + deterministic: a field already present is never re-added, so a
     second --apply run is a no-op and does NOT clobber the first run's `.bak`.
   - Analytical script: ALWAYS exits 0 (the CLI contract); --apply is the only
@@ -211,7 +211,7 @@ def apply_file(path: Path, art_type: Optional[str] = None) -> bool:
     parsed = parse_file(path)
     if not parsed["ok"]:
         return False
-    # Defense-in-depth: G-A3 no-auto-edit-approved guard at the apply layer,
+    # Defense-in-depth: no-auto-edit-approved guard at the apply layer,
     # independent of migrate()'s control flow (belt-and-suspenders).
     if (parsed["frontmatter"] or {}).get("status") == "approved":
         return False
@@ -282,7 +282,7 @@ def migrate(root: Path, apply: bool) -> Dict[str, Any]:
             continue
         public_plan = {k: v for k, v in plan.items() if not k.startswith("_")}
         if plan["approved"]:
-            # No-auto-edit-approved (G-A3): never written. Deferred to the PO,
+            # No-auto-edit-approved: never written. Deferred to the PO,
             # who confirms each item; the LLM drives that AskUserQuestion.
             confirm_required.append(public_plan)
             continue

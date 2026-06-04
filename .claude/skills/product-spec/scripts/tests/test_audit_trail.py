@@ -1,6 +1,6 @@
-"""test_audit_trail — C9 `--viz audit` governance view contracts.
+"""test_audit_trail — `--viz audit` governance view contracts.
 
-Covers: event join from change-log + approval + DEC; the H7 orphaned-approval →
+Covers: event join from change-log + approval + DEC; the orphaned-approval →
 `unreconciled` row (never dropped); bilingual labels; empty-state; and the HTML
 form's XSS-escaping contract (every dynamic field escaped server-side).
 """
@@ -48,7 +48,7 @@ def test_event_join_from_changelog_and_dec(tmp_path):
 
 
 def test_orphaned_approval_is_unreconciled(tmp_path):
-    # An approved artifact with NO change-log entry and NO DEC → must render unreconciled (H7).
+    # An approved artifact with NO change-log entry and NO DEC → must render unreconciled.
     root = _spec_root(tmp_path)
     _write(root / "docs/product/prds/auth.md",
            "---\nid: PRD-ORPH\ntype: prd\nstatus: approved\n"
@@ -82,7 +82,7 @@ def test_empty_state(tmp_path):
     assert "Chưa có sự kiện" in aat.render_ascii(data, "vi")
 
 
-@pytest.mark.bug_class  # cross-cutting invariant: HTML audit escapes every dynamic field (XSS-watch / C8)
+@pytest.mark.bug_class  # cross-cutting invariant: HTML audit escapes every dynamic field (XSS-watch)
 def test_html_escapes_malicious_dynamic_fields():
     # The HTML audit form joins free-text governance fields; a `<script>` smuggled into
     # any of them MUST be escaped server-side, never emitted as live markup.

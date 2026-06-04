@@ -23,7 +23,7 @@ class OfflineGuardViolation(RuntimeError):
 
 @pytest.fixture(autouse=True)
 def _offline_guard(monkeypatch):
-    """Offline enforcement (D12 / Security F7).
+    """Offline enforcement.
 
     The critique skill makes NO network calls at runtime. When ``CK_OFFLINE`` is set
     (the CI gate sets it), block ``socket.socket.connect`` so any *future* net call

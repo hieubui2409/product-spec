@@ -243,7 +243,7 @@ def store_batch(root, entries: List[Any], model_id: str,
     if no_cache:
         return None
 
-    # Phase 1 — validate the ENTIRE batch before touching disk (atomicity). A bad
+    # First — validate the ENTIRE batch before touching disk (atomicity). A bad
     # entry raises here, before any write, so the cache is left byte-unchanged.
     validated: List[Tuple[str, Any, Optional[str]]] = []
     for i, entry in enumerate(entries):
@@ -259,7 +259,7 @@ def store_batch(root, entries: List[Any], model_id: str,
     if graph is None:
         graph = build_graph(root)
 
-    # Phase 2 — single read-modify-write. Reset on a stamp mismatch (same as store),
+    # Then — single read-modify-write. Reset on a stamp mismatch (same as store),
     # apply every validated entry, GC entries whose nodes left the graph.
     cache = load_cache(root)
     if not _stamp_valid(cache, model_id):

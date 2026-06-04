@@ -333,7 +333,7 @@ def _competitors(artifacts: List[Dict[str, Any]]) -> List[Any]:
     Competitor IDENTITY lives ONCE in the BRD. Each well-formed entry surfaces
     as `{id, name, url, threat}`; a `url` starting `private:` is the encrypted
     OpSec case — its value is dropped to `None` so the secret path never reaches
-    the graph, the findings, OR any render (single chokepoint, G-E4).
+    the graph, the findings, OR any render (single chokepoint).
 
     A non-mapping entry (e.g. a bare string) is PRESERVED verbatim in the list so
     check_consistency can flag it as `invalid_type` — the single DRY home carries
@@ -357,7 +357,7 @@ def _competitors(artifacts: List[Dict[str, Any]]) -> List[Any]:
             # Coerce a non-string url (a list/dict from malformed YAML) to None
             # FIRST so the single chokepoint stores only a clean str-or-None,
             # then apply the OpSec drop: a `private:`-prefixed URL is dropped so
-            # the secret path never reaches the graph or any render (G-E4).
+            # the secret path never reaches the graph or any render.
             if not isinstance(url, str):
                 url = None
             elif url.strip().startswith(_PRIVATE_URL_PREFIX):

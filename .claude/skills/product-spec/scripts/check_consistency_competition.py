@@ -3,7 +3,7 @@ check_consistency_competition — COMPETITION-dimension structural checks for
 check_consistency.
 
 All deterministic — closed-enum membership + ID-grammar regex + id-set lookup
-against graph["competitors"]. No LLM judgment (G-B1): the `competitive_drift`
+against graph["competitors"]. No LLM judgment: the `competitive_drift`
 warn is the LLM's job. Competitor IDENTITY lives ONCE in the BRD's
 `competitors:` list (materialized onto graph["competitors"]).
 """
@@ -39,7 +39,7 @@ def check_competitors(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Validate the BRD `competitors:` list (the DRY identity home).
 
     Three deterministic checks:
-      - a non-mapping entry reuses the EXISTING `invalid_type` finding (F7).
+      - a non-mapping entry reuses the EXISTING `invalid_type` finding.
       - `threat` validated against its closed enum → `unknown_enum`.
       - the competitor `id` must match the `COMP-<SLUG>` grammar → `invalid_id`.
     """

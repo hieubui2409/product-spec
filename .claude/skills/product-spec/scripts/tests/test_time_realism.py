@@ -1,5 +1,4 @@
-"""Phase 3 — TIME dimension: the `time_realism` LLM check, SCRIPT half (goal G-D6,
-design R2 / trade-off T2).
+"""TIME dimension: the `time_realism` LLM check, SCRIPT half.
 
 `time_realism` ("this deadline is unrealistic for this scope") is an LLM-judgment
 warn — a sensory call no regex makes. To stop the classic over-flag hallucination,
@@ -10,7 +9,7 @@ from doing any date math. This module is the RED spec for that script half —
   - the script pre-computes `days_remaining = (target_date - today).days` and
     `child_story_count` (a graph count) — the LLM NEVER computes a date.
   - `today_date` comes from a pinnable `--today <ISO>` so the anchor (and thus the
-    gate's reproducibility) is deterministic (design F3 / G-A4).
+    gate's reproducibility) is deterministic.
   - an eligible epic (size + target_date present) crossing the rule's numbers is
     surfaced WITH all anchors so the LLM can flag it citing data (true-positive).
   - a below-threshold epic still carries full anchors; the LLM returns
@@ -19,7 +18,7 @@ from doing any date math. This module is the RED spec for that script half —
     returns `missing_anchor` instead of fabricating a date.
 
 The flag/no-flag JUDGMENT itself is graded by the LLM evals (eval/evals.json ids
-8-10); these tests assert only the deterministic script contract (G-B1 split).
+8-10); these tests assert only the deterministic script contract (Script-vs-LLM split).
 Subprocess + direct-call style, mirroring test_time_advisory.py.
 """
 
@@ -118,7 +117,7 @@ def _anchor_for(proj: Path, epic_id: str, today: str):
 
 
 # ── true-positive: eligible epic that crosses the design rule's numbers ──────
-# Rule (R2): flag only if size==L AND child_story_count>=6 AND days_remaining<21.
+# Rule: flag only if size==L AND child_story_count>=6 AND days_remaining<21.
 
 def test_anchor_true_positive_eligible_and_over_threshold(tmp_path):
     """L epic, 6 stories, target 14 days out → eligible, days_remaining computed
@@ -198,7 +197,7 @@ def test_prd_is_not_anchored(tmp_path):
     assert "PRD-P-E1" in ids
 
 
-# ── determinism: pinned --today → byte-identical output across runs (G-A4) ───
+# ── determinism: pinned --today → byte-identical output across runs ──────────
 
 def test_anchors_deterministic_for_pinned_today(tmp_path):
     proj = _scaffold(tmp_path)

@@ -1,4 +1,4 @@
-"""Tests for product-spec visualization renderers (Phase 6).
+"""Tests for product-spec visualization renderers.
 
 Asserts deterministic ASCII + Mermaid output; HTML assembly emits a valid
 self-contained file (smoke-tested for presence of expected anchors).
@@ -131,14 +131,14 @@ def test_ascii_delta_with_no_baseline_path_renders_empty_string_via_visualize():
 
 
 def test_board_view_registered_in_dispatcher():
-    """Phase 4: board joins the dispatcher's VIEWS as a body-bearing view."""
+    """Board joins the dispatcher's VIEWS as a body-bearing view."""
     import visualize
     assert "board" in visualize.VIEWS
     assert "board" in visualize.BODY_VIEWS
 
 
 def test_ascii_board_deterministic_grouped_lists():
-    """Phase 4: ASCII board groups goal/PRD/epic/story cards by the chosen field,
+    """ASCII board groups goal/PRD/epic/story cards by the chosen field,
     deterministically (canonical column order, sorted IDs)."""
     g = _graph()
     out = render_ascii.board(g, "status")
@@ -148,7 +148,7 @@ def test_ascii_board_deterministic_grouped_lists():
 
 
 def test_explorer_view_registered_and_ascii_is_tree():
-    """Phase 5: explorer joins VIEWS as a body view; its ASCII form == tree."""
+    """Explorer joins VIEWS as a body view; its ASCII form == tree."""
     import visualize
     assert "explorer" in visualize.VIEWS and "explorer" in visualize.BODY_VIEWS
     g = _graph()
@@ -173,7 +173,7 @@ def _time_graph():
 
 
 def test_time_view_registered_as_graph_view():
-    """Phase 3: `time` joins VIEWS as a graph view (NOT a body view) so
+    """`time` joins VIEWS as a graph view (NOT a body view) so
     `visualize.py --view time` is reachable through argparse choices=VIEWS."""
     import visualize
     assert "time" in visualize.VIEWS
@@ -222,8 +222,8 @@ def test_html_time_view_embeds_gantt_and_mermaid_runtime(tmp_path):
 
 
 def test_legacy_html_adopts_shared_design_system_and_no_sanitizer():
-    """Phase 6: the 9 legacy views adopt the shared design system (theme toggle +
-    .ve-card + palette) yet inline NO marked/DOMPurify (H4 symmetric gating)."""
+    """The 9 legacy views adopt the shared design system (theme toggle +
+    .ve-card + palette) yet inline NO marked/DOMPurify (symmetric gating)."""
     g = _graph()
     mermaid_text = render_mermaid.tree(g)
     html = render_html.assemble("tree", "mermaid", mermaid_text, g)
@@ -241,7 +241,7 @@ def test_legacy_html_adopts_shared_design_system_and_no_sanitizer():
 
 
 def test_legacy_html_token_contract_preserved():
-    """Phase 6: extend-only — the legacy token contract still renders (no stray
+    """Extend-only — the legacy token contract still renders (no stray
     unresolved {{token}} left in the page)."""
     g = _graph()
     html = render_html.assemble("heatmap", "ascii", "draft 1\napproved 2", g)
@@ -1119,18 +1119,18 @@ def test_mermaid_html_single_encodes_ampersand():
 
 
 # ============================================================================
-# Phase 6 — ASCII Downgrade to HTML-native (TDD RED)
+# ASCII Downgrade to HTML-native (TDD RED)
 #
-# PO decision §0.2 (DOWNGRADE, not removal):
-#   - HTML-native is the NEW default for the rich matrix/multi-dim views
-#     (risk grid, competition matrix/heatmap) + the new HTML-only `dashboard`.
+# PO decision (DOWNGRADE, not removal):
+#   - HTML-native is the default for the rich matrix/multi-dim views
+#     (risk grid, competition matrix/heatmap) + the HTML-only `dashboard`.
 #   - ASCII is NOT deleted: `--viz tree --format ascii` keeps a minimal,
 #     deterministic TEXT-SUMMARY tree (structure + counts) for terminal/CI.
 #   - board/explorer keep their text-summary fallback on `--format mermaid`
-#     (NOT removed — §0.2 reverses Q45).
-#   - body views never reach a CDN (fail-closed unchanged — G-A4).
+#     (NOT removed).
+#   - body views never reach a CDN (fail-closed unchanged).
 #
-# The text-summary tree grammar (phase spec §"Text-summary tree format", F10):
+# The text-summary tree grammar:
 #   header line     : "PRODUCT: <name>"
 #   one line/node   : "<2*depth spaces>[<type>:<id>] <title> · <status>"
 #   ordering        : sorted by ID at each depth (byte-deterministic)
@@ -1172,7 +1172,7 @@ def _text_summary_graph():
 
 
 def test_tree_text_summary_retained():
-    """G-G2 / F10: `--viz tree --format ascii` renders the minimal text-summary
+    """`--viz tree --format ascii` renders the minimal text-summary
     tree (NOT the heavy box-drawing graph-art). One line per node in the fixed
     grammar `[<type>:<id>] <title> · <status>`, 2-space indent per depth, sorted
     by ID at each level, plus a node/finding counts footer. This locks the exact
@@ -1212,7 +1212,7 @@ def test_tree_text_summary_retained():
 
 
 def test_html_default_for_matrix(tmp_path):
-    """G-G3 / §0.2: `--viz competition` with NO `--format` defaults to HTML-native
+    """`--viz competition` with NO `--format` defaults to HTML-native
     (the matrix/heatmap render as HTML tables, not ASCII). The dispatcher must
     write a self-contained HTML file under docs/product/visuals/ and emit the
     `{"written": ...}` JSON — NOT print an ASCII grid to stdout."""
@@ -1245,7 +1245,7 @@ def test_html_default_for_matrix(tmp_path):
 
 
 def test_dashboard_html_only(tmp_path):
-    """G-G1: the new multi-dim `dashboard` view is HTML-only. `--viz dashboard`
+    """The multi-dim `dashboard` view is HTML-only. `--viz dashboard`
     must be a registered view that writes an HTML file; `--format mermaid` falls
     back (with a stderr note) and still exits 0 — it never crashes or emits an
     unknown-view error."""
@@ -1284,7 +1284,7 @@ def test_dashboard_html_only(tmp_path):
 
 
 def test_board_textsummary_fallback(tmp_path):
-    """§0.2 (reverses Q45): board KEEPS its text-summary fallback. `--viz board
+    """Board KEEPS its text-summary fallback. `--viz board
     --format mermaid` must still print a text-summary that SHOWS the structure
     (grouped card ids), emit a fallback note, and exit 0 — the fallback is NOT
     removed."""
@@ -1312,7 +1312,7 @@ def test_board_textsummary_fallback(tmp_path):
 
 
 def test_visualize_determinism():
-    """G-A4: the retained text-summary tree is byte-deterministic — same input →
+    """The retained text-summary tree is byte-deterministic — same input →
     byte-identical output across repeated renders. Also asserts the new
     text-summary contract is in effect (counts footer present), so this is a true
     determinism check on the NEW format, not the old box-art."""
@@ -1327,7 +1327,7 @@ def test_visualize_determinism():
 
 
 def test_no_cdn_in_body_views(tmp_path):
-    """G-A4 / fail-closed: a body view (board) HTML inlines the marked + DOMPurify
+    """Fail-closed: a body view (board) HTML inlines the marked + DOMPurify
     sanitizer (or fails CLOSED to a plain-text banner) and NEVER reaches a CDN.
     The downgrade must not weaken the body-view no-network guarantee."""
     import subprocess

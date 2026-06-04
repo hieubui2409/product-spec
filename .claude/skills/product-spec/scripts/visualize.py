@@ -52,7 +52,7 @@ VIEWER_LAYERS = tuple(_BOARD_CARD_TYPES)
 # to --format html (the 9 graph views default to ascii) and have NO Mermaid form
 # (a --format mermaid request falls back to their ascii renderer with a note).
 BODY_VIEWS = ("board", "explorer")
-# PO decision §0.2 — HTML-native is the NEW default for the rich multi-dim/matrix
+# PO decision — HTML-native is the default for the rich multi-dim/matrix
 # views: the risk grid + competition matrix/heatmap (Mermaid can't express these
 # cleanly) and the HTML-only `dashboard`. tree/roadmap/heatmap/scope/persona/gap/
 # moscow/time/delta keep their ASCII default so the zero-dep terminal path loses
@@ -168,7 +168,7 @@ def _dispatch_body_view(view: str, fmt: str, root: Path, graph: Dict[str, Any],
                         artifacts, lang: str, filter_wont: bool, layers, group_by: str) -> int:
     """Render a body-bearing view (board / explorer). html → its own writer;
     ascii → its ascii renderer; mermaid → ascii fallback with a stderr note
-    (these views carry no Mermaid by design — red-team M8). `artifacts` is parsed
+    (these views carry no Mermaid by design). `artifacts` is parsed
     once by the caller alongside `graph` (build_graph_with_artifacts) — do NOT
     re-load here (that re-parsed every file a second time)."""
     if fmt == "mermaid":
@@ -243,7 +243,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    # C9 audit governance view: self-contained ASCII+md assembler (no graph dispatch,
+    # Audit governance view: self-contained ASCII+md assembler (no graph dispatch,
     # no HTML emitter — keeps the view registry off the XSS watch this phase).
     if args.view == "audit":
         import assemble_audit_trail
@@ -340,10 +340,10 @@ def _dispatch(args, fmt, root, graph, baseline, artifacts, layers) -> int:
         return 0
 
     # html
-    # The risk view has no clean Mermaid form (design report Q44); instead of the
+    # The risk view has no clean Mermaid form; instead of the
     # ASCII-in-<pre> fallback the other Mermaid-can't-express views use, it has a
     # dedicated HTML-native 3×3 grid whose cells drill down to description +
-    # mitigation + status (G-C3 / G-G3). Route it BEFORE the generic Mermaid path.
+    # mitigation + status. Route it BEFORE the generic Mermaid path.
     if args.view == "risk":
         grid = render_html.risk(graph)
         out = render_html.write(root, "risk", "risk-grid", grid, graph, lang=args.lang)
@@ -351,18 +351,18 @@ def _dispatch(args, fmt, root, graph, baseline, artifacts, layers) -> int:
         return 0
 
     # The competition view is HTML-native too (parity matrix + threat heatmap;
-    # design report Q30/Q44 — NOT Mermaid). It reuses the SAME pre-rendered
+    # NOT Mermaid). It reuses the SAME pre-rendered
     # native-fragment path as risk (view_format "html"): render_html.competition
     # escapes every spec-derived value server-side, so the fragment is injected
     # as-is. Route it BEFORE the generic Mermaid path so it never wraps in a
-    # <div class="mermaid"> or an ASCII <pre> fallback (G-E2).
+    # <div class="mermaid"> or an ASCII <pre> fallback.
     if args.view == "competition":
         frag = render_html.competition(graph, lang=args.lang)
         out = render_html.write(root, "competition", "html", frag, graph, lang=args.lang)
         print(_written_json(out, root))
         return 0
 
-    # The dashboard is the HTML-only multi-dim view (PO decision §0.2 / G-G1): one
+    # The dashboard is the HTML-only multi-dim view: one
     # page stacking the already-escaped roadmap + risk grid + competition fragments.
     # Like risk/competition it routes through the native "html" view_format (no
     # Mermaid wrapper, no sanitizer payload). HTML_ONLY_VIEWS guarantees fmt==html

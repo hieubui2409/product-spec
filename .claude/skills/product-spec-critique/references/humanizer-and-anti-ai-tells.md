@@ -127,7 +127,7 @@ longer ones that take their time. Let some mess in; perfect structure feels algo
 
 A clean human can hit several patterns with no AI involvement. Do not gut legitimate prose. On their own, these are not
 tells: perfect grammar; mixed casual and formal registers; plain or dry prose without the specific tells; formal
-vocabulary that is not on the §7 list; a single transition word; curly quotes alone; one em dash alone; unsourced
+vocabulary that is not on the overused-AI-vocabulary list; a single transition word; curly quotes alone; one em dash alone; unsourced
 claims. Look for clusters, not isolated hits. For product-spec-critique specifically, do not "fix" the sarcasm, the verbatim
 spec quotes, the IDs, or the frontmatter keys.
 

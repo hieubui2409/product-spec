@@ -1,4 +1,4 @@
-"""test_discover_ingest — E2 `--discover` read-fence + filter contracts (Security F3).
+"""test_discover_ingest — `--discover` read-fence + filter contracts.
 
 Covers: traversal/symlink rejected; directory input walked with bounded recursion (depth + count
 cap); dotfile (`.env`) skipped even inside a dir; non-`.md/.txt` rejected; oversize rejected; ingest

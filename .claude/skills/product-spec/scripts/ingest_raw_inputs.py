@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""ingest_raw_inputs — deterministic read-fence + filter for `--discover` (E2).
+"""ingest_raw_inputs — deterministic read-fence + filter for `--discover`.
 
 `--discover` ingests raw upstream text (interview transcripts, support dumps, competitor notes) and
 proposes CANDIDATE personas/problems/JTBD to SEED the Vision/BRD interview. This is the broadest read
-surface in the skill, so the read side is hard-fenced (Security F3 — `fs_guard` is write-only):
+surface in the skill, so the read side is hard-fenced (`fs_guard` is write-only):
 
   * **Project-root fence:** every input path is resolved (collapsing `..`, following symlinks) and must
     stay inside the project root; a traversal/symlink-escape is refused (reuse `fs_guard._is_within`).

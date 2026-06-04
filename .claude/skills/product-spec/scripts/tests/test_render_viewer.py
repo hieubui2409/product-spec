@@ -1,4 +1,4 @@
-"""Phase 4/5 tests: F2 interactive viewers `--viz board` and `--viz explorer`.
+"""Tests for the interactive viewers `--viz board` and `--viz explorer`.
 
 Both render artifact bodies CLIENT-SIDE: the server emits an inert JSON island,
 the client builds metadata via safe DOM APIs (textContent/dataset) and bodies via
@@ -303,7 +303,7 @@ def test_explorer_depth_recomputed_after_layer_filter():
     assert by_id["BRD-G1"]["depth"] == 0
 
 
-# ---------- ASCII explorer now honors --layers (F7) ----------
+# ---------- ASCII explorer now honors --layers ----------
 
 def test_ascii_explorer_honors_layers():
     g, _ = _ga()

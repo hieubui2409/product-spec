@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-render_export — F1 read-once Export. Assemble a spec slice (Phase-1 digest) into
+render_export — read-once Export. Assemble a spec slice (digest stage) into
 ONE self-contained doc: deterministic markdown, or a linear print-ready HTML via
-the Phase-2 body-render substrate.
+the body-render substrate.
 
 CLI:
     render_export.py --root <dir> --export <all|ID|list>

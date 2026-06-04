@@ -159,7 +159,7 @@ def test_find_shared_refs_strips_code_blocks(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_backslash_traversal_dropped():
-    """Backslash-encoded traversal 'a\\..\\b' must be dropped (C10 fix)."""
+    """Backslash-encoded traversal 'a\\..\\b' must be dropped."""
     dropped, rule = safety_check.is_dropped("a\\..\\b")
     assert dropped, "backslash-encoded traversal not dropped"
     assert rule == "always-drop:traversal"

@@ -101,7 +101,7 @@ def _build_dep_adj(graph: Dict[str, Any]) -> Dict[str, List[str]]:
     """node id -> sorted list of its depends_on targets, for every node that
     declares the edge. Sorted at the graph layer (spec_graph stores it sorted),
     so the cycle walk's iteration order — and thus its output — is deterministic
-    (G-A4). Targets that do not resolve to a real node are still included here:
+    (byte-deterministic). Targets that do not resolve to a real node are still included here:
     `dep_dangling` owns the missing-ID report; the cycle walk simply skips any
     target that is not itself a key (it cannot be on a cycle)."""
     adj: Dict[str, List[str]] = {}
@@ -115,7 +115,7 @@ def find_dep_cycles(adj: Dict[str, List[str]]) -> List[List[str]]:
 
     Iterative 3-color DFS (white/gray/black) over an explicit stack — NOT
     recursion — so a ~2000-deep linear chain cannot raise RecursionError
-    (design-report F4 / goal G-D3). Sorted iteration makes the output
+    (the walk is iterative, never recursive). Sorted iteration makes the output
     deterministic. A back-edge to a GRAY node yields the cycle path including
     the repeated closing node, e.g. ``["A", "B", "A"]``. A target absent from
     `adj` (a dangling depends_on) is skipped — it can never be on a cycle, and

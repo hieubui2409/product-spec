@@ -18,4 +18,4 @@ metrics: [mrr]
 # Billing PRD
 
 An APPROVED v1 PRD — migration must NEVER auto-edit it. It is deferred to the
-`confirm_required` list for per-item PO sign-off (G-A3 / G-F3); no `.bak` is written.
+`confirm_required` list for per-item PO sign-off; no `.bak` is written.

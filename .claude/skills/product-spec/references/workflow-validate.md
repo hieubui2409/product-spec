@@ -15,7 +15,7 @@ End-to-end workflow for the **--validate** (+ optional **--strict**), **--approv
 
 Each script emits JSON to stdout. Collect the union of `findings[]` across the three checkers. `spec_graph --snapshot` writes a snapshot JSON to `docs/product/visuals/.snapshots/` for later delta viz.
 
-The structural checkers above now also emit the TIME-dimension findings: `dep_cycle` + `dep_dangling` (errors, from `check_traceability`) and `dep_order` + `time_child_late` (warns, from `check_consistency`). These are pure date/graph comparisons — deterministic, in-gate (G-B1).
+The structural checkers above now also emit the TIME-dimension findings: `dep_cycle` + `dep_dangling` (errors, from `check_traceability`) and `dep_order` + `time_child_late` (warns, from `check_consistency`). These are pure date/graph comparisons — deterministic, in-gate.
 
 **Out-of-gate advisories (run separately, NEVER part of the `--strict` gate — they consume the wall clock or resolve external references):**
 
@@ -28,7 +28,7 @@ The structural checkers above now also emit the TIME-dimension findings: `dep_cy
 ./.claude/skills/.venv/bin/python3 scripts/competitive_drift_anchors.py --root <root>
 ```
 
-All three exit 0 on a valid run regardless of how many overdue/anchor items they surface (advisories/anchors, not gates) — the calendar never blocks. They exit non-zero ONLY on a malformed CLI argument (e.g. a non-ISO `--today`), which is input validation, not a finding. Surface `overdue` to the PO as information; feed the `time_realism` and `competitive_drift` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible (G-A4).
+All three exit 0 on a valid run regardless of how many overdue/anchor items they surface (advisories/anchors, not gates) — the calendar never blocks. They exit non-zero ONLY on a malformed CLI argument (e.g. a non-ISO `--today`), which is input validation, not a finding. Surface `overdue` to the PO as information; feed the `time_realism` and `competitive_drift` anchors to the LLM pass in Step 2. Keep these OUT of `strict_gate.py` so the structural gate stays byte-reproducible.
 
 For CI (no LLM in the loop), use the shell-runnable strict gate which exits non-zero on any error-severity finding:
 
@@ -58,7 +58,7 @@ The cache key is `check | scope_key | hash(es) | lang | dep_hash`, computed by `
 - **`fresh`** (cache hit) → reuse the stored verdict verbatim; **do NOT call the LLM** for that node. **`stale`** → the LLM judges it in the matching pass below.
 - **`contradiction` is NEVER cached** — skip the consult for it entirely; it always runs (Step 2's `contradiction` bullet). The script refuses a contradiction key (defensive).
 - **`--no-cache`** → bypass the cache entirely (every node stale); use when a verdict policy changed and a clean full re-judge is wanted.
-- **Ruled-drift (`po_ruling_ref`):** a fresh hit may carry `po_ruling_ref: DEC-n` (a REFERENCE — `decisions.md` is authoritative; see § Decision Register wiring). Surface the prior ruling instead of re-nagging. On a **stale** entry the consult returns `prior_po_ruling_ref: DEC-n` when the same node+check was previously ruled under different wording — the body changed, so re-judge the content, BUT consult `decisions.md` for the active DEC and **surface it** ("you accepted DEC-n for the prior wording — still applies?") rather than silently re-flagging (no-silent-reversal, G-A3; reuses the `decisions.md` plumbing wired below).
+- **Ruled-drift (`po_ruling_ref`):** a fresh hit may carry `po_ruling_ref: DEC-n` (a REFERENCE — `decisions.md` is authoritative; see § Decision Register wiring). Surface the prior ruling instead of re-nagging. On a **stale** entry the consult returns `prior_po_ruling_ref: DEC-n` when the same node+check was previously ruled under different wording — the body changed, so re-judge the content, BUT consult `decisions.md` for the active DEC and **surface it** ("you accepted DEC-n for the prior wording — still applies?") rather than silently re-flagging (no-silent-reversal; reuses the `decisions.md` plumbing wired below).
 
 For each check in `validation-rules-spec.md` whose **owner = LLM**, run a separate pass **over its stale set only**:
 
@@ -120,10 +120,10 @@ The impact-pass is the per-CHANGE propagation surface — `downstream()` + an LL
    - **First run / no previous snapshot** → there is no baseline, so **nothing changed** → skip the impact-pass entirely (do NOT crash; do NOT treat every node as "changed"). This reuses the same no-baseline rule as `--viz delta` (DRY).
 2. **Run `downstream()` per changed ID** (deterministic) → union the affected sets.
 3. **Annotate** each affected node with the impact-pass LLM scaffold (`validation-rules-spec.md → Impact-Pass LLM Scaffold`): `{node, dim_touched, one_liner, action}`.
-4. **Approved + contradicted** → an affected node that is `status: approved` AND contradicted by the change runs the **Contradiction Protocol** (`validation-rules-spec.md` § Contradiction Protocol; keep/change/hybrid). The engine NEVER auto-flips (G-A3).
+4. **Approved + contradicted** → an affected node that is `status: approved` AND contradicted by the change runs the **Contradiction Protocol** (`validation-rules-spec.md` § Contradiction Protocol; keep/change/hybrid). The engine NEVER auto-flips an approved artifact.
 5. **Write the impact report** → `docs/product/impact/<ts>.md` (skeleton `assets/templates/impact-report.md`; `trigger: --validate`, `changed_set:` the delta IDs, `dims:` the dimension union, one table row per affected node). This is a body document the LLM composes directly — not a `generate_templates.render` scalar fill.
 
-The impact-pass is deterministic in its graph half (snapshot-delta + `downstream()`) and LLM-only in its interpretation (G-B1/G-B2). When the change-set is empty (a clean re-validate of an unchanged spec), no impact report is written.
+The impact-pass is deterministic in its graph half (snapshot-delta + `downstream()`) and LLM-only in its interpretation. When the change-set is empty (a clean re-validate of an unchanged spec), no impact report is written.
 
 #### Self-correction write (behavioral memory 3E)
 
@@ -277,17 +277,17 @@ When generating reports or summaries:
 3. Call `generate_templates.py --type exec_summary --values <json> --write` to render `docs/product/exec-summary.md`.
 4. Optionally render an HTML version: `visualize.py --view tree --format html --root <root>` and bundle.
 
-### `--audience` modifier (E4)
+### `--audience` modifier
 
-`--summary` takes an optional `--audience` flavor (NO new top-level flag — DRY over this same value-assembly path; M1: `generate_templates.render()` is token-substitution, so reuse the value path that BUILDS the token values, then render):
+`--summary` takes an optional `--audience` flavor (NO new top-level flag — DRY over this same value-assembly path; `generate_templates.render()` is token-substitution, so reuse the value path that BUILDS the token values, then render):
 
 - **`--audience exec`** (default) — exactly the flow above. Byte-for-byte the current exec one-pager.
 - **`--audience release-notes`** — "what changed since the last approved snapshot". Build the
-  `{{changes_since_approved}}` value from the C9 audit trail:
+  `{{changes_since_approved}}` value from the governance audit trail:
   `assemble_audit_trail.since_last_approved(root)` → `render_release_delta_md(delta, lang)`. Fill the
   `release_notes` template: `generate_templates.py --type release_notes --values <json> --write` →
   `docs/product/release-notes.md`. Bilingual via session `lang`.
-  - **Dependency:** `release-notes` needs the audit trail (Phase 4); `exec` is independent and ships
+  - **Dependency:** `release-notes` needs the audit trail; `exec` is independent and ships
     without it. If the audit trail is unavailable, only `release-notes` is gated — `exec` always works.
 
 ## `--decision` Flow

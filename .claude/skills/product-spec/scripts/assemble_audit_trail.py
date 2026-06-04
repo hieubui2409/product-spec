@@ -129,7 +129,7 @@ def assemble(root, today: Optional[str] = None) -> Dict[str, Any]:
             "who_approved": a["approved_by"],
             "what_drifted": "approval predates current wording" if is_stale else "",
             "dec_ref": ",".join(dec_by_artifact.get(aid, [])),
-            # H7: corroboration (a change-log entry or a DEC affecting this artifact) is the sole
+            # Corroboration (a change-log entry or a DEC affecting this artifact) is the sole
             # criterion — an approval/stale flag with NONE is unreconciled, never dropped.
             "reconciled": reconciled,
         })
@@ -183,7 +183,7 @@ def render_markdown(data: Dict[str, Any], lang: str = "en") -> str:
 
 
 def since_last_approved(root, today: Optional[str] = None) -> Dict[str, Any]:
-    """The `--summary --audience release-notes` delta (E4): audit events on/after the most
+    """The `--summary --audience release-notes` delta: audit events on/after the most
     recent approval date. Reuses `assemble` (DRY) — same source-of-truth as the audit view.
     Returns {since, events}. `since` is None when nothing is approved yet (→ all events)."""
     data = assemble(root, today=today)

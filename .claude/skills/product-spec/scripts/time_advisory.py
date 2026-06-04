@@ -9,7 +9,7 @@ ships as this standalone advisory: it takes a pinnable `--today <ISO>` (default 
 real today) and emits an advisory JSON. It is NOT a gate — it ALWAYS exits 0, even
 when items are overdue, so a CI pipeline never blocks on the calendar.
 
-Pure date comparison — no LLM, no judgment (Script-vs-LLM split / G-B1).
+Pure date comparison — no LLM, no judgment (Script-vs-LLM split).
 
 CLI:
     time_advisory.py --root <project-dir> [--today YYYY-MM-DD]
@@ -36,7 +36,7 @@ configure_utf8_console()
 def check_overdue(graph: Dict[str, Any], today: dt.date) -> List[Dict[str, Any]]:
     """Return one `overdue` advisory per artifact whose target_date is strictly
     before `today`. A node with no (or malformed) target_date is silently skipped
-    — the field is optional (G-D1) and shape errors are the validate gate's job."""
+    — the field is optional and shape errors are the validate gate's job."""
     findings: List[Dict[str, Any]] = []
     for n in graph["nodes"]:
         td = _parse_iso_date(n.get("target_date"))

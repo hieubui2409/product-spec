@@ -22,7 +22,7 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
   `spec-critique-consolidate` → **`critique-consolidator`**, `spec-critique-humanize` →
   **`critique-humanizer`** (in `.claude/agents/`; all cross-references updated).
 - **Renamed the Stop-hook** `spec_critique_nudge.py` → **`product_spec_critique_nudge.py`**.
-- **Assumption-rigor in existing lenses (C11)** — the product **Riskiest-assumption** and tech
+- **Assumption-rigor in existing lenses** — the product **Riskiest-assumption** and tech
   **Hidden-dependencies / assume-success** lens prompts now require an explicit
   "unproven belief X → if wrong, Y happens" consequence clause (name the assumption AND its failure),
   not just that an assumption exists. Prompt/reference edit only — no new lens, agent, or flag; the
@@ -41,7 +41,7 @@ not a raw path log.
   hard-gated to levels 7-9; split `detail_level` preferences.
 - **Lifecycle caching + provenance reuse** (`none`/`full`/`consolidate_only`/`relens`) + cross-critique
   inheritance (parent→child `inherited_context`) and descendant rollup (child→parent).
-- R6 voice-neutral lenses + orchestration wiring.
+- Voice-neutral lenses + orchestration wiring.
 - Advisory en-language-purity check for reports.
 
 ### Changed

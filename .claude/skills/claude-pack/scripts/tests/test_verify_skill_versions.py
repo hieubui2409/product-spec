@@ -1,4 +1,4 @@
-"""test_verify_skill_versions — E5 release-identity verifier contract.
+"""test_verify_skill_versions — release-identity verifier contract.
 
 Scope = semver shape + presence of nested `metadata.version` ONLY. No bundle-equality.
 """
@@ -36,7 +36,7 @@ def test_missing_metadata_block_fails(tmp_path):
 
 
 def test_top_level_version_only_fails(tmp_path):
-    # version present but NOT nested under metadata → reject (E5 requires metadata.version).
+    # version present but NOT nested under metadata → reject (the gate requires metadata.version).
     _write_skill(tmp_path / "a", 'name: a\nversion: "1.2.3"')
     results, ok = vsv.verify([tmp_path / "a"])
     assert ok is False
