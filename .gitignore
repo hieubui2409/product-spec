@@ -81,8 +81,8 @@ ck.md
 !/.claude/skills/product-spec/**
 !/.claude/skills/claude-pack/
 !/.claude/skills/claude-pack/**
-!/.claude/skills/spec-critique/
-!/.claude/skills/spec-critique/**
+!/.claude/skills/product-spec-critique/
+!/.claude/skills/product-spec-critique/**
 # Seed manifest for claude-pack (committed source-of-truth)
 !/.claude/pack.manifest.yaml
 # CK-framework artifacts committed so the repo self-packs reproducibly
@@ -97,15 +97,16 @@ ck.md
 !/.claude/hooks/
 /.claude/hooks/*
 !/.claude/hooks/memory_gap_hook.py
-!/.claude/hooks/spec_critique_nudge.py
+!/.claude/hooks/product_spec_critique_nudge.py
 # Re-ignore Python cache + build artifacts inside tracked skills
 /.claude/skills/product-spec/**/__pycache__/
 /.claude/skills/product-spec/**/*.pyc
 /.claude/skills/claude-pack/**/__pycache__/
 /.claude/skills/claude-pack/**/*.pyc
 /.claude/skills/claude-pack/dist/
-/.claude/skills/spec-critique/**/__pycache__/
-/.claude/skills/spec-critique/**/*.pyc
+/.claude/skills/product-spec-critique/**/__pycache__/
+/.claude/skills/product-spec-critique/**/*.pyc
+/.claude/skills/product-spec-critique/**/.pytest_cache/
 /.claude/scripts/**/__pycache__/
 /.claude/scripts/**/*.pyc
 
