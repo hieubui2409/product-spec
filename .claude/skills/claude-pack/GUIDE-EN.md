@@ -71,12 +71,55 @@ Both ways yield the same result. Flags are just a shortcut for people who alread
 
 ---
 
-## 3. Every use case — ordered by priority
+## 3. Core concepts — the contract (read this once)
 
-Each scenario includes: when to use it, a **sample conversation**, the **equivalent skill flag**, and the
-**underlying command** that runs under the hood.
+Six guarantees govern every build:
+
+1. **Manifest is source-of-truth.** `.claude/pack.manifest.yaml` declares the inputs; CLI flags override
+   per-build, interactive mode regenerates it.
+2. **Determinism is a contract.** Same source + manifest → **byte-identical** `tar.gz` (PAX, sorted walk,
+   `mtime=0`, `uid=gid=0`, gzip `mtime=0`). Never hand-edit a tarball — it breaks the contract.
+3. **The safety filter is non-removable.** `.env`/secrets/keys, `.git/`, caches, session state are **always
+   dropped**; `settings.json`/`.ck.json`/top-level `README`/`CLAUDE.md`/internals are **opt-in only**.
+4. **Script-vs-LLM split.** Scripts do the structural work (parse, safety, tarball); the LLM owns the UI
+   (`AskUserQuestion`) and **never edits the tarball**. Scripts never call `AskUserQuestion`.
+5. **No auto-install.** The recipient runs the installer **by hand** — skip-existing by default,
+   `FORCE_OVERWRITE=1` to opt in (backs up first).
+6. **Release is tag-triggered CI only.** Bump `version` + the CHANGELOG, push an annotated tag; **never
+   hand-build + `gh release create`** — a manual build's SHA won't match CI's reproducible build, breaking
+   the published checksum.
+
+## 4. Learning path
+
+- **Build basics:** interactive build (Tier A1) → preview with `--dry-run` (A3) → build from an existing
+  manifest (A2).
+- **Shape the bundle:** override version/name (B1), content flags (B2), opt-in sensitive files (B3),
+  `_shared/` handling (B4).
+- **Automate in CI:** reproducible build with `SOURCE_DATE_EPOCH` (C1), JSON output (C2), the exit-code table.
+- **Ship & receive:** recipient install POSIX/Windows (D1); for an *official* release, drive the
+  tag-triggered pipeline (concept §3.6), never a hand build.
+
+## 5. Important caveats & gotchas
+
+- **Official releases are tag-triggered only** — never `gh release create` by hand; a manual build's bytes
+  differ from CI's reproducible build and break SHA256 verification. (§3.6)
+- **Bundle version ≠ skill version** — it labels the *distribution*. `0.0.0-dev` is refused for real builds
+  (use `--allow-dev-version` for throwaways).
+- **The safety filter can't be turned off** — secrets/`.env`/keys are always dropped; no flag pulls them back.
+- **`_shared/` is warn-only by default** — refs inside code fences are stripped first, so real deps need
+  `--include-shared <name>` explicitly (`--strict` turns un-included refs into a blocking error).
+- **`dist/` is gitignored** — tarballs are reproducible artifacts, not source; commit them only on a tagged release.
+- **v1 boundaries:** no remote upload, no GPG signing, no `claude-unpack`, no multi-project packing, tar.gz only.
+
+## 6. Every use case — grouped by what you reach for
+
+Grouped into four tiers: **A. Build basics** (1–3), **B. Shape the bundle** (4–7), **C. CI & automation**
+(8–9), **D. Recipient & release** (10). Each scenario includes: when to use it, a **sample conversation**,
+the **equivalent skill flag**, and the **underlying command** that runs under the hood.
 
 ---
+
+## Tier A — Build basics
 
 ### Priority 1 — Interactive build from scratch (no manifest yet)
 
@@ -184,6 +227,8 @@ the would-be SHA256.
 ```
 
 ---
+
+## Tier B — Shape the bundle
 
 ### Priority 4 — Override version / bundle name for ad-hoc builds
 
@@ -309,6 +354,8 @@ inside example code fences, not real dependencies — the skill strips fenced bl
 
 ---
 
+## Tier C — CI & automation
+
 ### Priority 8 — Reproducible build for CI (`SOURCE_DATE_EPOCH`)
 
 **When to use:** You want a reproducible build pinned to the commit date in CI.
@@ -366,6 +413,8 @@ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
 
 ---
 
+## Tier D — Recipient & release
+
 ### Priority 10 — Recipient side: install the bundle (including Windows)
 
 **When to use:** The recipient has `claude-pack-{version}.tar.gz`.
@@ -403,7 +452,7 @@ FORCE_OVERWRITE=1 ./install.sh      # overwrite existing skills (backs up first)
 
 ---
 
-## 4. Output Contract
+## 7. Output Contract
 
 ```
 dist/
@@ -426,7 +475,7 @@ claude-pack-{version}/
 
 ---
 
-## 5. Exit Codes (for automation)
+## 8. Exit Codes (for automation)
 
 | Code | Meaning |
 |------|---------|
@@ -443,7 +492,7 @@ claude-pack-{version}/
 
 ---
 
-## 6. What this skill does NOT do
+## 9. What this skill does NOT do
 
 - **No remote upload.** Use `gh release upload` manually.
 - **No GPG signing in v1.** SHA256 sidecar only.
@@ -454,7 +503,7 @@ claude-pack-{version}/
 
 ---
 
-## 7. Further reading
+## 10. Further reading
 
 - `SKILL.md` — the full operating contract (flag table, output contract, workflow map).
 - `references/manifest-spec.md` — manifest schema.

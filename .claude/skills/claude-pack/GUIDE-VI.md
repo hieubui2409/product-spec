@@ -71,12 +71,54 @@ Hai cách cho cùng kết quả. Cờ lệnh chỉ là lối tắt cho người 
 
 ---
 
-## 3. Toàn bộ tình huống sử dụng — sắp theo thứ tự ưu tiên
+## 3. Khái niệm cốt lõi — bản hợp đồng (đọc một lần)
 
-Mỗi tình huống gồm: khi nào dùng, **kịch bản hội thoại mẫu**, **cờ lệnh skill tương đương**, và **lệnh thực
-thi** chạy ngầm.
+Sáu cam kết chi phối mọi lần build:
+
+1. **Manifest là source-of-truth.** `.claude/pack.manifest.yaml` khai báo đầu vào; CLI flag override theo
+   từng lần build, chế độ tương tác sinh lại manifest.
+2. **Determinism là một hợp đồng.** Cùng source + manifest → `tar.gz` **byte-identical** (PAX, sorted walk,
+   `mtime=0`, `uid=gid=0`, gzip `mtime=0`). Đừng bao giờ sửa tay tarball — phá vỡ hợp đồng.
+3. **Safety filter không thể tắt.** `.env`/secrets/keys, `.git/`, caches, session state **luôn bị loại**;
+   `settings.json`/`.ck.json`/`README`/`CLAUDE.md` top-level/internals **chỉ vào khi opt-in**.
+4. **Script-vs-LLM split.** Script lo phần cấu trúc (parse, safety, tarball); LLM lo UI (`AskUserQuestion`)
+   và **không bao giờ sửa tarball**. Script không bao giờ gọi `AskUserQuestion`.
+5. **Không auto-install.** Người nhận chạy installer **bằng tay** — skip-existing mặc định, `FORCE_OVERWRITE=1`
+   để opt-in (backup trước).
+6. **Release chỉ kích bằng tag qua CI.** Bump `version` + CHANGELOG, push annotated tag; **không bao giờ
+   hand-build + `gh release create`** — SHA của build tay không khớp build reproducible của CI, làm hỏng
+   checksum đã công bố.
+
+## 4. Lộ trình học
+
+- **Build cơ bản:** build tương tác (Tier A1) → preview `--dry-run` (A3) → build từ manifest có sẵn (A2).
+- **Định hình bundle:** override version/name (B1), flag nội dung (B2), opt-in file nhạy cảm (B3), xử lý
+  `_shared/` (B4).
+- **Tự động hóa CI:** reproducible build với `SOURCE_DATE_EPOCH` (C1), output JSON (C2), bảng exit code.
+- **Ship & nhận:** cài phía người nhận POSIX/Windows (D1); với release *chính thức*, dùng pipeline kích-bằng-tag
+  (khái niệm §3.6), không bao giờ build tay.
+
+## 5. Những lưu ý quan trọng
+
+- **Release chính thức chỉ kích bằng tag** — không bao giờ `gh release create` bằng tay; build tay ra byte
+  khác build reproducible của CI và làm hỏng verify SHA256. (§3.6)
+- **Version bundle ≠ version skill** — nó gắn nhãn *distribution*. `0.0.0-dev` bị từ chối cho build thật
+  (dùng `--allow-dev-version` cho bản vứt đi).
+- **Safety filter không tắt được** — secrets/`.env`/keys luôn bị loại; không flag nào kéo lại được.
+- **`_shared/` mặc định warn-only** — ref trong code fence bị strip trước, nên dep thật cần `--include-shared
+  <name>` tường minh (`--strict` biến ref chưa-include thành lỗi chặn build).
+- **`dist/` bị gitignore** — tarball là artifact reproducible, không phải source; chỉ commit khi release có tag.
+- **Ranh giới v1:** không upload remote, không GPG, không `claude-unpack`, không multi-project, chỉ tar.gz.
+
+## 6. Toàn bộ tình huống — gom theo việc bạn cần đến
+
+Gom thành bốn tier: **A. Build cơ bản** (1–3), **B. Định hình bundle** (4–7), **C. CI & automation** (8–9),
+**D. Người nhận & release** (10). Mỗi tình huống gồm: khi nào dùng, **kịch bản hội thoại mẫu**, **cờ lệnh
+skill tương đương**, và **lệnh thực thi** chạy ngầm.
 
 ---
+
+## Tier A — Build cơ bản
 
 ### Ưu tiên 1 — Build tương tác từ đầu (chưa có manifest)
 
@@ -181,6 +223,8 @@ echo "$answers_json" | .claude/skills/.venv/bin/python3 -m build_manifest --writ
 ```
 
 ---
+
+## Tier B — Định hình bundle
 
 ### Ưu tiên 4 — Override version / bundle name cho build ad-hoc
 
@@ -305,6 +349,8 @@ nằm trong code fence ví dụ, không phải dependency thật — skill strip
 
 ---
 
+## Tier C — CI & automation
+
 ### Ưu tiên 8 — Reproducible build cho CI (`SOURCE_DATE_EPOCH`)
 
 **Khi nào dùng:** Muốn build reproducible theo commit date trong CI.
@@ -362,6 +408,8 @@ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
 
 ---
 
+## Tier D — Người nhận & release
+
 ### Ưu tiên 10 — Phía người nhận: cài bundle (kể cả Windows)
 
 **Khi nào dùng:** Người nhận đã có `claude-pack-{version}.tar.gz`.
@@ -398,7 +446,7 @@ FORCE_OVERWRITE=1 ./install.sh      # ghi đè skill đã tồn tại (backup tr
 
 ---
 
-## 4. Output Contract
+## 7. Output Contract
 
 ```
 dist/
@@ -421,7 +469,7 @@ claude-pack-{version}/
 
 ---
 
-## 5. Exit Codes (cho automation)
+## 8. Exit Codes (cho automation)
 
 | Code | Nghĩa |
 |------|-------|
@@ -438,7 +486,7 @@ claude-pack-{version}/
 
 ---
 
-## 6. Những điều skill này KHÔNG làm
+## 9. Những điều skill này KHÔNG làm
 
 - **Không upload remote.** Dùng `gh release upload` thủ công.
 - **Không GPG signing v1.** Chỉ SHA256 sidecar.
@@ -449,7 +497,7 @@ claude-pack-{version}/
 
 ---
 
-## 7. Tham chiếu sâu hơn
+## 10. Tham chiếu sâu hơn
 
 - `SKILL.md` — operating contract đầy đủ (flag table, output contract, workflow map).
 - `references/manifest-spec.md` — schema manifest.
