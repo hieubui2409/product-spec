@@ -33,7 +33,58 @@ technical commands.
 
 ---
 
-## 2. Two ways to give instructions — and which to prefer
+## 2. Core concepts — the mental model (read this once)
+
+These seven ideas explain *why* the skill behaves the way it does. Hold them and everything else clicks.
+
+1. **The five-layer tree + traceability.** Vision → **one** BRD → **many** PRDs → Epics → Stories. Every
+   layer links *up* to its parent by an ID, so you can always trace a story back to the business goal it
+   serves — and spot a goal that has no feature carrying it.
+2. **One home per fact (DRY).** Each fact lives in exactly one place and is referenced by ID elsewhere.
+   Personas → `PRODUCT.md`; business goals → the BRD; **acceptance criteria → only the story** (a PRD never
+   restates them); competitors are declared once in the BRD and cited by ID. Don't expect the same fact
+   written twice — that's by design.
+3. **Structure is data; your prose is yours.** The machine reads the **frontmatter** (IDs, `status`, `scope`,
+   `moscow`, `metrics`) as the source of truth — it never guesses meaning from your headings. Your narrative
+   prose, on the other hand, is **never overwritten** by the skill.
+4. **It interviews; it doesn't assume.** The skill asks before deciding anything that's yours to decide —
+   personas, scope (in / out / core-value), sign-off. It only fills a default when the field is editable
+   boilerplate, and it tells you when it does.
+5. **Nothing gets approved silently.** `status` moves `draft → approved` **only** when you explicitly approve
+   and give an approver + date. The skill never stamps approval on its own.
+6. **No silent reversals.** When a new claim contradicts an already-**approved** document, the skill stops and
+   gives you three choices — **Keep** (reject the new claim), **Change** (and re-approve), or **Hybrid**
+   (record both, plan a follow-up). It never quietly picks a side.
+7. **Preferences are seeded once.** Early on, the skill asks your **language**, **detail level**, and
+   **engagement profile** (how hard to probe, how many next-steps to suggest), saves them, and **never
+   re-asks**. Change them anytime by saying so or via `--lang` / `preferences.py --set`.
+
+---
+
+## 3. Your learning path
+
+These are complex documents — don't try to learn every flag at once. Follow this path:
+
+**Day 1 — build one thin slice end to end (the spine):**
+`init` → `BRD` → one `PRD` → one `epic` → one `story` → `validate`. Once you've taken a single goal all the
+way down to a story with acceptance criteria and validated it, you understand the whole skill.
+
+**Week 1 — keep it healthy and share it:**
+`approve` mature documents, `update` when things change, `status` for a quick pulse, then `visualize` /
+`summary` / `export` to show others. Also set your **language** and **engagement profile** early (Tier D
+below) so the rest of the interview fits how you like to work.
+
+**As you grow — governance & memory (Tier E):**
+the `decision register` (so settled calls aren't re-litigated), `--apply-critique` (bring a critique back as
+decisions), the validate **Memory pass**, `--reflect`, and the opt-in end-of-session reminder. These keep a
+long-running spec honest; you don't need them on day one.
+
+**Shortcut once you know the shapes:** instead of the manual BRD → PRD → epic → story path, paste a messy
+brain-dump and let `--auto` decompose it (Tier A2). It still confirms every ambiguous split with you.
+
+---
+
+## 4. Two ways to give instructions — and which to prefer
 
 There are two ways to ask the skill to work. **The preferred way is the first — speaking in natural language.**
 
@@ -67,17 +118,39 @@ ropes. Throughout this guide, every scenario lists both ways so you can compare.
 
 ---
 
-## 3. Every use case — ordered by priority
+## 5. Important caveats & gotchas (so nothing surprises you)
 
-Below is everything the skill can do, ordered **from what you need first to what comes later**. Each scenario
-includes: when to use it, a full **sample conversation**, and the equivalent flag command.
+- **Approval is explicit only.** Nothing flips to `approved` without you naming an approver + date. (§2.5)
+- **Your prose is never overwritten.** On `update`, the skill flags affected parts and asks — you keep the
+  pen. (§2.3)
+- **Contradictions stop, never auto-fix.** A clash with an approved document is surfaced as Keep / Change /
+  Hybrid — the skill won't silently reconcile it. (§2.6)
+- **Every BRD goal needs a metric.** A goal with no success metric is a validation **error** (it blocks under
+  `--strict`) — a goal you can't measure can't be graded.
+- **Acceptance criteria live only in the story**, and story sizes are **`S` / `M` / `L`** — never story
+  points or hours.
+- **Preferences are asked once, then never again.** To change language, detail, or engagement later, just say
+  so, or use `--lang` / `preferences.py --set` — the skill won't keep re-asking.
+- **Fully offline after install.** No internet at runtime; your documents live under `docs/product/` in your
+  own project.
+- **Critique is a separate skill.** `cleanmatic:product-spec-critique` tears the spec apart but **never edits
+  it** — you bring its findings back yourself with `--apply-critique` (Tier E1).
+
+---
+
+## 6. Every use case — grouped by tier, ordered by how you'll reach for them
+
+Below is everything the skill can do, grouped into five tiers that match the learning path above. Each
+scenario includes: when to use it, a full **sample conversation**, and the equivalent flag command.
 
 All examples use a real product from the skill's sample set: **Acme Shop** — a web storefront for small
 boutique fashion brands, helping them sell directly to fans without a middleman marketplace.
 
 ---
 
-### Priority 1 — Start a new product from zero
+## Tier A — Build the spec (the core spine)
+
+### A1 — Start a new product from zero
 
 **When to use:** You're starting completely fresh, with no documents yet.
 
@@ -118,6 +191,10 @@ After this step, you have a `docs/product/` folder with your first `PRODUCT.md` 
 > > **Skill:** I read 3 `.md` files. Candidate personas I'm proposing (confirm / edit / reject each):
 > > "province shopper who finds the local pool empty", "returnee who wants depth over small talk"…
 
+> 💡 **First-run preferences.** On this very first interview the skill also asks — in one short batch — your
+> **detail level** (Concise / Standard / Verbose) and your **engagement profile** (Balanced vs Push-hard; see
+> Tier D2). It saves the answers and never asks again.
+
 #### Equivalent flag
 
 ```
@@ -128,7 +205,7 @@ After this step, you have a `docs/product/` folder with your first `PRODUCT.md` 
 
 ---
 
-### Priority 2 — Dump a "brain-dump" and let the skill organize it
+### A2 — Dump a "brain-dump" and let the skill organize it
 
 **When to use:** You already have a lot of ideas written messily (from meeting notes, brainstorms) and want
 the skill to **automatically decompose** them into business goals, features, epics, and stories.
@@ -168,7 +245,7 @@ The skill **never commits** ambiguous splits on its own — it always confirms w
 
 ---
 
-### Priority 3 — Write the business goals document (BRD)
+### A3 — Write the business goals document (BRD)
 
 **When to use:** You want to capture the **business goals**, success metrics, stakeholders, constraints, and
 competitive landscape. Each product has exactly **one** BRD.
@@ -202,7 +279,7 @@ competitive landscape. Each product has exactly **one** BRD.
 
 ---
 
-### Priority 4 — Add a feature area (PRD)
+### A4 — Add a feature area (PRD)
 
 **When to use:** You want to describe **one feature area** in detail — e.g. "Checkout", "Search", "Accounts".
 Each feature area is its own PRD. A product has many PRDs.
@@ -248,7 +325,7 @@ risks, and how it stacks up against competitors.
 
 ---
 
-### Priority 5 — Add a large work group (Epic)
+### A5 — Add a large work group (Epic)
 
 **When to use:** A PRD is usually big and needs to be split into a few **epics** — large work groups, each
 producing a clear outcome.
@@ -278,7 +355,7 @@ producing a clear outcome.
 
 ---
 
-### Priority 6 — Add a user story with acceptance criteria
+### A6 — Add a user story with acceptance criteria
 
 **When to use:** You split an epic into **stories** — the smallest unit, told from the user's point of view,
 with clear **acceptance criteria** that define when it's "done".
@@ -318,7 +395,9 @@ a relative size: `S` / `M` / `L` — **never** story points or hours.
 
 ---
 
-### Priority 7 — Check the quality of the document set (Validate)
+## Tier B — Keep it healthy
+
+### B1 — Check the quality of the document set (Validate)
 
 **When to use:** Any time you want to know whether the set is "healthy": any orphan story (not attached to an
 epic)? any broken link? any business goal with no feature carrying it? are stories well-written per the INVEST
@@ -360,7 +439,35 @@ quality, vagueness, value drift, semantic duplication). The result is an **easy-
 
 ---
 
-### Priority 8 — Apply a change without losing prior work (Update)
+### B2 — Ask "what should I do next?" (Status)
+
+**When to use:** You come back after a break and want a quick health pulse — what changed since the last quality
+check, what's still in draft, what hasn't been validated yet. A read-only nudge; it never edits anything.
+
+The skill compares the current document set against the last time you ran a validation and tells you what drifted,
+what's unvalidated, and what's still a draft — so you know where to point your attention. It does not re-run the full
+quality check (that's Validate); it just reads the last-validated marker and reports.
+
+#### Conversation
+
+> **You:** What's the state of my spec — anything I should look at?
+>
+> **Skill:** Quick status (read-only, nothing changed):
+> - 🕒 3 items changed since your last validation (`PRD-CHECKOUT`, `PRD-CHECKOUT-E1`, story `…-S2`) — worth re-validating.
+> - 📝 2 still in *draft*: `PRD-SEARCH`, epic `PRD-SEARCH-E1`.
+> - ✅ Everything else matches the last validated snapshot.
+>
+> Want me to run a full validation on the changed items?
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --status
+```
+
+---
+
+### B3 — Apply a change without losing prior work (Update)
 
 **When to use:** Something changed — a goal, a scope, a decision — and you want to update it **without
 overwriting** the prose you carefully wrote.
@@ -390,7 +497,7 @@ review** — rather than rewriting them. Regeneration is optional, opt-in per it
 
 ---
 
-### Priority 9 — Sign off / lock a document (Approve)
+### B4 — Sign off / lock a document (Approve)
 
 **When to use:** A BRD/PRD/Epic/Story is mature and you want to **stamp approval** — record the approver and
 date, and flip the status to `approved`.
@@ -417,7 +524,9 @@ skill **never** sets `approved` unless you ask to approve and provide an owner +
 
 ---
 
-### Priority 10 — Get a 1-page summary for leadership (Summary)
+## Tier C — Share & visualize
+
+### C1 — Get a 1-page summary for leadership (Summary)
 
 **When to use:** You need a **one-page summary** to send to investors, leadership, or partners — capturing
 the vision, goals, scope, and progress.
@@ -446,7 +555,7 @@ the vision, goals, scope, and progress.
 
 ---
 
-### Priority 11 — Draw the document set as visuals (Visualize)
+### C2 — Draw the document set as visuals (Visualize)
 
 **When to use:** You want to *see* the document set instead of reading each file — the traceability tree, a
 timeline roadmap, a kanban board, a risk grid, a competitor matrix…
@@ -519,7 +628,7 @@ The main views:
 
 ---
 
-### Priority 12 — Export a read-once document to share (Export)
+### C3 — Export a read-once document to share (Export)
 
 **When to use:** You want to bundle a slice of the document set into **one self-contained file** to send to
 someone — without making them open each file.
@@ -547,7 +656,9 @@ format (markdown or print-ready HTML).
 
 ---
 
-### Priority 13 — Work in Vietnamese (or English)
+## Tier D — Tune the skill to how you work (set this early)
+
+### D1 — Work in Vietnamese (or English)
 
 **When to use:** You want the interview and the content written in Vietnamese (or English).
 
@@ -572,35 +683,47 @@ the structure remains stable and shared across both languages.
 
 ---
 
-### Priority 14 — Ask "what should I do next?" (Status)
+### D2 — Tune how hard the skill challenges and suggests (Engagement profile)
 
-**When to use:** You come back after a break and want a quick health pulse — what changed since the last quality
-check, what's still in draft, what hasn't been validated yet. A read-only nudge; it never edits anything.
+**When to use:** The skill probes too hard (or not hard enough), or offers too many next-step suggestions (or too few).
+Two knobs let you tune **how the AI engages** — separate from how long the output is (`detail_level`):
 
-The skill compares the current document set against the last time you ran a validation and tells you what drifted,
-what's unvalidated, and what's still a draft — so you know where to point your attention. It does not re-run the full
-quality check (that's Validate); it just reads the last-validated marker and reports.
+- **`interview_rigor`** (`light` / `standard` / `deep`, default `standard`) — how hard the skill **challenges claims
+  and hunts for gaps / edge cases / missing acceptance criteria**. Applies at **every** interview level (vision / BRD /
+  PRD / epic / story).
+- **`action_prompting`** (`minimal` / `standard` / `proactive`, default `standard`) — the **density of next-step
+  suggestions** the skill offers each turn.
 
-#### Conversation
+**These are two independent axes:** `detail_level` = *length* (how much prose); `interview_rigor` = *depth* (how hard
+the challenge). **"Concise but deep"** is valid (`detail_level: concise` + `interview_rigor: deep`) — terse output, yet
+the skill still pushes back on every unproven claim. Never read `deep` as "write more".
 
-> **You:** What's the state of my spec — anything I should look at?
->
-> **Skill:** Quick status (read-only, nothing changed):
-> - 🕒 3 items changed since your last validation (`PRD-CHECKOUT`, `PRD-CHECKOUT-E1`, story `…-S2`) — worth re-validating.
-> - 📝 2 still in *draft*: `PRD-SEARCH`, epic `PRD-SEARCH-E1`.
-> - ✅ Everything else matches the last validated snapshot.
->
-> Want me to run a full validation on the changed items?
+The neutral default is `standard`, so the skill **never silently** puts you in a strict posture. It asks once early —
+**one question folded into the `detail_level` batch** on your first interview — offering **Balanced** (default) vs
+**Push-hard** (`interview_rigor: deep` + `action_prompting: proactive`), and writes only on your confirm. If you're
+just sketching and want it lighter, say "light". At session close, if there's real evidence (e.g. you kept waving off
+deep probing as noise), it may propose tightening *or* relaxing a knob — it writes only if you agree.
 
-#### Equivalent flag
+#### Equivalent command
 
 ```
-/cleanmatic:product-spec --status
+# Push-hard:
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root . \
+  --set interview_rigor=deep --set action_prompting=proactive
+# Lighter touch:
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root . \
+  --set interview_rigor=light --set action_prompting=minimal
 ```
+
+This **preserves every other preference** (load→merge→save); an unknown key or a bad value exits non-zero and
+**writes nothing**. Tune the two separately for the split case — e.g. concise-but-rigorous is
+`--set interview_rigor=deep` only.
 
 ---
 
-### Priority 15 — Record a decision so it's never re-litigated (Decision Register)
+## Tier E — Governance & memory (as your spec matures)
+
+### E1 — Record a decision so it's never re-litigated (Decision Register)
 
 **When to use:** You made a deliberate call — kept the old wording, accepted a known trade-off, or resolved a
 contradiction — and want it remembered so the skill stops re-raising it. Or you just want to see the decisions
@@ -661,7 +784,7 @@ of guessing.
 
 ---
 
-### Priority 16 — Make sure nothing important slips through the cracks (the validate "Memory pass")
+### E2 — Make sure nothing important slips through the cracks (the validate "Memory pass")
 
 **When to use:** You don't ask for this — it happens automatically every time you run a quality check (Validate). It's
 worth knowing it's there, so you understand why the report ends with a short "what did we remember to write down?" note.
@@ -696,7 +819,7 @@ The Memory pass is built into Validate — there's no separate flag. Just run:
 
 ---
 
-### Priority 17 — Catch up on memories you skipped earlier (Reflect)
+### E3 — Catch up on memories you skipped earlier (Reflect)
 
 **When to use:** After a long stretch of work — a big import, lots of changes without running Validate, or an old spec you
 just brought in — you suspect some decisions or corrections were never written down. Reflect goes back and *harvests* them.
@@ -729,7 +852,7 @@ limit: it can only catch what's *written down*, never something you only *said* 
 
 ---
 
-### Priority 18 — Turn on an automatic memory reminder (opt-in Stop hook)
+### E4 — Turn on an automatic memory reminder (opt-in Stop hook)
 
 **When to use:** You (or your build team) want the skill to **remind you at the end of a session** if a decision, a
 correction, or a boundary slip looks unrecorded — without having to remember to check yourself. This is an opt-in setup
@@ -762,37 +885,7 @@ settings file.
 
 ---
 
-### Priority 19 — Tune how hard the skill challenges and suggests (Engagement profile)
-
-**When to use:** The skill probes too hard (or not hard enough), or offers too many next-step suggestions (or too few).
-Two knobs let you tune **how the AI engages** — separate from how long the output is (`detail_level`):
-
-- **`interview_rigor`** (`light` / `standard` / `deep`, default `standard`) — how hard the skill **challenges claims
-  and hunts for gaps / edge cases / missing acceptance criteria**. Applies at **every** interview level (vision / BRD /
-  PRD / epic / story).
-- **`action_prompting`** (`minimal` / `standard` / `proactive`, default `standard`) — the **density of next-step
-  suggestions** the skill offers each turn.
-
-**These are two independent axes:** `detail_level` = *length* (how much prose); `interview_rigor` = *depth* (how hard
-the challenge). **"Concise but deep"** is valid (`detail_level: concise` + `interview_rigor: deep`) — terse output, yet
-the skill still pushes back on every unproven claim. Never read `deep` as "write more".
-
-The neutral default is `standard`, so the skill **never silently** puts you in a strict posture — it asks once early
-(folded into the `detail_level` question) and writes only on your confirm. At session close, if there's real evidence
-(e.g. you kept waving off deep probing as noise), it may propose tightening or relaxing a knob — it writes only if you agree.
-
-#### Equivalent command
-
-```
-./.claude/skills/.venv/bin/python3 scripts/preferences.py --root . \
-  --set interview_rigor=deep --set action_prompting=proactive
-```
-
-This **preserves every other preference** (load→merge→save); a bad value exits non-zero and **writes nothing**.
-
----
-
-## 4. A typical end-to-end workflow
+## 7. A typical end-to-end workflow
 
 If you're just starting out, here's the recommended order:
 
@@ -810,7 +903,7 @@ You don't have to follow this exact order — but it's the smoothest path.
 
 ---
 
-## 5. What this skill does NOT do (so you can relax)
+## 8. What this skill does NOT do (so you can relax)
 
 - **No code.** This is a product-spec skill. If you need code, the engineering team writes it from the
   stories + acceptance criteria.
@@ -823,7 +916,7 @@ You don't have to follow this exact order — but it's the smoothest path.
 
 ---
 
-## 6. Stuck? Just ask the skill directly
+## 9. Stuck? Just ask the skill directly
 
 The easiest move when stuck: **open the skill and ask in plain words.** For example *"What should I do
 next?"* or *"What's missing from my document set?"*. The skill looks at the current state and suggests a
