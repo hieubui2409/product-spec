@@ -10,6 +10,8 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-06-04
+
 ### Changed
 - **Assumption-rigor in existing lenses (C11)** — the product **Riskiest-assumption** and tech
   **Hidden-dependencies / assume-success** lens prompts now require an explicit

@@ -8,7 +8,7 @@ keywords: [packaging, distribution, tarball, manifest, claude, skill-distributio
 argument-hint: "[--manifest <path>] [--version <semver>] [--all|--skills <list>] [--dry-run]"
 metadata:
   author: cleanmatic
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # cleanmatic:claude-pack

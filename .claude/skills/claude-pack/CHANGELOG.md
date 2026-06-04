@@ -13,6 +13,14 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-06-04
+
+Backlog C/D/E ships: product-spec gains `--apply-critique` / `--viz audit` (ascii·md·html) /
+`--summary --audience` / `--discover` / the `goal_without_metric` validate check / `_hashable`
+consolidation; product-spec-critique gains strengthened assumption-rigor lens prompts; the bundle
+gains the E5 skill-version release gate + cross-skill CI. Skill versions this release:
+product-spec **2.1.0**, product-spec-critique **1.1.0**, claude-pack **0.2.0**.
+
 ### Added
 - **Skill-version release gate (E5)** — `scripts/verify_skill_versions.py` asserts each skill's nested
   `metadata.version` is present + semver; wired into `claude-pack-release.yml` before the build (drift

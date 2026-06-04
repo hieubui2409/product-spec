@@ -9,6 +9,8 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-06-04
+
 Backlog C/D/E — closing the PO pipeline. Additive + backward-compatible.
 
 ### Added

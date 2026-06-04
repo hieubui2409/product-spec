@@ -8,7 +8,7 @@ keywords: [ critique, review, product-spec, brutal, sarcasm, prd, brd, epic, sto
 argument-hint: "[scope] [--product|--tech|--market|--craft] [--interactive] [--lang vi|en] [--no-web] [--level 1..9]"
 metadata:
   author: cleanmatic
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # cleanmatic:product-spec-critique
