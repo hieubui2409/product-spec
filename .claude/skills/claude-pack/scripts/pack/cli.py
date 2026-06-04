@@ -81,12 +81,6 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = args.root.resolve()
 
-    if args.all:
-        _emit(args, {"error": "--all is not implemented in v0.1; list skills/agents/"
-                              "rules explicitly in the manifest or via flags"},
-              fp=sys.stderr)
-        return EXIT_VALIDATION
-
     manifest, rc = _load_and_validate(args, root)
     if rc != EXIT_OK:
         return rc

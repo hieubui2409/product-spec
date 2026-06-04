@@ -39,8 +39,6 @@ def build_parser() -> argparse.ArgumentParser:
                    help="override manifest.bundle_name")
     p.add_argument("--out", type=Path, default=Path("dist"),
                    help="output directory (default: dist/)")
-    p.add_argument("--all", action="store_true",
-                   help="pack everything under .claude/ minus always-drop list")
     p.add_argument("--skills", default=None, help="comma-separated skill slugs")
     p.add_argument("--agents", default=None, help="comma-separated agent basenames")
     p.add_argument("--hooks", default=None, help="comma-separated hook filenames")

@@ -13,6 +13,17 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **Removed the non-functional `--all` flag** — it errored on use and ran against the curated-distribution
+  design; use the manifest or `--skills <list>`.
+
+### Hardening / tests
+- **Recipient installer is now tested.** A SemVer precedence matrix (`test_installer_semver.py`) pins the
+  bash `semver_compare` (and PowerShell `Compare-Semver` on the Windows CI leg) against the leading-zero,
+  pre-release, and ASCII-collation edge cases — a wrong verdict here silently keeps a stale skill or
+  clobbers a newer one. An install e2e (`test_installer_e2e.py`) builds a real bundle, extracts it, runs
+  the bundled `install.sh` into a throwaway tree, and asserts a clean + idempotent install.
+
 ## [1.2.0] — 2026-06-04
 
 Pipeline-closure release: product-spec gains `--apply-critique` / `--viz audit` (ascii·md·html) /

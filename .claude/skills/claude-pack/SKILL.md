@@ -5,7 +5,7 @@ user-invocable: true
 when_to_use: "When you need to bundle a curated subset of this repo's .claude/ tree for sharing with another developer or installing on another machine."
 category: packaging
 keywords: [packaging, distribution, tarball, manifest, claude, skill-distribution]
-argument-hint: "[--manifest <path>] [--version <semver>] [--all|--skills <list>] [--dry-run]"
+argument-hint: "[--manifest <path>] [--version <semver>] [--skills <list>] [--dry-run]"
 metadata:
   author: cleanmatic
   version: "0.2.0"
@@ -32,7 +32,6 @@ Developer-facing skill that bundles a curated subset of this repo's `.claude/` t
 |------|---------|
 | (no flag) | Interactive menu → build manifest → preview → confirm → pack. |
 | `--manifest <path>` | Manifest file (default `.claude/pack.manifest.yaml`). |
-| `--all` | Pack everything under `.claude/` not on the always-drop list. Not implemented in v0.1 — errors (exit 1); list skills/agents/rules explicitly. |
 | `--skills <list>` | Comma-separated skill slugs (override manifest). |
 | `--agents <list>` | Comma-separated agent slugs (override manifest). |
 | `--hooks <list>` | Comma-separated hook filenames (override manifest). |
