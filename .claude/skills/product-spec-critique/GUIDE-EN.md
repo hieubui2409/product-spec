@@ -152,6 +152,11 @@ From the second critique of a scope onward, prior work is **reused** — token s
   > mobile differs from web. Why it dies: building an app just to have one. Fix: name a mobile-only job (e.g. buy on the go)."
 - **tech** (sonnet), INVEST, Given-When-Then testability, hidden dependencies, NFR gaps. Catches: untestable AC,
   non-INVEST story, happy-path only.
+
+> 💪 **Assumption rigor (sharpened).** The product **riskiest-assumption** and tech **hidden-dependencies /
+> assume-success** rows now demand an explicit *consequence clause*: a finding must state "unproven belief X →
+> if wrong, Y happens" (and for tech, name the silently-assumed system/story AND the failure when it's absent),
+> not merely note that an assumption exists. Naming a risk without its consequence no longer counts.
 - **market** (sonnet + web), Lean Canvas, Porter, Blue Ocean, unit-economics. Catches: me-too, no revenue path, no
   moat. Prefers BRD `competitors:` + cited web.
 - **craft** (haiku), plain-language, 4Cs, unmeasurable-adjective audit, terminology consistency. Catches: typos, vague

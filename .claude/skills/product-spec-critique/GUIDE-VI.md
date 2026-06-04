@@ -171,6 +171,12 @@ Lần chê thứ hai trở đi sẽ **tái sử dụng** việc đã làm — ch
   trôi mỗi chỗ một kiểu, đoạn văn dài lê thê, và những chỗ nói suông không kèm ví dụ. Đây đúng là lớp mà `--validate`
   không bao giờ chạm tới.
 
+> 💪 **Siết kỷ luật giả định.** Hai khung **giả định rủi ro nhất** (lăng kính product) và **phụ thuộc bị giấu /
+> giả định mọi thứ trơn tru** (lăng kính tech) nay bắt buộc một mệnh đề hậu quả tường minh: một phát hiện phải nói
+> "niềm tin chưa được kiểm chứng X → nếu sai, Y xảy ra" (và với tech, phải nêu rõ hệ thống/story bị ngầm giả định
+> AND điều gì hỏng khi nó vắng mặt), chứ không chỉ ghi rằng có một giả định. Nêu rủi ro mà thiếu hậu quả thì không
+> còn được tính.
+
 ---
 
 ## Cảm giác của từng mức giọng (cùng một lỗi)

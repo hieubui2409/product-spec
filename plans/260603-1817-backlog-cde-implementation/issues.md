@@ -35,7 +35,7 @@
 | 7 | D11 _hashable consolidation | ✅ done (`render_common.py`, output unchanged) |
 | 8 | C11 assumption-rigor + goal_without_metric | ✅ done (lens prompts + check + fixtures + eval) |
 | 9 | 9a E2E | ✅ **done** — D1 executed (see below); only the optional 4-agent live fleet re-run is unused |
-| 10 | 9b docs sweep + changelog | ⚠️ **partial** — see deferral D2 below |
+| 10 | 9b docs sweep + changelog | ✅ **done** — D2 executed (GUIDEs EN+VI surgically extended, changelogs backfilled) |
 
 ## Code review (single consolidated pass, 2026-06-03)
 - 🔴→✅ **CRITICAL — `--discover` directory-walk symlink escape (FIXED, commit 2b50e12).** `_walk_dir`
@@ -63,13 +63,15 @@
   - The only thing NOT done (by the "reduce-agent/use-cache" directive): spawning the live 4-lens + opus
     consolidator + humanizer fleet to regenerate reports — the main agent acted as the lenses inline. Ask
     the PO if a full live-fleet regeneration is ever wanted; the lifecycle + contracts are already proven real.
-- 🟡 **D2 — Phase 10 GUIDE deep-sweep partial.** Every new surface was registered inline as built:
-  `SKILL.md` (both skills), root `CLAUDE.md` pointer table, `references/*` (workflow-apply-critique,
-  workflow-discover, visualization-spec, validation-rules-spec, workflow-validate), root `README.md`, and
-  all **3 CHANGELOGs** populated. NOT done: the full prose walkthrough rewrite of the four ~750-line
-  `GUIDE-EN.md`/`GUIDE-VI.md` PO guides + the **VI native-review pass** (CLAUDE.md bilingual rule). Left
-  for a focused docs pass — **interview the PO** on depth/tone before the GUIDE rewrite. Changelog
-  backfill of *historical* commits by subject-scope+`--follow` (H5) is also deferred with D1 (the new
-  features are recorded under `[Unreleased]`; historical backfill is a separate git-archaeology task).
+- ✅ **D2 — DONE 2026-06-04.** GUIDEs **surgically extended** (not wholesale-rewritten — honors
+  "never overwrite PO prose"; preserves existing quality): product-spec `GUIDE-EN.md` + `GUIDE-VI.md`
+  gained sections for `--discover` (P1), `goal_without_metric` (P7), `--summary --audience` (P10),
+  `--viz audit` (P11), and `--apply-critique` (P15) — VI written natively. Critique `GUIDE-EN.md` +
+  `GUIDE-VI.md` gained the strengthened assumption-rigor (consequence-clause) note. product-spec
+  `README.md` flag list + critique `README.md` worked-examples (incl. the lv5 showcase + dating-app
+  run) updated. All **3 CHANGELOGs** backfilled by subject-scope + `--follow` (critique rename traced),
+  no fabricated version numbers. Suites green (601/152/142), docs-only. NOTE: chose surgical-extend
+  over the wholesale GUIDE rewrite the original deferral floated — if the PO wants a full narrative
+  rewrite/restructure of the guides, that's a separate ask.
 - 🟢 **D3 — `--format md` is audit-only.** Added `md` to `visualize.py` FORMATS but rejected for every
   non-audit view. If the PO later wants markdown for other views, that's a clean extension.

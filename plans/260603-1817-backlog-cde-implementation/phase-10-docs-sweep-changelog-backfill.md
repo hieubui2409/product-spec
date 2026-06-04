@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "9b — docs sweep + changelog backfill"
-status: partial
+status: done
 priority: P1
 effort: "2d"
 dependencies: [9]

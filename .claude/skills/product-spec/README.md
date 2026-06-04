@@ -26,7 +26,7 @@ Invoke from Claude Code:
 /cleanmatic:product-spec
 ```
 
-With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, add stories, validate, update, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--validate`, `--strict`, `--approve`, `--update`, `--decision`, `--status`, `--summary`, `--viz <view>`, `--format ascii|mermaid|html`, `--lang en|vi`, `--voice` (record PO voice), `--reflect` (retroactive memory harvest).
+With no flag, the skill detects the state of `docs/product/` and presents a menu (init, new BRD, new PRD, add stories, validate, update, visualize, approve, summary). Common flags: `--product`, `--brd`, `--prd <slug>`, `--epic`, `--story`, `--auto` (braindump → decompose), `--discover <path(s)>` (seed the interview from raw transcripts/notes), `--validate`, `--strict`, `--approve`, `--update`, `--decision`, `--apply-critique <report>` (turn a critique report into recorded decisions), `--status`, `--summary [--audience exec|release-notes]`, `--viz <view>` (incl. `audit`), `--format ascii|mermaid|html`, `--lang en|vi`, `--voice` (record PO voice), `--reflect` (retroactive memory harvest).
 
 ## Layout
 

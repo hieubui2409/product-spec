@@ -65,6 +65,14 @@ committed `.claude/settings.json`. Windows: `install.ps1` (`-CritiqueHook` / `-C
 - **No auto-memory**, only a PO-confirmed `DEC` bridge.
 - **No HTML/PDF** (markdown v1), **no new venv**, **no new sample spec** (reuses `product-spec/examples/acme-shop`).
 
+## Worked examples
+
+- `examples/critique-acme-shop-all-level5.md` — the **default-level (5, no-mercy)** showcase over
+  `product-spec/examples/acme-shop` (all four lenses, grounded citations).
+- `examples/critique-acme-shop-mobile-level7..9*.md` — the harsh-level harm-floor reference set.
+- `e2e/dating-app/docs/product/critique/` — a full worked spec with a scoped critique
+  (`260603-prd-chat-lvl5.md`) exercising the inherit/rollup/cache lifecycle.
+
 ## Guides
 
 - [`GUIDE-VI.md`](./GUIDE-VI.md), Tiếng Việt, every flag/lens/use-case as a sample dialogue.

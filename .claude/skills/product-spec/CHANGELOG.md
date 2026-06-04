@@ -37,5 +37,20 @@ Backlog C/D/E — closing the PO pipeline. Additive + backward-compatible.
 
 ## [2.0.0]
 
-- Current shipped baseline (see git history for the full feature set: Vision/BRD/PRD/Epic/Story
-  hierarchy, traceability, validation, visualization, decision register, memory-write enforcement).
+Current shipped baseline. History below reconstructed from `feat(product-spec)`/`fix(product-spec)`
+commit subjects (not a raw path log), grouped by theme.
+
+### Added
+- Vision/BRD/PRD/Epic/Story hierarchy with parent-scoped IDs, traceability, and `--validate`
+  (structural scripts + LLM judgment), `--approve`, `--summary`, `--export`, and the `--viz` view family.
+- **Memory-write enforcement layer:** deterministic `memory_gap` detector (four signal types); Tier-0
+  forcing-functions + a single enforcement reference home; unrecorded-memory signals + reflect hint
+  surfaced in `--status`; opt-in Stop hook for memory-gap nudges; `install --memory-hook` registration.
+- **`--reflect`** retroactive memory harvest + a read-only harvester agent.
+- **`--voice`** flag to record PO style explicitly via `record_po_style`.
+- Atomic batch-write path for the judgment cache (`--store-batch`).
+
+### Changed
+- Modularized oversized scripts into focused modules; shared test helpers through `conftest`;
+  single-homed `FENCE_PREFIX` (via `check_fence` import) and the `last_judged` writer.
+- Cross-platform memory-hook interpreter path + completed `install.sh` argument hints.

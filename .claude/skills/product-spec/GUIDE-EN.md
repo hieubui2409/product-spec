@@ -107,11 +107,23 @@ problem you solve, your target customers (called *personas*), the core value, an
 
 After this step, you have a `docs/product/` folder with your first `PRODUCT.md` and `vision.md`.
 
+> 💡 **Have raw material already?** If you have interview transcripts, support-ticket dumps, or competitor
+> notes (as `.md`/`.txt` files), point the skill at them with **`--discover`** to *seed* this interview with
+> **candidate** personas and problems instead of starting cold. It reads only the files you name (fenced to
+> your project, dotfiles like `.env` skipped, directories walked within a safe limit), proposes candidates,
+> and **confirms each with you before anything is written** — it never auto-creates a persona.
+>
+> > **You:** Discover personas from `research/interviews/`.
+> >
+> > **Skill:** I read 3 `.md` files. Candidate personas I'm proposing (confirm / edit / reject each):
+> > "province shopper who finds the local pool empty", "returnee who wants depth over small talk"…
+
 #### Equivalent flag
 
 ```
 /cleanmatic:product-spec                # no flag → skill sees nothing exists → offers to initialize
 /cleanmatic:product-spec --product      # go straight to creating/refreshing PRODUCT.md
+/cleanmatic:product-spec --discover research/interviews/   # seed the interview from raw files/dirs
 ```
 
 ---
@@ -313,8 +325,12 @@ epic)? any broken link? any business goal with no feature carrying it? are stori
 principle? anything drifting from the core value, or contradicting an already-locked decision?
 
 The skill runs **two layers**: a machine layer checking structure (orphans, broken links, missing acceptance
-criteria, duplicate IDs), and a judgment layer (story quality, vagueness, value drift, semantic duplication).
-The result is an **easy-to-read report**.
+criteria, duplicate IDs, **and any business goal with no success metric**), and a judgment layer (story
+quality, vagueness, value drift, semantic duplication). The result is an **easy-to-read report**.
+
+> 💡 New check — **every BRD goal must carry at least one success metric.** A goal with an empty or missing
+> `metrics` is flagged as an error (a goal you can't measure can't be graded), so it surfaces in the report
+> and blocks under `--strict`.
 
 #### Conversation
 
@@ -416,10 +432,16 @@ the vision, goals, scope, and progress.
 >
 > **You:** Both.
 
+> 💡 **Pick the audience.** The same `--summary` can speak to two audiences: the default **exec one-pager**,
+> or a **release-notes** brief — "what changed since the last sign-off" — pulled from the audit trail (below).
+> Say "give me release notes since the last approval" or use `--audience release-notes`.
+
 #### Equivalent flag
 
 ```
-/cleanmatic:product-spec --summary
+/cleanmatic:product-spec --summary                          # exec one-pager (default)
+/cleanmatic:product-spec --summary --audience exec          # same, explicit
+/cleanmatic:product-spec --summary --audience release-notes # what changed since last approved
 ```
 
 ---
@@ -447,6 +469,7 @@ The main views:
 | A competitor matrix + threat heatmap | `competition` |
 | A multi-dimensional summary on one page | `dashboard` |
 | Maps by persona, scope, or change vs an old baseline | `persona`, `scope`, `delta` |
+| A governance **audit trail** — when · what · who-approved · what-drifted · which decision | `audit` |
 
 #### Conversation
 
@@ -480,7 +503,13 @@ The main views:
 /cleanmatic:product-spec --viz competition
 /cleanmatic:product-spec --viz dashboard
 /cleanmatic:product-spec --viz explorer
+/cleanmatic:product-spec --viz audit                 # governance audit trail (text or markdown)
 ```
+
+> 💡 The **`audit`** view is read-only and shows only plain text or markdown (no HTML this round). It joins
+> your change-log, sign-offs, stale approvals, and decisions into one timeline. If a sign-off has no
+> matching change-log entry or decision, it shows up as an explicit **`unreconciled`** row rather than being
+> hidden — so a governance gap is never silently swept under the rug.
 
 > 💡 Want to hide deferred items (marked "won't do")? Add "hide the deferred items" — equivalent to the
 > `--filter-wont` flag.
@@ -597,6 +626,34 @@ still applies.
 ```
 /cleanmatic:product-spec --decision         # list recorded decisions
 /cleanmatic:product-spec --decision DEC-2    # view one decision
+```
+
+#### Turning a critique into decisions — `--apply-critique`
+
+If you ran **`cleanmatic:product-spec-critique`** (the brutal-but-grounded tear-down) and got a report, this is
+how you bring its findings *back into the spec as decisions*. The critique skill only writes a report; it never
+touches your spec. `--apply-critique` walks each finding **with you** — **Keep** (reject the finding, record
+why), **Change + re-approve** (accept it; the skill runs the impact pass and never rewrites your prose for you),
+or **Defer** (revisit later) — and records one `DEC-<n>` per resolved finding so nothing is re-litigated.
+
+It is built to be safe: the report is read only from `docs/product/critique/`, each finding is matched to its
+artifact and tagged **fresh / stale / unknown** (so you know if the spec moved since the critique), a *Change*
+on an already-approved document goes through the same Keep/Change/Hybrid sign-off gate, and an interrupted run
+resumes without double-recording. If a report predates freshness tracking, the skill tells you plainly instead
+of guessing.
+
+> **You:** Apply the critique report from this morning.
+>
+> **Skill:** I read `docs/product/critique/260604-all.md` — 6 findings. Walking them one by one:
+> 1. `[blocker] BRD-G2` — the north-star metric. Keep, Change + re-approve, or Defer?
+>
+> **You:** Change it — add the sustained-conversation metric.
+>
+> **Skill:** Recorded **DEC-1** (affects BRD-G2). I've flagged the goal for your edit (I won't rewrite the
+> wording myself). On to finding 2…
+
+```
+/cleanmatic:product-spec --apply-critique docs/product/critique/<report>.md
 ```
 
 ---
