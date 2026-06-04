@@ -16,6 +16,8 @@ A small collection of **Claude Code skills** by cleanmatic. Three skills ship he
 
 The three skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by any installer).
 
+> 🇬🇧 **English** overview below · 🇻🇳 **Tiếng Việt**: cuộn xuống mục **[Tiếng Việt](#tiếng-việt)** ở cuối trang.
+
 ---
 
 ## `product-spec` — for Product Owners
@@ -37,6 +39,7 @@ in plain language, no code required from you. Bilingual: English and Vietnamese.
 | Apply a change without losing prior decisions | `/cleanmatic:product-spec --update` |
 | Turn a critique report into recorded decisions | `/cleanmatic:product-spec --apply-critique <report>` |
 | Seed a new spec from raw transcripts/notes | `/cleanmatic:product-spec --discover <path(s)>` |
+| Tune how hard the interview challenges / how many next-steps it suggests | `… preferences.py --set interview_rigor=deep --set action_prompting=proactive` |
 
 Output lives in `docs/product/` inside your project — markdown files with rich YAML metadata. The skill never writes
 outside `docs/product/`.
@@ -231,3 +234,83 @@ via any flag.
 Each skill can answer most "how do I…" questions — invoke it and ask. For installer issues, re-run the POSIX installer
 with `bash -x .claude/skills/<skill>/install.sh` to see each step. For deeper detail, start from the skill's `GUIDE-*.md`
 and `SKILL.md`.
+
+---
+
+# Tiếng Việt
+
+Một bộ nhỏ gồm **3 skill cho Claude Code** của cleanmatic, mỗi skill tự chứa dưới `.claude/skills/`:
+
+| Skill | Cho ai | Làm gì |
+|---|---|---|
+| **[`product-spec`](.claude/skills/product-spec/)** | **Product Owner** không chuyên kỹ thuật | Dựng cây tài liệu sản phẩm theo phỏng vấn (**Tầm nhìn → 1 BRD → nhiều PRD → Epic → Story kèm AC**) với truy vết chặt, kiểm tra, trực quan hóa — bằng ngôn ngữ bình thường, không cần code. Song ngữ EN/VI. |
+| **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owner** | Bản mổ xẻ thẳng-tay-có-căn-cứ một spec qua bốn lăng kính (product/tech/market/craft). Nói điều `--validate` không nói: vì sao nó chết, đứng đâu trên thị trường, chữ nghĩa có vững không. Chín mức giọng, không bao giờ sửa spec, không bao giờ làm cổng CI. Song ngữ EN/VI. |
+| **[`claude-pack`](.claude/skills/claude-pack/)** | **Developer** | Đóng gói một tập con chọn lọc của cây `.claude/` (skills, agents, hooks, rules) thành `tar.gz` **versioned + deterministic** để chia sẻ hoặc cài máy khác. Manifest-first; installer đa nền tảng cho người nhận. |
+
+Ba skill dùng chung **một venv Python** ở `.claude/skills/.venv/` (do bất kỳ installer nào tạo).
+
+> 📘 **Hướng dẫn dùng (mỗi tình huống là một hội thoại mẫu) + lộ trình học + khái niệm cốt lõi:** mỗi skill có `GUIDE-VI.md` (Tiếng Việt) và `GUIDE-EN.md` (English) trong thư mục của nó. README chi tiết từng skill cũng có 2 phần Anh + Việt.
+
+## `product-spec` — cho Product Owner
+
+Phỏng vấn bạn, ghi lại spec thành cây có truy vết chặt, kiểm tra và trực quan hóa — tất cả bằng lời, không cần code.
+
+| Bạn muốn… | Chạy |
+|---|---|
+| Bắt đầu một spec mới từ đầu | `/cleanmatic:product-spec` (không cờ → menu) |
+| Thêm một vùng tính năng | `/cleanmatic:product-spec --prd <tính-năng>` |
+| Phân rã một "bãi ý tưởng" dài thành spec sạch | `/cleanmatic:product-spec --auto` |
+| Kiểm tra mồ côi / thiếu AC / lệch giá trị | `/cleanmatic:product-spec --validate` |
+| Ký duyệt một BRD/PRD/Epic/Story | `/cleanmatic:product-spec --approve` |
+| Tóm tắt 1 trang cho lãnh đạo | `/cleanmatic:product-spec --summary` |
+| Vẽ cây / lộ trình / phủ mục tiêu / nhật ký kiểm toán | `/cleanmatic:product-spec --viz <view>` |
+| Áp dụng thay đổi mà không mất quyết định cũ | `/cleanmatic:product-spec --update` |
+| Chỉnh độ vặn / mật độ gợi ý của phỏng vấn | `… preferences.py --set interview_rigor=deep --set action_prompting=proactive` |
+
+Đầu ra nằm trong `docs/product/` của dự án bạn (markdown + metadata YAML). Skill không bao giờ ghi ra ngoài `docs/product/`.
+
+**KHÔNG làm:** không sinh code; không ước lượng story-point/giờ (chỉ `size: S|M|L`); không ghi đè văn bạn viết (gắn cờ + hỏi khi `--update`); không tự đảo ngược quyết định đã duyệt (nêu ra Giữ/Đổi/Kết hợp); không cần Internet khi chạy.
+
+## `product-spec-critique` — cho Product Owner
+
+`--validate` nói spec vững về cấu trúc. `product-spec-critique` nói nó có **tốt** không — một bản mổ xẻ thật lòng, châm biếm, gắt-nhưng-có-căn-cứ qua bốn lăng kính. Mỗi phát hiện trích `mã:dòng`, nói vì sao nó chết, kèm cách sửa. **Không bao giờ sửa spec** và **không bao giờ** vào cổng CI (quan điểm + tra mạng + giọng, bản chất không tất định).
+
+| Bạn muốn… | Chạy |
+|---|---|
+| Đọc thẳng toàn bộ spec | `/cleanmatic:product-spec-critique` (hay `all`) |
+| Xé một tính năng (PRD/epic/story) | `/cleanmatic:product-spec-critique PRD-CHECKOUT` |
+| Chỉ soi mặt thị trường (hay product/tech/craft) | `/cleanmatic:product-spec-critique --market` |
+| Chọn phạm vi + lăng kính + độ gắt tương tác | `/cleanmatic:product-spec-critique --interactive` |
+| Chỉnh giọng từ nhẹ tới gắt | `/cleanmatic:product-spec-critique --level 1..9` |
+
+**Mức giọng (1→9) và lằn ranh an toàn.** Mặc định **mức 5** (gắt, có thể đá xéo bạn, nhưng vẫn xoay quanh công việc). Mức 1–4 không công kích bạn, chỉ hiện vật. **Mức 6–9 nguy hiểm, phải opt-in** — mức 6 chửi thẳng người viết; 7–9 leo thang theo bậc đại từ (`ông/tôi` → `mày/tao`) và ở mức 9 có chửi thề nhắm-vào-công-việc; 6–8 hỏi xác nhận, **mức 9 hỏi lại mỗi lần chạy**. Có một lằn ranh không bao giờ vượt ở **mọi** mức kể cả 9, kể cả khi bạn đồng ý: nó nhắm **công việc**, không nhắm **bạn** — không đe dọa, không miệt thị con người bạn, không nhắm gia đình, không tự hại/tình dục.
+
+**KHÔNG làm:** không sinh code, không sửa spec (chỉ ghi báo cáo); không làm cổng CI; không tự ghi bộ nhớ (chỉ thành `DEC-<n>` khi bạn xác nhận); không tự chạy `--validate`.
+
+## `claude-pack` — cho Developer
+
+Đóng gói một tập con chọn lọc của `.claude/` thành `tar.gz` versioned + deterministic. Mỗi bundle kèm `MANIFEST.json` (per-file SHA256), `INSTALL.md`, và installer đa nền tảng (`install.sh` + `install.ps1`).
+
+| Bạn muốn… | Chạy |
+|---|---|
+| Soạn manifest tương tác rồi pack | `/cleanmatic:claude-pack` (không cờ → phỏng vấn) |
+| Build từ manifest có sẵn | `… -m pack --manifest .claude/pack.manifest.yaml` |
+| Xem trước danh sách file + dung lượng, không tạo tarball | `… -m pack --manifest … --dry-run` |
+| Override version cho build ad-hoc | `… -m pack --manifest … --version 0.2.0-rc1` |
+| Build reproducible cho CI theo commit date | `SOURCE_DATE_EPOCH=… … -m pack … --source-date-epoch env` |
+
+Đầu ra ở `dist/claude-pack-{version}.tar.gz` + sidecar `.sha256` (`dist/` bị gitignore — tarball là artifact reproducible, không phải source).
+
+**6 điều cốt lõi:** manifest là source-of-truth; determinism là hợp đồng (byte-identical); safety filter không thể tắt (secrets/`.env`/`.git`/caches luôn bị loại, settings/.ck opt-in); script lo cấu trúc, LLM lo UI; không auto-install (người nhận tự chạy); **release chỉ kích bằng tag qua CI — không bao giờ `gh release create` bằng tay** (SHA build tay không khớp build CI).
+
+## Song ngữ (product-spec)
+
+Phỏng vấn hỏi bằng ngôn ngữ bạn chọn (`--lang en` / `--lang vi`); phần văn LLM sinh ra (tầm nhìn, mô tả story, AC) viết theo ngôn ngữ đó. Mã (`BRD-G1`, `PRD-AUTH-E1-S1`) và khóa frontmatter (`personas`, `scope`, `moscow`…) giữ tiếng Anh để cấu trúc ổn định. Nhãn trực quan (`Now/Next/Later`, `Must/Should/Could/Won't`) bản địa hóa khi `--lang vi`. Tiếng Việt được người bản ngữ rà cho tự nhiên.
+
+## Quyền riêng tư
+
+Các skill **không gọi mạng khi chạy**. Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi lưu cục bộ + verify SHA-256. Safety filter của claude-pack **luôn loại** `.env`/secrets/keys, `.git/`, caches, session state khỏi mọi bundle — không flag nào kéo lại được.
+
+## Cần trợ giúp?
+
+Mỗi skill tự trả lời được hầu hết câu "làm thế nào…" — cứ gọi nó và hỏi. Sự cố installer: chạy lại `bash -x .claude/skills/<skill>/install.sh` để thấy từng bước. Chi tiết sâu hơn: bắt đầu từ `GUIDE-*.md` và `SKILL.md` của skill. Bảng xử lý sự cố đầy đủ ở mục **English** bên trên.
