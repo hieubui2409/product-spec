@@ -19,9 +19,16 @@ Status legend: `[ ]` todo · `[~]` in-progress/partial · `[x]` done · `[next]`
 
 ---
 
-## A. Bridge product-spec ↔ claude-pack (make the pair a real pipeline)
+## A. Bridge product-spec ↔ claude-pack — CLOSED (premise was flawed)
 
-- [ ] **A1 — `product-spec --pack` / export-to-distributable.** Package a spec slice (the authored `docs/product/` **content/output**) into a versioned, content-hashed tarball + SHA, reusing claude-pack's determinism engine. Current `--export` only emits one HTML/md file. *Note (2026-06-04 PO review): value is narrower than first framed — git already versions `docs/product/`; the only real edge is a self-contained hashed artifact for a recipient **without repo access** (audit/hand-off). Distinct from A2 because it packages spec CONTENT, not the skill.* — **med (was high) — confirm the no-repo-access use-case is real before building**
+> **2026-06-04 (PO critique):** Group A conflated two different jobs — *distributing a tool* (claude-pack's
+> real job) vs *versioning living content* (git's job). The spec is co-located with the code in the same
+> repo, so **git is the single source of truth + versioning + diff**, and the skill already provides the
+> sync surface (`change-log.md`, `decisions.md`, `--viz audit`, `--summary --audience release-notes`,
+> `--approve` snapshots, `--viz delta`). Packing the spec fights the living spec→code→spec-update pipeline.
+> Both items dropped.
+
+- [x] ~~**A1 — `product-spec --pack` / export-to-distributable.**~~ **DROPPED 2026-06-04 (PO critique):** a tarball is strictly worse than the repo for a *living* spec — you can't diff opaque tarballs, and the spec→code→update→code-update loop would force a churny tarball-per-edit. Every need it claimed is already met: "what changed" → `--summary --audience release-notes` + `--viz audit` + `git diff docs/product/`; "lock scope for release X" → `--approve` (owner+date+version) + `.snapshots/` + `--viz delta`; "mid-phase change to approved spec" → GATE-NO-SILENT-REVERSAL + Decision Register + `--update` (no new pack); "single source of truth, dev-read/PO-write" → `docs/product/` in-repo + branch protection/CODEOWNERS. Residual external-hand-off sliver is served by the existing `--export` (readable doc); authenticity there = B6 (signing), not a spec pack. — **cut (YAGNI)**
 - [x] ~~**A2 — Pack a "product-spec starter".**~~ **DROPPED 2026-06-04 (PO critique — redundant three ways):** (1) the "empty `docs/product/` seed" is dead weight — product-spec **self-scaffolds** `docs/product/` on no-flag init / `--product`; (2) product-spec already ships in the bundle and claude-pack already builds a single-skill bundle via **`--skills product-spec`** — no new asset needed; (3) onboarding is already prompt-driven (README.md + CLAUDE.md → install bundle → `/cleanmatic:product-spec` → the AI interviews + generates). Nothing left for a static "starter" to add. — **cut (YAGNI)**
 
 ## B. Harden claude-pack (now shipped at 1.1.0 — remaining gaps)
