@@ -61,6 +61,16 @@ Keys (all optional in the file):
                        INHERIT pass walks: nearest critiqued ancestor + most-recent
                        scope=all (nearest), or every critiqued ancestor (deep). The
                        --no-inherit flag beats --inherit deep (off wins over depth).
+  interview_rigor      light | standard | deep (default standard) — PRODUCT-SPEC interview
+                       RIGOR: how hard the interview challenges claims and probes for gaps /
+                       edge cases / acceptance-criteria holes. Applies at ALL interview
+                       levels (vision/BRD/PRD/epic/story). SEPARATE from detail_level —
+                       detail_level = verbosity (length), interview_rigor = depth of
+                       challenge; "concise but deep" is expressible. Wired in
+                       workflow-interview.md (LLM-side guidance, not a script knob).
+  action_prompting     minimal | standard | proactive (default standard) — PRODUCT-SPEC
+                       next-action density: how many suggested next steps the AI offers at
+                       turn boundaries. Wired in workflow-interview.md.
 
 The level-applicability of the register keys (gender at 7, dialect at ≥8, profanity at
 9) and the universal-harm floor are LLM-workflow/voice concerns, not schema concerns
@@ -119,6 +129,13 @@ DEFAULTS: Dict[str, Any] = {
     "critique_inherit": "on",
     "critique_rollup": "on",
     "critique_inherit_depth": "nearest",
+    # PRODUCT-SPEC engagement knobs (both default `standard`, mirroring detail_level's
+    # neutral posture so a fresh project never trips GATE-NEVER-ASSUME with a strict
+    # default). interview_rigor = depth of challenge/probing (SEPARATE from detail_level's
+    # verbosity); action_prompting = density of suggested next-actions. Wired LLM-side in
+    # workflow-interview.md; the only writers are PO-invoked (--set) or PO-confirmed.
+    "interview_rigor": "standard",
+    "action_prompting": "standard",
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
@@ -142,6 +159,9 @@ ENUMS: Dict[str, frozenset] = {
     "critique_inherit": frozenset({"on", "off"}),
     "critique_rollup": frozenset({"on", "off"}),
     "critique_inherit_depth": frozenset({"nearest", "deep"}),
+    # PRODUCT-SPEC engagement knobs — closed enums, neutral default `standard`.
+    "interview_rigor": frozenset({"light", "standard", "deep"}),
+    "action_prompting": frozenset({"minimal", "standard", "proactive"}),
 }
 
 
@@ -221,8 +241,53 @@ def main() -> int:
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
+    ap.add_argument(
+        "--set",
+        dest="sets",
+        action="append",
+        metavar="KEY=VALUE",
+        help="write a known preference (repeatable). load→merge→save: every other "
+             "committed key is preserved (save() is a blind full-dict overwrite, so the "
+             "merge is mandatory). An unknown key OR a value outside the key's closed enum "
+             "exits non-zero, writing nothing. Digit strings coerce to int for int-typed "
+             "keys (critique_level / critique_drift_threshold). Splits on the FIRST '=' "
+             "only (values may contain '=').",
+    )
     args = ap.parse_args()
-    print(json.dumps(load(args.root), indent=2, ensure_ascii=False))
+
+    # No --set: read-only dump (behaviour unchanged).
+    if not args.sets:
+        print(json.dumps(load(args.root), indent=2, ensure_ascii=False))
+        return 0
+
+    # Write path: resolve current prefs (incl. existing committed keys), merge the
+    # --set overrides onto them, then validate+save the whole dict. This is the
+    # red-team data-loss fix — never save() a partial dict.
+    prefs = load(args.root)
+    for pair in args.sets:
+        if "=" not in pair:
+            print(f"--set: expected KEY=VALUE, got {pair!r}", file=sys.stderr)
+            return 2
+        key, value = pair.split("=", 1)  # split on FIRST '=' only
+        # Reject typos loudly: save() silently DROPS unknown keys, so without this a
+        # mistyped key (e.g. `interview_rigour`) would exit 0 + "saved" while writing
+        # nothing — a silent no-op the PO would trust.
+        if key not in DEFAULTS:
+            print(f"--set: unknown preference {key!r}", file=sys.stderr)
+            return 2
+        # argparse hands us strings; for keys whose canonical type is int (the
+        # `critique_level` enum + the `critique_drift_threshold` passthrough), coerce a
+        # digit string so the value matches the int enum / keeps the on-disk type int.
+        if isinstance(DEFAULTS[key], int) and value.isdigit():
+            value = int(value)
+        prefs[key] = value
+
+    try:
+        path = save(args.root, prefs)
+    except PreferenceError as exc:
+        print(f"PreferenceError: {exc}", file=sys.stderr)
+        return 1
+    print(f"saved preferences → {path}")
     return 0
 
 

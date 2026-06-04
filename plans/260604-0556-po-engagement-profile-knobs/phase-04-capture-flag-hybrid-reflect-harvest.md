@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Capture: --set flag + end-of-session forcing-function"
-status: pending
+status: done
 priority: P2
 effort: "2h"
 dependencies: [1, 2]

@@ -1,7 +1,7 @@
 ---
 title: "PO Engagement Profile knobs for product-spec*"
 description: ""
-status: pending
+status: done
 priority: P2
 branch: "claude/agent-naming-conventions-cd70n"
 tags: []
@@ -39,11 +39,11 @@ Mode: `--tdd`; red-team + validate gates done (see `## Red Team Review`, `## Val
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Schema and write-CLI in preferences](./phase-01-schema-and-write-cli-in-preferences.md) | Pending |
-| 2 | [Product-spec interview/prose injection](./phase-02-product-spec-interview-prose-injection.md) | Pending |
+| 1 | [Schema and write-CLI in preferences](./phase-01-schema-and-write-cli-in-preferences.md) | Done |
+| 2 | [Product-spec interview/prose injection](./phase-02-product-spec-interview-prose-injection.md) | Done |
 | 3 | [Critique injection — DEFERRED (out of v1)](./phase-03-critique-injection-action-reminders-only.md) | Deferred |
-| 4 | [Capture: --set flag + end-of-session forcing-function](./phase-04-capture-flag-hybrid-reflect-harvest.md) | Pending |
-| 5 | [Docs sync](./phase-05-docs-sync.md) | Pending |
+| 4 | [Capture: --set flag + end-of-session forcing-function](./phase-04-capture-flag-hybrid-reflect-harvest.md) | Done |
+| 5 | [Docs sync](./phase-05-docs-sync.md) | Done |
 
 ## Dependencies
 

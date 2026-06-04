@@ -8,7 +8,7 @@ keywords: [ product-owner, prd, brd, epic, story, requirements, traceability, vi
 argument-hint: "[--flag] [target]"
 metadata:
   author: cleanmatic
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # cleanmatic:product-spec
@@ -60,6 +60,7 @@ spec tree in ASCII, Mermaid, and self-contained HTML.
 | `--compact-mode <m>`       | `--export` compaction: `struct` (default, script-deterministic) · `llm` (emits `<!-- COMPACT -->` markers for the LLM to summarize in the same call). `llm` requires `--format md` — it is rejected with `--format html` (DOMPurify strips the markers and no `.md` is written for the rewrite step).                                                                                       |
 | `--lang <code>`            | Interview/output language: `en` (default) · `vi`. IDs and frontmatter keys stay English; body-view facets/labels + in-view value labels + export headings localize. Graph/HTML-native page chrome (page `<title>`, panel headers) stays English.                                                                                                                                                                                                                                                       |
 | `--voice`                  | Record the PO's voice into `.memory/po-style.yaml` deterministically (`--register`/`--vocabulary`/`--recurring-asks`/`--do`/`--dont`, lang-keyed) instead of relying on the LLM noticing a wording correction. Thin CLI over `record_po_style` (one writer home). See `references/behavioral-memory.md`.                                                                                                                                                                                                  |
+| `preferences.py --set KEY=VALUE` | Write a PO preference deterministically (`preferences.py` CLI, repeatable). Used to persist the **engagement knobs** `interview_rigor` (light/standard/deep) + `action_prompting` (minimal/standard/proactive) — both default `standard`, modulating interview challenge-depth and next-action density. **load→merge→save**: preserves every other committed key (a bad enum exits non-zero, writing nothing). Only PO-driven writers exist (`--set` typed, or the end-of-session forcing-function PO-confirmed). See `references/workflow-interview.md` → *Engagement profile*. |
 | `--reflect`                | Retroactive memory harvest: when inline forcing-functions were skipped, scan git + `.memory/` (git-degrade-safe), spawn the read-only opus harvester, and propose unrecorded rulings (`DEC-<n>`) / self-corrections / voice for PO confirm-then-persist. On-demand + soft `--status` suggestion. See `references/workflow-reflect.md`.                                                                                                                                                                    |
 
 ## No-Flag Menu

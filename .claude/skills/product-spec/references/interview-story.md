@@ -2,6 +2,10 @@
 
 Question bank for decomposing an epic into stories. Each story has explicit acceptance criteria and inherits its personas from the parent epic. Epic capture is a separate pass — see `interview-epic.md`.
 
+> **Probing depth** is set by `interview_rigor` (light/standard/deep) — `deep` challenges each unproven
+> claim and hunts missing acceptance criteria / edge cases here too. The knob→behaviour home is the
+> **Engagement profile** section in `workflow-interview.md`; this pass just obeys it (no duplicated table).
+
 ## Story Block
 
 For each story under the epic:

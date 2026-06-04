@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Critique injection — DEFERRED (out of v1)"
-status: completed
+status: deferred
 priority: P3
 effort: "0h"
 dependencies: []

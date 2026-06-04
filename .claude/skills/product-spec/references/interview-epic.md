@@ -2,6 +2,10 @@
 
 Question bank for decomposing a PRD into epics. Each epic links its parent PRD requirement and BRD goal. Story decomposition is a separate pass — see `interview-story.md`.
 
+> **Probing depth** is set by `interview_rigor` (light/standard/deep) — `deep` challenges each unproven
+> claim and hunts gaps / edge cases at the epic level too. The knob→behaviour home is the **Engagement
+> profile** section in `workflow-interview.md`; this pass just obeys it (no duplicated table).
+
 ## E1 — Epic Goal
 
 **target:** `epic.md → Goal`

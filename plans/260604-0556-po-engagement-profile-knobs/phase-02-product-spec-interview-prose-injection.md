@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Product-spec interview/prose injection"
-status: pending
+status: done
 priority: P1
 effort: "2h"
 dependencies: [1]

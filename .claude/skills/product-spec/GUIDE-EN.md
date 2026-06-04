@@ -762,6 +762,36 @@ settings file.
 
 ---
 
+### Priority 19 — Tune how hard the skill challenges and suggests (Engagement profile)
+
+**When to use:** The skill probes too hard (or not hard enough), or offers too many next-step suggestions (or too few).
+Two knobs let you tune **how the AI engages** — separate from how long the output is (`detail_level`):
+
+- **`interview_rigor`** (`light` / `standard` / `deep`, default `standard`) — how hard the skill **challenges claims
+  and hunts for gaps / edge cases / missing acceptance criteria**. Applies at **every** interview level (vision / BRD /
+  PRD / epic / story).
+- **`action_prompting`** (`minimal` / `standard` / `proactive`, default `standard`) — the **density of next-step
+  suggestions** the skill offers each turn.
+
+**These are two independent axes:** `detail_level` = *length* (how much prose); `interview_rigor` = *depth* (how hard
+the challenge). **"Concise but deep"** is valid (`detail_level: concise` + `interview_rigor: deep`) — terse output, yet
+the skill still pushes back on every unproven claim. Never read `deep` as "write more".
+
+The neutral default is `standard`, so the skill **never silently** puts you in a strict posture — it asks once early
+(folded into the `detail_level` question) and writes only on your confirm. At session close, if there's real evidence
+(e.g. you kept waving off deep probing as noise), it may propose tightening or relaxing a knob — it writes only if you agree.
+
+#### Equivalent command
+
+```
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root . \
+  --set interview_rigor=deep --set action_prompting=proactive
+```
+
+This **preserves every other preference** (load→merge→save); a bad value exits non-zero and **writes nothing**.
+
+---
+
 ## 4. A typical end-to-end workflow
 
 If you're just starting out, here's the recommended order:

@@ -43,8 +43,8 @@ SKILL_MD = SKILL_ROOT / "SKILL.md"
 REFERENCES_DIR = SKILL_ROOT / "references"
 ACME_ROOT = SKILL_ROOT / "examples" / "acme-shop"
 
-TARGET_VERSION = "2.1.0"
-STALE_VERSION = "1.1.0"
+TARGET_VERSION = "2.2.0"
+STALE_VERSION = "2.1.0"
 
 # The five v2 frontmatter schema additions this major bump introduces. The
 # migrated example must exercise them so the docs show v2 in action.

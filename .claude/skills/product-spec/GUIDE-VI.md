@@ -761,6 +761,36 @@ cài đặt của bạn.
 
 ---
 
+### Ưu tiên 19 — Điều chỉnh mức độ skill "thử thách" và "gợi ý" (Hồ sơ tương tác)
+
+**Khi nào dùng:** Bạn thấy skill hỏi quá kỹ (hoặc chưa đủ kỹ), hoặc gợi ý bước tiếp theo quá nhiều (hoặc quá ít). Hai
+"núm vặn" cho phép bạn chỉnh **cách AI tương tác** — tách biệt với độ dài nội dung (`detail_level`):
+
+- **`interview_rigor`** (`light` / `standard` / `deep`, mặc định `standard`) — mức độ skill **chất vấn các khẳng định
+  và đào sâu tìm lỗ hổng / ca biên / tiêu chí nghiệm thu còn thiếu**. Áp dụng ở **mọi cấp** phỏng vấn (tầm nhìn / BRD /
+  PRD / epic / story).
+- **`action_prompting`** (`minimal` / `standard` / `proactive`, mặc định `standard`) — **số lượng gợi ý bước tiếp theo**
+  skill đưa ra ở mỗi lượt.
+
+**Quan trọng — đây là hai trục độc lập:** `detail_level` = *độ dài* (viết dài hay ngắn); `interview_rigor` = *độ sâu*
+(chất vấn nông hay sâu). "Ngắn gọn nhưng đào sâu" là hoàn toàn hợp lệ (`detail_level: concise` + `interview_rigor:
+deep`). Đừng hiểu `deep` thành "viết dài hơn".
+
+Mặc định trung tính là `standard`, nên skill **không bao giờ tự ý** đặt bạn vào chế độ khắt khe — nó sẽ hỏi một lần ở
+đầu phiên (gộp chung với câu hỏi `detail_level`), và chỉ ghi khi bạn xác nhận. Vào cuối phiên, nếu có bằng chứng thực
+(ví dụ bạn liên tục gạt phần đào sâu là "nhiễu"), skill có thể đề xuất **siết hoặc nới** một núm — bạn đồng ý thì nó mới ghi.
+
+#### Cờ lệnh tương đương
+
+```
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root . \
+  --set interview_rigor=deep --set action_prompting=proactive
+```
+
+Lệnh này **giữ nguyên mọi tùy chọn khác** (đọc → trộn → ghi); một giá trị sai sẽ thoát với lỗi và **không ghi gì cả**.
+
+---
+
 ## 4. Quy trình điển hình từ đầu đến cuối
 
 Nếu bạn mới bắt đầu, đây là trình tự khuyên dùng:

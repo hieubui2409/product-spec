@@ -52,6 +52,7 @@ For each flag, load the relevant reference from `.claude/skills/product-spec/ref
 | `--viz` (incl. `board`/`explorer`), `--format`, `--lang`, `--group-by`, `--layers` | `visualization-spec.md` (+ `scripts/visualize.py`)  |
 | `--export`, `--layers`, `--depth`, `--compact-mode`                                | `workflow-export.md` (+ `scripts/render_export.py`) |
 | `--reflect` (retroactive memory harvest)                                           | `workflow-reflect.md` (+ `scripts/reflect_scan.py`) |
+| engagement knobs `interview_rigor` / `action_prompting` (`preferences.py --set`)   | `workflow-interview.md` → *Engagement profile* (+ `scripts/preferences.py`) |
 | memory-write reliability (forcing-functions · opt-in Stop hook · `--memory-hook`)  | `memory-enforcement.md` (the single home)           |
 | *(every turn, no flag needed)*                                                     | `guardrails-and-boundaries.md` — **load regardless of flag** |
 

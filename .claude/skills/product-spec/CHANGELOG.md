@@ -9,6 +9,40 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-06-04
+
+PO engagement-profile knobs. Additive + backward-compatible (13 → 15 preference keys; old
+`preferences.yaml` files without the new keys resolve to the documented defaults).
+
+### Added
+- **2 engagement knobs in `preferences.yaml`** — `interview_rigor` (light / standard / **deep**) and
+  `action_prompting` (minimal / standard / **proactive**), both default `standard` (neutral posture, no
+  GATE-NEVER-ASSUME breach). `interview_rigor` sizes how hard the interview challenges claims + probes for
+  gaps / edge cases / missing AC, at **all** interview levels (vision/BRD/PRD/epic/story);
+  `action_prompting` sizes next-action density. Orthogonal to `detail_level` (verbosity vs rigor —
+  "concise but deep" is expressible). Wired LLM-side in `workflow-interview.md` → *Engagement profile*.
+- **`preferences.py --set KEY=VALUE` write-CLI** (repeatable) — the deterministic, PO-driven writer for
+  the knobs. **load→merge→save**: preserves every other committed key (`save()` is a blind full-dict
+  overwrite, so the merge is mandatory — a partial write would clobber unrelated keys). A value outside the
+  key's closed enum — OR an **unknown key** — exits non-zero, writing nothing (no silent typo no-op); digit
+  strings coerce to int for the int-typed keys (`critique_level`, `critique_drift_threshold`); splits on the
+  FIRST `=` only.
+- **End-of-session engagement forcing-function** — folded into the existing Closing-the-Loop batch (no new
+  interrupt). When the live session shows real evidence, it proposes ONE bidirectional tighten/relax and,
+  on PO confirm, persists via `--set`. No auto-write: the only writers are PO-typed `--set` or this
+  PO-confirmed prompt.
+- **Init-Flow seed** — a one-time strict-first-vs-neutral ask, combined into the existing `detail_level`
+  Init-Flow `AskUserQuestion` batch when the total stays ≤4 questions.
+
+### Changed
+- **`preferences.py` schema** — `DEFAULTS`/`ENUMS` gain the 2 closed-enum keys (15 keys total). The
+  defaults count guard moves 13 → 15.
+
+### Notes
+- **Cut from this round** (red-team + validate): `standing_reminders` (privacy / prompt-injection),
+  `--reflect engagement-profile` harvest (no deterministic anchor signal), and critique wiring (marginal
+  value vs provenance-rebuild cost — deferred).
+
 ## [2.1.0] — 2026-06-04
 
 Closing the PO pipeline (product-spec ↔ product-spec-critique). Additive + backward-compatible.

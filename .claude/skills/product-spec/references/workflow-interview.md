@@ -60,6 +60,61 @@ read `preferences.load(root)["detail_level"]` and size accordingly (LLM-side gui
 
 This shapes prose LENGTH only; it never changes structure, frontmatter facts, or the DRY home of any fact.
 
+## Engagement profile (interview rigor + action density)
+
+Two closed-enum knobs in the same `preferences.yaml` (`scripts/preferences.py`) modulate **how the AI
+engages** during the interview — distinct from `detail_level`'s output verbosity. Both default `standard`
+and are read the same way (`preferences.load(root)[...]`).
+
+- `interview_rigor` ∈ `light` / `standard` / `deep` (default `standard`) — how hard the interview
+  **challenges claims and probes for gaps / edge cases / acceptance-criteria holes**.
+- `action_prompting` ∈ `minimal` / `standard` / `proactive` (default `standard`) — the **density of
+  suggested next-actions** the AI offers at turn boundaries.
+
+**`interview_rigor` applies at ALL interview levels** — vision, BRD, PRD, epic, AND story — not just the
+detailed story/epic flows.
+
+### Orthogonality with `detail_level` (do not conflate)
+
+`detail_level` sizes **verbosity (how long the prose is)**; `interview_rigor` sizes **rigor (how deep the
+challenge is)**. They are independent axes: **"concise but deep"** is a valid, expressible combo —
+`detail_level: concise` + `interview_rigor: deep` means *terse output, but hard probing* (short AC, yet the
+AI still pushes back on every unproven claim and hunts edge cases). Never read `deep` rigor as "write more".
+
+### Consume the knobs
+
+| `interview_rigor` | interview behaviour (all levels) |
+|-------------------|----------------------------------|
+| `light` | take claims largely at face value; minimal challenge; surface only blocking gaps |
+| `standard` (default) | the current balanced challenge + gap/edge/AC probing |
+| `deep` | challenge each unproven claim; actively hunt edge cases, missing AC, and contradictions |
+
+| `action_prompting` | next-action density |
+|--------------------|---------------------|
+| `minimal` | answer the ask; offer a next step only when one is clearly required |
+| `standard` (default) | the current balanced "here's the natural next step" closing |
+| `proactive` | surface a short menu of relevant next steps at each turn boundary |
+
+These are LLM-side guidance (like `lang` / `detail_level`), not script knobs — they never change structure,
+frontmatter facts, or the DRY home of any fact.
+
+### Seed the engagement profile (once, with `detail_level`)
+
+On the **first** interview (Init Flow), or whenever `preferences.yaml` has these keys unset, offer a
+strict-first posture. **Combine this into the existing `detail_level` Init-Flow `AskUserQuestion` batch when
+the total stays ≤4 questions** (one `AskUserQuestion` batch = max 4); otherwise ask as a separate batch.
+Offer: neutral (`standard`, the default) vs strict-first (`interview_rigor: deep` + `action_prompting:
+proactive`). Persist the answer via the Phase-1 write-CLI:
+
+```bash
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root> \
+  --set interview_rigor=deep --set action_prompting=proactive   # load→merge→save, preserves other keys
+```
+
+Per `GATE-NEVER-ASSUME`: defaults are neutral `standard`, so if the PO skips the question, default to
+`standard` and **say so** — never silently assume a strict posture. Never re-ask once set (read
+`.session.md` / `preferences.yaml`).
+
 ## Phased Interview Engine
 
 The interview is **phased** (vision → brd → prd → epic → story) and **resumable** via `docs/product/.session.md` (committed). Session schema in `frontmatter-and-id-spec.md`.
@@ -239,7 +294,25 @@ When the PO ends the session:
    `--status` surfaces read-only later (`workflow-status.md`), and `--validate` is where the required **Memory pass**
    records any unrecorded ruling/slip (`workflow-validate.md`; full model in `references/memory-enforcement.md`). It is
    a nudge, never a block — the PO may decline.
-3. Offer a quick `--validate` and `--viz tree` to summarize what was built.
+3. **Engagement-knob forcing-function (OPTIONAL — only when live evidence exists).** If THIS session
+   produced real conversational evidence about engagement fit — e.g. goals omitted a metric ×N times, or
+   the PO repeatedly waved off deep probing as noise, or kept asking "what's next?" — fold ONE tighten-or-
+   relax proposal into the SAME close-out `AskUserQuestion` batch above (do **not** raise a separate
+   interrupt). Ask once whether to adjust a knob, **bidirectionally**: propose *raising* `interview_rigor`
+   to `deep` (or `action_prompting` to `proactive`) when the PO wanted more push, OR *lowering* it to
+   `light` / `minimal` when they found it noisy. On an explicit PO confirm, persist via the Phase-1
+   write-CLI (load→merge→save, preserves every other key):
+
+   ```bash
+   ./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root> --set interview_rigor=light
+   ```
+
+   **No auto-write.** The write happens ONLY after the PO confirms in that batch — markdown cannot
+   *enforce* the confirm gate, but there is no auto path to abuse: the only writers are `--set` (PO-typed)
+   and this forcing-function (PO-confirmed). Honesty caveat (consistent with `memory-enforcement.md`): this
+   raises the *consideration rate* of an engagement adjustment, it does not guarantee capture — "reduced
+   recurrence", never "the store fills itself". Skip the item entirely when no live evidence exists.
+4. Offer a quick `--validate` and `--viz tree` to summarize what was built.
 
 ## Examples (snippets the LLM emits)
 

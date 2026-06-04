@@ -196,3 +196,13 @@ different lifecycles:
 
 Collapsing them would force user-facing voice and internal conduct into one schema and one privacy posture — exactly
 the conflation this split avoids.
+
+## Not to be confused with: the engagement-profile PREFERENCES
+
+The `interview_rigor` / `action_prompting` **engagement knobs** (`preferences.yaml`, wired in
+`workflow-interview.md` → *Engagement profile*) are **closed-enum PREFERENCES, not a third behavioral store**.
+They are PO-confirmed session defaults (like `detail_level` / `lang`): the only writers are the PO-typed
+`preferences.py --set` or the PO-confirmed end-of-session forcing-function — never LLM-discretionary, never
+session-derived. Don't read them as 3D voice (they shape *how hard the interview probes / how many next-actions
+it offers*, not the PO's wording) nor as 3E conduct (they're user-set knobs, not the skill's self-corrections).
+DRY home for their behaviour table: `workflow-interview.md`; schema home: `scripts/preferences.py`.

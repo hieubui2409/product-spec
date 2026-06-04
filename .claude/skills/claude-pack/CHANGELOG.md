@@ -13,6 +13,20 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-06-04
+
+product-spec engagement-profile release. Skill versions this release: product-spec **2.2.0**,
+product-spec-critique **1.1.0** (unchanged), claude-pack **0.2.0** (unchanged).
+
+### Added — product-spec engagement knobs
+- **2 PO engagement knobs** in product-spec's `preferences.yaml` — `interview_rigor`
+  (light/standard/**deep**) + `action_prompting` (minimal/standard/**proactive**), both default `standard`.
+  Modulate interview challenge-depth (all levels) + next-action density; orthogonal to `detail_level`.
+- **`preferences.py --set KEY=VALUE` write-CLI** — deterministic PO-driven writer, **load→merge→save**
+  (preserves other committed keys; bad enum → non-zero, nothing written).
+- **End-of-session forcing-function** folded into the existing Closing-the-Loop batch (PO-confirmed,
+  no auto-write). Full detail in product-spec's CHANGELOG `[2.2.0]`.
+
 ### Changed
 - **Removed the non-functional `--all` flag** — it errored on use and ran against the curated-distribution
   design; use the manifest or `--skills <list>`.

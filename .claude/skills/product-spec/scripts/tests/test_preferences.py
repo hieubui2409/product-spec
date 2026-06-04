@@ -1,8 +1,12 @@
 """Tests for preferences.py — the PO-preferences memory store.
 
 Covers the existing defaults/enums plus the new non-enum `critique_drift_threshold`
-key (consumed by cleanmatic:product-spec-critique). The read path must never raise."""
+key (consumed by cleanmatic:product-spec-critique). The read path must never raise.
 
+Also covers the 2 product-spec engagement knobs (`interview_rigor`, `action_prompting`)
+and the load-merge `--set` write-CLI (must preserve every other committed key)."""
+
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,11 +42,15 @@ def test_defaults_when_no_file(tmp_path):
     assert prefs["critique_profanity"] == "strong"
 
 
-def test_defaults_has_exactly_thirteen_keys(tmp_path):
-    # Guards the DEFAULTS/ENUMS symmetry contract as keys are added. 13 = the original
-    # 10 + the 3 product-spec-critique cross-critique keys (critique_inherit/rollup/depth).
+def test_defaults_has_exactly_fifteen_keys(tmp_path):
+    # Guards the DEFAULTS/ENUMS symmetry contract as keys are added. 15 = the original
+    # 10 + the 3 product-spec-critique cross-critique keys (critique_inherit/rollup/depth)
+    # + the 2 product-spec engagement knobs (interview_rigor/action_prompting).
     assert set(preferences.load(tmp_path)) == set(preferences.DEFAULTS)
-    assert len(preferences.DEFAULTS) == 13
+    assert len(preferences.DEFAULTS) == 15
+    # Both new knobs are closed enums (not free scalars).
+    assert "interview_rigor" in preferences.ENUMS
+    assert "action_prompting" in preferences.ENUMS
 
 
 def test_cross_critique_defaults(tmp_path):
@@ -202,3 +210,141 @@ def test_save_drops_unknown_keys_keeps_threshold(tmp_path):
 def test_save_invalid_enum_raises(tmp_path):
     with pytest.raises(preferences.PreferenceError):
         preferences.save(tmp_path, {"lang": "zz"})
+
+
+# --------------------------------------------------------------------------
+# Engagement knobs (product-spec): interview_rigor + action_prompting
+# --------------------------------------------------------------------------
+
+def test_engagement_knobs_default_standard(tmp_path):
+    # Both default to `standard`, mirroring detail_level (neutral posture — no
+    # GATE-NEVER-ASSUME breach from a strict-by-default knob).
+    prefs = preferences.load(tmp_path)
+    assert prefs["interview_rigor"] == "standard"
+    assert prefs["action_prompting"] == "standard"
+
+
+def test_engagement_knobs_backward_compat(tmp_path):
+    # An old preferences.yaml written WITHOUT the new keys still resolves them to
+    # `standard` (non-breaking: missing keys degrade to defaults).
+    _write_prefs(tmp_path, "lang: vi\ndetail_level: concise\n")
+    prefs = preferences.load(tmp_path)
+    assert prefs["interview_rigor"] == "standard"
+    assert prefs["action_prompting"] == "standard"
+    assert prefs["lang"] == "vi"
+
+
+def test_engagement_knobs_enum_values_round_trip(tmp_path):
+    for v in ("light", "standard", "deep"):
+        _write_prefs(tmp_path, f"interview_rigor: {v}\n")
+        assert preferences.load(tmp_path)["interview_rigor"] == v
+    for v in ("minimal", "standard", "proactive"):
+        _write_prefs(tmp_path, f"action_prompting: {v}\n")
+        assert preferences.load(tmp_path)["action_prompting"] == v
+
+
+def test_engagement_knobs_out_of_range_falls_back(tmp_path):
+    _write_prefs(tmp_path, "interview_rigor: hard\naction_prompting: aggressive\n")
+    prefs = preferences.load(tmp_path)
+    assert prefs["interview_rigor"] == "standard"
+    assert prefs["action_prompting"] == "standard"
+
+
+def test_save_invalid_engagement_enum_raises(tmp_path):
+    with pytest.raises(preferences.PreferenceError):
+        preferences.save(tmp_path, {"interview_rigor": "hard"})
+    with pytest.raises(preferences.PreferenceError):
+        preferences.save(tmp_path, {"action_prompting": "aggressive"})
+
+
+# --------------------------------------------------------------------------
+# --set write-CLI — load→merge→save (red-team A/N data-loss fix)
+# --------------------------------------------------------------------------
+
+def _run_cli(tmp_path, *cli_args):
+    """Invoke preferences.py as a subprocess (exercises main()'s real argv path)."""
+    script = SCRIPTS_DIR / "preferences.py"
+    return subprocess.run(
+        [sys.executable, str(script), "--root", str(tmp_path), *cli_args],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_set_load_merge_preserves_other_keys(tmp_path):
+    # Seed an existing file with unrelated keys, then --set one engagement knob.
+    # The pre-existing keys MUST survive (save() is a blind full-dict overwrite, so
+    # the CLI has to load→merge→save — red-team finding A).
+    _write_prefs(tmp_path, "lang: vi\ncritique_level: 9\n")
+    res = _run_cli(tmp_path, "--set", "interview_rigor=deep")
+    assert res.returncode == 0, res.stderr
+    prefs = preferences.load(tmp_path)
+    assert prefs["lang"] == "vi"
+    assert prefs["critique_level"] == 9
+    assert prefs["interview_rigor"] == "deep"
+
+
+def test_set_multiple_keys_one_call(tmp_path):
+    res = _run_cli(
+        tmp_path, "--set", "interview_rigor=deep", "--set", "action_prompting=proactive"
+    )
+    assert res.returncode == 0, res.stderr
+    prefs = preferences.load(tmp_path)
+    assert prefs["interview_rigor"] == "deep"
+    assert prefs["action_prompting"] == "proactive"
+
+
+def test_set_bad_enum_nonzero_and_file_unchanged(tmp_path):
+    _write_prefs(tmp_path, "lang: vi\n")
+    res = _run_cli(tmp_path, "--set", "interview_rigor=bad")
+    assert res.returncode != 0
+    # Nothing was written: the seeded file is intact and the knob is still default.
+    prefs = preferences.load(tmp_path)
+    assert prefs["lang"] == "vi"
+    assert prefs["interview_rigor"] == "standard"
+
+
+def test_set_value_splits_on_first_equals(tmp_path):
+    # A value containing `=` splits on the FIRST `=` only. `lang=en=extra` would make
+    # the value `en=extra` (not a valid enum) → non-zero, proving the split point.
+    res = _run_cli(tmp_path, "--set", "lang=en=extra")
+    assert res.returncode != 0
+    # Sanity: a clean value with no stray `=` works.
+    res2 = _run_cli(tmp_path, "--set", "lang=vi")
+    assert res2.returncode == 0, res2.stderr
+    assert preferences.load(tmp_path)["lang"] == "vi"
+
+
+def test_set_malformed_pair_nonzero(tmp_path):
+    # No `=` at all is a usage error → non-zero, nothing written.
+    res = _run_cli(tmp_path, "--set", "interview_rigor")
+    assert res.returncode != 0
+
+
+def test_set_int_enum_key_coerces_digit_string(tmp_path):
+    # argparse hands `--set` string values; an int-enum key (critique_level, enum is
+    # ints 1..9) must coerce the digit string to int so it matches the enum and persists
+    # as an int — not silently fail with a string/int type mismatch.
+    res = _run_cli(tmp_path, "--set", "critique_level=7")
+    assert res.returncode == 0, res.stderr
+    assert preferences.load(tmp_path)["critique_level"] == 7  # int, not "7"
+
+
+def test_set_int_passthrough_key_coerces(tmp_path):
+    # The non-enum int key critique_drift_threshold also coerces, keeping the on-disk
+    # type canonical (int), not a quoted string.
+    res = _run_cli(tmp_path, "--set", "critique_drift_threshold=10")
+    assert res.returncode == 0, res.stderr
+    assert preferences.load(tmp_path)["critique_drift_threshold"] == 10
+
+
+def test_set_unknown_key_rejected_nonzero(tmp_path):
+    # A typo'd key must NOT silently no-op: save() drops unknown keys, so the CLI rejects
+    # them up front (exit non-zero) rather than printing "saved" while writing nothing.
+    _write_prefs(tmp_path, "lang: vi\n")
+    res = _run_cli(tmp_path, "--set", "interview_rigour=deep")  # British-spelling typo
+    assert res.returncode != 0
+    # Nothing changed: the real knob is still default, the seeded key intact.
+    prefs = preferences.load(tmp_path)
+    assert prefs["interview_rigor"] == "standard"
+    assert prefs["lang"] == "vi"

@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Docs sync"
-status: pending
+status: done
 priority: P3
 effort: "1.5h"
 dependencies: [1, 2, 4]
