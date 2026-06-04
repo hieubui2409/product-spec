@@ -100,16 +100,40 @@ frontmatter facts, or the DRY home of any fact.
 
 ### Seed the engagement profile (once, with `detail_level`)
 
-On the **first** interview (Init Flow), or whenever `preferences.yaml` has these keys unset, offer a
-strict-first posture. **Combine this into the existing `detail_level` Init-Flow `AskUserQuestion` batch when
-the total stays ≤4 questions** (one `AskUserQuestion` batch = max 4); otherwise ask as a separate batch.
-Offer: neutral (`standard`, the default) vs strict-first (`interview_rigor: deep` + `action_prompting:
-proactive`). Persist the answer via the Phase-1 write-CLI:
+On the **first** interview (Init Flow), or whenever `preferences.yaml` has these keys unset, offer the
+posture as **ONE question folded into the existing `detail_level` Init-Flow `AskUserQuestion` batch**
+(detail_level + this = 2 questions, well under the 4-per-batch cap); ask it as a separate batch only if some
+other seed pushes the batch over 4.
+
+It is a single **posture** choice that sets BOTH knobs together — deliberately *not* two separate questions —
+because at the very first turn the PO has not seen the interview yet (asking them to fine-tune "rigor" vs
+"prompting" in the abstract is a decision they lack context to make), and in practice the two correlate (a PO
+who wants hard challenge usually also wants proactive guidance). The neutral default keeps it skippable
+(GATE-NEVER-ASSUME). The rarer split case (e.g. terse-but-rigorous) is handled by per-knob `--set` below, so
+the init batch stays short rather than front-loading three preference questions.
+
+- **EN:** "Two quick things about *how* I run the interview — separate from how long the spec text is
+  (`detail_level`). **Balanced** *(default)*: I challenge claims and suggest next steps at a normal level.
+  **Push-hard**: I rigorously challenge every claim and actively hunt edge cases / missing acceptance
+  criteria (`interview_rigor: deep`), AND proactively offer a short menu of next steps at each turn
+  (`action_prompting: proactive`). Which do you want? *(Want them split — e.g. concise output but rigorous
+  probing? Tell me, or set each one later.)*"
+- **VI:** "Hai điều nhanh về *cách* tôi chạy phỏng vấn — tách biệt với độ dài chữ của spec (`detail_level`).
+  **Cân bằng** *(mặc định)*: tôi chất vấn và gợi ý bước kế ở mức bình thường. **Đào sâu**: tôi vặn kỹ từng
+  khẳng định, chủ động truy ca biên / tiêu chí nghiệm thu còn thiếu (`interview_rigor: deep`), VÀ bày sẵn
+  menu bước kế mỗi lượt (`action_prompting: proactive`). Bạn muốn kiểu nào? *(Muốn tách riêng — vd chữ ngắn
+  gọn nhưng vẫn vặn kỹ? Cứ nói, hoặc chỉnh từng cái sau.)*"
+
+Map: **Balanced / Cân bằng** → leave both at `standard` (skip the write); **Push-hard / Đào sâu** → persist
+both via the Phase-1 write-CLI:
 
 ```bash
 ./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root> \
   --set interview_rigor=deep --set action_prompting=proactive   # load→merge→save, preserves other keys
 ```
+
+For the split case, set either knob alone — e.g. concise-but-rigorous is `--set interview_rigor=deep` only;
+quieter next-step prompts is `--set action_prompting=minimal` only.
 
 Per `GATE-NEVER-ASSUME`: defaults are neutral `standard`, so if the PO skips the question, default to
 `standard` and **say so** — never silently assume a strict posture. Never re-ask once set (read
