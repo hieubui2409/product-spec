@@ -3,12 +3,40 @@
 A guide for **product owners**. Each use-case is a sample dialogue over the sample spec
 `product-spec/examples/acme-shop`. The natural-language way (just say it) is preferred; the flag form is the equivalent.
 
-## What it is, and how it differs from `--validate`
+> Vietnamese version: [`GUIDE-VI.md`](./GUIDE-VI.md).
+
+---
+
+## 1. What it is, and how it differs from `--validate`
 
 `--validate` (in `product-spec`) is a **structural** check: missing AC, orphans, core-value drift, pass/fail, neutral
 warm voice, CI-gateable. `product-spec-critique` is the deliberate opposite: it **critiques**, opinionated, sarcastic, uses web
 research, so it is **never** in the CI gate. It *consumes* validate's findings as ammo, then says what validate
 **cannot**: why-it-dies, market, writing craft, cross-lens.
+
+It is the second skill in a pair: **`product-spec` builds the spec; `product-spec-critique` tears it apart** (and never edits
+it). The spec must exist first.
+
+---
+
+## 2. Core concepts — the mental model (read this once)
+
+1. **Four lenses → one report, never an edit.** Product, tech, market, and craft critics run (in parallel), a
+   consolidator merges + a humanizer polishes, and the result is **one markdown report** under
+   `docs/product/critique/`. The skill **never touches your spec** — you bring findings back yourself (concept 6).
+2. **Opinion, not pass/fail → never CI.** Because it is opinionated + sarcastic + web-backed, it is **non-deterministic
+   by design** and stays out of the CI gate. `--validate` is the deterministic gate; this is the judgment on top.
+3. **Judged against ancestry.** Even a single story is critiqued against its **full ancestry** (epic → PRD → goal →
+   vision) — a story only means something against the intent above it.
+4. **The voice ladder, levels 1–9.** Level 5 (`--no-mercy`) is the **default baseline** and is **ungated**. Levels 1–4
+   never attack the author; 5 lifts that redline; **6–9 are dangerous** (roast / competence / character / profanity)
+   and never belong in a professional context. **Level 9 re-confirms on EVERY run.** Full redline below.
+5. **The universal-harm floor holds at every level — the TARGET decides, not the strength.** It swears at the *work*;
+   it never aims at *who you are*. Full floor below.
+6. **It bridges back via decisions, never edits.** A decision-worthy finding becomes a `DEC-<n>` **only on your
+   confirm**, and the round-trip into the spec is done by `product-spec --apply-critique` — this skill only writes the report.
+7. **Re-runs reuse prior work (cheaper, never weaker).** From the second critique of a scope, saved analysis is reused;
+   parent blockers can be **inherited** down and child verdicts **rolled up** to a parent.
 
 > ⚠️ **Personal-attack redline.** Levels 1 to 4 forbid attacking the author; only the artifact is fair game. Level 5
 > (`--no-mercy`) lifts the redline, so personal barbs are allowed, and it is the **default baseline** voice. Level 6 (`--roast`) requires a direct roast of the
@@ -27,6 +55,35 @@ research, so it is **never** in the CI gate. It *consumes* validate's findings a
 > never produce self-harm or sexual content. A defanged minced oath like `đậu xanh` is allowed (it dodges the literal
 > vulgarity); only the literal family-target form is out. Every line still keeps evidence (`ID:line`) and a fix.
 
+---
+
+## 3. Your learning path
+
+- **First run:** point it at the whole spec at the default level — `/product-spec-critique` — and **read the report**
+  (severity tally → Top-3 fix-now → by-lens). That single run shows you the shape of the output.
+- **Then focus:** scope to one branch (a PRD/epic/story), pick a lens or two, set `critique_detail_level`, try
+  `--no-web` when you want a spec-only read. Iterating on a branch is far cheaper than re-running `all`.
+- **Voice, carefully:** stay at level ≤ 5 for anything you'll share. Levels 6–9 are private "destroy-me" modes for the
+  spec's own author only — understand the redline + harm floor before you reach for them.
+- **As you integrate:** use the reuse/inherit/rollup behaviours, the repeat-offense tracking across reports, and the
+  **DEC bridge** so a critique turns into recorded decisions back in `product-spec` (`--apply-critique`).
+
+---
+
+## 4. Important caveats & gotchas
+
+- **It never edits your spec.** Report only. Findings return to the spec solely through `product-spec --apply-critique`,
+  where you confirm each one. (§2.1, §2.6)
+- **It never gates CI.** Opinion + web + voice = non-deterministic, deliberately kept out of the reproducible gate. (§2.2)
+- **`all` scope is expensive** (opus × 2 + web). Scope to a branch while iterating; reserve `all` for a full pass.
+- **Level 5 is the ungated default** — it may go after you personally with no warning. **6–8 warn + confirm** when
+  ad-hoc; **9 re-confirms every single run** and downgrades to 8 on decline. None of 6–9 are for professional use.
+- **The universal-harm floor always holds**, even at 9, even with consent — work yes, who-you-are no. (§2.5)
+- **The spec must already exist** — run `cleanmatic:product-spec` first. This skill does not draft, validate, decompose,
+  or visualize.
+
+---
+
 ## When to use
 
 - You want an honest, sharp read on whether a spec is worth building, not a pass/fail.
@@ -36,9 +93,11 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 
 ---
 
-## By use-case
+## 5. Use cases — grouped by tier
 
-### 1. Critique the whole spec
+## Tier A — Run your first critique
+
+### A1. Critique the whole spec
 
 > **You:** "Give the whole Acme Shop spec an honest tear-down."
 > **Assistant:** Runs `critique_scan` (fresh structural checks + cached verdicts), fans out 4 lenses in parallel,
@@ -46,22 +105,50 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 >
 > Flag form: `/product-spec-critique all` or `/product-spec-critique`.
 
-### 2. Critique one branch (PRD / epic / story)
+### A2. Reading the report
+
+- **Severity tally** (blocker / major / minor) at the top.
+- **Top 3, fix now**: the three most threatening findings across lenses.
+- **By lens**: each finding = `[severity][lens] <ID:line>` → critique → why-it-dies → fix.
+- **Repeat offenses** + **Decision-worthy (DEC)** at the end.
+
+---
+
+## Tier B — Focus & tune
+
+### B1. Critique one branch (PRD / epic / story)
 
 > **You:** "Pick apart the checkout PRD." → `/product-spec-critique PRD-CHECKOUT`. Even for a single story, the **full ancestry**
 > (epic → PRD → goal → vision) is pulled as judgment context, a story only means something against the intent above it.
 
-### 3. Pick lenses
+### B2. Pick lenses
 
 > **You:** "Only the market angle." → `/product-spec-critique --market`. Four lens flags: `--product` `--tech` `--market`
 > `--craft`. No flag = all four.
 
-### 4. Interactive
+### B3. Interactive
 
 > **You:** "Let me choose the scope and intensity first." → `/product-spec-critique --interactive` → asks 3 questions: scope,
 > lenses, level.
 
-### 5. Change the voice level
+### B4. The two "detail" levels are independent (spec vs critique)
+
+- `detail_level` (set in `cleanmatic:product-spec`) sizes the SPEC you write (`concise`/`standard`/`verbose`).
+- `critique_detail_level` (for `product-spec-critique`) sizes the CRITIQUE report (`concise` = top-3 + one line per lens;
+  `verbose` = full per-lens + longer why-it-dies).
+
+Setting one never affects the other. "Verbose specs + concise critiques" is valid. Both default to `standard`.
+
+### B5. Offline (`--no-web`)
+
+> **You:** "Don't search the web, judge from the spec." → `/product-spec-critique --no-web`. With no BRD `competitors:` and
+> `--no-web`, the market lens **flags "missing competitive grounding"** rather than inventing competitors.
+
+---
+
+## Tier C — Voice & safety
+
+### C1. Change the voice level
 
 > **You:** "Go easy, I just wrote this." → `--level 1` (`--warm`).
 > **You:** "Don't hold back." → `--level 5` (`--no-mercy`). This is the default baseline: it may go after you personally but runs straight away, no warning or confirm (the gate starts at level 6).
@@ -73,7 +160,7 @@ NOT for: drafting, validating, decomposing, or visualizing a spec, that is `clea
 > **You:** "Full profanity, no holds barred." → `--level 9` (sustained work-targeted profanity, no restraint). Level 9
 > **re-confirms on every run** and downgrades to 8 if you decline. The universal-harm floor above holds at 9 regardless.
 
-### Register config for levels 7-9 (gender, dialect, profanity)
+### C2. Register config for levels 7-9 (gender, dialect, profanity)
 
 The three harshest levels read knobs from `preferences.yaml`. These pick the ADDRESS form, not extra permission, the
 safety floor is identical whatever you set:
@@ -88,33 +175,35 @@ In English the gender/dialect knobs are no-ops (no pronoun ladder); `critique_pr
 and is what separates English level 7 (off) from 8 (on). Default is `strong` because level 9 re-confirms every run
 anyway, so when it fires it runs at full power.
 
-### The two "detail" levels are independent (spec vs critique)
+### C3. Feel the voice levels (same finding)
 
-- `detail_level` (set in `cleanmatic:product-spec`) sizes the SPEC you write (`concise`/`standard`/`verbose`).
-- `critique_detail_level` (for `product-spec-critique`) sizes the CRITIQUE report (`concise` = top-3 + one line per lens;
-  `verbose` = full per-lens + longer why-it-dies).
+Finding: an AC says "fast login" with no measurable threshold (`PRD-AUTH-E1-S1:16`). These are a few representative
+levels; all nine (including level 2's dry edge, level 4's heavy sarcasm, and the level-7-8 escalation) live in
+`references/voice-and-tone.md`.
 
-Setting one never affects the other. "Verbose specs + concise critiques" is valid. Both default to `standard`.
+- **L1 (`--warm`):** "'Fast login' has no number, add a threshold (e.g. p95 < 2s) so the build team can test it."
+- **L3 (`--blunt`):** "'Fast login', fast how? QA can't test an adjective. Why it dies: an unmeasurable AC
+  makes 'done' a matter of opinion. Fix: 'p95 < 2s on 4G'."
+- **L5 (`--no-mercy`, default):** "'Fast login' is a wish, not a requirement, and you knew it was hollow when you typed it.
+  Engineers will build by horoscope. Why it dies: 'done' is undefinable → endless rework. Fix now: 'p95 < 2s on 4G'."
+- **L6 (`--roast`, ⚠️ insults the author, never professional):** "'Fast login'?? Too lazy to type one number, so you
+  scribbled it and called it a day. Why it dies: 'fast' = a number only you know, and you don't write the code. Fix it
+  if you've any pride left: 'p95 < 2s on 4G, measured by RUM', ten characters, how lazy do you have to be."
+- **L7 (⚠️ cold contempt + competence, zero profanity):** "'Fast login', and not one number behind it. Let me be blunt:
+  whoever owns this spec does not yet think like a product person. Blown apart because: undefined 'done' hands the build team
+  a guessing game. Rewrite it properly: 'p95 < 2s on 4G, measured by RUM'."
+- **L8 (⚠️ character attack + profanity on, work-targeted):** "'Fast' again. This whole spec is half-assed the same way
+  every time. The AC is so empty there isn't one number to test, and it's bullshit to ship something this lazy and call
+  it a requirement. Trashed because: nothing to measure means endless rework. Rewrite it now: 'p95 < 2s on 4G'."
+- **L9 (⚠️⚠️ sustained profanity, re-confirms every run):** "'Fast login'? This AC is fucking empty. Too lazy to type
+  one number and you still call it a spec, that's pathetic. Wrecked because: 'fast' is a number only you know, and
+  you don't write the code. Rewrite it, and don't make me say it twice: 'p95 < 2s on 4G, measured by RUM'."
 
-### 6. Offline (`--no-web`)
+---
 
-> **You:** "Don't search the web, judge from the spec." → `/product-spec-critique --no-web`. With no BRD `competitors:` and
-> `--no-web`, the market lens **flags "missing competitive grounding"** rather than inventing competitors.
+## Tier D — Reuse & integrate
 
-### 7. Repeat offenses / prior reports
-
-> Every run, the consolidator reads prior reports in `docs/product/critique/` to catch **repeat offenses**, "said this
-> last time, still not fixed". After a `--validate`, if the spec drifted ≥ threshold (default 3 nodes) since the last
-> critique, the opt-in hook drops a one-line nudge, never auto-runs, never blocks.
-
-### 8. Decision (DEC) bridge
-
-> If the consolidator flags a finding as **decision-worthy** (e.g. it contradicts an `approved` artifact), the assistant
-> asks you (Keep / Change / Hybrid). Only on your confirm does it record a `DEC-<n>` via `decision_register.py` (with a
-> `[source: critique]` prefix in the rationale to distinguish it from a validate-born DEC). It never edits an approved
-> artifact silently.
-
-### 9. Re-runs: reuse & parent/child context
+### D1. Re-runs: reuse & parent/child context
 
 From the second critique of a scope onward, prior work is **reused** — token savings only, never weaker quality.
 
@@ -142,9 +231,22 @@ From the second critique of a scope onward, prior work is **reused** — token s
 >
 > The market lens reuses pages fetched within the last 14 days by default. Add `--refresh-web` to force a re-fetch.
 
+### D2. Repeat offenses / prior reports
+
+> Every run, the consolidator reads prior reports in `docs/product/critique/` to catch **repeat offenses**, "said this
+> last time, still not fixed". After a `--validate`, if the spec drifted ≥ threshold (default 3 nodes) since the last
+> critique, the opt-in hook drops a one-line nudge, never auto-runs, never blocks.
+
+### D3. Decision (DEC) bridge
+
+> If the consolidator flags a finding as **decision-worthy** (e.g. it contradicts an `approved` artifact), the assistant
+> asks you (Keep / Change / Hybrid). Only on your confirm does it record a `DEC-<n>` via `decision_register.py` (with a
+> `[source: critique]` prefix in the rationale to distinguish it from a validate-born DEC). It never edits an approved
+> artifact silently. To walk a whole report's findings back into the spec, use `product-spec --apply-critique <report>`.
+
 ---
 
-## By lens (what each one attacks)
+## 6. By lens (what each one attacks)
 
 - **product** (opus), JTBD, Value Prop Canvas, Kano, RICE, riskiest-assumption. Catches: feature nobody needs, fake
   persona, gold-plating, solution-first.
@@ -164,40 +266,7 @@ From the second critique of a scope onward, prior work is **reused** — token s
 
 ---
 
-## Feel the voice levels (same finding)
-
-Finding: an AC says "fast login" with no measurable threshold (`PRD-AUTH-E1-S1:16`). These are a few representative
-levels; all nine (including level 2's dry edge, level 4's heavy sarcasm, and the level-7-8 escalation) live in
-`references/voice-and-tone.md`.
-
-- **L1 (`--warm`):** "'Fast login' has no number, add a threshold (e.g. p95 < 2s) so the build team can test it."
-- **L3 (`--blunt`):** "'Fast login', fast how? QA can't test an adjective. Why it dies: an unmeasurable AC
-  makes 'done' a matter of opinion. Fix: 'p95 < 2s on 4G'."
-- **L5 (`--no-mercy`, default):** "'Fast login' is a wish, not a requirement, and you knew it was hollow when you typed it.
-  Engineers will build by horoscope. Why it dies: 'done' is undefinable → endless rework. Fix now: 'p95 < 2s on 4G'."
-- **L6 (`--roast`, ⚠️ insults the author, never professional):** "'Fast login'?? Too lazy to type one number, so you
-  scribbled it and called it a day. Why it dies: 'fast' = a number only you know, and you don't write the code. Fix it
-  if you've any pride left: 'p95 < 2s on 4G, measured by RUM', ten characters, how lazy do you have to be."
-- **L7 (⚠️ cold contempt + competence, zero profanity):** "'Fast login', and not one number behind it. Let me be blunt:
-  whoever owns this spec does not yet think like a product person. Blown apart because: undefined 'done' hands the build team
-  a guessing game. Rewrite it properly: 'p95 < 2s on 4G, measured by RUM'."
-- **L8 (⚠️ character attack + profanity on, work-targeted):** "'Fast' again. This whole spec is half-assed the same way
-  every time. The AC is so empty there isn't one number to test, and it's bullshit to ship something this lazy and call
-  it a requirement. Trashed because: nothing to measure means endless rework. Rewrite it now: 'p95 < 2s on 4G'."
-- **L9 (⚠️⚠️ sustained profanity, re-confirms every run):** "'Fast login'? This AC is fucking empty. Too lazy to type
-  one number and you still call it a spec, that's pathetic. Wrecked because: 'fast' is a number only you know, and
-  you don't write the code. Rewrite it, and don't make me say it twice: 'p95 < 2s on 4G, measured by RUM'."
-
----
-
-## Reading the report
-
-- **Severity tally** (blocker / major / minor) at the top.
-- **Top 3, fix now**: the three most threatening findings across lenses.
-- **By lens**: each finding = `[severity][lens] <ID:line>` → critique → why-it-dies → fix.
-- **Repeat offenses** + **Decision-worthy (DEC)**.
-
-## Boundaries
+## 7. Boundaries
 
 - No spec editing (writes a report only). No CI gate. No code generation. Level 5 is the ungated default baseline;
   levels 6-8 require a danger warning + explicit confirm when ad-hoc (a standing preference prints a one-line reminder
