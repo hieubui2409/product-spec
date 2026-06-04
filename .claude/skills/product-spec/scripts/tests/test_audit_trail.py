@@ -1,8 +1,8 @@
 """test_audit_trail — C9 `--viz audit` governance view contracts.
 
 Covers: event join from change-log + approval + DEC; the H7 orphaned-approval →
-`unreconciled` row (never dropped); bilingual labels; empty-state; and the no-HTML
-guard (the audit view must wire NO html emitter this phase).
+`unreconciled` row (never dropped); bilingual labels; empty-state; and the HTML
+form's XSS-escaping contract (every dynamic field escaped server-side).
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import assemble_audit_trail as aat  # noqa: E402
+import render_html  # noqa: E402
 
 
 def _spec_root(tmp_path: Path) -> Path:
@@ -81,10 +82,39 @@ def test_empty_state(tmp_path):
     assert "Chưa có sự kiện" in aat.render_ascii(data, "vi")
 
 
-def test_no_html_emitter_wired():
-    # XSS-watch guard: the audit assembler must expose NO html renderer this phase.
-    assert not hasattr(aat, "render_html")
-    public = [n for n in dir(aat) if n.startswith("render_")]
-    # ASCII + markdown only (incl. the release-notes delta markdown helper) — NO html emitter.
-    assert set(public) == {"render_ascii", "render_markdown", "render_release_delta_md"}, public
-    assert not any("html" in n.lower() for n in dir(aat))
+@pytest.mark.bug_class  # cross-cutting invariant: HTML audit escapes every dynamic field (XSS-watch / C8)
+def test_html_escapes_malicious_dynamic_fields():
+    # The HTML audit form joins free-text governance fields; a `<script>` smuggled into
+    # any of them MUST be escaped server-side, never emitted as live markup.
+    data = {
+        "schema_version": "1.0",
+        "events": [
+            {"date": "2026-06-04", "artifact": "PRD-X<script>alert(1)</script>",
+             "action": "approved", "who_approved": "<img src=x onerror=alert(2)>",
+             "what_drifted": "scope & \"risk\"", "dec_ref": "DEC-1", "reconciled": True},
+            {"date": "2026-06-04", "artifact": "PRD-Y", "action": "approved",
+             "who_approved": "PO", "what_drifted": "</td><script>evil()</script>",
+             "dec_ref": "", "reconciled": False},
+        ],
+        "unreconciled_count": 1,
+    }
+    html = render_html.audit(data, "en")
+    # No live markup survives — the angle brackets that would open a tag are escaped.
+    # (Inert attribute TEXT like "onerror=alert" may remain inside the escaped string;
+    # what matters is that no real `<tag>` is emitted.)
+    assert "<script>" not in html
+    assert "<img src=x" not in html
+    assert "</td><script>" not in html
+    # The payloads appear only in escaped form.
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+    assert "&lt;img src=x onerror=alert(2)&gt;" in html
+    assert "&amp;" in html and "&quot;" in html  # & and " escaped
+    # Unreconciled row still flagged (not dropped) + class present.
+    assert "audit-unreconciled" in html
+    assert "unreconciled" in html
+
+
+def test_html_empty_state_escaped():
+    html = render_html.audit({"events": []}, "vi")
+    assert "audit-empty" in html
+    assert "Chưa có sự kiện" in html

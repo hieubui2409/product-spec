@@ -248,12 +248,21 @@ def main() -> int:
     if args.view == "audit":
         import assemble_audit_trail
         afmt = args.format or "ascii"
-        if afmt in ("html", "mermaid"):
-            print(f"note: 'audit' is ASCII+md only; rendering ascii "
-                  f"(requested --format {afmt} has no audit form).", file=sys.stderr)
+        if afmt == "mermaid":
+            # An audit trail is a chronological table, not a graph — no Mermaid form.
+            print("note: 'audit' has no Mermaid form (it is a chronological table); "
+                  "rendering ascii.", file=sys.stderr)
             afmt = "ascii"
-        data = assemble_audit_trail.assemble(Path(args.root).resolve())
-        if afmt == "md":
+        root = Path(args.root).resolve()
+        data = assemble_audit_trail.assemble(root)
+        if afmt == "html":
+            # HTML-native: render_html.audit escapes EVERY dynamic field server-side
+            # (who_approved / DEC title / change-log text), then write a self-contained
+            # page through the soft fence — same path as risk/competition.
+            frag = render_html.audit(data, lang=args.lang)
+            out = render_html.write(root, "audit", "html", frag, {}, lang=args.lang)
+            print(_written_json(out, root))
+        elif afmt == "md":
             print(assemble_audit_trail.render_markdown(data, args.lang))
         else:
             print(assemble_audit_trail.render_ascii(data, args.lang))

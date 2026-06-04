@@ -501,13 +501,17 @@ Các góc nhìn chính:
 /cleanmatic:product-spec --viz competition
 /cleanmatic:product-spec --viz dashboard
 /cleanmatic:product-spec --viz explorer
-/cleanmatic:product-spec --viz audit                 # nhật ký kiểm toán quản trị (văn bản hoặc markdown)
+/cleanmatic:product-spec --viz audit                 # nhật ký kiểm toán quản trị (văn bản, mặc định)
+/cleanmatic:product-spec --viz audit --format md     # bảng markdown (dán vào PR / tài liệu)
+/cleanmatic:product-spec --viz audit --format html   # trang HTML khép kín (mở trên trình duyệt)
 ```
 
-> 💡 View **`audit`** chỉ-đọc và chỉ hiện văn bản thuần hoặc markdown (vòng này chưa có HTML). Nó ghép
-> change-log, các lần ký duyệt, các phê duyệt đã cũ, và các quyết định vào một dòng thời gian. Nếu một lần
-> ký duyệt không có change-log hay quyết định nào khớp, nó hiện thành một dòng **`unreconciled`** (chưa đối
-> soát) tường minh thay vì bị giấu đi — để một lỗ hổng quản trị không bao giờ bị âm thầm quét dưới thảm.
+> 💡 View **`audit`** chỉ-đọc, hiện được dạng văn bản thuần (mặc định), markdown, hoặc một trang HTML khép
+> kín — mọi giá trị đều được thoát ký tự (escape) an toàn, nên kể cả tên người ký duyệt có ký tự lạ cũng
+> không làm vỡ trang. Nó ghép change-log, các lần ký duyệt, các phê duyệt đã cũ, và các quyết định vào một
+> dòng thời gian. Nếu một lần ký duyệt không có change-log hay quyết định nào khớp, nó hiện thành một dòng
+> **`unreconciled`** (chưa đối soát) tường minh thay vì bị giấu đi — để một lỗ hổng quản trị không bao giờ
+> bị âm thầm quét dưới thảm.
 
 > 💡 Muốn ẩn các mục đã hoãn (đánh dấu "sẽ không làm")? Thêm ý "ẩn các mục đã hoãn" — tương đương cờ
 > `--filter-wont`.

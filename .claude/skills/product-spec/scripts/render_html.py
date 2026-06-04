@@ -535,6 +535,60 @@ _COMPETITION_CSS = (
 )
 
 
+# ── HTML-native governance audit trail (C9) ────────────────────────────────
+#
+# The audit view joins free-text governance fields (who_approved, DEC title,
+# change-log "what drifted") that are higher injection-risk than the structured
+# graph views — so EVERY dynamic value is escaped server-side through _escape()
+# before assembly (no DOMPurify/marked, no href channel). This is the gate the
+# XSS-watch (C8) required before the view could grow an HTML form.
+_AUDIT_CSS = (
+    "<style>"
+    ".audit-table{border-collapse:collapse;width:100%;max-width:60rem;}"
+    ".audit-table caption{caption-side:top;text-align:left;color:var(--muted);font-size:.85rem;margin-bottom:.5rem;}"
+    ".audit-table th,.audit-table td{border:1px solid var(--border);padding:.5rem .6rem;vertical-align:top;text-align:left;font-size:.9rem;}"
+    ".audit-table thead th{background:var(--recessed);color:var(--muted);font-weight:600;}"
+    ".audit-unreconciled{background:var(--red-dim);}"
+    ".audit-unreconciled td:first-child::before{content:'⚠ ';}"
+    ".audit-empty{color:var(--muted);font-style:italic;}"
+    "</style>"
+)
+
+
+def audit(data: Dict[str, Any], lang: str = "en") -> str:
+    """HTML-native governance audit trail (C9): a chronological table.
+
+    `data` is the dict from `assemble_audit_trail.assemble` (events list). Returns a
+    self-contained fragment (scoped <style> + <table>). EVERY spec/PO-derived value is
+    escaped server-side via _escape() — the unreconciled rows are flagged with a class +
+    a marker, never dropped. Deterministic: no timestamp inside the fragment (G-A4)."""
+    from assemble_audit_trail import _AUDIT_LABELS  # lazy: no import cycle
+    lab = _AUDIT_LABELS.get(lang, _AUDIT_LABELS["en"])
+    events = data.get("events", [])
+    if not events:
+        return _AUDIT_CSS + f'<p class="audit-empty">{_escape(lab["empty"])}</p>'
+    headers = [lab["when"], lab["artifact"], lab["action"], lab["who"], lab["drift"], lab["dec"]]
+    head = "".join(f"<th>{_escape(h)}</th>" for h in headers)
+    rows = []
+    for e in events:
+        action = e.get("action", "")
+        cls = "" if e.get("reconciled", True) else ' class="audit-unreconciled"'
+        if not e.get("reconciled", True):
+            action = f'{action} [{lab["unreconciled"]}]'
+        cells = [e.get("date") or "-", e.get("artifact") or "-", action or "-",
+                 e.get("who_approved") or "-", e.get("what_drifted") or "-", e.get("dec_ref") or "-"]
+        tds = "".join(f"<td>{_escape(str(c))}</td>" for c in cells)
+        rows.append(f"<tr{cls}>{tds}</tr>")
+    return (
+        _AUDIT_CSS
+        + '<table class="audit-table">'
+        + f"<caption>{_escape(lab['title'])}</caption>"
+        + f"<thead><tr>{head}</tr></thead>"
+        + "<tbody>" + "".join(rows) + "</tbody>"
+        + "</table>"
+    )
+
+
 # ── HTML-native multi-dimensional dashboard (HTML-only; PO decision §0.2) ───
 #
 # The dashboard is the new HTML-only multi-dim view (G-G1): ONE self-contained

@@ -20,7 +20,8 @@ Backlog C/D/E — closing the PO pipeline. Additive + backward-compatible.
   deterministic fresh-re-approval guard. Scripts: `parse_critique_report.py`, `apply_critique_progress.py`.
 - **`--viz audit` (C9)** — a read-only governance trail joining change-log · approvals · stale-approvals ·
   decision register into one chronological table, with explicit `unreconciled` rows for source
-  disagreement. ASCII + `md` only (no HTML). Script: `assemble_audit_trail.py`.
+  disagreement. Renders `ascii` (default) · `md` · `html`; the HTML form escapes every dynamic field
+  server-side (`render_html.audit`) guarded by a `bug_class` XSS test. Script: `assemble_audit_trail.py`.
 - **`--summary --audience exec|release-notes` (E4)** — audience modifier on `--summary` (no new flag).
   `exec` = the current one-pager; `release-notes` = "what changed since the last approved snapshot" from
   the C9 trail. New `release-notes` template.

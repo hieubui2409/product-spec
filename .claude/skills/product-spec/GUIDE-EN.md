@@ -503,13 +503,16 @@ The main views:
 /cleanmatic:product-spec --viz competition
 /cleanmatic:product-spec --viz dashboard
 /cleanmatic:product-spec --viz explorer
-/cleanmatic:product-spec --viz audit                 # governance audit trail (text or markdown)
+/cleanmatic:product-spec --viz audit                 # governance audit trail (text, default)
+/cleanmatic:product-spec --viz audit --format md     # markdown table (paste into a PR / doc)
+/cleanmatic:product-spec --viz audit --format html   # self-contained HTML page (opens in a browser)
 ```
 
-> 💡 The **`audit`** view is read-only and shows only plain text or markdown (no HTML this round). It joins
-> your change-log, sign-offs, stale approvals, and decisions into one timeline. If a sign-off has no
-> matching change-log entry or decision, it shows up as an explicit **`unreconciled`** row rather than being
-> hidden — so a governance gap is never silently swept under the rug.
+> 💡 The **`audit`** view is read-only and renders as plain text (default), markdown, or a self-contained
+> HTML page — every value is safety-escaped, so even a sign-off name containing odd characters can't break
+> the page. It joins your change-log, sign-offs, stale approvals, and decisions into one timeline. If a
+> sign-off has no matching change-log entry or decision, it shows up as an explicit **`unreconciled`** row
+> rather than being hidden — so a governance gap is never silently swept under the rug.
 
 > 💡 Want to hide deferred items (marked "won't do")? Add "hide the deferred items" — equivalent to the
 > `--filter-wont` flag.

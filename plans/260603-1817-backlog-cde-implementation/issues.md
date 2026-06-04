@@ -75,3 +75,11 @@
   rewrite/restructure of the guides, that's a separate ask.
 - 🟢 **D3 — `--format md` is audit-only.** Added `md` to `visualize.py` FORMATS but rejected for every
   non-audit view. If the PO later wants markdown for other views, that's a clean extension.
+- ✅ **D4 — audit HTML added (PO request 2026-06-04).** `--viz audit --format html` now renders a
+  self-contained page via `render_html.audit`, escaping EVERY dynamic field server-side
+  (`render_html._escape`, no DOMPurify/marked, no href channel) — same write path as risk/competition.
+  The Phase-4 XSS-watch gate was satisfied, not bypassed: the old no-HTML guard test was replaced by a
+  `bug_class`-marked XSS test (`test_html_escapes_malicious_dynamic_fields` — proves `<script>`/`<img
+  onerror>`/`</td>` payloads in who_approved/artifact/drift are escaped). Mermaid still N/A (a timeline
+  table is not a graph → falls back to ascii). Default stays `ascii`. Docs updated (SKILL, viz-spec,
+  GUIDE EN+VI, CHANGELOG). product-spec 602, bug_class 2→3.
