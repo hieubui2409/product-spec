@@ -21,8 +21,8 @@ Status legend: `[ ]` todo · `[~]` in-progress/partial · `[x]` done · `[next]`
 
 ## A. Bridge product-spec ↔ claude-pack (make the pair a real pipeline)
 
-- [ ] **A1 — `product-spec --pack` / export-to-distributable.** Package a spec slice (`docs/product/`) into a versioned, content-hashed tarball + SHA, reusing claude-pack's determinism engine. Current `--export` only emits one HTML/md file; a CI-archivable / hand-off bundle is the missing piece. *First real data-flow link between the two skills.* — **high value**
-- [ ] **A2 — Pack a "product-spec starter".** Use claude-pack to bundle product-spec + an empty `docs/product/` seed so a PO in another repo extracts and runs immediately. Realizes claude-pack's stated "seed new repo" use-case (no concrete asset today). — **high value**
+- [ ] **A1 — `product-spec --pack` / export-to-distributable.** Package a spec slice (the authored `docs/product/` **content/output**) into a versioned, content-hashed tarball + SHA, reusing claude-pack's determinism engine. Current `--export` only emits one HTML/md file. *Note (2026-06-04 PO review): value is narrower than first framed — git already versions `docs/product/`; the only real edge is a self-contained hashed artifact for a recipient **without repo access** (audit/hand-off). Distinct from A2 because it packages spec CONTENT, not the skill.* — **med (was high) — confirm the no-repo-access use-case is real before building**
+- [x] ~~**A2 — Pack a "product-spec starter".**~~ **DROPPED 2026-06-04 (PO critique — redundant three ways):** (1) the "empty `docs/product/` seed" is dead weight — product-spec **self-scaffolds** `docs/product/` on no-flag init / `--product`; (2) product-spec already ships in the bundle and claude-pack already builds a single-skill bundle via **`--skills product-spec`** — no new asset needed; (3) onboarding is already prompt-driven (README.md + CLAUDE.md → install bundle → `/cleanmatic:product-spec` → the AI interviews + generates). Nothing left for a static "starter" to add. — **cut (YAGNI)**
 
 ## B. Harden claude-pack (now shipped at 1.1.0 — remaining gaps)
 
