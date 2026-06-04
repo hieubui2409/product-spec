@@ -3,59 +3,63 @@ phase: 5
 title: "Docs sync"
 status: pending
 priority: P3
-effort: "2h"
-dependencies: [1, 2, 3, 4]
+effort: "1.5h"
+dependencies: [1, 2, 4]
 ---
+
+<!-- Updated: Validation Session 1 — critique dropped from v1; removed product-spec-critique SKILL.md edit + the
+     action_prompting critique-clamp doc line. Dependency on Phase 3 removed. -->
+
 
 # Phase 5: Docs sync
 
 ## Overview
 
-Keep the docs/source-of-truth surfaces consistent with the new knobs. This repo is doc-heavy; stale preference
-tables are a real DRY hazard. One home per fact — cross-reference, don't restate.
+Keep the doc/source-of-truth surfaces consistent with the **2** new knobs. Doc-heavy repo → stale preference tables
+are a real DRY hazard. One home per fact; cross-reference, don't restate.
 
 ## Requirements
 
-- Functional: every place that enumerates preferences/flags lists the 3 new keys with defaults + which skill reads
-  them.
-- Non-functional: no duplicated knob→behavior tables (those live in `workflow-interview.md` / `workflow-critique.md`
-  from Phases 2-3); docs here link to those homes.
+- Functional: every place enumerating preferences/flags lists the 2 new keys (defaults `standard`, which skill reads).
+- Non-functional: no duplicated knob→behavior tables (those live in `workflow-interview.md` / `workflow-critique.md`).
 
 ## Architecture
 
-- `preferences.py` module docstring (the canonical key catalogue) already lists keys — add the 3 with the same
-  rigor as `detail_level` (this is the doc source-of-truth for keys).
-- `CLAUDE.md` (product-spec operating guide): note the engagement-profile knobs exist + which workflow reference
-  owns them.
-- `behavioral-memory.md`: add a short cross-ref clarifying these knobs are PREFERENCES (PO-confirmed), distinct
-  from 3D voice / 3E conduct — so future readers don't conflate them with a new behavioral store.
-- `SKILL.md` (both skills): flag/CLI list += `--set` / `--add-reminder` / `--remove-reminder`.
-- `GUIDE-VI.md`: brief VI note for the PO-facing audience.
+- `preferences.py` module docstring (canonical key catalogue) — add the 2 keys with the same rigor as `detail_level`,
+  noting SEPARATE-from-`detail_level` (verbosity vs rigor). (No critique clamp note — critique deferred.)
+- `CLAUDE.md` (product-spec section): note the engagement knobs + which reference owns them; add `--set` to any CLI
+  mention.
+- `behavioral-memory.md`: short cross-ref clarifying these are PREFERENCES (PO-confirmed), distinct from 3D voice /
+  3E conduct — so future readers don't conflate them with a new behavioral store.
+- product-spec `SKILL.md`: flag/CLI list += `preferences.py --set`. (product-spec-critique `SKILL.md` unchanged —
+  critique deferred.)
+- `GUIDE-VI.md`: brief VI note.
 
 ## Related Code Files
 
 - Modify: `.claude/skills/product-spec/scripts/preferences.py` (docstring catalogue)
 - Modify: `.claude/skills/product-spec/references/behavioral-memory.md`
-- Modify: `CLAUDE.md` (root product-spec section)
-- Modify: `.claude/skills/product-spec/SKILL.md`, `.claude/skills/product-spec-critique/SKILL.md`
+- Modify: `CLAUDE.md`
+- Modify: `.claude/skills/product-spec/SKILL.md`
 - Modify: `.claude/skills/product-spec/GUIDE-VI.md`
 
 ## Implementation Steps
 
-1. Update `preferences.py` docstring with the 3 keys (defaults, enums, which skill, SEPARATE-from-`detail_level`).
-2. Add the cross-ref in `behavioral-memory.md` (prefs vs 3D/3E distinction).
-3. Update `CLAUDE.md` workflow-pointer / preferences mention.
-4. Update both `SKILL.md` CLI/flag lists.
+1. Update `preferences.py` docstring with the 2 keys (defaults, enums, which skill, SEPARATE-from-`detail_level`).
+2. Add the cross-ref in `behavioral-memory.md` (prefs vs 3D/3E).
+3. Update `CLAUDE.md` preferences/flag mention.
+4. Update product-spec `SKILL.md` CLI list (`--set`).
 5. Add the VI note in `GUIDE-VI.md`.
-6. Grep sweep: no contradictory/stale knob description; no duplicated behavior tables.
+6. Grep sweep per new key name across `.claude/skills/product-spec*` — every mention consistent; no duplicated tables;
+   no leftover reference to `standing_reminders` or `--reflect engagement-profile` (both cut).
 
 ## Success Criteria
 
-- [ ] `preferences.py` docstring is the complete, accurate key catalogue (incl. new 3).
+- [ ] `preferences.py` docstring is the complete, accurate key catalogue (incl. the 2 new keys).
 - [ ] `CLAUDE.md`, both `SKILL.md`, `behavioral-memory.md`, `GUIDE-VI.md` reference the knobs consistently.
-- [ ] No duplicated knob→behavior tables (single home preserved).
+- [ ] No duplicated knob→behavior tables; no orphan mentions of dropped features.
 
 ## Risk Assessment
 
-- **Doc drift**: easy to forget one surface. Mitigate with a final grep for each new key name across
-  `.claude/skills/product-spec*` to confirm every mention is consistent.
+- **Doc drift**: final grep for each new key name across `.claude/skills/product-spec*` to confirm consistency and
+  zero orphan references to the cut features.

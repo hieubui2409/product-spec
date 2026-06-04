@@ -11,32 +11,31 @@ dependencies: []
 
 ## Overview
 
-Foundation. Add the 3 engagement knobs to `preferences.py` schema and a deterministic `--set` write-CLI. Pure
-script logic → **tests-first** (TDD). Everything additive: zero breaking changes.
+Foundation. Add **2 closed-enum** engagement knobs to `preferences.py` + a `--set` write-CLI that does
+`load→merge→save` (the red-team's #1 data-loss fix). Pure script logic → **tests-first** (TDD). Additive, non-breaking.
 
 ## Requirements
 
 - Functional:
-  - `interview_rigor` ∈ {light, standard, deep}, default `deep`.
-  - `action_prompting` ∈ {minimal, standard, proactive}, default `proactive`.
-  - `standing_reminders` = `list[str]`, default `[]` (modeled on existing `dismissed_reminders`).
-  - `preferences.py --set <key>=<value>` write-CLI (repeatable), routes through `save()` (enum-validated, fenced).
-    For `standing_reminders`, support `--add-reminder <s>` / `--remove-reminder <s>` (union/remove, not enum).
+  - `interview_rigor` ∈ {light, standard, deep}, default **standard**.
+  - `action_prompting` ∈ {minimal, standard, proactive}, default **standard**.
+  - `preferences.py --set <key>=<value>` (repeatable) → enum-validated, fenced, and **load-merge**: preserves every
+    other existing key. No list key in v1 (`standing_reminders` dropped).
 - Non-functional:
   - Non-breaking: missing keys degrade to defaults; old files load unchanged.
-  - `save()` keeps file byte-stable (sorted keys, LF) — no churn vs current writer.
+  - `save()` byte-stable (sorted keys, LF) — no churn.
 
 ## Architecture
 
-- `DEFAULTS` += 3 keys; `ENUMS` += `interview_rigor`, `action_prompting` (NOT `standing_reminders` — it is a list,
-  validated like `dismissed_reminders`).
-- `load()`: existing list-handling branch already covers a new list key — generalize the `dismissed_reminders`
-  branch to also coerce `standing_reminders` to `list[str]`.
-- `save()`: existing list-guard generalized to both list keys.
-- CLI: extend `main()` (currently read-only dump) with optional `--set KEY=VALUE` (repeatable),
-  `--add-reminder`, `--remove-reminder`. Mirror the `behavioral_memory.py --voice` CLI shape. With no write flag,
-  behavior unchanged (still dumps `load()`). A bad enum → `PreferenceError` → non-zero exit + clear message,
-  nothing written.
+- `DEFAULTS` += `interview_rigor: "standard"`, `action_prompting: "standard"`; `ENUMS` += both. (13 → **15** keys.)
+- `load()`/`save()` already handle scalar enums — the 2 new keys need no new branch.
+- **CLI (the critical part):** extend `main()` with `--set KEY=VALUE` (repeatable). It MUST:
+  1. `prefs = load(root)` (resolve current, incl. existing committed keys),
+  2. apply each `--set` onto `prefs` (split on FIRST `=` only),
+  3. `save(root, prefs)` (enum-validated; a bad value raises `PreferenceError` → non-zero exit, nothing written).
+  - With no `--set`, behavior unchanged (still dumps `load()`).
+  - Mirrors the `behavioral_memory.py --voice` load-merge model (`behavioral_memory.py:155-176`) — which the original
+    plan cited but did not replicate.
 
 ## Related Code Files
 
@@ -46,27 +45,30 @@ script logic → **tests-first** (TDD). Everything additive: zero breaking chang
 ## Implementation Steps
 
 1. **Tests first** in `test_preferences.py`:
-   - defaults: fresh `load()` returns `interview_rigor=deep`, `action_prompting=proactive`, `standing_reminders=[]`.
-   - backward-compat: a `preferences.yaml` written WITHOUT the new keys still loads them at default (the core
-     non-breaking assertion).
-   - enum guard: `save({"interview_rigor":"hard"})` → `PreferenceError` (note: `hard` is NOT a value — light/standard/deep).
-   - list handling: `standing_reminders` round-trips a list; a non-list value degrades on read, raises on save.
-   - CLI: `--set action_prompting=minimal` persists; `--add-reminder "re-check metric on goals"` unions;
-     `--remove-reminder` removes; `--set` with bad enum exits non-zero and writes nothing.
+   - **Update the existing count guard**: `test_defaults_has_exactly_thirteen_keys` → **15**; update its comment;
+     keep/extend the `set(load(...)) == set(DEFAULTS)` symmetry assertion and assert both new keys are in `ENUMS`
+     (red-team B).
+   - defaults: fresh `load()` → `interview_rigor=standard`, `action_prompting=standard`.
+   - backward-compat: a `preferences.yaml` written WITHOUT the new keys still loads them at `standard`.
+   - enum guard: `save({"interview_rigor":"hard"})` → `PreferenceError` (`hard` is not a value).
+   - **load-merge (red-team A/N)**: write `{lang:vi, critique_level:9}`; run CLI `--set interview_rigor=deep`; reload
+     → `lang==vi`, `critique_level==9`, `interview_rigor==deep` ALL present (no clobber).
+   - CLI: `--set` two keys in one call both persist; `--set k=bad` exits non-zero, file unchanged; value containing
+     `=` splits on first `=` only.
 2. Run tests → red.
-3. Implement schema (`DEFAULTS`/`ENUMS`), generalize list branches in `load()`/`save()`.
-4. Implement CLI write flags in `main()`.
-5. Run tests → green. Run full `product-spec` pytest to confirm no regression.
+3. Implement schema (2 keys in `DEFAULTS`/`ENUMS`).
+4. Implement the load-merge `--set` CLI in `main()`.
+5. Run tests → green. Full `product-spec` pytest → confirm no regression.
 
 ## Success Criteria
 
-- [ ] New tests pass; existing `test_preferences.py` + full suite green (no regression).
-- [ ] Fresh load yields the 3 documented defaults.
-- [ ] Old-file (no new keys) load == defaults (non-breaking proven by test).
-- [ ] `--set` / `--add-reminder` / `--remove-reminder` persist correctly; bad enum writes nothing, non-zero exit.
+- [ ] New + updated tests pass; full suite green (count guard now 15 — no contradiction).
+- [ ] Fresh load yields both defaults = `standard`.
+- [ ] Old-file (no new keys) load == defaults (non-breaking proven).
+- [ ] `--set` preserves all other existing keys (load-merge proven by test); bad enum writes nothing, non-zero exit.
 
 ## Risk Assessment
 
-- **YAML bool coercion** (`off/on/no/yes`) already handled for enum keys; new enums are word-valued so unaffected —
-  but add a test that a literal `standing_reminders: [no]` does not silently become `[False]` (coerce to str).
-- **CLI value parsing**: `--set k=v` splitting on first `=` only (values may contain `=`). Test it.
+- **Data loss if `--set` skips load-merge (red-team A, Critical)** — the load-merge test is the guard; it MUST exist
+  and pass before this phase is done.
+- **CLI `k=v` parsing**: split on first `=` only (values may contain `=`). Tested.

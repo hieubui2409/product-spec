@@ -2,7 +2,7 @@
 
 - **Date:** 2026-06-04
 - **Scope:** `cleanmatic:product-spec` + `cleanmatic:product-spec-critique`
-- **Status:** design agreed (PO-confirmed), ready for `/ck:plan --tdd --redteam`
+- **Status:** design agreed (PO-confirmed), **revised post-red-team 2026-06-04 — see §13 (authoritative for v1 scope)**
 - **Decision posture:** v1 minimal, NO breaking changes, backward-compatible with current `preferences.yaml`.
 
 ---
@@ -75,8 +75,12 @@ Existing memory layer (per-project `docs/product/.memory/`, shared by both skill
 - **Flag (deterministic):** add a write-CLI to `preferences.py`, e.g. `preferences.py --root <r> --set interview_rigor=standard` → routes through `save()` (enum-validated, fenced). Additive to the current read-only `main()`.
 - **Hybrid harvest (LLM, confirmed):**
   - Per-session forcing-function in `workflow-interview.md`: when AI observes a repeated pattern (e.g. goals omit a metric ×N; PO breezes past deep probing as noise), it asks ONCE → on PO yes, writes the knob/reminder. Bidirectional (may propose lowering `rigor`).
-  - New `--reflect` harvest category `engagement-profile` (in `reflect_scan.py` + `workflow-reflect.md`): retroactively proposes knob changes from session/`.memory` state → PO confirm → write. Reuses `memory_gap` dedup so it never re-proposes an already-set value.
+  - ~~New `--reflect` harvest category~~ **CUT in §13** — `reflect_scan` emits git-only anchors; soft traits leave no
+    deterministic signal, so a retroactive harvest would manufacture candidates (forbidden). Capture is the explicit
+    flag + the live end-of-session forcing-function only.
 - All writes PO-confirmed → consistent with GATE-NEVER-ASSUME.
+- **Correction:** the original "reuses `memory_gap` dedup" claim was factually wrong — `reflect_scan` does not import
+  `memory_gap`. Moot now that the harvest is cut.
 
 ## 8. Injection points (read `preferences.load()` at trigger)
 
@@ -114,4 +118,54 @@ Existing memory layer (per-project `docs/product/.memory/`, shared by both skill
 
 1. `standing_reminders` — free-form strings, or a small closed vocabulary of check-types? (free-form = flexible but un-validatable; v1 leans free-form list like `dismissed_reminders`.)
 2. Harvest forcing-function cadence — every prose turn (noisy) vs end-of-session only? (lean end-of-session + `--reflect`, mirror the 3D honesty caveat.)
-3. Does `action_prompting=proactive` in critique risk turning report into a fix-list (scope creep vs critique's report-only contract)? Confirm bound before wiring.
+3. Does `action_prompting=proactive` in critique risk turning report into a fix-list (scope creep vs critique's report-only contract)? Confirm bound before wiring. → **Resolved in §13 (clamp critique to ≤standard).**
+
+---
+
+## 13. Red-team revisions (2026-06-04) — AUTHORITATIVE for v1
+
+Red-team (3 reviewers, 19 accepted findings; full adjudication:
+`plans/260604-0556-po-engagement-profile-knobs/reports/from-code-reviewer-to-planner-red-team-consolidated-plan-review-report.md`)
+reshaped v1. Where §1–§12 conflict, **this section wins**.
+
+### PO rulings
+- **Default posture (finding Q):** **Hybrid, identical to `detail_level`.** Both knobs default to **`standard`** (neutral);
+  Init Flow asks ONE `AskUserQuestion` ("strict-first deep/proactive?") and persists; never re-asked. Strict is a PO
+  choice, never a silent default → no GATE-NEVER-ASSUME breach, no break of the `detail_level=standard` convention.
+- **`standing_reminders`: DROPPED from v1** (findings O privacy-leak, R prompt-injection, P unenforceable confirm,
+  D phantom consumer, J list foot-gun, M bool-coercion). v1 ships **two scalar enum knobs only**.
+- **`--reflect engagement-profile` harvest: CUT** (findings G no-signal, E false memory_gap claim, F shape-break,
+  H dedup self-defeat, N multi-write loss). Soft traits have no deterministic on-disk signal → no retroactive harvest.
+
+### v1 final knob set
+| Key | Enum | Default | Applies to |
+|---|---|---|---|
+| `interview_rigor` | light/standard/deep | **standard** | product-spec interview |
+| `action_prompting` | minimal/standard/proactive | **standard** | product-spec (all) · critique (**clamped ≤ standard**) |
+| `detail_level` *(existing)* | concise/standard/verbose | standard | product-spec — referenced, not copied |
+
+→ DEFAULTS goes 13 → **15** (two keys), both in ENUMS (no list key).
+
+### Capture (both, all PO-driven, no auto-write)
+- **Explicit `--set` flag:** `preferences.py --set key=value` — **MUST `load()→merge→save()`** (finding A: `save()` is a
+  blind overwrite; one-key `--set` would clobber the file). PO typing it = consent.
+- **End-of-session interview forcing-function:** during the live session the AI observes real conversational evidence
+  (e.g. metric omitted ×N) → at session close asks once (tighten OR relax) → PO confirms → `--set`. Piggybacks the
+  existing Closing-the-Loop sequence (finding L: no third standalone nudge).
+- No script can enforce "confirmed" (finding P) — but with reminders + harvest gone, the **only** writers are
+  PO-invoked (`--set`) or PO-confirmed (forcing-function). No auto-write path exists.
+
+### Critique wiring (finding C, I, S)
+- Edit `critique_bundle.py::emit_bundle` (NOT `critique_scan.py`) to add `action_prompting` only.
+- **Clamp to ≤ standard** so `proactive` never reaches the report-only critique (resolves Q3).
+- Fold `action_prompting` into the provenance reuse hash (`critique_common._provenance_hash`) OR document it only
+  affects `--fresh` runs (finding I: knob change on unchanged spec otherwise reuses the stale cached report).
+
+### Design-doc corrections (R3-verified, avoid over-correction)
+- **claude-pack does NOT ship `preferences.yaml`** (`selection.py:30-36` walks `.claude/skills/...` only). The §3/privacy
+  "pack leakage" framing was misdirected; the real (now-moot, reminders dropped) exposure was **git commit**.
+- **`save()` IS path-fenced** (`preferences.py:210` → `fs_guard`). The fence covers path containment, not value content.
+
+### Findings rendered moot by the cuts
+O, R, P(auto), D, E, F, G, H, J, M, N — all dissolved by dropping `standing_reminders` + cutting the harvest.
+Still applied: **A, B, C, I, K, L, S** + the two corrections.
