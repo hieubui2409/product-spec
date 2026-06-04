@@ -116,24 +116,33 @@ the init batch stays short rather than front-loading three preference questions.
   (`detail_level`). **Balanced** *(default)*: I challenge claims and suggest next steps at a normal level.
   **Push-hard**: I rigorously challenge every claim and actively hunt edge cases / missing acceptance
   criteria (`interview_rigor: deep`), AND proactively offer a short menu of next steps at each turn
-  (`action_prompting: proactive`). Which do you want? *(Want them split — e.g. concise output but rigorous
-  probing? Tell me, or set each one later.)*"
+  (`action_prompting: proactive`). Which do you want? *(Or, if you're just sketching and want me to go
+  lighter than Balanced — fewer challenges, fewer prompts — say "light"; and if you want the two split,
+  e.g. concise output but rigorous probing, tell me, or set each one later.)*"
 - **VI:** "Hai điều nhanh về *cách* tôi chạy phỏng vấn — tách biệt với độ dài chữ của spec (`detail_level`).
   **Cân bằng** *(mặc định)*: tôi chất vấn và gợi ý bước kế ở mức bình thường. **Đào sâu**: tôi vặn kỹ từng
   khẳng định, chủ động truy ca biên / tiêu chí nghiệm thu còn thiếu (`interview_rigor: deep`), VÀ bày sẵn
-  menu bước kế mỗi lượt (`action_prompting: proactive`). Bạn muốn kiểu nào? *(Muốn tách riêng — vd chữ ngắn
-  gọn nhưng vẫn vặn kỹ? Cứ nói, hoặc chỉnh từng cái sau.)*"
+  menu bước kế mỗi lượt (`action_prompting: proactive`). Bạn muốn kiểu nào? *(Hoặc, nếu bạn chỉ phác thảo và
+  muốn tôi nhẹ hơn Cân bằng — ít vặn, ít gợi ý — cứ nói "nhẹ"; còn nếu muốn tách riêng hai cái, vd chữ ngắn
+  gọn nhưng vẫn vặn kỹ, thì nói, hoặc chỉnh từng cái sau.)*"
 
 Map: **Balanced / Cân bằng** → leave both at `standard` (skip the write); **Push-hard / Đào sâu** → persist
-both via the Phase-1 write-CLI:
+both via the Phase-1 write-CLI; **"light" / "nhẹ"** (the relax opt-in surfaced by the hint) → persist both
+at the relaxed end:
 
 ```bash
+# Push-hard:
 ./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root> \
   --set interview_rigor=deep --set action_prompting=proactive   # load→merge→save, preserves other keys
+# Light (relax both):
+./.claude/skills/.venv/bin/python3 scripts/preferences.py --root <root> \
+  --set interview_rigor=light --set action_prompting=minimal
 ```
 
 For the split case, set either knob alone — e.g. concise-but-rigorous is `--set interview_rigor=deep` only;
-quieter next-step prompts is `--set action_prompting=minimal` only.
+quieter next-step prompts is `--set action_prompting=minimal` only. The end-of-session forcing-function is
+the *evidence-driven* relax path (it may propose `light`/`minimal` after seeing the PO wave off probing);
+this init hint is the *upfront* relax opt-in for a PO who already knows they're only sketching.
 
 Per `GATE-NEVER-ASSUME`: defaults are neutral `standard`, so if the PO skips the question, default to
 `standard` and **say so** — never silently assume a strict posture. Never re-ask once set (read
