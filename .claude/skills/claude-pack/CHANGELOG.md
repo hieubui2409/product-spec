@@ -18,8 +18,18 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 Backlog C/D/E ships: product-spec gains `--apply-critique` / `--viz audit` (ascii·md·html) /
 `--summary --audience` / `--discover` / the `goal_without_metric` validate check / `_hashable`
 consolidation; product-spec-critique gains strengthened assumption-rigor lens prompts; the bundle
-gains the E5 skill-version release gate + cross-skill CI. Skill versions this release:
+gains the E5 skill-version release gate + cross-skill CI. **Also finalizes the
+`agent-naming-conventions` rename** (skill / sub-agents / hook). Skill versions this release:
 product-spec **2.1.0**, product-spec-critique **1.1.0**, claude-pack **0.2.0**.
+
+### Changed — naming conventions (`agent-naming-conventions`)
+- **Skill renamed `spec-critique` → `product-spec-critique`** — invoke as `cleanmatic:product-spec-critique`
+  now. `pack.manifest.yaml` skill entry + all bundle references updated.
+- **6 lens/consolidator sub-agents renamed to actor-noun** (`.claude/agents/`):
+  `spec-critique-product`→`product-critic`, `-tech`→`tech-critic`, `-market`→`market-critic`,
+  `-craft`→`craft-critic`, `-consolidate`→`critique-consolidator`, `-humanize`→`critique-humanizer`.
+- **Stop-hook renamed** `spec_critique_nudge.py` → `product_spec_critique_nudge.py`.
+- Untracked the ck-managed `release-manifest.json` (regenerated locally; not repo source).
 
 ### Added
 - **Skill-version release gate (E5)** — `scripts/verify_skill_versions.py` asserts each skill's nested
@@ -34,6 +44,8 @@ product-spec **2.1.0**, product-spec-critique **1.1.0**, claude-pack **0.2.0**.
 - Bundle now ships product-spec's new `--apply-critique` / `--viz audit` / `--summary --audience` /
   `--discover` surfaces + `goal_without_metric` validate check, and critique's strengthened
   assumption-rigor lens prompts (see each skill's CHANGELOG).
+- **Migration:** if you invoked the old `/spec-critique`, use `/product-spec-critique`; if you referenced
+  the old sub-agent or hook filenames directly, update to the new names above.
 
 ## [1.1.0] — 2026-06-03
 

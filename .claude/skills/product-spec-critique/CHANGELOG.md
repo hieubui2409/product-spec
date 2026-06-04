@@ -13,6 +13,15 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 ## [1.1.0] — 2026-06-04
 
 ### Changed
+- **Renamed the skill `spec-critique` → `product-spec-critique`** (the `agent-naming-conventions` work).
+  Invoke it as `cleanmatic:product-spec-critique` / `/product-spec-critique` now. The skill directory,
+  `SKILL.md`, the `pack.manifest.yaml` entry, and the bundle changelog references were all updated.
+- **Renamed the 6 lens/consolidator sub-agents to an actor-noun convention:**
+  `spec-critique-product` → **`product-critic`**, `spec-critique-tech` → **`tech-critic`**,
+  `spec-critique-market` → **`market-critic`**, `spec-critique-craft` → **`craft-critic`**,
+  `spec-critique-consolidate` → **`critique-consolidator`**, `spec-critique-humanize` →
+  **`critique-humanizer`** (in `.claude/agents/`; all cross-references updated).
+- **Renamed the Stop-hook** `spec_critique_nudge.py` → **`product_spec_critique_nudge.py`**.
 - **Assumption-rigor in existing lenses (C11)** — the product **Riskiest-assumption** and tech
   **Hidden-dependencies / assume-success** lens prompts now require an explicit
   "unproven belief X → if wrong, Y happens" consequence clause (name the assumption AND its failure),
@@ -21,7 +30,7 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [1.0.0]
 
-Current shipped baseline. History below reconstructed from `feat(spec-critique)`/`fix(spec-critique)`
+Prior shipped baseline. History below reconstructed from `feat(spec-critique)`/`fix(spec-critique)`
 commit subjects traced through the `spec-critique` → `product-spec-critique` rename (`git log --follow`),
 not a raw path log.
 
@@ -38,5 +47,4 @@ not a raw path log.
 ### Changed
 - Bilingual-output hardening: render `lang: en` reports fully in English (Vietnamese-leak fix); a
   concrete "sustained profanity" floor so the English level-9 outscales level 8.
-- Renamed the skill `spec-critique` → `product-spec-critique`; sub-agents renamed to the actor-noun
-  convention; recorded the lens-per-language design decision in `voice-and-tone`.
+- Recorded the lens-per-language design decision in `voice-and-tone`.
