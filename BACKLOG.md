@@ -19,6 +19,12 @@ Status legend: `[ ]` todo · `[~]` in-progress/partial · `[x]` done · `[next]`
 
 ---
 
+## NEW (2026-06-06, ungroomed)
+
+- [ ] **N1 — Repeat-offense finding-level fingerprint (`product-spec-critique`).** Priority: low/med (enhancement, not a bug). Repeat-offense + inherit hiện match theo **NODE** (`critique_inherit._node_of` cắt `:line`) → bền với dịch dòng nhưng **thô**: (a) không phân biệt 2 finding khác nhau trên cùng node (vd PRD-FUND 4 blocker → gộp thành "node có repeat"); (b) key index `<evidence_id>@<ts>` (`PRD-FUND:101@ts`) dính số dòng nên cùng 1 finding logic sau dịch dòng (`:103`) tạo key mới, store không dedup ở mức finding-logic. **Fix:** thêm `finding_fingerprint` = hash chuẩn hóa của (node + nội dung critique/why, **bỏ số dòng**) vào row index → repeat-offense chính xác tới từng finding + miễn nhiễm dịch dòng; `:line` chỉ còn để trích dẫn. Phạm vi: `critique_cache.upsert_findings` + đường đọc `build_inherited_context`/repeat + test. *Bối cảnh:* phát hiện khi điều tra bug index rỗng (đã fix riêng: `critique_inherit.py:188` đọc nhầm `evidence_id` thay vì `evidence`).
+
+---
+
 ## A. Bridge product-spec ↔ claude-pack — CLOSED (premise was flawed)
 
 > **2026-06-04 (PO critique):** Group A conflated two different jobs — *distributing a tool* (claude-pack's

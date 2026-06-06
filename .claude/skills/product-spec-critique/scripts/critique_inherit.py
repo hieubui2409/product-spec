@@ -185,7 +185,10 @@ def index_report_findings(root, report_ts: str, scope: str,
     repeat-offense. LOSSY by design — only blockers + DEC-worthy are indexed."""
     rows: List[Dict[str, Any]] = []
     for f in findings:
-        eid = f.get("evidence_id")
+        # Lens-agent findings carry the citation under `evidence` (`<id>:<line>`);
+        # the index's internal key is `evidence_id`. Accept either so a raw lens
+        # array indexes correctly, not just a pre-renamed one.
+        eid = f.get("evidence_id") or f.get("evidence")
         if not eid:
             continue
         if f.get("severity") != "blocker" and not f.get("dec_worthy"):

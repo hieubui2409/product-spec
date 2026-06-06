@@ -88,6 +88,22 @@ def test_inherited_blockers_only_minor_dropped(tmp_path):
     assert got[0]["severity"] == "blocker"
 
 
+def test_index_accepts_raw_lens_schema_keys(tmp_path):
+    # Lens agents emit findings keyed by `evidence` (+ `why_it_dies`), not the
+    # index-internal `evidence_id`/`why`. The indexer must accept the raw lens
+    # shape, else a real critique run indexes nothing (inherit/repeat go blind).
+    proj = make_proj(tmp_path)
+    ci.index_report_findings(proj, "260603-0009", "PRD-AUTH",
+                             [{"lens": "product", "evidence": "PRD-AUTH:10",
+                               "severity": "blocker", "why_it_dies": "core value miss",
+                               "fix": "do X"}])
+    got = ci.build_inherited_context(proj, _graph(), "PRD-AUTH-E1")
+    assert len(got) == 1
+    assert got[0]["evidence_id"] == "PRD-AUTH:10"
+    assert got[0]["severity"] == "blocker"
+    assert got[0]["why"] == "core value miss"  # why_it_dies mapped onto why
+
+
 def test_inherited_dec_worthy_minor_kept(tmp_path):
     proj = make_proj(tmp_path)
     ci.index_report_findings(proj, "260603-0001", "PRD-AUTH",
