@@ -48,6 +48,25 @@ def test_findings_index_different_ts_coexist(tmp_path):
     assert "PRD-AUTH@260603-0002" in idx
 
 
+def test_findings_index_persists_finding_fingerprint(tmp_path):
+    # N1: the new additive field round-trips through upsert → load.
+    proj = make_proj(tmp_path)
+    cc.upsert_findings(proj, "260603-0001", "all",
+                       [{**_finding("PRD-AUTH:3"),
+                         "finding_fingerprint": "abc123abc123abc1"}])
+    entry = cc.load_index(proj)["PRD-AUTH:3@260603-0001"]
+    assert entry["finding_fingerprint"] == "abc123abc123abc1"
+
+
+def test_findings_index_legacy_row_tolerant(tmp_path):
+    # Crit 4: a legacy finding with no finding_fingerprint key persists + loads
+    # with the field defaulted to None (no KeyError on the missing key).
+    proj = make_proj(tmp_path)
+    cc.upsert_findings(proj, "260603-0001", "all", [_finding("PRD-AUTH:3")])
+    entry = cc.load_index(proj)["PRD-AUTH:3@260603-0001"]
+    assert entry.get("finding_fingerprint") is None
+
+
 def test_findings_index_corrupt_returns_empty(tmp_path):
     proj = make_proj(tmp_path)
     mem = proj / "docs" / "product" / ".memory"

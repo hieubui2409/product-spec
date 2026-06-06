@@ -3,6 +3,7 @@
     "PRD-FUND-E2-S2:36@20260606T042002Z": {
       "dec_worthy": false,
       "evidence_id": "PRD-FUND-E2-S2:36",
+      "finding_fingerprint": "ac808baf537c7e3e",
       "fix": "Thêm AC phân nhánh tường minh cho edge case vượt số dư trước khi story vào in-progress; PO chọn 1 trong 2 hướng trước khi code.",
       "report_ts": "20260606T042002Z",
       "scope": "PRD-FUND",
@@ -12,6 +13,7 @@
     "PRD-FUND-E3-S1:26@20260606T042002Z": {
       "dec_worthy": false,
       "evidence_id": "PRD-FUND-E3-S1:26",
+      "finding_fingerprint": "01f3e06cf01454d0",
       "fix": "Thêm story/AC 'trạng thái đóng quỹ theo kỳ' (ai đủ/ai thiếu) gắn BRD-G2; tối thiểu 1 AC cho roommate thấy nghĩa vụ cá nhân, không chỉ số dư tổng.",
       "report_ts": "20260606T042002Z",
       "scope": "PRD-FUND",
@@ -21,6 +23,7 @@
     "PRD-FUND-E3-S1:31@20260606T042002Z": {
       "dec_worthy": false,
       "evidence_id": "PRD-FUND-E3-S1:31",
+      "finding_fingerprint": "ad52e5a56f6036a1",
       "fix": "Tách AC2: (a) fund-keeper vừa lưu quay lại thấy số dư đã cộng/trừ (local, đủ MVP); (b) ghi rõ cross-device cho thành viên khác là pull-to-refresh/polling, không phải push realtime, hẹn đợt sau.",
       "report_ts": "20260606T042002Z",
       "scope": "PRD-FUND",
@@ -30,6 +33,7 @@
     "PRD-FUND:101@20260606T042002Z": {
       "dec_worthy": false,
       "evidence_id": "PRD-FUND:101",
+      "finding_fingerprint": "add7e5481df2251c",
       "fix": "Đưa 'thành viên tự ghi/đối chiếu khoản nộp của mình' vào MUST của MVP, hoặc PO ký nhận MVP chấp nhận minh bạch một chiều và dời core-value sang đợt 2.",
       "report_ts": "20260606T042002Z",
       "scope": "PRD-FUND",
@@ -39,6 +43,7 @@
     "VISION:46@20260606T042002Z": {
       "dec_worthy": false,
       "evidence_id": "VISION:46",
+      "finding_fingerprint": "df0355ecce175bc2",
       "fix": "Thêm Revenue Hypothesis vào BRD (placeholder cũng được): ≥1 mô hình giả thuyết (freemium giới hạn quỹ/nhóm, subscription fund-keeper, transaction fee VietQR). Không cần chốt ngay nhưng phải đặt câu hỏi + ghi lại.",
       "report_ts": "20260606T042002Z",
       "scope": "PRD-FUND",

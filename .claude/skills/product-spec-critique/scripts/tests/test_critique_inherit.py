@@ -213,3 +213,156 @@ def test_index_report_findings_round_trip(tmp_path):
     # blocker stored; minor (non-DEC) NOT stored (index is lossy: blockers + DEC).
     assert "PRD-AUTH:1@260603-0001" in idx
     assert "PRD-AUTH-E1:2@260603-0001" not in idx
+
+
+# ---------------------------------------------------------------------------
+# N1 — finding-level fingerprint (spec-span anchor): normalize + pure hash
+# ---------------------------------------------------------------------------
+
+def test_normalize_line_trims_case_and_markup():
+    assert ci._normalize_line("  ## Hello   World ") == "hello world"
+    assert ci._normalize_line("- foo BAR") == "foo bar"
+    assert ci._normalize_line("owner: Jane Doe") == "owner: jane doe"
+
+
+def test_normalize_line_structural_only_is_empty():
+    # B1: structural-only lines (no alphanumeric) collapse to "" → no usable anchor.
+    assert ci._normalize_line("---") == ""
+    assert ci._normalize_line("***") == ""
+    assert ci._normalize_line("___") == ""
+    assert ci._normalize_line("   ") == ""
+    assert ci._normalize_line(">") == ""
+
+
+def test_normalize_line_keeps_numeric_content_no_overstrip():
+    # Leading content digits / signs are NOT list markers → kept verbatim, so
+    # distinct lines can't collide (the over-strip false-merge the reviewer caught).
+    assert ci._normalize_line("5xx errors") == "5xx errors"
+    assert ci._normalize_line("+10% growth") == "+10% growth"
+    assert ci._normalize_line("-5 points") == "-5 points"
+    assert ci._normalize_line("2026-05-28") == "2026-05-28"
+
+
+def test_fingerprint_pure_stable_and_discriminating():
+    base = ci._fingerprint("PRD-AUTH", "blocker", "owner: Jane Doe")
+    assert base and base == ci._fingerprint("PRD-AUTH", "blocker", "  owner:  JANE doe ")
+    assert base != ci._fingerprint("PRD-AUTH", "major", "owner: Jane Doe")      # 3b severity
+    assert base != ci._fingerprint("PRD-OTHER", "blocker", "owner: Jane Doe")   # node
+    assert base != ci._fingerprint("PRD-AUTH", "blocker", "a different line")   # text (crit 3)
+
+
+def test_fingerprint_numbered_siblings_distinct():
+    # "3. X" vs "7. X": distinct numbered-list siblings with identical prose must
+    # NOT merge (leading list number is kept as content, not stripped).
+    a = ci._fingerprint("PRD-AUTH", "blocker", "3. Xem so du")
+    b = ci._fingerprint("PRD-AUTH", "blocker", "7. Xem so du")
+    assert a and b and a != b
+
+
+def test_fingerprint_pure_empty_normalize_is_none():
+    # B1: hashing "" would collide distinct findings → return None instead.
+    assert ci._fingerprint("PRD-AUTH", "blocker", "---") is None
+    assert ci._fingerprint("PRD-AUTH", "blocker", "") is None
+
+
+# ---------------------------------------------------------------------------
+# N1 — line resolver (cited spec-line text from the live source)
+# ---------------------------------------------------------------------------
+
+def test_resolve_line_text_matches_source(tmp_path):
+    proj = make_proj(tmp_path)
+    g = _spec_graph().build_graph(proj)
+    # PRD-AUTH → prds/auth.md; compare resolver vs a direct read (no hard-coded string).
+    src = (proj / "docs" / "product" / "prds" / "auth.md").read_text(
+        encoding="utf-8").splitlines()
+    assert ci._resolve_line_text(proj, g, "PRD-AUTH:7") == src[6]
+
+
+def test_resolve_line_text_unresolvable_is_none(tmp_path):
+    proj = make_proj(tmp_path)
+    g = _spec_graph().build_graph(proj)
+    assert ci._resolve_line_text(proj, g, "PRD-AUTH:99999") is None  # out of range
+    assert ci._resolve_line_text(proj, g, "NOPE-NODE:1") is None     # unknown node
+    assert ci._resolve_line_text(proj, g, "PRD-AUTH") is None        # no :line
+    assert ci._resolve_line_text(proj, g, "PRD-AUTH:x") is None      # non-int line
+
+
+# ---------------------------------------------------------------------------
+# N1 — write path attaches finding_fingerprint
+# ---------------------------------------------------------------------------
+
+def test_index_writes_fingerprint_for_content_line(tmp_path):
+    proj = make_proj(tmp_path)
+    # PRD-AUTH:7 = "owner: Jane Doe" (real content line) → non-null fingerprint.
+    ci.index_report_findings(proj, "260603-0001", "PRD-AUTH", [_blocker("PRD-AUTH:7")])
+    entry = critique_cache.load_index(proj)["PRD-AUTH:7@260603-0001"]
+    assert entry.get("finding_fingerprint")
+
+
+def test_index_goal_node_structural_line_fingerprint_none(tmp_path):
+    # B2: BRD-G1 → brd.md line 1 = "---" → normalized empty → fingerprint None
+    # (field present, value None) → eid fallback. No crash on the goal-node class.
+    proj = make_proj(tmp_path)
+    ci.index_report_findings(proj, "260603-0001", "all", [_blocker("BRD-G1:1")])
+    entry = critique_cache.load_index(proj)["BRD-G1:1@260603-0001"]
+    assert "finding_fingerprint" in entry and entry["finding_fingerprint"] is None
+
+
+# ---------------------------------------------------------------------------
+# N1 — read-path dedup by fingerprint (line-drift immunity + no false-merge)
+# ---------------------------------------------------------------------------
+
+def _row(eid, fp, severity="blocker"):
+    return {"evidence_id": eid, "severity": severity, "why": "w", "fix": "f",
+            "dec_worthy": False, "finding_fingerprint": fp}
+
+
+def test_index_rows_dedup_same_fingerprint_line_drift(tmp_path):
+    # Crit 1: same logical finding re-critiqued after a pure line shift (:5 → :7,
+    # identical cited text → identical fp) collapses to ONE row, latest ts/eid kept.
+    proj = make_proj(tmp_path)
+    fp = "deadbeefdeadbeef"
+    critique_cache.upsert_findings(proj, "260603-0001", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:5", fp)])
+    critique_cache.upsert_findings(proj, "260603-0002", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:7", fp)])
+    same = [r for r in ci._index_rows(proj) if r.get("finding_fingerprint") == fp]
+    assert len(same) == 1
+    assert same[0]["evidence_id"] == "PRD-AUTH-E1-S1:7"  # latest ts wins
+
+
+def test_index_rows_distinct_fingerprints_kept(tmp_path):
+    # Crit 2: two distinct findings on the same node (different fp) stay separate.
+    proj = make_proj(tmp_path)
+    critique_cache.upsert_findings(proj, "260603-0001", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:5", "aaaa1111aaaa1111"),
+                                    _row("PRD-AUTH-E1-S1:9", "bbbb2222bbbb2222")])
+    s1 = [r for r in ci._index_rows(proj)
+          if ci._node_of(r["evidence_id"]) == "PRD-AUTH-E1-S1"]
+    assert len(s1) == 2
+
+
+def test_index_rows_none_fingerprint_does_not_merge(tmp_path):
+    # B1 guard: rows with fingerprint None must key by eid, NOT collapse to one
+    # (a naive `key = fp` with fp=None would merge distinct findings).
+    proj = make_proj(tmp_path)
+    critique_cache.upsert_findings(proj, "260603-0001", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:1", None),
+                                    _row("PRD-AUTH-E1-S1:2", None)])
+    s1 = [r for r in ci._index_rows(proj)
+          if ci._node_of(r["evidence_id"]) == "PRD-AUTH-E1-S1"]
+    assert len(s1) == 2
+
+
+def test_rollup_blocker_count_not_inflated_by_line_drift(tmp_path):
+    # Crit 1 end-to-end: one logical blocker across two re-critiques (same fp,
+    # drifted line) counts ONCE in the rollup, not twice.
+    proj = make_proj(tmp_path)
+    fp = "cafef00dcafef00d"
+    critique_cache.upsert_findings(proj, "260603-0001", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:5", fp)])
+    critique_cache.upsert_findings(proj, "260603-0002", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:7", fp)])
+    roll = ci.build_descendant_rollup(proj, _graph(), "PRD-AUTH-E1")
+    bc = {b["id"]: b["blocker_count"] for b in roll["blocker_children"]}
+    assert bc["PRD-AUTH-E1-S1"] == 1

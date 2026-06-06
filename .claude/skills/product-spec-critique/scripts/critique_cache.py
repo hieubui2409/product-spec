@@ -44,7 +44,10 @@ def _index_path(root):
     return _memory_dir(root) / "critique-findings-index.json"
 
 
-_INDEX_FIELDS = ("severity", "why", "fix", "dec_worthy")
+# `finding_fingerprint` (N1): stable per-finding anchor for dedup, computed at
+# write time by critique_inherit. May be None (unresolvable/structural cited line)
+# → readers fall back to the evidence_id key. Legacy rows lack it → `.get` → None.
+_INDEX_FIELDS = ("severity", "why", "fix", "dec_worthy", "finding_fingerprint")
 
 
 def load_index(root) -> Dict[str, Dict[str, Any]]:

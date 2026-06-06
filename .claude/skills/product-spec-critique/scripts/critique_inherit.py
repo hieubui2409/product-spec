@@ -14,9 +14,11 @@ over the index, deterministic, no wall-clock. The keys sit at the top of the bun
 the lenses receive but the lens prompt is told to ignore them (consolidator-only).
 """
 
+import hashlib
+import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 import critique_cache
 
@@ -43,6 +45,77 @@ def _node_of(evidence_id: str) -> str:
     return str(evidence_id).split(":", 1)[0]
 
 
+# ---------------------------------------------------------------------------
+# finding-level fingerprint (spec-span anchor) — stable per-finding identity
+#
+# A finding's identity is anchored to the TEXT of the spec line it cites, NOT to
+# the LLM's `why` prose (paraphrase-unstable) nor the line NUMBER (drifts when the
+# spec reflows). Inserting a paragraph above moves `:5`→`:7` but the line's text is
+# unchanged → same fingerprint → recognized as the same finding. Editing the cited
+# text → new fingerprint, which is correct (the criticised content changed).
+# ---------------------------------------------------------------------------
+
+_MARKER_RE = re.compile(r'^(?:#{1,6}|>+|[-*+])\s+')  # leading md heading/quote/bullet marker
+
+
+def _normalize_line(text: str) -> str:
+    """Light deterministic normalize: drop ONE leading markup marker (heading `#`,
+    blockquote `>`, bullet `-*+` — each only when whitespace-followed, so it never
+    eats content like `5xx`, `+10%`, `-5`), collapse internal whitespace, trim,
+    lowercase. A structural-only line (no alphanumeric — `---`, `***`, `___`, bare
+    `>`) collapses to '' → 'no usable anchor'. Leading list NUMBERS are deliberately
+    kept as content so two siblings (`3. X` vs `7. X`) do NOT collide."""
+    s = (text or "").strip()
+    if not re.search(r'[^\W_]', s):  # no alphanumeric → structural-only → no anchor
+        return ""
+    return re.sub(r'\s+', ' ', _MARKER_RE.sub('', s)).strip().lower()
+
+
+def _fingerprint(node: str, severity, line_text) -> Optional[str]:
+    """Pure fingerprint: sha256(node + severity + normalized text)[:16], or None when
+    the normalized text is empty. Hashing '' would COLLIDE distinct findings on the
+    same node+severity (the bug this feature removes) → None instead, so the caller
+    falls back to the evidence_id key."""
+    norm = _normalize_line(line_text)
+    if not norm:
+        return None
+    digest = hashlib.sha256(f"{node}\0{severity or ''}\0{norm}".encode("utf-8"))
+    return digest.hexdigest()[:16]
+
+
+def _resolve_line_text(root, graph, evidence_id) -> Optional[str]:
+    """The RAW text of the spec line an evidence-ID (`<node>:<line>`) cites, or None
+    when unresolvable (missing `:line`, non-int line, unknown node, node without a
+    `file`, unreadable file, or out-of-range line). Caller degrades to eid keying."""
+    if not evidence_id or ":" not in str(evidence_id):
+        return None
+    node, _, line_s = str(evidence_id).partition(":")
+    try:
+        line = int(line_s)
+    except ValueError:
+        return None
+    n = {x["id"]: x for x in graph.get("nodes", [])}.get(node)
+    if not n or not n.get("file"):
+        return None
+    try:
+        lines = (Path(root) / "docs" / "product" / n["file"]).read_text(
+            encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    return lines[line - 1] if 1 <= line <= len(lines) else None
+
+
+def _finding_fingerprint(root, graph, evidence_id, severity) -> Optional[str]:
+    """Fingerprint for a finding's cited spec span, or None ⇒ caller keys by
+    evidence_id. None covers: unresolvable citation, an empty/structural line, and
+    BRD-goal nodes (whose `file` is brd.md + content lives in frontmatter, so a cited
+    structural line normalizes empty) — all safe degrades, no false merge."""
+    text = _resolve_line_text(root, graph, evidence_id)
+    if text is None:
+        return None
+    return _fingerprint(_node_of(evidence_id), severity, text)
+
+
 def _live_ids(graph: Dict[str, Any]) -> Set[str]:
     return {n["id"] for n in graph.get("nodes", [])}
 
@@ -62,15 +135,21 @@ def _classify(evidence_id: str, scope: str, ancestors_set: Set[str],
 
 
 def _index_rows(root) -> List[Dict[str, Any]]:
-    """Index entries deduped per evidence-ID, keeping the most-recent report_ts."""
+    """Index entries deduped per FINDING, keeping the most-recent report_ts.
+
+    Dedup key = `finding_fingerprint or evidence_id`: same logical finding across
+    re-critiques (same fingerprint, drifted line) collapses to one row; a None/legacy
+    fingerprint falls back to the evidence_id key (today's behaviour) — distinct
+    None-fingerprint findings keep their distinct eids and do NOT merge."""
     best: Dict[str, Dict[str, Any]] = {}
     for entry in critique_cache.load_index(root).values():
         eid = entry.get("evidence_id")
         if not eid:
             continue
-        cur = best.get(eid)
+        key = entry.get("finding_fingerprint") or eid
+        cur = best.get(key)
         if cur is None or str(entry.get("report_ts") or "") >= str(cur.get("report_ts") or ""):
-            best[eid] = entry
+            best[key] = entry
     return list(best.values())
 
 
@@ -184,6 +263,8 @@ def index_report_findings(root, report_ts: str, scope: str,
     blockers + DEC-worthy to the findings-index for the next critique's inherit /
     repeat-offense. LOSSY by design — only blockers + DEC-worthy are indexed."""
     rows: List[Dict[str, Any]] = []
+    graph = None  # built lazily on the first indexable finding (critique is read-only,
+    #               so the spec is byte-stable across this single run → safe to resolve)
     for f in findings:
         # Lens-agent findings carry the citation under `evidence` (`<id>:<line>`);
         # the index's internal key is `evidence_id`. Accept either so a raw lens
@@ -193,11 +274,14 @@ def index_report_findings(root, report_ts: str, scope: str,
             continue
         if f.get("severity") != "blocker" and not f.get("dec_worthy"):
             continue
+        if graph is None:
+            graph = _import_spec_graph().build_graph(Path(root))
         rows.append({
             "evidence_id": eid,
             "severity": f.get("severity"),
             "why": f.get("why") or f.get("why_it_dies"),
             "fix": f.get("fix"),
             "dec_worthy": bool(f.get("dec_worthy")),
+            "finding_fingerprint": _finding_fingerprint(root, graph, eid, f.get("severity")),
         })
     return critique_cache.upsert_findings(root, report_ts, scope, rows)
