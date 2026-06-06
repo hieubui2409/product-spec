@@ -72,7 +72,7 @@
   keywords: ["ideation", "tradeoffs", "debate", "decisions"]
 - name: "chrome-profile"
   path: "chrome-profile/SKILL.md"
-  description: "Target a real Google Chrome profile for browser automation through Chrome DevTools MCP or claude-in-chrome. Provides a chrome-profile CLI, profile discovery, bridge diagnostics, setup playbooks, and the URL-anchor workflow for selecting the correct profile tab."
+  description: "Target a real Google Chrome profile for browser automation through Chrome DevTools MCP. Provides the chrome-profile CLI, profile discovery, live DevTools probing guidance, setup playbooks, and URL-anchor tab selection."
   category: "dev-tools"
   has_scripts: true
   has_references: true
@@ -481,6 +481,14 @@
   has_references: true
   argument_hint: "[timeframe] [--compare] [--team] [--format html|md]"
   keywords: ["retrospective", "sprint", "metrics", "review"]
+- name: "review-pr"
+  path: "review-pr/SKILL.md"
+  description: "Review a GitHub pull request thoroughly — analyze diff for correctness, security, breaking changes, code quality, and AI-slop patterns. Supports --fix to auto-remediate findings and --reply to post the review back to GitHub via the gh CLI as a formal review."
+  category: "utilities"
+  has_scripts: false
+  has_references: true
+  argument_hint: "<PR number or URL> [--fix] [--reply]"
+  keywords: ["pr", "pull request", "review", "github", "gh", "fix", "reply", "anti-slop", "ai-slop"]
 - name: "scout"
   path: "scout/SKILL.md"
   description: "Fast codebase scouting using parallel agents. Use for file discovery, task context gathering, quick searches across directories. Supports internal (Explore) and external (Gemini/OpenCode) agents."
@@ -571,7 +579,7 @@
   keywords: ["agents", "parallel", "multi-session", "collaboration"]
 - name: "tech-graph"
   path: "tech-graph/SKILL.md"
-  description: "Generate production-quality SVG+PNG technical diagrams — architecture, data flow, flowchart, sequence, agent/memory, or concept maps — across 7 visual styles. Use when user wants \"generate diagram\", \"draw diagram\", \"visualize\", \"architecture diagram\", \"flowchart\", or any system/flow they want illustrated. Pairs with /ck:preview --diagram for visual self-review and /ck:mermaidjs-v11 for inline-doc diagrams; this skill is the publish-grade output mode."
+  description: "Generate production-quality SVG+PNG technical diagrams — architecture, data flow, flowchart, sequence, agent/memory, or concept maps — across 8 visual styles. Use when user wants \"generate diagram\", \"draw diagram\", \"visualize\", \"architecture diagram\", \"flowchart\", or any system/flow they want illustrated. Pairs with /ck:preview --diagram for visual self-review and /ck:mermaidjs-v11 for inline-doc diagrams; this skill is the publish-grade output mode."
   category: "dev-tools"
   has_scripts: true
   has_references: true
@@ -618,11 +626,11 @@
   keywords: ["MCP", "tools", "execute", "discovery", "gemini", "mcp-client"]
 - name: "watzup"
   path: "watzup/SKILL.md"
-  description: "Generate short handoff reports from Git branches, remote refs, worktrees, and unfinished plans. Use when the user asks what's in flight, wants progress/next steps, is in a fresh worktree or detached checkout, or needs end-of-session status."
+  description: "Generate short handoff reports from Git branches, remote refs, worktrees, unfinished plans, and roadmap docs. Surfaces priority-ranked next steps with checkbox progress and rationale. Use when the user asks what's in flight, wants progress/next steps, is in a fresh worktree or detached checkout, or needs end-of-session status."
   category: "utilities"
   has_scripts: true
   has_references: false
-  keywords: ["session", "wrap-up", "changes", "review", "worktree", "branches", "plans"]
+  keywords: ["session", "wrap-up", "changes", "review", "worktree", "branches", "plans", "roadmap", "priority", "next-steps"]
 - name: "web-design-guidelines"
   path: "web-design-guidelines/SKILL.md"
   description: "Review UI code for Web Interface Guidelines compliance. Use when asked to \"review my UI\", \"check accessibility\", \"audit design\", \"review UX\", or \"check my site against best practices\"."
