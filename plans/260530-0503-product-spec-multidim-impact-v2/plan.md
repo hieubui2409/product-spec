@@ -1,7 +1,7 @@
 ---
 title: "product-spec v2.0.0 — multi-dim impact (risk/time/competition) + consistency engine, Workflow-orchestrated"
 description: "Extend shipped product-spec (v1.1.0->2.0.0): finish RISK, add TIME (target_date + depends_on w/ cycle detection) + COMPETITION (parity matrix), impact-propagation engine, ASCII->HTML-native default. Executed via Workflow-tool orchestrator gated by goal.md."
-status: pending
+status: completed
 priority: P2
 branch: "master"
 tags: []
@@ -30,13 +30,13 @@ Extend the **shipped** `cleanmatic:product-spec` skill (`v1.1.0` → **`2.0.0`**
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Workflow Orchestration Harness](./phase-01-workflow-orchestration-harness.md) | Pending |
-| 2 | [Risk Hardening](./phase-02-risk-hardening.md) | Pending |
-| 3 | [Time and Dependencies](./phase-03-time-and-dependencies.md) | Pending |
-| 4 | [Competition](./phase-04-competition.md) | Pending |
-| 5 | [Impact Engine and Migration](./phase-05-impact-engine-and-migration.md) | Pending |
-| 6 | [ASCII Downgrade to HTML-native](./phase-06-ascii-downgrade-to-html-native.md) | Pending |
-| 7 | [Docs and 2.0.0 Release](./phase-07-docs-and-2-0-0-release.md) | Pending |
+| 1 | [Workflow Orchestration Harness](./phase-01-workflow-orchestration-harness.md) | Completed |
+| 2 | [Risk Hardening](./phase-02-risk-hardening.md) | Completed |
+| 3 | [Time and Dependencies](./phase-03-time-and-dependencies.md) | Completed |
+| 4 | [Competition](./phase-04-competition.md) | Completed |
+| 5 | [Impact Engine and Migration](./phase-05-impact-engine-and-migration.md) | Completed |
+| 6 | [ASCII Downgrade to HTML-native](./phase-06-ascii-downgrade-to-html-native.md) | Completed |
+| 7 | [Docs and 2.0.0 Release](./phase-07-docs-and-2-0-0-release.md) | Completed |
 
 ## Dependencies
 

@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Script: cache+state primitives"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: []

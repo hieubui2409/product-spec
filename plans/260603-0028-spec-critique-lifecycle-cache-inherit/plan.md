@@ -1,7 +1,7 @@
 ---
 title: "spec-critique: lifecycle caching + cross-critique inheritance (full 4-idea)"
 description: "Wire the already-built scan plumbing (snapshot/drift/prior_reports/judgment reuse) into the live critique flow + add the 4 PO-confirmed caches (findings-index, web-url+TTL, critique-state, humanized-output), cross-critique inheritance (parent→child) + descendant rollup (child→parent). Mode: --hard --tdd."
-status: pending
+status: completed
 priority: P2
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: [spec-critique, cache, inheritance, tdd]
@@ -41,12 +41,12 @@ Implements the AGREED-NOT-IMPLEMENTED brainstorm `plans/reports/spec-critique-li
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Script: cache+state primitives](./phase-01-script-cache-state-primitives.md) | Pending |
-| 2 | [Script: provenance reuse + report frontmatter](./phase-02-script-provenance-reuse-report-frontmatter.md) | Pending |
-| 3 | [Script: inherited_context + descendant rollup](./phase-03-script-inherited-context-descendant-rollup.md) | Pending |
-| 4 | [Orchestration references + voice floor](./phase-04-orchestration-references-voice-floor.md) | Pending |
-| 5 | [E2E fixtures + evals](./phase-05-e2e-fixtures-evals.md) | Pending |
-| 6 | [Docs sync + claude-pack release](./phase-06-docs-sync-claude-pack-release.md) | Pending |
+| 1 | [Script: cache+state primitives](./phase-01-script-cache-state-primitives.md) | Completed |
+| 2 | [Script: provenance reuse + report frontmatter](./phase-02-script-provenance-reuse-report-frontmatter.md) | Completed |
+| 3 | [Script: inherited_context + descendant rollup](./phase-03-script-inherited-context-descendant-rollup.md) | Completed |
+| 4 | [Orchestration references + voice floor](./phase-04-orchestration-references-voice-floor.md) | Completed |
+| 5 | [E2E fixtures + evals](./phase-05-e2e-fixtures-evals.md) | Completed |
+| 6 | [Docs sync + claude-pack release](./phase-06-docs-sync-claude-pack-release.md) | Completed |
 
 ## Execution order & dependencies
 

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Competition"
-status: pending
+status: completed
 priority: P2
 effort: "1.5d"
 dependencies: [3]

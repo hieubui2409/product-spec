@@ -1,7 +1,7 @@
 ---
 title: "PO Engagement Profile knobs for product-spec*"
 description: ""
-status: done
+status: completed
 priority: P2
 branch: "claude/agent-naming-conventions-cd70n"
 tags: []

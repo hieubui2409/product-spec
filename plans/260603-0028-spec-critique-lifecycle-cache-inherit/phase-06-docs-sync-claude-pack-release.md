@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Docs sync + claude-pack release"
-status: pending
+status: completed
 priority: P2
 effort: "0.5d"
 dependencies: [5]

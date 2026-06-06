@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Script: provenance reuse + report frontmatter"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [1]

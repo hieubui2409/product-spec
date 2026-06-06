@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Script: inherited_context + descendant rollup"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1, 2]

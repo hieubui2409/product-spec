@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Time and Dependencies"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [2]

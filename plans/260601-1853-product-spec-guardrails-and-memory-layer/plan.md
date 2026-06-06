@@ -1,7 +1,7 @@
 ---
 title: "product-spec: guardrails + memory layer (combined)"
 description: "Guardrails (off-topic/no-code/anti-rationalization) + references restructure (split+DRY) + memory 3-store + behavioral 3D/3E + --status. Mode: --hard --tdd, workflow-orchestratable."
-status: done
+status: completed
 priority: P1
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: [product-spec, memory, guardrails, references, tdd]

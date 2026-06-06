@@ -1,7 +1,7 @@
 ---
 title: "cleanmatic:spec-critique — brutal product-spec critique skill"
 description: "Separate consumer skill that critiques a product-spec (Vision/BRD/PRD/Epic/Story) from 4 lenses (product/tech/market/craft) via dedicated read-only sub-agents + an opus consolidator, in a fixed sarcastic Vietnamese voice (5-level), grounded in --validate findings + ancestry context + web competitor research. Output to docs/product/critique/. Opt-in post-validate drift nudge hook. Reuse-first: no re-analysis."
-status: pending
+status: completed
 priority: P2
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: [skill, product-spec, critique, agents, hook, vietnamese]
@@ -60,12 +60,12 @@ A **separate** skill (`cleanmatic:spec-critique`) that consumes the shipped `cle
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Scripts & preferences](./phase-01-scripts-preferences.md) | Pending |
-| 2 | [Critique agents](./phase-02-critique-agents.md) | Pending |
-| 3 | [Drift nudge hook](./phase-03-drift-nudge-hook.md) | Pending |
-| 4 | [Skill & references](./phase-04-skill-references.md) | Pending |
-| 5 | [Installer wiring](./phase-05-installer-wiring.md) | Pending |
-| 6 | [Docs examples evals](./phase-06-docs-examples-evals.md) | Pending |
+| 1 | [Scripts & preferences](./phase-01-scripts-preferences.md) | Completed |
+| 2 | [Critique agents](./phase-02-critique-agents.md) | Completed |
+| 3 | [Drift nudge hook](./phase-03-drift-nudge-hook.md) | Completed |
+| 4 | [Skill & references](./phase-04-skill-references.md) | Completed |
+| 5 | [Installer wiring](./phase-05-installer-wiring.md) | Completed |
+| 6 | [Docs examples evals](./phase-06-docs-examples-evals.md) | Completed |
 
 **Dependency order:** P1 → (P2, P3) ; P4 needs P1+P2 ; P5 needs P3 ; P6 needs P4. P1 first (defines the JSON bundle schema all agents consume + the last_critique.json marker the hook reads).
 

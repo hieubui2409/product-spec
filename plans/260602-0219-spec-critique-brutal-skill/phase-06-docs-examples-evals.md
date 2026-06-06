@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Docs examples evals"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [4]

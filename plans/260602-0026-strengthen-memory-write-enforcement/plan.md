@@ -1,7 +1,7 @@
 ---
 title: "product-spec: strengthen memory-write reliability (forcing-functions + opt-in hook + --reflect)"
 description: "Make memory writes (decision / 3D po-style / 3E self-corrections / judgment-cache) reliable via deterministic triggers without false hard-guarantees. Tier-0 forcing-functions + Tier-1 opt-in Stop hook + Tier-2 --reflect harvester. Mode: --hard --tdd, ultracode-orchestratable."
-status: done
+status: completed
 priority: P1
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: [product-spec, memory, hook, agents, reflect, claude-pack, tdd]

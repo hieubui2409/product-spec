@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "E2E fixtures + evals"
-status: pending
+status: completed
 priority: P1
 effort: "2d"
 dependencies: [4]

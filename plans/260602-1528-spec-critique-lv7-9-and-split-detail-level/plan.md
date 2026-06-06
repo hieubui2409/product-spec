@@ -1,7 +1,7 @@
 ---
 title: "spec-critique levels 7-9 (ông-tôi / mày-tao / chửi thề) + split detail_level"
 description: ""
-status: complete
+status: completed
 priority: P2
 branch: "feat/product-spec-guardrails-and-memory-layer"
 tags: []

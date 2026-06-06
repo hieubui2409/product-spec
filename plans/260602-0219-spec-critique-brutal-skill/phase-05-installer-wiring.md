@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Installer wiring"
-status: pending
+status: completed
 priority: P2
 effort: "0.5d"
 dependencies: [3]

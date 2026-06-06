@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "ASCII Downgrade to HTML-native"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [5]

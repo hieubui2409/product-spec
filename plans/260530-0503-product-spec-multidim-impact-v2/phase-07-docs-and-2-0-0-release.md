@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Docs and 2.0.0 Release"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [6]
