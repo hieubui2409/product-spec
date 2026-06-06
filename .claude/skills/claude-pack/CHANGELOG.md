@@ -13,6 +13,25 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-06-06
+
+product-spec-critique finding-fingerprint release. Skill versions this release: product-spec
+**2.2.0** (unchanged), product-spec-critique **1.2.0**, claude-pack **0.2.0** (unchanged).
+Additive + backward-compatible; the committed findings-index degrades gracefully for legacy rows.
+
+### Changed — product-spec-critique
+- **Finding-level fingerprint (N1).** The findings-index now carries a per-finding
+  `finding_fingerprint` = `sha256(node + severity + normalize(cited spec-line text))`, anchored to
+  the deterministic spec text a finding cites — not the LLM `why` prose (paraphrase-fragile) nor the
+  line number (drifts). Inherit + descendant-rollup dedup by fingerprint (falling back to
+  `evidence_id`), so a logical blocker re-critiqued after a line shift is counted **once** instead of
+  inflating the rollup, and two distinct findings on one node stay distinct.
+- **Back-compatible by construction.** Additive field, index key unchanged; legacy rows without the
+  field degrade to `evidence_id` keying. A structural / unresolvable cited line (`---`, a BRD-goal
+  frontmatter fence) yields a null fingerprint → `evidence_id` fallback, never a false merge. Leading
+  list numbers are kept as content so numbered siblings (`3. X` vs `7. X`) do not collide. The LLM
+  consolidator's prior-reports repeat-offense path is unchanged.
+
 ## [1.3.0] — 2026-06-04
 
 product-spec engagement-profile release. Skill versions this release: product-spec **2.2.0**,
