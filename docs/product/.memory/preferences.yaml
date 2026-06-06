@@ -1,0 +1,15 @@
+action_prompting: proactive
+critique_address_gender: m
+critique_detail_level: standard
+critique_dialect: bac
+critique_drift_threshold: 3
+critique_inherit: 'on'
+critique_inherit_depth: nearest
+critique_level: 5
+critique_profanity: strong
+critique_rollup: 'on'
+detail_level: verbose
+dismissed_reminders: []
+interview_rigor: deep
+lang: vi
+prioritization: moscow

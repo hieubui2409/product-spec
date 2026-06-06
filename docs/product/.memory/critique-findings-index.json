@@ -1,0 +1,50 @@
+{
+  "entries": {
+    "PRD-FUND-E2-S2:36@20260606T042002Z": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-FUND-E2-S2:36",
+      "fix": "Thêm AC phân nhánh tường minh cho edge case vượt số dư trước khi story vào in-progress; PO chọn 1 trong 2 hướng trước khi code.",
+      "report_ts": "20260606T042002Z",
+      "scope": "PRD-FUND",
+      "severity": "blocker",
+      "why": "Engineer phải quyết lúc code: cho âm hay block? Hai hướng → data model khác nhau (có/không cột allowed_negative). Phát hiện muộn → migration. Story không sign-off được khi thiếu edge case đã biết sẽ xảy ra."
+    },
+    "PRD-FUND-E3-S1:26@20260606T042002Z": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-FUND-E3-S1:26",
+      "fix": "Thêm story/AC 'trạng thái đóng quỹ theo kỳ' (ai đủ/ai thiếu) gắn BRD-G2; tối thiểu 1 AC cho roommate thấy nghĩa vụ cá nhân, không chỉ số dư tổng.",
+      "report_ts": "20260606T042002Z",
+      "scope": "PRD-FUND",
+      "severity": "blocker",
+      "why": "Việc roommate thật sự thuê app để làm là biết nghĩa vụ của mình + nhóm theo kỳ (must-be Kano). Thiếu nó, roommate không có lý do mở app hằng tháng → kéo sập group-retention-d30 (BRD-G2) mà chính epic này nhận."
+    },
+    "PRD-FUND-E3-S1:31@20260606T042002Z": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-FUND-E3-S1:31",
+      "fix": "Tách AC2: (a) fund-keeper vừa lưu quay lại thấy số dư đã cộng/trừ (local, đủ MVP); (b) ghi rõ cross-device cho thành viên khác là pull-to-refresh/polling, không phải push realtime, hẹn đợt sau.",
+      "report_ts": "20260606T042002Z",
+      "scope": "PRD-FUND",
+      "severity": "blocker",
+      "why": "Hiểu là realtime cross-device push → build WebSocket, vượt ngân sách bootstrap. Hiểu là local refresh → roommate phòng khác thấy số dư cũ, phá value prop minh bạch tức thì. AC không testable vì không nói 'ai thấy ngay' + 'ngay là bao lâu'."
+    },
+    "PRD-FUND:101@20260606T042002Z": {
+      "dec_worthy": false,
+      "evidence_id": "PRD-FUND:101",
+      "fix": "Đưa 'thành viên tự ghi/đối chiếu khoản nộp của mình' vào MUST của MVP, hoặc PO ký nhận MVP chấp nhận minh bạch một chiều và dời core-value sang đợt 2.",
+      "report_ts": "20260606T042002Z",
+      "scope": "PRD-FUND",
+      "severity": "blocker",
+      "why": "Core value là minh bạch cho roommate (người phải tin). Roommate chỉ đọc lại đúng cái fund-keeper gõ → niềm tin vẫn đặt vào một người; sản phẩm chỉ là Excel realtime. Nhóm thử nghiệm không thấy khác biệt đủ để bỏ Zalo+ghi tay."
+    },
+    "VISION:46@20260606T042002Z": {
+      "dec_worthy": false,
+      "evidence_id": "VISION:46",
+      "fix": "Thêm Revenue Hypothesis vào BRD (placeholder cũng được): ≥1 mô hình giả thuyết (freemium giới hạn quỹ/nhóm, subscription fund-keeper, transaction fee VietQR). Không cần chốt ngay nhưng phải đặt câu hỏi + ghi lại.",
+      "report_ts": "20260606T042002Z",
+      "scope": "PRD-FUND",
+      "severity": "blocker",
+      "why": "Free hoàn toàn với 10.000 nhóm + ≥8 GD/tháng tạo chi phí hạ tầng không cơ chế bù. Gọi vốn thiếu revenue hypothesis làm yếu luận điểm; năm 2 tích hợp VietQR không biết ưu tiên gì để monetize."
+    }
+  },
+  "version": 1
+}
