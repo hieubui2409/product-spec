@@ -1,9 +1,9 @@
 ---
 phase: 1
-title: "Failing tests (TDD red)"
-status: pending
+title: Failing tests (TDD red)
+status: completed
 priority: P2
-effort: "2h"
+effort: 2h
 dependencies: []
 ---
 

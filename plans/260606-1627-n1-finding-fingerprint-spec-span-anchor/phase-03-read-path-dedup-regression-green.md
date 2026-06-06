@@ -1,10 +1,11 @@
 ---
 phase: 3
-title: "Read-path dedup + regression green"
-status: pending
+title: Read-path dedup + regression green
+status: completed
 priority: P2
-effort: "1h"
-dependencies: [2]
+effort: 1h
+dependencies:
+  - 2
 ---
 
 # Phase 3: Read-path dedup + regression green

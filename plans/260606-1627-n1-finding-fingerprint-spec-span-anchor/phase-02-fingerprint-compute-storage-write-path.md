@@ -1,10 +1,11 @@
 ---
 phase: 2
-title: "Fingerprint compute + storage (write path)"
-status: pending
+title: Fingerprint compute + storage (write path)
+status: completed
 priority: P2
-effort: "2h"
-dependencies: [1]
+effort: 2h
+dependencies:
+  - 1
 ---
 
 # Phase 2: Fingerprint compute + storage (write path)

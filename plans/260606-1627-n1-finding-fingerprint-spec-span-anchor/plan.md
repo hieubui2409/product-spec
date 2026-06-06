@@ -1,14 +1,19 @@
 ---
-title: "N1 finding-level fingerprint (spec-span anchor)"
-description: "Anchor critique findings-index identity to cited spec-line text (+severity) so repeat/inherit/rollup dedup is per-finding and line-drift-immune"
-status: pending
+title: N1 finding-level fingerprint (spec-span anchor)
+description: >-
+  Anchor critique findings-index identity to cited spec-line text (+severity) so
+  repeat/inherit/rollup dedup is per-finding and line-drift-immune
+status: completed
 priority: P2
-branch: "master"
-tags: [product-spec-critique, cache, tdd]
+branch: master
+tags:
+  - product-spec-critique
+  - cache
+  - tdd
 blockedBy: []
 blocks: []
-created: "2026-06-06T09:31:00.262Z"
-createdBy: "ck:plan"
+created: '2026-06-06T09:31:00.262Z'
+createdBy: 'ck:plan'
 source: skill
 ---
 
@@ -54,9 +59,9 @@ Anchored to deterministic spec content — NOT LLM `why` prose (paraphrase-fragi
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | [Failing tests (TDD red)](./phase-01-failing-tests-tdd-red.md) | Pending |
-| 2 | [Fingerprint compute + storage (write path)](./phase-02-fingerprint-compute-storage-write-path.md) | Pending |
-| 3 | [Read-path dedup + regression green](./phase-03-read-path-dedup-regression-green.md) | Pending |
+| 1 | [Failing tests (TDD red)](./phase-01-failing-tests-tdd-red.md) | Completed |
+| 2 | [Fingerprint compute + storage (write path)](./phase-02-fingerprint-compute-storage-write-path.md) | Completed |
+| 3 | [Read-path dedup + regression green](./phase-03-read-path-dedup-regression-green.md) | Completed |
 
 ## Dependencies
 
