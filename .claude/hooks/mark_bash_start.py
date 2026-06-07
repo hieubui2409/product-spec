@@ -2,7 +2,7 @@
 """
 mark_bash_start.py — PreToolUse:Bash hook. Stamps a monotonic start mark for a
 skill-script Bash command so its PostToolUse counterpart (track_script_execution.py)
-can compute wall-clock `ms`. CM-local dev tooling (NOT shipped).
+can compute wall-clock `ms`. Ships in the release bundle.
 
 Only marks commands that run a .claude/skills/<skill>/scripts/<file>.(py|sh) —
 the same filter PostToolUse uses — so plain git/ls/grep never create markers.

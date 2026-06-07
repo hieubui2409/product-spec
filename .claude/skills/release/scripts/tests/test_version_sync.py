@@ -1,11 +1,11 @@
 """test_version_sync — A4 PR-time gate: each skill's SKILL.md metadata.version must
 equal its own CHANGELOG.md top released heading `## [X.Y.Z]`.
 
-Scope = ALL THREE skills. The per-skill changelog (`.claude/skills/<skill>/CHANGELOG.md`)
-is pinned to that skill's own version; the *bundle/release* history now lives in the
-repo-root `/CHANGELOG.md`, whose top heading is the bundle identity and must equal
-`version:` in `.claude/pack.manifest.yaml`. The release skill is no longer special-cased —
-its skill changelog tracks the skill version like the other two.
+Scope = every SHIPPED skill (now four — telemetry ships too). The per-skill changelog
+(`.claude/skills/<skill>/CHANGELOG.md`) is pinned to that skill's own version; the
+*bundle/release* history now lives in the repo-root `/CHANGELOG.md`, whose top heading is
+the bundle identity and must equal `version:` in `.claude/pack.manifest.yaml`. The release
+skill is no longer special-cased — its skill changelog tracks the skill version like the rest.
 
 Rides the existing `cross-skill-bug-class.yml` release leg via `@pytest.mark.bug_class`.
 Reuses verify_skill_versions' frontmatter parser + changelog helper (no fork).
@@ -23,8 +23,8 @@ from verify_skill_versions import ChangelogError, _frontmatter, changelog_top_ve
 REPO_ROOT = Path(__file__).resolve().parents[5]
 SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 
-# Every skill's CHANGELOG top == its SKILL.md version (the release skill now included).
-VERSION_SYNCED_SKILLS = ("product-spec", "product-spec-critique", "release")
+# Every shipped skill's CHANGELOG top == its SKILL.md version (telemetry now ships too).
+VERSION_SYNCED_SKILLS = ("product-spec", "product-spec-critique", "release", "telemetry")
 
 
 def _skill_version(skill: str) -> str:

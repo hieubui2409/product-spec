@@ -3,7 +3,7 @@
 analyze_telemetry.py — CLI front for the usage-&-health lenses. Deterministic
 gather + render; the LLM (cleanmatic:telemetry skill) narrates the output. It
 NEVER judges — it surfaces counts/rates/spans for the skill to adjudicate.
-READ-ONLY. CM-local dev tooling (NOT shipped in the pack bundle).
+READ-ONLY. Ships in the release bundle.
 
 Usage:
   analyze_telemetry.py --lens usage|session|health|all

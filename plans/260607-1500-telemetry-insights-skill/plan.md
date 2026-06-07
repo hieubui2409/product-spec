@@ -14,6 +14,12 @@ source: skill
 
 # Telemetry usage-and-health skill (cleanmatic:telemetry) — port from com:skill-analytics
 
+> **REVERSED 2026-06-08 (per PO):** the original "CM-local, NOT bundled" decision (D5/D8/F1 below,
+> Phase 08) was reversed — the telemetry skill + its 5 sink hooks + the shared lens/eval code now
+> **ship in the release bundle** (`product-spec-v2.1.0`), hooks auto-registered by the installer. The
+> phase text below records the as-built CM-local design at the time; the reversal lives in `BACKLOG.md`
+> and the follow-up plan. Phases 1–7 (the lenses themselves) are unchanged.
+
 ## Overview
 
 Give the (non-technical, Vietnamese) PO a one-command read on **how their skills are used + whether scripts/subagents are healthy + a thin effectiveness proxy**, narrated in plain Vietnamese, with ascii/md/mermaid/json reports.

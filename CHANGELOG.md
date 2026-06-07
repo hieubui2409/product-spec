@@ -2,8 +2,9 @@
 
 The **project release changelog**. Every tagged release (`product-spec-v*`, formerly `claude-pack-v*`) of the
 distributable bundle is recorded here; its top `## [X.Y.Z]` heading is the bundle release identity and must equal
-`version:` in `.claude/pack.manifest.yaml`. The bundle ships three skills (`cleanmatic:product-spec`,
-`cleanmatic:product-spec-critique`, `cleanmatic:release`) plus their agents and opt-in hooks.
+`version:` in `.claude/pack.manifest.yaml`. The bundle ships four skills (`cleanmatic:product-spec`,
+`cleanmatic:product-spec-critique`, `cleanmatic:release`, `cleanmatic:telemetry`) plus their agents and hooks
+(`cleanmatic:telemetry`'s sink hooks are auto-registered by the installer).
 Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: [semver](https://semver.org/).
 
 > **Per-skill changelogs live with each skill** — `.claude/skills/<skill>/CHANGELOG.md`, each pinned to that
@@ -15,6 +16,27 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 > skill `metadata.version`.
 
 ## [Unreleased]
+
+## [2.1.0] — 2026-06-08
+### Added — cleanmatic:telemetry now ships (usage & health observability)
+- **New shipped skill `cleanmatic:telemetry`** — a read-only, plain-Vietnamese **usage & health** read for the
+  product owner: 8 lenses (usage+tokens, session-shape, script health, subagent reliability, workflow chains,
+  validate-pass internal-quality proxy, memory health, forensics) rendered as ascii/markdown/mermaid/json.
+  Deterministic gather (`_shared/scripts/analyze_telemetry.py`) → LLM narration. Reverses the prior
+  CM-local/not-bundled decision so end users can read how their own skills are used.
+- **5 telemetry sink hooks ship + auto-enable.** `track_skill_invocation`, `track_script_execution`,
+  `emit_session_summary`, `mark_bash_start`, `track_subagent_outcome` are bundled and **auto-registered by the
+  installer** into the recipient's `settings.json` (idempotent + upgrade-safe; opt out with
+  `register_telemetry_hooks.py --remove`). All fail-open + stdlib-only (system `python3`, no venv needed).
+- **Eval gate ships too** — `_shared/lib/run_evals.py` (deterministic structural gate) + `llm_eval.py`
+  (LLM-judge, offline by default via `FakeLLMClient`) now travel in the bundle, making each skill's already-shipped
+  `eval/golden/` fixtures runnable for recipients.
+- The shared lens/eval code rides `_include_shared: [lib, scripts]` in `pack.manifest.yaml`.
+
+### Changed
+- **Tests never ship.** `safety_catalog.ALWAYS_DROP_DIRS` now drops `__tests__/` and `tests/` from every bundle.
+- **Telemetry bundle guard inverted** — `test_bundle_includes_telemetry.py` asserts the telemetry surface IS
+  present (sinks + test dirs stay OUT); the `release` skill is bumped to 1.1.0 for the installer + packaging changes.
 
 ## [2.0.0] — 2026-06-07
 

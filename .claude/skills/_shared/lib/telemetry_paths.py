@@ -1,6 +1,6 @@
 """
 telemetry_paths.py — single source of truth for the append-only telemetry
-sinks written by CM-local hooks (skill invocation, script execution, session
+sinks written by the bundled telemetry hooks (skill invocation, script execution, session
 summary). One directory (.claude/telemetry/) so a jq read-back touches one place.
 
 Contract: a telemetry write must NEVER break the hook/op it observes. Every
@@ -8,7 +8,7 @@ function here is fail-open — any error (unwritable dir, non-serializable
 record) is swallowed. json.dumps is the ONLY serialization path (no manual
 field concat → no forged-record injection from skill names / script paths).
 
-CM-local dev tooling, NOT shipped in the pack bundle. Zero third-party deps
+Ships in the release bundle. Zero third-party deps
 (stdlib only).
 """
 

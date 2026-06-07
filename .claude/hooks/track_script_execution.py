@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 track_script_execution.py — records skill-script Bash runs to
-.claude/telemetry/hook-telemetry.jsonl. CM-local dev tooling (NOT shipped).
+.claude/telemetry/hook-telemetry.jsonl. Ships in the release bundle.
 Registered on PostToolUse:Bash. Filters to commands that run a
 .claude/skills/<skill>/scripts/<file>.(py|sh) — ignores plain git/ls/grep.
 

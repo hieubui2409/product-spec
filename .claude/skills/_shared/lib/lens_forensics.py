@@ -3,7 +3,7 @@ tool counts, token usage (input/output/cache), files touched, subagent spawns,
 duration. Ported from human-analyzer's parse-session-jsonl-forensics.py; streams
 line-by-line so large transcripts never load whole.
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. CM-local (NOT shipped).
+Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

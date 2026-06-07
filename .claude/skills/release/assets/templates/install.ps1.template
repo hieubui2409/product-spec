@@ -282,6 +282,30 @@ if ($RunHooks) {
     Log "Review .claude\skills\*\install.ps1 before enabling."
 }
 
+# --- Enable telemetry hooks (usage & health observability) ---
+# Wire the shipped read-only telemetry hooks into settings.json so the lenses have
+# data. Idempotent + upgrade-safe (the registrar never double-registers). Non-fatal.
+# Opt out: python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --remove
+# PARITY: install.sh has an equivalent block — keep both in sync.
+Write-Host ""
+$Registrar = Join-Path $TargetDir ".claude\skills\_shared\scripts\register_telemetry_hooks.py"
+if (Test-Path $Registrar) {
+    $py = Get-Command python3 -ErrorAction SilentlyContinue
+    if (-not $py) { $py = Get-Command python -ErrorAction SilentlyContinue }
+    if ($py) {
+        Log "Enabling telemetry hooks (usage & health) in settings.json"
+        $env:CLAUDE_PROJECT_DIR = $TargetDir
+        try {
+            & $py.Source $Registrar
+            Note "Telemetry enabled. Opt out: python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --remove"
+        } catch {
+            Note "! telemetry registration skipped (non-fatal — register manually later)"
+        }
+    } else {
+        Note "python not found — telemetry hooks left unregistered (run register_telemetry_hooks.py to enable)"
+    }
+}
+
 # --- Summary ---
 Write-Host ""
 Log "Summary"

@@ -2,7 +2,7 @@
 count, avg/median duration, total files modified, total subagents, and skill
 co-occurrence (which skills tend to run together in one session).
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. CM-local (NOT shipped).
+Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

@@ -18,9 +18,9 @@ from pathlib import Path
 import yaml
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
-# telemetry is CM-local (NOT bundled) but still an owned skill → its metadata.version
-# is semver-checked here. It is deliberately ABSENT from test_version_sync's
-# VERSION_SYNCED_SKILLS (no changelog-equality assertion) since it never ships.
+# All four owned skills ship in the bundle and are semver-checked here; each is also
+# changelog-pinned in test_version_sync.VERSION_SYNCED_SKILLS. The skip-missing logic
+# in main() stays as a forward-compat backstop for any future CM-local (unbundled) skill.
 DEFAULT_SKILLS = ("product-spec", "product-spec-critique", "release", "telemetry")
 
 # keepachangelog: the first heading whose bracket is EXACTLY [X.Y.Z]. The closing

@@ -11,7 +11,7 @@ Source decision tree (Phase-6, evidence-based):
   3. Neither trustworthy → available:False, honest "not available on current
      data" (no fabricated metric).
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. CM-local (NOT shipped).
+Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

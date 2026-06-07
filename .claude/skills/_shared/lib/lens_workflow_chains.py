@@ -3,7 +3,7 @@ vs the chains DECLARED in the routing docs; ranks common chains + flags deviatio
 Ported from human-analyzer's analyze-workflow-chains.py; framework-prefix logic
 stripped — both sides normalize to flat dir slugs via catalog.py (D1).
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. CM-local (NOT shipped).
+Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

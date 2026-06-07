@@ -4,7 +4,7 @@ duration `ms` where the Pre/Post:Bash pairing recorded it.
 
 Labelled "approx": `exit` is inferred (no reliable numeric code in the payload)
 and `ms` is present only when both Bash hooks fired. Pure gather → dict.
-READ-ONLY, fail-soft. CM-local (NOT shipped).
+READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

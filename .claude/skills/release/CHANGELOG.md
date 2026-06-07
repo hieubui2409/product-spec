@@ -12,6 +12,22 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-06-08
+
+### Added
+- **Installer auto-registers telemetry hooks.** The generated `install.sh` / `install.ps1` now run
+  `register_telemetry_hooks.py` against the recipient root after install, so the shipped `cleanmatic:telemetry`
+  lenses have data out of the box. Idempotent + upgrade-safe (never double-registers); non-fatal; opt out with
+  `register_telemetry_hooks.py --remove`.
+
+### Changed
+- **`safety_catalog` drops `__tests__/` and `tests/`** from every bundle — test suites + fixtures are dev
+  artifacts and never ship to recipients (joins `plans/`, caches, VCS in `ALWAYS_DROP_DIRS`).
+- **Bundle telemetry guard inverted** (`tests/test_bundle_excludes_telemetry.py` →
+  `test_bundle_includes_telemetry.py`): the suite now asserts the telemetry skill + 5 hooks + shared lens/eval
+  code ARE present, while runtime sinks (`.claude/telemetry/`) and test dirs stay OUT. `telemetry` added to
+  `test_version_sync.VERSION_SYNCED_SKILLS` (it ships → changelog-pinned).
+
 ## [1.0.0] — 2026-06-07
 
 **BREAKING — renamed from `cleanmatic:claude-pack`.** The skill is now `cleanmatic:release`; the bundle artifact is

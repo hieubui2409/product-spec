@@ -7,7 +7,7 @@ check-memory-system-health.py.
 READ-ONLY by skill boundary (D / Phase-4): NO --apply, NO disk writes — memory
 writes belong to the product-spec memory flow, not this usage-&-health lens. A
 dry-run `fix_preview` lists the dead index lines a repair WOULD drop, nothing
-more. stdlib-only frontmatter parser (no pyyaml dependency). CM-local (NOT shipped).
+more. stdlib-only frontmatter parser (no pyyaml dependency). Ships in the release bundle.
 """
 from __future__ import annotations
 

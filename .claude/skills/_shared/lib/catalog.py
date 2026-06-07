@@ -12,7 +12,7 @@ by reading each `.claude/skills/*/SKILL.md` `name:` field and building a
 slug→dir map, then falling back to structural guesses. Flat dir slug is the
 identity (HA's framework_of / to_dir_id are intentionally dropped — D1).
 
-CM-local dev tooling, NOT shipped. stdlib only.
+Ships in the release bundle. stdlib only.
 """
 from __future__ import annotations
 

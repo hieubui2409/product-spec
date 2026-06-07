@@ -33,8 +33,10 @@ A **read-only** skill that tells the product owner, **in plain Vietnamese**, thr
 The split both repos follow: a **script gathers** (deterministic, never judges), the **skill narrates** (judges, in VI). The skill NEVER recomputes a number — it narrates the script's dict.
 
 ```bash
-./.claude/skills/.venv/bin/python3 ./.claude/skills/_shared/scripts/analyze_telemetry.py \
+# Recipient bundle: system python3 (the scripts are stdlib-only — no venv needed).
+python3 ./.claude/skills/_shared/scripts/analyze_telemetry.py \
   --lens all --format ascii [--days 30] [--top 10]
+# In the cleanmatic dev repo, use the shared venv: ./.claude/skills/.venv/bin/python3 …
 ```
 
 Default behaviour when the PO invokes `/cleanmatic:telemetry`:
@@ -42,7 +44,7 @@ Default behaviour when the PO invokes `/cleanmatic:telemetry`:
 2. Read the aggregates; **narrate in Vietnamese** (use `--en` / "in English" to switch).
 3. Lead with the honesty gate; recommendations are **gợi ý (suggestions)** only.
 
-Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--session <id>` / `--all-sessions` (forensics). The venv interpreter is mandatory.
+Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--session <id>` / `--all-sessions` (forensics). Stdlib-only → runs under system `python3` (no venv required on recipients).
 
 ## Lenses
 

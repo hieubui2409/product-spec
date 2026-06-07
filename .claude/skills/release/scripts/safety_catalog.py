@@ -41,6 +41,9 @@ ALWAYS_DROP_DIRS: frozenset[str] = frozenset({
     ".logs", "session-state", "agent-memory",
     # Internal planning / review reports — never ship to recipients
     "plans",
+    # Test suites + their fixtures — dev artifacts, never ship to recipients
+    # (matches any path component, so `__tests__/fixtures/` is dropped wholesale).
+    "__tests__", "tests",
     # Build artifacts
     "dist", "build", "target", ".next", ".turbo",
 })

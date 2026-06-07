@@ -20,6 +20,6 @@ All notable changes to this skill are documented here. Format: [Keep a Changelog
 - **Honesty gate:** every report ends with a mandatory "Cái này KHÔNG đo được" section separating MEASURED from NOT-MEASURED (market/user outcome / E3).
 
 ### Notes
-- **Read-only:** never edits specs, code, the catalog, or memory; no network; venv-run.
-- **Not shipped** in the release bundle (local PO tooling); the supporting `_shared` lenses + the two new hooks are git-tracked but bundle-excluded by manifest omission.
+- **Read-only:** never edits specs, code, the catalog, or memory; no network. Stdlib-only → runs under system `python3` (no venv needed on recipients).
+- **Shipped** in the release bundle (first ships in `product-spec-v2.1.0`): the skill, its 5 sink hooks, and the supporting `_shared` lens/eval code (`_include_shared:[lib,scripts]`). The installer auto-registers the hooks (opt out: `register_telemetry_hooks.py --remove`).
 - **Deferred** (see `BACKLOG.md`): rich crash-log `errors.jsonl`, HTML output, E3 market-outcome.

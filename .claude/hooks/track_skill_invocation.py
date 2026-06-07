@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 track_skill_invocation.py — records every skill invocation to
-.claude/telemetry/invocations.jsonl. CM-local dev tooling (NOT shipped in the
-pack bundle). Fail-open + non-blocking: always emits {"continue": true}.
+.claude/telemetry/invocations.jsonl. Ships in the release bundle.
+Fail-open + non-blocking: always emits {"continue": true}.
 
 GATE C1 (ship-both): the runtime event that carries a skill invocation is not
 empirically pinned for this Claude Code version, so this hook is registered on

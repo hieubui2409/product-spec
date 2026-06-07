@@ -3,7 +3,7 @@
 timeout / blocked / unknown, a success rate, and the top failure modes. Gated on
 volume — thin data shows raw counts, no verdicts.
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. CM-local (NOT shipped).
+Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
 """
 from __future__ import annotations
 

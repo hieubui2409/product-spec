@@ -2,7 +2,7 @@
 """
 emit_session_summary.py — on session Stop, emits one line to
 .claude/telemetry/sessions.jsonl: {ts, session, skills[], tools{},
-files_modified, subagents, duration_s}. CM-local dev tooling (NOT shipped).
+files_modified, subagents, duration_s}. Ships in the release bundle.
 
 Reconstructs activity from the transcript (the Stop payload carries no tool
 list / duration). Reads the head (real start ts → duration) + a bounded tail

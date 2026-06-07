@@ -46,7 +46,7 @@ jq -r 'select(.ms!=null) | [.script, (.ms|tostring)] | @tsv' hook-telemetry.json
 
 Beyond raw `jq`, the **usage-&-health lenses** turn these sinks into narrated reports.
 Deterministic gather (script) → narration (the `/cleanmatic:telemetry` skill, plain
-Vietnamese). The lenses are CM-local (NOT shipped); the skill is read-only.
+Vietnamese). The lenses ship in the release bundle; the skill is read-only.
 
 ```bash
 # overview dashboard-lite (ascii); --format md|mermaid|json; --lens usage|session|

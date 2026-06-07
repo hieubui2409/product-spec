@@ -5,7 +5,7 @@ platform_lib/formatters.py for the telemetry usage-&-health lenses. No skill_ids
 dependency, stdlib only. Handles Vietnamese display-width (NFC + East-Asian
 width) so VI narration tables align in a terminal.
 
-CM-local dev tooling, NOT shipped in the pack bundle.
+Ships in the release bundle.
 """
 import json
 import sys

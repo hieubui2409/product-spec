@@ -8,8 +8,8 @@ walk a session transcript chronologically; a Skill tool_use opens a span credite
 to that skill; sum assistant `message.usage` (input+output) of that and following
 assistant turns until the next Skill tool_use opens a new span.
 
-Pure gather → returns a render-agnostic dict. READ-ONLY, fail-soft. CM-local
-(NOT shipped).
+Pure gather → returns a render-agnostic dict. READ-ONLY, fail-soft. Ships in the
+release bundle.
 """
 from __future__ import annotations
 

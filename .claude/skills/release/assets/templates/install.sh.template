@@ -314,6 +314,27 @@ else
     log "Review .claude/skills/*/install.sh before enabling."
 fi
 
+# --- Enable telemetry hooks (usage & health observability) ---
+# The bundle ships read-only telemetry hooks (cleanmatic:telemetry). Wire them into
+# the recipient's settings.json so the lenses have data to read. The registrar is
+# idempotent + upgrade-safe — it checks for existing entries and never double-registers.
+# Non-fatal: a registration failure must never fail the install. Opt out anytime with:
+#   python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --remove
+echo ""
+REGISTRAR="$TARGET_DIR/.claude/skills/_shared/scripts/register_telemetry_hooks.py"
+if [ -f "$REGISTRAR" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        log "Enabling telemetry hooks (usage & health) in settings.json"
+        if CLAUDE_PROJECT_DIR="$TARGET_DIR" python3 "$REGISTRAR"; then
+            note "Telemetry enabled. Opt out: python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --remove"
+        else
+            note "! telemetry registration skipped (non-fatal — register manually later)"
+        fi
+    else
+        note "python3 not found — telemetry hooks left unregistered (run register_telemetry_hooks.py to enable)"
+    fi
+fi
+
 # --- Summary ---
 echo ""
 log "Summary"

@@ -4,7 +4,7 @@ track_subagent_outcome.py — SubagentStop hook. Records one line per finished
 subagent to .claude/telemetry/subagent-outcomes.jsonl:
   {ts, agent_type, outcome, session}
 outcome ∈ {success, api_error, timeout, blocked, unknown}. Powers the
-reliability lens. CM-local dev tooling (NOT shipped).
+reliability lens. Ships in the release bundle.
 
 Outcome inference (in priority order):
   1. An explicit `outcome` field in the Stop payload, if it is a known enum.

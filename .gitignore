@@ -83,8 +83,8 @@ ck.md
 !/.claude/skills/release/**
 !/.claude/skills/product-spec-critique/
 !/.claude/skills/product-spec-critique/**
-# cleanmatic:telemetry — CM-local usage-&-health skill (git-tracked, NOT bundled:
-# absent from pack.manifest.yaml skills:[] → excluded by construction).
+# cleanmatic:telemetry — usage-&-health skill (git-tracked AND bundled: listed in
+# pack.manifest.yaml skills:[]; its shared lens/eval code rides _include_shared).
 !/.claude/skills/telemetry/
 !/.claude/skills/telemetry/**
 # Seed manifest for claude-pack (committed source-of-truth)
@@ -163,9 +163,10 @@ Script.tar.gz
 # Sinks are runtime-only: never committed, never distributed. Created at runtime
 # by telemetry_paths.py, so no tracked placeholder needed.
 /.claude/telemetry/
-# Telemetry tooling is CM-repo source (committed) but NOT bundled to recipients
-# (absent from pack.manifest hooks:[]). The Python hooks are re-included by the
-# `!/.claude/hooks/*.py` rule above; their Python tests need re-including too.
+# Telemetry tooling is CM-repo source (committed) AND bundled to recipients
+# (the Python hooks are listed in pack.manifest hooks:[]). The hooks are re-included
+# by the `!/.claude/hooks/*.py` rule above; their Python tests need re-including too
+# (tests are git-tracked here but dropped from the bundle by safety_catalog).
 !/.claude/hooks/__tests__/
 /.claude/hooks/__tests__/*
 !/.claude/hooks/__tests__/*.py

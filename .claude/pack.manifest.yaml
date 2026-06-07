@@ -2,12 +2,13 @@
 # Edit freely; this is the source-of-truth for pack/cli.py.
 # Schema: .claude/skills/release/references/manifest-spec.md
 schema_version: '1.0'
-version: 2.0.0
+version: 2.1.0
 bundle_name: product-spec
 skills:
 - product-spec
 - release
 - product-spec-critique
+- telemetry
 agents:
 - memory-harvester.md
 - product-critic.md
@@ -19,6 +20,11 @@ agents:
 hooks:
 - memory_gap_hook.py
 - product_spec_critique_nudge.py
+- track_skill_invocation.py
+- track_script_execution.py
+- emit_session_summary.py
+- mark_bash_start.py
+- track_subagent_outcome.py
 rules:
 - primary-workflow.md
 - development-rules.md
@@ -29,6 +35,13 @@ rules:
 - skill-domain-routing.md
 - skill-workflow-routing.md
 extra: []
+# Ship the shared observability + eval-gate code the telemetry skill + hooks need:
+# _shared/lib (telemetry libs, lenses, run_evals, llm_eval) + _shared/scripts
+# (analyze_telemetry, register_telemetry_hooks). Walked recursively; __tests__ is
+# dropped by safety_catalog so only runtime code ships.
+_include_shared:
+- lib
+- scripts
 top_level:
   include_readme: true
   include_claudemd: true

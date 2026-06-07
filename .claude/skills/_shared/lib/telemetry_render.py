@@ -5,7 +5,7 @@ NO network, NO inlined JS, NO asset reads — pure text only.
 
 Each renderer takes a LIST of lens aggregates (the "overview" composition) and
 dispatches per `lens` key in a stable order. Below-gate lenses render a short
-"insufficient data" note instead of recommendations. CM-local (NOT shipped).
+"insufficient data" note instead of recommendations. Ships in the release bundle.
 """
 from __future__ import annotations
 
