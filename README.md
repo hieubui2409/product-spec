@@ -1,4 +1,5 @@
 # Product Spec Harness Eco-system
+
 An AI-powered harness for Claude Code to define, strictly validate, and brutally critique Product Specs. Bulletproof requirements before a single line of code is written.
 
 | Skill | For whom | What it does |
@@ -237,7 +238,7 @@ and `SKILL.md`.
 
 # Tiếng Việt
 
-Một bộ nhỏ gồm **3 skill cho Claude Code** của cleanmatic, mỗi skill tự chứa dưới `.claude/skills/`:
+Một bộ AI Harness cho Claude Code giúp chuẩn hoá, truy vết và phản biện gắt gao các Đặc tả Sản phẩm (Product Spec). Ép logic Business phải chặt chẽ trước khi bàn giao cho Dev.
 
 | Skill | Cho ai | Làm gì |
 |---|---|---|
