@@ -1,7 +1,5 @@
-# cleanmatic skills
-
-A small collection of **Claude Code skills** by cleanmatic. Three skills ship here, each self-contained under
-`.claude/skills/`:
+# Product Spec Harness Eco-system
+An AI-powered harness for Claude Code to define, strictly validate, and brutally critique Product Specs. Bulletproof requirements before a single line of code is written.
 
 | Skill | For whom | What it does |
 |---|---|---|
