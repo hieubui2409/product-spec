@@ -30,3 +30,34 @@ All 8 phases of `plans/260607-1500-telemetry-insights-skill/` confirmed covered 
 
 ## Unresolved questions
 - None blocking. F1's only residual: if any future automation literally forwards `--en` to the CLI it would exit 2 — mitigated by removing it from `argument-hint` and keeping it out of the pass-through list.
+
+---
+
+# Phase 2 — SHIP-IT reversal (2026-06-08, per PO) → product-spec-v2.1.0
+
+PO reversed the original CM-local/not-bundled decision: telemetry skill + 5 sink hooks + shared lens/eval
+code now **ship**, hooks **auto-registered at install**, and the eval gate (`run_evals`/`llm_eval`) ships too.
+
+## Changes
+- **manifest**: +`telemetry` skill, +5 hooks, +`_include_shared:[lib,scripts]`.
+- **safety_catalog**: `ALWAYS_DROP_DIRS` += `__tests__`, `tests` → no skill ships its tests/fixtures.
+- **registrar hardening** (PO concern: no duplicate registers): interpreter resolves to system `python3` when
+  no venv (recipient); reconcile-by-basename strips any stale-interpreter form before add; `--remove` is
+  interpreter-agnostic; `load_settings` tolerates a missing file (auto-create). `remove_commands` (dead) removed.
+- **installer** (`install.sh`/`.ps1` templates): auto-run the registrar against the recipient root, non-fatal,
+  with an opt-out notice.
+- **tests**: `test_bundle_excludes_telemetry.py` → `test_bundle_includes_telemetry.py` (assert PRESENT: skill +
+  5 hooks + shared modules; ABSENT: runtime sinks + test dirs); `VERSION_SYNCED_SKILLS += telemetry`; new
+  "core skills stay telemetry-independent" guard.
+- **docs/comments**: every "CM-local / NOT shipped" flipped (gitignore, SKILL.md, CHANGELOGs, BACKLOG, readback,
+  docstrings); plan annotated REVERSED; E3 untouched.
+- **release**: `release` skill 1.0.0 → 1.1.0; bundle 2.0.0 → 2.1.0 (`release.py --apply`).
+
+## Evidence
+- Full pytest green: `_shared`+`hooks`+`release` + product-spec + critique, no regressions.
+- Real `python -m pack` build: **351 members** — telemetry skill + 5 hooks + `_shared/lib`(telemetry+`run_evals`+`llm_eval`) + `_shared/scripts` PRESENT; `__tests__`/`tests`/sinks/`.pyc` ABSENT.
+- **Determinism**: two builds → identical SHA256.
+- **Extract-run**: `python3 analyze_telemetry.py --lens all --format ascii` from the extracted bundle root → exit 0 (proves hook→`_shared/lib` import resolves post-install with system python3).
+- **Installer dry-run** into a temp recv: 5 hooks installed, `_shared` shipped, **6 telemetry entries** registered (system python3, no venv path); **re-run install → still 6 (no duplication)**; `--remove` → 0.
+- A4 gate green (each skill version == its CHANGELOG top; root CHANGELOG top == manifest 2.1.0).
+- Released: `gh release view product-spec-v2.1.0` — published (not draft), assets `product-spec-2.1.0.tar.gz` + `.sha256`, CI run `success`.
