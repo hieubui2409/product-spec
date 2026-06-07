@@ -2,6 +2,24 @@
 
 All notable changes to this skill are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/); versioning: [SemVer](https://semver.org/).
 
+## [1.0.1] — 2026-06-08
+
+### Added
+- **Bilingual fixed labels via `--lang vi|en`** (default `vi`). The renderer now localizes every
+  fixed scaffolding string (headings, ascii banners, column headers, gate note, disclaimers) through a
+  single `_T` dict; dynamic data (numbers, skill ids, script paths) stays language-neutral. The LLM still
+  narrates the interpretive prose on top in the chosen language. Resolves the gap where EN/VI was only a
+  narration directive and the script output was English-only with a mixed-language gate note.
+
+### Changed
+- **Self-contained layout.** The skill's own runtime code (lenses, `analyze_telemetry`,
+  `register_telemetry_hooks`, `telemetry_render`, `catalog`, `formatters`, `telemetry_paths`) moved from
+  `_shared/lib` + `_shared/scripts` into `.claude/skills/telemetry/scripts/**`, matching the
+  self-contained convention of the other three skills. The 5 sink hooks now bootstrap `sys.path` from
+  `skills/telemetry/scripts`; the bundle ships the skill dir via the `skills:` walk (no telemetry code under
+  `_shared` anymore). Only the cross-skill **eval-gate** (`run_evals`, `llm_eval`) still rides
+  `_include_shared: [lib]`. No behaviour change — paths only.
+
 ## [1.0.0] — 2026-06-07
 
 ### Added

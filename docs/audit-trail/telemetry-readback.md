@@ -2,7 +2,7 @@
 
 The A1 hooks append JSONL to `.claude/telemetry/` (gitignored, local). Read them with
 `jq` — no dashboard, no script (KISS, v1). Hooks are Python (`.claude/hooks/*.py`); the
-sink helper is `.claude/skills/_shared/lib/telemetry_paths.py`. Sinks:
+sink helper is `.claude/skills/telemetry/scripts/telemetry_paths.py`. Sinks:
 
 | Sink | Written by | Shape |
 |------|------------|-------|
@@ -51,7 +51,7 @@ Vietnamese). The lenses ship in the release bundle; the skill is read-only.
 ```bash
 # overview dashboard-lite (ascii); --format md|mermaid|json; --lens usage|session|
 # health|reliability|workflow|validate|memory|forensics|all; --days N --top N
-.claude/skills/.venv/bin/python3 .claude/skills/_shared/scripts/analyze_telemetry.py \
+.claude/skills/.venv/bin/python3 .claude/skills/telemetry/scripts/analyze_telemetry.py \
   --lens all --format ascii
 ```
 
@@ -67,9 +67,9 @@ by an idempotent script — re-run it any time after a `settings.json` regen:
 
 ```bash
 # add/repair the telemetry registrations (idempotent; venv python)
-.claude/skills/.venv/bin/python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py
+.claude/skills/.venv/bin/python3 .claude/skills/telemetry/scripts/register_telemetry_hooks.py
 
 # inspect / remove
-.claude/skills/.venv/bin/python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --check
-.claude/skills/.venv/bin/python3 .claude/skills/_shared/scripts/register_telemetry_hooks.py --remove
+.claude/skills/.venv/bin/python3 .claude/skills/telemetry/scripts/register_telemetry_hooks.py --check
+.claude/skills/.venv/bin/python3 .claude/skills/telemetry/scripts/register_telemetry_hooks.py --remove
 ```

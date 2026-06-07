@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 _HOOKS = Path(__file__).resolve().parent.parent
-_LIB = _HOOKS.parent / "skills" / "_shared" / "lib"
+_LIB = _HOOKS.parent / "skills" / "telemetry" / "scripts"
 sys.path.insert(0, str(_LIB))
 sys.path.insert(0, str(_HOOKS))
 

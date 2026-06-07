@@ -9,11 +9,9 @@ from pathlib import Path
 
 import pytest
 
-_SCRIPTS = Path(__file__).resolve().parent.parent
-_LIB = _SCRIPTS.parent / "lib"
-sys.path.insert(0, str(_LIB))
+_SCRIPTS = Path(__file__).resolve().parent.parent  # telemetry/scripts (flat modules)
 sys.path.insert(0, str(_SCRIPTS))
-FIX = _LIB / "__tests__" / "fixtures"
+FIX = Path(__file__).resolve().parent / "fixtures"
 
 
 @pytest.fixture
@@ -67,3 +65,19 @@ def test_health_lens_json(cli, capsys):
     cli.main(["--lens", "health", "--format", "json"])
     out = json.loads(capsys.readouterr().out)
     assert out["total_runs"] == 4
+
+
+def test_lang_flag_localizes_ascii(cli, capsys):
+    # default (vi) → Vietnamese banner; --lang en → English banner. Same data.
+    cli.main(["--lens", "usage", "--days", "36500", "--format", "ascii"])
+    vi = capsys.readouterr().out
+    cli.main(["--lens", "usage", "--days", "36500", "--format", "ascii", "--lang", "en"])
+    en = capsys.readouterr().out
+    assert "MỨC DÙNG" in vi and "USAGE" in en
+    assert "5" in vi and "5" in en  # the invocation count is language-neutral
+
+
+def test_lang_rejects_unknown_value(cli):
+    with pytest.raises(SystemExit) as e:  # argparse choices guard exits 2
+        cli.main(["--lens", "usage", "--lang", "fr"])
+    assert e.value.code == 2

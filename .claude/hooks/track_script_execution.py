@@ -26,7 +26,7 @@ import sys
 from datetime import datetime, timezone
 
 _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
-_LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "_shared", "lib")
+_LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "telemetry", "scripts")
 sys.path.insert(0, _LIB_DIR)
 
 from telemetry_paths import append_event, read_and_clear_bash_start  # noqa: E402

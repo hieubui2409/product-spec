@@ -20,8 +20,9 @@ import sys
 from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
-_LIB = _SCRIPT_DIR.parent / "lib"
-sys.path.insert(0, str(_LIB))
+# Lens / render / catalog / formatters modules are flat siblings in this scripts/
+# dir (self-contained skill layout — telemetry no longer depends on _shared).
+sys.path.insert(0, str(_SCRIPT_DIR))
 
 from formatters import json_output  # noqa: E402
 import lens_usage_tokens  # noqa: E402
@@ -65,10 +66,10 @@ def _render(data, fmt: str, args) -> str:
     import telemetry_render  # noqa: E402
     aggregates = data if isinstance(data, list) else [data]
     if fmt == "ascii":
-        return telemetry_render.render_ascii(aggregates)
+        return telemetry_render.render_ascii(aggregates, lang=args.lang)
     if fmt == "mermaid":
-        return telemetry_render.render_mermaid(aggregates)
-    return telemetry_render.render_md(aggregates, top=args.top)
+        return telemetry_render.render_mermaid(aggregates, lang=args.lang)
+    return telemetry_render.render_md(aggregates, top=args.top, lang=args.lang)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -82,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--session", help="forensics: parse one session by id")
     ap.add_argument("--all-sessions", action="store_true", help="forensics: across all sessions")
     ap.add_argument("--format", choices=["md", "json", "ascii", "mermaid"], default="md")
+    ap.add_argument("--lang", choices=["vi", "en"], default="vi",
+                    help="language for fixed scaffolding labels (vi default; LLM narrates prose in this language)")
     args = ap.parse_args(argv)
 
     if args.overview or args.lens == "all":

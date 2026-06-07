@@ -1,11 +1,15 @@
 """test_bundle_includes_telemetry — the telemetry usage-&-health skill + its sink
-hooks + the shared observability/eval code MUST reach a recipient bundle (the PO
-reversed the original CM-local decision so end users can run the lenses).
+hooks + the shared eval-gate code MUST reach a recipient bundle (the PO reversed
+the original CM-local decision so end users can run the lenses).
+
+Telemetry is now SELF-CONTAINED: its lenses/CLI/render/registrar live under
+`.claude/skills/telemetry/scripts/**` and ship via the `skills:` walk. Only the
+shared EVAL-GATE (run_evals, llm_eval) still rides `_include_shared: [lib]`.
 
 Two independent layers, deliberately distinct (a regression in either is a real bug):
   1. By construction — the whitelist manifest names the telemetry skill, the 5
-     hooks, and `_include_shared: [lib, scripts]`, so resolve_selection yields the
-     skill dir, every hook, and the shared lens/eval modules. Fast, deterministic.
+     hooks, and `_include_shared: [lib]`, so resolve_selection yields the skill dir
+     (with its scripts), every hook, and the shared eval modules. Deterministic.
   2. Regression sentinel — a REAL `python -m pack` build, asserted non-empty FIRST
      (else a vacuous pass), then scanned to confirm the telemetry surface is present
      AND that two things stay OUT: runtime sinks (`.claude/telemetry/*.jsonl`) and
@@ -39,16 +43,21 @@ TELEMETRY_HOOK_BASENAMES = {
     "track_subagent_outcome.py",
 }
 
-# A representative slice of the shared code the skill + hooks need at runtime.
-SHARED_MODULE_ARCS = {
-    ".claude/skills/_shared/lib/telemetry_paths.py",
-    ".claude/skills/_shared/lib/telemetry_render.py",
-    ".claude/skills/_shared/lib/lens_usage_tokens.py",
+# Telemetry's own runtime code now lives INSIDE the skill (self-contained) and
+# ships via the `skills:` walk — a representative slice the CLI + hooks need.
+TELEMETRY_SKILL_MODULE_ARCS = {
+    ".claude/skills/telemetry/scripts/telemetry_paths.py",
+    ".claude/skills/telemetry/scripts/telemetry_render.py",
+    ".claude/skills/telemetry/scripts/lens_usage_tokens.py",
+    ".claude/skills/telemetry/scripts/analyze_telemetry.py",
+    ".claude/skills/telemetry/scripts/register_telemetry_hooks.py",
+}
+# The shared EVAL-GATE stays in _shared/lib and ships via `_include_shared: [lib]`.
+SHARED_EVAL_ARCS = {
     ".claude/skills/_shared/lib/run_evals.py",
     ".claude/skills/_shared/lib/llm_eval.py",
-    ".claude/skills/_shared/scripts/analyze_telemetry.py",
-    ".claude/skills/_shared/scripts/register_telemetry_hooks.py",
 }
+SHARED_MODULE_ARCS = TELEMETRY_SKILL_MODULE_ARCS | SHARED_EVAL_ARCS
 
 # Runtime sink the SubagentStop hook writes — gitignored data, must NEVER ship.
 TELEMETRY_SINK_BASENAMES = {"subagent-outcomes.jsonl"}
@@ -68,9 +77,16 @@ def test_selection_includes_telemetry_by_construction():
     # All 5 sink hooks ship.
     missing_hooks = TELEMETRY_HOOK_BASENAMES - {Path(a).name for a in arcs}
     assert not missing_hooks, f"telemetry hooks missing from bundle file set: {missing_hooks}"
-    # The shared lens + eval-gate code ships (so the CLI + hooks import-resolve).
+    # Telemetry's own modules (in the skill dir) + the shared eval-gate both ship.
     missing_shared = SHARED_MODULE_ARCS - arcs
-    assert not missing_shared, f"shared telemetry/eval modules missing from bundle: {missing_shared}"
+    assert not missing_shared, f"telemetry skill / shared eval modules missing from bundle: {missing_shared}"
+    # Relocation invariant: NO telemetry module may linger under _shared anymore
+    # (only the eval-gate run_evals/llm_eval + plan-table-parser are shared now).
+    stray = [a for a in arcs if a.startswith(".claude/skills/_shared/")
+             and (Path(a).name.startswith(("telemetry_", "lens_"))
+                  or Path(a).name in {"catalog.py", "formatters.py",
+                                       "analyze_telemetry.py", "register_telemetry_hooks.py"})]
+    assert not stray, f"telemetry module still under _shared after relocation: {stray}"
     # Runtime sinks are NOT a manifest path → never selected.
     sink_leaks = [a for a in arcs if "/.claude/telemetry/" in f"/{a}" or a.startswith(".claude/telemetry/")]
     assert not sink_leaks, f"runtime telemetry sink leaked into bundle file set: {sink_leaks}"

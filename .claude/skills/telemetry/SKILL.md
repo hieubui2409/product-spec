@@ -5,10 +5,10 @@ user-invocable: true
 when_to_use: "When the (non-technical) product owner asks how their skills are being used, which scripts error or run slow, whether subagents succeed, whether memory is tidy, or whether the last spec validate passed — and wants it explained in plain Vietnamese, not raw logs."
 category: observability
 keywords: [telemetry, usage, health, skills, tokens, sessions, reliability, subagents, memory, validate, vietnamese, dashboard, analytics]
-argument-hint: "[--lens usage|session|health|reliability|workflow|validate|memory|forensics|all] [--format ascii|md|mermaid|json] [--days N] [--top N]"
+argument-hint: "[--lens usage|session|health|reliability|workflow|validate|memory|forensics|all] [--format ascii|md|mermaid|json] [--days N] [--top N] [--lang vi|en]"
 metadata:
   author: cleanmatic
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # cleanmatic:telemetry — Usage & Health (Mức dùng & Sức khỏe)
@@ -34,17 +34,17 @@ The split both repos follow: a **script gathers** (deterministic, never judges),
 
 ```bash
 # Recipient bundle: system python3 (the scripts are stdlib-only — no venv needed).
-python3 ./.claude/skills/_shared/scripts/analyze_telemetry.py \
+python3 ./.claude/skills/telemetry/scripts/analyze_telemetry.py \
   --lens all --format ascii [--days 30] [--top 10]
 # In the cleanmatic dev repo, use the shared venv: ./.claude/skills/.venv/bin/python3 …
 ```
 
 Default behaviour when the PO invokes `/cleanmatic:telemetry`:
 1. Run `analyze_telemetry.py --lens all --format ascii`.
-2. Read the aggregates; **narrate in Vietnamese** (use `--en` / "in English" to switch).
+2. Read the aggregates; **narrate in Vietnamese** (default). Switch to English with `--lang en` (the script also localizes its fixed labels) or just "in English".
 3. Lead with the honesty gate; recommendations are **gợi ý (suggestions)** only.
 
-Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--session <id>` / `--all-sessions` (forensics). Stdlib-only → runs under system `python3` (no venv required on recipients).
+Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--lang vi|en` (fixed-label language, vi default), `--session <id>` / `--all-sessions` (forensics). Stdlib-only → runs under system `python3` (no venv required on recipients).
 
 ## Lenses
 

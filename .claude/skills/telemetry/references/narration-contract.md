@@ -6,7 +6,8 @@ non-technical product owner. The script gathers; this contract governs the words
 ## Voice
 
 - **Vietnamese by default**, native quality: full diacritics, natural register, short
-  sentences. Switch to English only on `--en` or an explicit request.
+  sentences. Switch to English on `--lang en` (the script also localizes its fixed labels
+  to match) or an explicit request.
 - Talk in **owner language** (skills, work, "lần dùng", "chạy lỗi", "chậm"), not engineering
   jargon. Numbers stay numbers; skill ids / script paths stay ascii.
 - **No hype.** This is a status read, not a pitch.

@@ -41,14 +41,16 @@ def _reliability(gated):
 
 class TestAscii:
     def test_above_gate_has_status_lines(self):
-        out = render_ascii([_usage(False), _health()])
-        assert "USAGE" in out and "HEALTH" in out
+        out = render_ascii([_usage(False), _health()])  # default lang = vi
+        assert "MỨC DÙNG" in out and "SỨC KHỎE" in out
         assert "[OK]" in out  # health has a per-script ok line
         assert "[!]" in out   # release error line
+        en = render_ascii([_usage(False), _health()], lang="en")
+        assert "USAGE" in en and "HEALTH" in en
 
     def test_below_gate_shows_gated_usage(self):
-        out = render_ascii([_usage(True)])
-        assert "[!] USAGE" in out  # gated → not-ok light
+        assert "[!] MỨC DÙNG" in render_ascii([_usage(True)])          # vi default
+        assert "[!] USAGE" in render_ascii([_usage(True)], lang="en")  # gated → not-ok light
 
     def test_deterministic(self):
         a = render_ascii([_usage(False), _health()])
@@ -90,14 +92,33 @@ class TestMermaid:
 
 class TestMd:
     def test_renders_each_lens_section(self):
-        out = render_md([_usage(False), _health(), _reliability(False)])
-        assert "## Skill Usage" in out
-        assert "## Script Health" in out
-        assert "## Subagent Reliability" in out
+        out = render_md([_usage(False), _health(), _reliability(False)])  # vi default
+        assert "## Mức dùng kỹ năng" in out
+        assert "## Sức khỏe script" in out
+        assert "## Độ tin cậy subagent" in out
+        en = render_md([_usage(False), _health(), _reliability(False)], lang="en")
+        assert "## Skill Usage" in en
+        assert "## Script Health" in en
+        assert "## Subagent Reliability" in en
 
     def test_gate_note_in_md(self):
-        out = render_md([_usage(True)])
-        assert "chưa đủ dữ liệu" in out
+        assert "Chưa đủ dữ liệu" in render_md([_usage(True)])                  # vi default
+        assert "Insufficient data" in render_md([_usage(True)], lang="en")
 
     def test_empty_list(self):
-        assert "No lenses" in render_md([])
+        assert "Không có lens" in render_md([])               # vi default
+        assert "No lenses" in render_md([], lang="en")
+
+
+class TestBilingual:
+    def test_data_is_language_neutral(self):
+        """vi/en differ only in fixed labels — numbers, skill ids stay identical."""
+        vi = render_md([_usage(False), _health()], lang="vi")
+        en = render_md([_usage(False), _health()], lang="en")
+        for token in ("product-spec", "release", "450", "150", "**12**", "100%"):
+            assert token in vi and token in en, f"{token} must survive in both languages"
+        assert vi != en  # but the scaffolding labels DO differ
+
+    def test_unknown_lang_falls_back_to_en(self):
+        out = render_md([_usage(False)], lang="zz")
+        assert "## Skill Usage" in out  # graceful en fallback, never a KeyError
