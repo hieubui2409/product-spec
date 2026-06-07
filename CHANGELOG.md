@@ -44,9 +44,11 @@ eval gate) and the release-skill hardening line. Skill versions this release: `p
   GitHub Release `body_path`, replacing `generate_release_notes`.
 
 ### Added — observability (A1)
-- **Fail-open telemetry sink** — append-only JSONL `.claude/skills/_shared/lib/telemetry-paths.cjs` + 3 hooks
-  (`track-skill-invocation`, `track-script-execution`, `emit-session-summary`) wired idempotently via
-  `register_telemetry_hooks.cjs`. Sinks are gitignored and **never enter a bundle** (guarded by
+- **Fail-open telemetry sink (Python)** — append-only JSONL via `.claude/skills/_shared/lib/telemetry_paths.py`
+  + 3 hooks (`track_skill_invocation.py`, `track_script_execution.py`, `emit_session_summary.py`) wired
+  idempotently by `register_telemetry_hooks.py`. Originally prototyped in Node `.cjs`; **rewritten to Python**
+  this release (our hooks are Python; ck-managed `*.cjs` stay ignored) and the temporary `telemetry-spike`
+  probe was dropped. Sinks are gitignored and **never enter a bundle** (guarded by
   `test_bundle_excludes_telemetry.py`); the skill-event path ships-both (Skill-tool + prompt-expansion) with
   cross-process dedup.
 
