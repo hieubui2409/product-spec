@@ -16,6 +16,23 @@ default + C (manual) fallback** recommended, final pick open.
 **Recommended C/D/E build order** (brainstorm): **E5 → D12 → E1 → C9 → E4 → E2 → D11**
 (stabilize → close the loop → governance/polish → widen → cleanup). C10 parked · E3 deferred.
 Status legend: `[ ]` todo · `[~]` in-progress/partial · `[x]` done · `[next]` next-up · `[park]` parked · `[defer]` deferred.
+**Build-order C/D/E (E5→D12→E1→C9→E4→E2→D11): ALL SHIPPED** 2026-06-03 (C10 parked · E3 deferred).
+
+---
+
+## v2.0.0 RELEASE — skill rename + restructure (2026-06-07, ✅ SHIPPED, commit `6e64b26`)
+
+PO directive (not a prior backlog item). BREAKING: `cleanmatic:claude-pack` → `cleanmatic:release`; bundle
+`claude-pack-{v}.tar.gz` → `product-spec-{v}.tar.gz`; tag `claude-pack-v*` → `product-spec-v*`; CI workflows renamed.
+
+- [x] **Skill/bundle/tag rename + CI rewire** — `git mv` (history preserved), 4 default-string sites, 3 workflow files (`release.yml`/`release-ci.yml`/`release-integration.yml`) + `cross-skill-bug-class` filter, manifest `1.4.0→2.0.0`, release skill `0.2.0→1.0.0`.
+- [x] **`release.py` changelog-lifecycle engine** — `--extract/--release/--bump/--pre-release/--date/--apply/--push`; lock `[Unreleased]→[X.Y.Z]` + manifest bump; owner-owned tag push; `REPO=parents[4]` (plan's `parents[3]` guess rejected empirically); 20 unit tests. Adopts HA `_framework-shared/release.py`, drops `release_notes`/PII gate, reuses `pack/`.
+- [x] **CI release body from locked CHANGELOG** — `release.yml` runs `release.py --extract <ver>` → `body_path` (replaces `generate_release_notes`).
+- [x] **Telemetry hooks `.cjs`→Python** (PO policy: our hooks must be Python) — `track_skill_invocation`/`track_script_execution`/`emit_session_summary`/`telemetry_paths`/`register_telemetry_hooks` rewritten; temp `telemetry-spike` dropped; `settings.json` re-registered to python; 56 tests green.
+- [x] **`.gitignore` policy fix** — track our `*.py` hooks + `_shared` python (`run_evals`/`llm_eval` were wrongly ignored → broke a commit); ck `*.cjs` stay ignored.
+- [x] **Audit-trail** — `REVIEW.md` Cycle 1 (9 release-pipeline invariants attacked, all held) + `EVIDENCE.md` PACK-2 (REPO path-math).
+
+**Owner-owned remaining (not done by tooling):** `git tag product-spec-v2.0.0 && git push origin HEAD && git push origin product-spec-v2.0.0` → fires `release.yml`.
 
 ---
 
@@ -124,8 +141,10 @@ a new skill is justified only for outward-facing integration.
 - ~~C10 positioning?~~ → **parked** until the target task tracker is chosen; then a separate outward-facing skill reads product-spec's exported artifact.
 - ~~D11 closure?~~ → **close to micro-util only**; drop the design-system ambition.
 
+**Resolved-by-ship (2026-06-03/07):**
+- ~~E1 anchoring final pick~~ → shipped with **A (artifact-id + freshness) default + C (manual) fallback**.
+- ~~E2 vs `--auto`~~ → shipped as a separate `--discover` flag.
+- ~~D12 CI matrix~~ → shipped at **1 OS × 2 Python** (path-filtered, per-skill-dir).
+
 **Still open:**
-- **E1 anchoring final pick:** accept **A (artifact-id + freshness warning) default + C (manual) fallback**, or require the stricter **B (hash-gate, force re-critique on drift)**? *(Needed before planning E1.)*
-- **C10 target:** which task tracker (GitHub Issues / Jira / other)? Decides when C10 un-parks.
-- **E2 vs `--auto`:** ship E2 as a separate flag, or prototype inside `--auto` first and split only if the input/output distinction proves real?
-- **D12 CI matrix:** OK to drop the 2 new workflows to 1 OS × 2 Python (vs release's 3×3)?
+- **C10 target:** which task tracker (GitHub Issues / Jira / other)? Decides when C10 un-parks. *(The only genuinely-open question.)*
