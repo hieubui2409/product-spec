@@ -34,7 +34,10 @@ rules:
 - team-coordination-rules.md
 - skill-domain-routing.md
 - skill-workflow-routing.md
-extra: []
+# AGPL-3.0 requires the license (and source) to travel with any distributed copy.
+extra:
+- LICENSE
+- CONTRIBUTING.md
 # Ship the shared EVAL-GATE code from _shared/lib (run_evals, llm_eval) so each
 # skill's bundled eval/golden fixtures are runnable on the recipient. The telemetry
 # skill is now SELF-CONTAINED: its lenses/CLI/render/registrar live under

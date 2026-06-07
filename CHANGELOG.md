@@ -17,6 +17,13 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Added
+- **AGPL-3.0 license + CONTRIBUTING.** Added `LICENSE` (GNU AGPL-3.0, © 2026 Hieu Bui) and
+  `CONTRIBUTING.md` (inbound=outbound, DCO sign-off, dev/test/release workflow). Both are added to the
+  manifest `extra:` so every distributed bundle carries the license + contribution terms (AGPL requires the
+  license to accompany distributed copies). README gains an EN + VI **License** section: noncommercial-friendly
+  but proprietary commercial use requires a separate license.
+
 ## [2.2.0] — 2026-06-08
 ### Changed
 - **`cleanmatic:telemetry` is now a self-contained skill.** Its runtime code (8 lenses, `analyze_telemetry`,
