@@ -9,13 +9,35 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 > **Per-skill changelogs live with each skill** — `.claude/skills/<skill>/CHANGELOG.md`, each pinned to that
 > skill's own `SKILL.md` `metadata.version` (the A4 PR-gate asserts skill version == skill changelog top for all
-> three, including the `release` skill). This root file is the *bundle/release* log; the skill files are the
+> four, including the `release` skill). This root file is the *bundle/release* log; the skill files are the
 > *per-skill* logs. On a release: bump each changed skill's `metadata.version` + its CHANGELOG, fill `[Unreleased]`
 > here, then run `release.py --release X.Y.Z --apply` (locks `[Unreleased]` → `[X.Y.Z]` + bumps
 > `pack.manifest.yaml version:` together). CI `verify_skill_versions.py` fails the release on any missing/malformed
 > skill `metadata.version`.
 
 ## [Unreleased]
+
+## [2.2.0] — 2026-06-08
+### Changed
+- **`cleanmatic:telemetry` is now a self-contained skill.** Its runtime code (8 lenses, `analyze_telemetry`,
+  `register_telemetry_hooks`, `telemetry_render`, `catalog`, `formatters`, `telemetry_paths`) moved from
+  `_shared/lib` + `_shared/scripts` into `.claude/skills/telemetry/scripts/**`, matching the self-contained
+  convention of the other three skills. The 5 sink hooks bootstrap `sys.path` from `skills/telemetry/scripts`;
+  the bundle ships the skill dir via the `skills:` walk. `_include_shared` is reduced to `[lib]` — only the
+  cross-skill eval-gate (`run_evals`, `llm_eval`) still rides it. No telemetry code remains under `_shared`.
+  Pure refactor: behaviour unchanged, verified end-to-end (build, extract-run, installer auto-register).
+- **Installer registrar path updated** to `.claude/skills/telemetry/scripts/register_telemetry_hooks.py` in
+  `install.sh` / `install.ps1` (and the opt-out notice), following the relocation. (release skill → 1.1.1)
+- **README rewritten as an ecosystem overview** — frames the bundle as a whole rig (4 skills + critique
+  sub-agents + hooks + rules + shared eval-gate + deterministic packager), not just a list of skills; adds a
+  "what the harness installs" table and a full `telemetry` section, EN + VI.
+
+### Added
+- **`cleanmatic:telemetry` bilingual fixed labels via `--lang vi|en`** (default `vi`). The renderer localizes
+  every fixed scaffolding string through a single `_T` dict; dynamic data (numbers, skill ids) stays
+  language-neutral; the LLM narrates prose in the chosen language. (telemetry skill → 1.0.1)
+- **`cleanmatic:telemetry` user-facing docs** — `README.md`, `GUIDE-EN.md`, `GUIDE-VI.md` added to the skill so
+  it matches the documentation depth of the other shipped skills.
 
 ## [2.1.0] — 2026-06-08
 ### Added — cleanmatic:telemetry now ships (usage & health observability)

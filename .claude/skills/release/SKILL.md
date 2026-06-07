@@ -8,7 +8,7 @@ keywords: [release, packaging, distribution, tarball, manifest, changelog, versi
 argument-hint: "[--manifest <path>] [--version <semver>] [--skills <list>] [--dry-run] | release.py [--release X.Y.Z | --bump major|minor|patch] [--apply] [--push]"
 metadata:
   author: cleanmatic
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # cleanmatic:release

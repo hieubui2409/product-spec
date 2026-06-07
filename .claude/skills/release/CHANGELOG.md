@@ -12,6 +12,16 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-06-08
+
+### Changed
+- **Installer registrar path follows the self-contained telemetry skill.** `install.sh` / `install.ps1`
+  now invoke `.claude/skills/telemetry/scripts/register_telemetry_hooks.py` (was `_shared/scripts/…`) after
+  the telemetry code moved into its own skill folder. The opt-out command in the notice updated to match.
+- **`pack.manifest.yaml` `_include_shared` reduced to `[lib]`.** `_shared/scripts` no longer exists; only the
+  cross-skill eval-gate (`run_evals`, `llm_eval`) still rides `_include_shared`. The telemetry surface ships
+  via the `skills:` walk now that it is self-contained. Manifest comment updated.
+
 ## [1.1.0] — 2026-06-08
 
 ### Added

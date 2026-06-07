@@ -1,19 +1,36 @@
 # Product Spec Harness Eco-system
 
-An AI-powered harness for Claude Code to define, strictly validate, and brutally critique Product Specs. Bulletproof requirements before a single line of code is written.
+An AI-powered **harness for Claude Code** to define, strictly validate, brutally critique, ship, and observe Product Specs. Bulletproof requirements before a single line of code is written — then package the whole rig and watch how it actually gets used.
+
+It is **not just a pile of skills.** Installing the bundle drops a coordinated `.claude/` rig into your project: four skills, the critique sub-agents they spawn, the hooks that nudge and instrument them, the rules that steer the orchestration, a shared eval-gate, and a deterministic packager — all wired to work together.
 
 | Skill | For whom | What it does |
 |---|---|---|
 | **[`product-spec`](.claude/skills/product-spec/)** | Non-technical **Product Owners** | Interview-driven product spec hierarchy (**Vision → 1 BRD → many PRDs → Epics → Stories with AC**) with strict traceability, validation, and visualization — in plain language, no code required. Bilingual EN/VI. |
 | **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owners** | An opinionated, brutal-but-grounded tear-down of a `product-spec` spec across four lenses (product/tech/market/craft). Says what `--validate` cannot: why it would die, where it sits in the market, whether the writing holds up. Nine voice levels, never edits the spec, never gates CI. Bilingual EN/VI. |
-| **[`release`](.claude/skills/release/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
+| **[`release`](.claude/skills/release/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules, the shared eval-gate) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
+| **[`telemetry`](.claude/skills/telemetry/)** | **Product Owners** | A read-only, plain-Vietnamese **usage & health** read on your own tooling: which skills get used, which scripts error or run slow, whether sub-agents succeed, whether memory is tidy, whether the last `validate` passed. Eight lenses, ascii/md/mermaid/json. Honest by design — usage & health, **not** market effectiveness. Bilingual EN/VI. |
 
 > 📘 **Usage guides (every use case as a sample conversation):**
 > - product-spec — [`GUIDE-VI.md`](.claude/skills/product-spec/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec/GUIDE-EN.md) (English)
 > - product-spec-critique — [`GUIDE-VI.md`](.claude/skills/product-spec-critique/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec-critique/GUIDE-EN.md) (English)
 > - release — [`GUIDE-VI.md`](.claude/skills/release/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/release/GUIDE-EN.md) (English)
+> - telemetry — [`GUIDE-VI.md`](.claude/skills/telemetry/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/telemetry/GUIDE-EN.md) (English)
 
-The three skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by any installer).
+### What the harness installs (the whole rig, not just skills)
+
+| Component | Where | What it is |
+|---|---|---|
+| **4 skills** | `.claude/skills/{product-spec,product-spec-critique,release,telemetry}/` | The user-invocable `/cleanmatic:*` commands above. Each is self-contained (its own `scripts/`, `references/`, guides). |
+| **7 critique sub-agents** | `.claude/agents/` | The lens critics (`product-`/`tech-`/`market-`/`craft-critic`), `critique-consolidator`, `critique-humanizer`, and `memory-harvester` that `product-spec-critique` and `--reflect` spawn. |
+| **Hooks** | `.claude/hooks/` | The `product-spec-critique` post-validate drift nudge + memory-gap hook, and telemetry's **5 sink hooks** (skill invocation, script duration, sub-agent outcome, bash timing, session summary) — auto-registered at install. |
+| **Orchestration rules** | `.claude/rules/` | The workflow/orchestration/development rules that steer how Claude drives the skills. |
+| **Shared eval-gate** | `.claude/skills/_shared/lib/` | `run_evals.py` (structural) + `llm_eval.py` (advisory) so each skill's bundled `eval/golden/` fixtures are actually runnable on your machine. |
+| **Packager + installer** | `pack.manifest.yaml`, `INSTALL.md`, `install.{sh,ps1}` | The deterministic builder and the multiplatform installer that recreates the shared venv. |
+
+Generated as you use it: your spec under `docs/product/`, telemetry sinks under `.claude/telemetry/*.jsonl` (gitignored runtime data, never bundled), and reproducible tarballs under `dist/`.
+
+The four skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by any installer). The telemetry lenses and its sink hooks are **stdlib-only** and also run under a plain system `python3` on a recipient machine.
 
 > 🇬🇧 **English** overview below · 🇻🇳 **Tiếng Việt**: cuộn xuống mục **[Tiếng Việt](#tiếng-việt)** ở cuối trang.
 
@@ -190,6 +207,50 @@ Requires **Python 3.11+**. Then invoke from Claude Code:
 
 ---
 
+## `telemetry` — for Product Owners
+
+After you have been using the harness for a while, `telemetry` tells you — **in plain Vietnamese** — how your own
+tooling is actually doing. It is **read-only** and **honest by design**: it reports *whether the machinery runs*
+(usage & health), never *whether the product wins in the market* (that is E3, deliberately out of scope). A script
+gathers deterministic counts; the skill narrates them, always ending with a **"what this does NOT measure"** section.
+
+### What it does for you
+
+| You want to… | Run |
+|---|---|
+| A one-glance dashboard of usage + health | `/cleanmatic:telemetry` (`--lens all`, ascii) |
+| See which skills get used and which never are | `/cleanmatic:telemetry --lens usage` |
+| Find scripts that error or run slow | `/cleanmatic:telemetry --lens health` |
+| Check whether sub-agents succeed or fail | `/cleanmatic:telemetry --lens reliability` |
+| See if the last spec `validate` passed (internal quality, **not** market success) | `/cleanmatic:telemetry --lens validate` |
+| Audit memory tidiness (orphans / dead links) | `/cleanmatic:telemetry --lens memory` |
+| Reconstruct a single session | `/cleanmatic:telemetry --lens forensics --session <id>` |
+| Read it in English instead | `/cleanmatic:telemetry --lang en` |
+
+Eight lenses (`usage`, `session`, `health`, `reliability`, `workflow`, `validate`, `memory`, `forensics`); four
+formats (`ascii`, `md`, `mermaid`, `json`). On a thin/new repo most lenses say **"chưa đủ dữ liệu"** and suppress
+recommendations rather than inventing trends.
+
+The 5 sink hooks are **auto-registered at install** (opt out with
+`python3 .claude/skills/telemetry/scripts/register_telemetry_hooks.py --remove`). They are fail-open, make no network
+calls, and write only to gitignored `.claude/telemetry/*.jsonl` sinks.
+
+### Deep links
+
+- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/telemetry/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/telemetry/GUIDE-EN.md)
+- **README:** [`.claude/skills/telemetry/README.md`](.claude/skills/telemetry/README.md)
+- **Operating contract:** [`.claude/skills/telemetry/SKILL.md`](.claude/skills/telemetry/SKILL.md)
+- **Narration & honesty gate:** [`references/narration-contract.md`](.claude/skills/telemetry/references/narration-contract.md)
+
+### What it does NOT do
+
+- No market/user-outcome metric (E3) — the `validate` proxy means "spec is well-formed", not "users adopted it".
+- No writing — it never edits specs, code, the catalog, or memory; there is no `--apply`.
+- Not billing-exact — token weight and `ms` durations are directional/approx, labelled "ước lượng".
+- Not a CI gate — opinion-free numbers for you to read; nothing blocks on it.
+
+---
+
 ## Bilingual (product-spec)
 
 - The interview asks questions in your chosen language (`--lang en` or `--lang vi`).
@@ -218,7 +279,7 @@ Vietnamese phrasing is native-reviewed for natural wording.
 
 ## Privacy
 
-Both skills make **no network calls at runtime**. product-spec's one-time installer downloads the Mermaid, marked, and
+All four skills make **no network calls at runtime** (telemetry's sink hooks and lenses are fail-open and stdlib-only; they read/write only local gitignored `.claude/telemetry/*.jsonl` sinks and never transmit anything). product-spec's one-time installer downloads the Mermaid, marked, and
 DOMPurify runtimes from the public CDN (`cdn.jsdelivr.net`); each is then stored locally as `mermaid.min.js` /
 `marked.min.js` / `purify.min.js` and verified against a pinned SHA-256 hash. (Degraded-install caveat: if
 `mermaid.min.js` failed to vendor, product-spec's Mermaid **graph** views fall back to a `cdn.jsdelivr.net` `<script>` at
@@ -238,15 +299,31 @@ and `SKILL.md`.
 
 # Tiếng Việt
 
-Một bộ AI Harness cho Claude Code giúp chuẩn hoá, truy vết và phản biện gắt gao các Đặc tả Sản phẩm (Product Spec). Ép logic Business phải chặt chẽ trước khi bàn giao cho Dev.
+Một bộ **AI Harness cho Claude Code** giúp định nghĩa, kiểm tra chặt, phản biện gắt gao, đóng gói và quan sát các Đặc tả Sản phẩm (Product Spec). Ép logic Business phải chặt chẽ trước khi bàn giao cho Dev — rồi đóng gói cả bộ và theo dõi nó thực sự được dùng ra sao.
+
+Đây **không chỉ là một mớ skill.** Cài bundle là thả vào dự án bạn cả một bộ `.claude/` phối hợp: bốn skill, các sub-agent phản biện mà chúng gọi ra, các hook nhắc/đo lường chúng, các rule điều phối, một eval-gate dùng chung, và một bộ đóng gói deterministic — tất cả nối với nhau.
 
 | Skill | Cho ai | Làm gì |
 |---|---|---|
 | **[`product-spec`](.claude/skills/product-spec/)** | **Product Owner** không chuyên kỹ thuật | Dựng cây tài liệu sản phẩm theo phỏng vấn (**Tầm nhìn → 1 BRD → nhiều PRD → Epic → Story kèm AC**) với truy vết chặt, kiểm tra, trực quan hóa — bằng ngôn ngữ bình thường, không cần code. Song ngữ EN/VI. |
 | **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owner** | Bản mổ xẻ thẳng-tay-có-căn-cứ một spec qua bốn lăng kính (product/tech/market/craft). Nói điều `--validate` không nói: vì sao nó chết, đứng đâu trên thị trường, chữ nghĩa có vững không. Chín mức giọng, không bao giờ sửa spec, không bao giờ làm cổng CI. Song ngữ EN/VI. |
-| **[`release`](.claude/skills/release/)** | **Developer** | Đóng gói một tập con chọn lọc của cây `.claude/` (skills, agents, hooks, rules) thành `tar.gz` **versioned + deterministic** để chia sẻ hoặc cài máy khác. Manifest-first; installer đa nền tảng cho người nhận. |
+| **[`release`](.claude/skills/release/)** | **Developer** | Đóng gói một tập con chọn lọc của cây `.claude/` (skills, agents, hooks, rules, eval-gate dùng chung) thành `tar.gz` **versioned + deterministic** để chia sẻ hoặc cài máy khác. Manifest-first; installer đa nền tảng cho người nhận. |
+| **[`telemetry`](.claude/skills/telemetry/)** | **Product Owner** | Bản đọc **mức dùng & sức khỏe** chỉ-đọc, tiếng Việt thuần, về chính bộ đồ nghề của bạn: skill nào hay dùng, script nào lỗi/chậm, sub-agent có chạy ổn không, bộ nhớ có gọn không, lần `validate` cuối có pass không. Tám lăng kính, ra ascii/md/mermaid/json. Trung thực theo thiết kế — mức dùng & sức khỏe, **không phải** hiệu quả thị trường. Song ngữ EN/VI. |
 
-Ba skill dùng chung **một venv Python** ở `.claude/skills/.venv/` (do bất kỳ installer nào tạo).
+Bốn skill dùng chung **một venv Python** ở `.claude/skills/.venv/` (do bất kỳ installer nào tạo). Riêng telemetry (lăng kính + 5 sink hook) **chỉ dùng stdlib** nên chạy được cả bằng `python3` hệ thống trên máy người nhận.
+
+### Harness cài những gì (cả bộ, không chỉ skill)
+
+| Thành phần | Ở đâu | Là gì |
+|---|---|---|
+| **4 skill** | `.claude/skills/{product-spec,product-spec-critique,release,telemetry}/` | Các lệnh `/cleanmatic:*` ở trên. Mỗi skill tự chứa (`scripts/`, `references/`, guide riêng). |
+| **7 sub-agent phản biện** | `.claude/agents/` | Các lens critic (`product-`/`tech-`/`market-`/`craft-critic`), `critique-consolidator`, `critique-humanizer`, và `memory-harvester` mà `product-spec-critique` + `--reflect` gọi ra. |
+| **Hook** | `.claude/hooks/` | Hook nhắc re-critique sau validate + memory-gap của `product-spec-critique`, và **5 sink hook** của telemetry (skill invocation, script duration, sub-agent outcome, bash timing, session summary) — tự đăng ký khi cài. |
+| **Rule điều phối** | `.claude/rules/` | Các rule workflow/orchestration/development điều khiển cách Claude vận hành skill. |
+| **Eval-gate dùng chung** | `.claude/skills/_shared/lib/` | `run_evals.py` (cấu trúc) + `llm_eval.py` (advisory) để fixture `eval/golden/` đóng kèm mỗi skill chạy được trên máy bạn. |
+| **Bộ đóng gói + installer** | `pack.manifest.yaml`, `INSTALL.md`, `install.{sh,ps1}` | Builder deterministic + installer đa nền tảng dựng lại venv dùng chung. |
+
+Sinh ra khi bạn dùng: spec ở `docs/product/`, sink telemetry ở `.claude/telemetry/*.jsonl` (dữ liệu runtime, gitignore, không bao giờ bundle), và tarball reproducible ở `dist/`.
 
 > 📘 **Hướng dẫn dùng (mỗi tình huống là một hội thoại mẫu) + lộ trình học + khái niệm cốt lõi:** mỗi skill có `GUIDE-VI.md` (Tiếng Việt) và `GUIDE-EN.md` (English) trong thư mục của nó. README chi tiết từng skill cũng có 2 phần Anh + Việt.
 
@@ -302,13 +379,34 @@ Phỏng vấn bạn, ghi lại spec thành cây có truy vết chặt, kiểm tr
 
 **6 điều cốt lõi:** manifest là source-of-truth; determinism là hợp đồng (byte-identical); safety filter không thể tắt (secrets/`.env`/`.git`/caches luôn bị loại, settings/.ck opt-in); script lo cấu trúc, LLM lo UI; không auto-install (người nhận tự chạy); **release chỉ kích bằng tag qua CI — không bao giờ `gh release create` bằng tay** (SHA build tay không khớp build CI).
 
+## `telemetry` — cho Product Owner
+
+Sau khi dùng harness một thời gian, `telemetry` cho bạn biết — **bằng tiếng Việt thuần** — bộ đồ nghề của bạn đang chạy thế nào. Nó **chỉ-đọc** và **trung thực theo thiết kế**: báo *máy móc có chạy không* (mức dùng & sức khỏe), không bao giờ báo *sản phẩm có thắng thị trường không* (đó là E3, cố ý nằm ngoài phạm vi). Script gom số liệu tất định; skill diễn giải, luôn kết thúc bằng mục **"Cái này KHÔNG đo được"**.
+
+| Bạn muốn… | Chạy |
+|---|---|
+| Bảng tổng quan mức dùng + sức khỏe trong một cái liếc | `/cleanmatic:telemetry` (`--lens all`, ascii) |
+| Xem skill nào hay dùng, skill nào chưa dùng lần nào | `/cleanmatic:telemetry --lens usage` |
+| Tìm script lỗi hoặc chạy chậm | `/cleanmatic:telemetry --lens health` |
+| Kiểm tra sub-agent chạy ổn hay hỏng | `/cleanmatic:telemetry --lens reliability` |
+| Xem lần `validate` cuối có pass không (chất lượng nội bộ, **không** phải thành công thị trường) | `/cleanmatic:telemetry --lens validate` |
+| Soi bộ nhớ có gọn không (mồ côi / link chết) | `/cleanmatic:telemetry --lens memory` |
+| Dựng lại một phiên làm việc | `/cleanmatic:telemetry --lens forensics --session <id>` |
+| Đọc bằng tiếng Anh | `/cleanmatic:telemetry --lang en` |
+
+Tám lăng kính (`usage`, `session`, `health`, `reliability`, `workflow`, `validate`, `memory`, `forensics`); bốn định dạng (`ascii`, `md`, `mermaid`, `json`). Trên repo mới/mỏng, hầu hết lăng kính nói **"chưa đủ dữ liệu"** và tắt gợi ý thay vì bịa ra xu hướng.
+
+5 sink hook **tự đăng ký khi cài** (tắt bằng `python3 .claude/skills/telemetry/scripts/register_telemetry_hooks.py --remove`). Chúng fail-open, không gọi mạng, chỉ ghi vào sink `.claude/telemetry/*.jsonl` (đã gitignore).
+
+**KHÔNG làm:** không đo hiệu quả thị trường/người dùng (E3 — proxy `validate` nghĩa là "spec đúng cấu trúc", không phải "người dùng đã chấp nhận"); không ghi gì (không sửa spec/code/catalog/memory, không `--apply`); không chính xác hóa đơn (token & `ms` là ước lượng); không làm cổng CI.
+
 ## Song ngữ (product-spec)
 
 Phỏng vấn hỏi bằng ngôn ngữ bạn chọn (`--lang en` / `--lang vi`); phần văn LLM sinh ra (tầm nhìn, mô tả story, AC) viết theo ngôn ngữ đó. Mã (`BRD-G1`, `PRD-AUTH-E1-S1`) và khóa frontmatter (`personas`, `scope`, `moscow`…) giữ tiếng Anh để cấu trúc ổn định. Nhãn trực quan (`Now/Next/Later`, `Must/Should/Could/Won't`) bản địa hóa khi `--lang vi`. Tiếng Việt được người bản ngữ rà cho tự nhiên.
 
 ## Quyền riêng tư
 
-Các skill **không gọi mạng khi chạy**. Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi lưu cục bộ + verify SHA-256. Safety filter của release **luôn loại** `.env`/secrets/keys, `.git/`, caches, session state khỏi mọi bundle — không flag nào kéo lại được.
+Cả bốn skill **không gọi mạng khi chạy** (sink hook + lăng kính của telemetry fail-open, chỉ-stdlib, chỉ đọc/ghi sink cục bộ `.claude/telemetry/*.jsonl` đã gitignore, không truyền gì đi đâu). Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi lưu cục bộ + verify SHA-256. Safety filter của release **luôn loại** `.env`/secrets/keys, `.git/`, caches, session state khỏi mọi bundle — không flag nào kéo lại được.
 
 ## Cần trợ giúp?
 
