@@ -45,9 +45,11 @@ def _hook_cmd(file: str) -> str:
 TRACK_SKILL = _hook_cmd("track_skill_invocation.py")
 TRACK_SCRIPT = _hook_cmd("track_script_execution.py")
 EMIT_SESSION = _hook_cmd("emit_session_summary.py")
+MARK_BASH_START = _hook_cmd("mark_bash_start.py")
+TRACK_SUBAGENT = _hook_cmd("track_subagent_outcome.py")
 
 # All current telemetry command strings (used to identify our entries).
-TELEMETRY_CMDS: set[str] = {TRACK_SKILL, TRACK_SCRIPT, EMIT_SESSION}
+TELEMETRY_CMDS: set[str] = {TRACK_SKILL, TRACK_SCRIPT, EMIT_SESSION, MARK_BASH_START, TRACK_SUBAGENT}
 
 # Legacy node .cjs command substrings — these are replaced on register so we
 # don't double-fire node+python.
@@ -63,8 +65,10 @@ _LEGACY_PATTERNS = [
 REGISTRATIONS = [
     {"event": "PreToolUse",          "matcher": "Skill", "commands": [TRACK_SKILL]},
     {"event": "UserPromptExpansion", "matcher": None,    "commands": [TRACK_SKILL]},
+    {"event": "PreToolUse",          "matcher": "Bash",  "commands": [MARK_BASH_START]},
     {"event": "PostToolUse",         "matcher": "Bash",  "commands": [TRACK_SCRIPT]},
     {"event": "Stop",                "matcher": None,    "commands": [EMIT_SESSION]},
+    {"event": "SubagentStop",        "matcher": None,    "commands": [TRACK_SUBAGENT]},
 ]
 
 

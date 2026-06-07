@@ -1,0 +1,2 @@
+{"ts": "2026-06-05T12:00:00+00:00", "session": "sessA", "skills": ["cleanmatic:product-spec"], "tools": {"Skill": 2, "Edit": 3}, "files_modified": 3, "subagents": 1, "duration_s": 3600}
+{"ts": "2026-06-06T12:00:00+00:00", "session": "sessB", "skills": ["product-spec", "cleanmatic:release", "cleanmatic:product-spec-critique"], "tools": {"Skill": 3, "Write": 2}, "files_modified": 2, "subagents": 2, "duration_s": 1800}

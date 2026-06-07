@@ -58,6 +58,16 @@ Learn-back from `human-analyzer` (HA) — CM is the source repo; HA built observ
 - [x] ~~**Reverse STANDARDIZE.md**~~ ✅ `STANDARDIZE.md` repo root, 5-row table + divergences (≤60 lines).
 - [x] ~~**Red-team adversarial review** (Phase 07)~~ ✅ 8 invariants attacked, all held (reproducible command+state); 0 BROKEN; verdicts in `REVIEW.md`.
 
+**Telemetry usage-&-health skill (`cleanmatic:telemetry`) — SHIPPED 2026-06-07** (plan `260607-1500-telemetry-insights-skill/`, Phases 1–8). xia PORT of `human-analyzer`'s `com:skill-analytics` (dev-facing EN) → cleanmatic (flat slugs, VI non-tech narration). Architecture: scripts gather (deterministic) / skill narrates (LLM); CM-local, NOT bundled.
+- [x] ~~**8 lenses**~~ ✅ `_shared/lib/lens_*.py` + `_shared/scripts/analyze_telemetry.py`: usage+tokens, session-shape, coarse-health, reliability, workflow-chains, memory-health (read-only), forensics, validate-pass proxy. Flat-slug catalog (`catalog.py` reads SKILL.md `name:`). Low-volume gate.
+- [x] ~~**2 new sinks (hook-only)**~~ ✅ `subagent-outcomes.jsonl` (SubagentStop) + `ms` on `hook-telemetry.jsonl` (Pre/Post:Bash pairing). atexit/excepthook REJECTED (would ModuleNotFoundError on recipients — `_shared` not bundled; same F1 class). Pairing keyed on command-hash only (live Pre/Post session_id is asymmetric).
+- [x] ~~**Renderers**~~ ✅ `telemetry_render.py`: ascii (terminal) + mermaid (escaped, no network/JS) — the genuine gap over HA — plus md/json from `formatters.py`. NO HTML (D4).
+- [x] ~~**Effectiveness proxy**~~ ✅ validate-pass = INTERNAL quality (last-status from `last_validated.json` marker + pass-rate from validate-script exit history); honest n/a when no runs. Explicitly **NOT E3**.
+- [x] ~~**Packaging guards**~~ ✅ `telemetry` in `DEFAULT_SKILLS` (semver) but NOT `VERSION_SYNCED_SKILLS` (never ships); manifest omits skill+hooks; gitignore re-include; real-tarball + "no shipped script imports a telemetry module" tests green.
+- [defer] **Rich `errors.jsonl` crash-log** (stack traces via excepthook) — DROPPED: cannot instrument SHIPPED product-spec scripts without a bundle-leaking telemetry import. Script failures stay as the coarse `exit` in `hook-telemetry.jsonl`. Revisit only if a non-import capture path exists.
+- [defer] **HTML telemetry output** — out of scope (avoids vendored-asset / shipped-render coupling, F1). A future separate plan only.
+- [note] **E3 outcome tracking** referenced as the deferred market-outcome boundary; the validate proxy is internal-quality only. **E3 status UNCHANGED** (still `[defer]` below).
+
 **Out of scope this round (P2/P3):** A5 context-gauge · A6 e2e pipeline · A7 PreCompact digest (all P2) · A8 nav-doc auto-gen (P3, 3-skill = low value) · A9 quality-gate learning loop (P3, **deferred** — dirties report-only/non-deterministic boundary; the safe slice shipped as repeat-offense polish).
 
 ---

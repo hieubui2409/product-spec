@@ -23,15 +23,10 @@ _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 _LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "_shared", "lib")
 sys.path.insert(0, _LIB_DIR)
 
-from telemetry_paths import append_event, project_dir  # noqa: E402
+from telemetry_paths import append_event, sessions_dir  # noqa: E402
 
 TAIL_BYTES = 256 * 1024
 FILE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
-
-
-def _sessions_dir() -> Path:
-    slug = project_dir().replace("/", "-")
-    return Path.home() / ".claude" / "projects" / slug
 
 
 def resolve_transcript(data: dict):
@@ -39,7 +34,9 @@ def resolve_transcript(data: dict):
     tp = data.get("transcript_path") if data else None
     if tp and Path(tp).exists():
         return tp
-    d = _sessions_dir()
+    # Shared resolver (DRY): ~/.claude/projects/<encoded-root>/ — same dir the
+    # lenses read, CK_SESSIONS_DIR-overridable.
+    d = sessions_dir()
     sid = (data.get("session_id") if data else None) or os.environ.get("CK_SESSION_ID")
     if sid:
         p = d / f"{sid}.jsonl"

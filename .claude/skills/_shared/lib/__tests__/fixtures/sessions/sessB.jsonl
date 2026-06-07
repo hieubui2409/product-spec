@@ -1,0 +1,4 @@
+{"timestamp": "2026-06-06T09:00:00Z", "message": {"role": "assistant", "content": [{"type": "tool_use", "name": "Skill", "input": {"skill": "cleanmatic:product-spec"}}], "usage": {"input_tokens": 100, "output_tokens": 50}}}
+{"timestamp": "2026-06-06T09:01:00Z", "message": {"role": "assistant", "content": [{"type": "text", "text": "working on the spec"}], "usage": {"input_tokens": 200, "output_tokens": 100}}}
+{"timestamp": "2026-06-06T09:02:00Z", "message": {"role": "assistant", "content": [{"type": "tool_use", "name": "Skill", "input": {"skill": "cleanmatic:release"}}], "usage": {"input_tokens": 80, "output_tokens": 20}}}
+{"timestamp": "2026-06-06T09:03:00Z", "message": {"role": "assistant", "content": [{"type": "tool_use", "name": "Write", "input": {"file_path": "/x.md"}}], "usage": {"input_tokens": 40, "output_tokens": 10}}}

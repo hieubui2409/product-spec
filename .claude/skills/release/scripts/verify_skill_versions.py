@@ -18,7 +18,10 @@ from pathlib import Path
 import yaml
 
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
-DEFAULT_SKILLS = ("product-spec", "product-spec-critique", "release")
+# telemetry is CM-local (NOT bundled) but still an owned skill → its metadata.version
+# is semver-checked here. It is deliberately ABSENT from test_version_sync's
+# VERSION_SYNCED_SKILLS (no changelog-equality assertion) since it never ships.
+DEFAULT_SKILLS = ("product-spec", "product-spec-critique", "release", "telemetry")
 
 # keepachangelog: the first heading whose bracket is EXACTLY [X.Y.Z]. The closing
 # `\]` is required, so `## [Unreleased]` is skipped and pre-release / build-metadata
@@ -89,14 +92,28 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--skill", action="append", type=Path, default=[], help="explicit skill dir (repeatable)")
     args = ap.parse_args(argv)
 
+    skipped: list[str] = []
     if args.skill:
         skill_dirs = list(args.skill)
     else:
         # script lives at <root>/.claude/skills/release/scripts/ → parents[4] == <root>
         root = args.root or Path(__file__).resolve().parents[4]
-        skill_dirs = [root / ".claude" / "skills" / s for s in DEFAULT_SKILLS]
+        skill_dirs = []
+        for s in DEFAULT_SKILLS:
+            d = root / ".claude" / "skills" / s
+            if d.is_dir():
+                skill_dirs.append(d)
+            else:
+                # CM-local skills (e.g. telemetry) are absent from a RECIPIENT bundle.
+                # This checker ships in the bundle, so skip a missing DEFAULT skill dir
+                # rather than fail — keeps the shipped checker bundle-portable. Locally
+                # (all dirs present) every DEFAULT_SKILLS entry is still verified; a
+                # present dir with a broken/absent SKILL.md still FAILS via verify().
+                skipped.append(s)
 
     results, ok = verify(skill_dirs)
+    for s in skipped:
+        print(f"[skip] {s:<8}  -         not present (CM-local / not bundled)")
     width = max((len(r.name) for r in results), default=4)
     for r in results:
         mark = "OK " if r.ok else "FAIL"

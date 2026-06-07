@@ -83,6 +83,10 @@ ck.md
 !/.claude/skills/release/**
 !/.claude/skills/product-spec-critique/
 !/.claude/skills/product-spec-critique/**
+# cleanmatic:telemetry — CM-local usage-&-health skill (git-tracked, NOT bundled:
+# absent from pack.manifest.yaml skills:[] → excluded by construction).
+!/.claude/skills/telemetry/
+!/.claude/skills/telemetry/**
 # Seed manifest for claude-pack (committed source-of-truth)
 !/.claude/pack.manifest.yaml
 # CK-framework artifacts committed so the repo self-packs reproducibly
@@ -107,6 +111,8 @@ ck.md
 /.claude/skills/product-spec-critique/**/__pycache__/
 /.claude/skills/product-spec-critique/**/*.pyc
 /.claude/skills/product-spec-critique/**/.pytest_cache/
+/.claude/skills/telemetry/**/__pycache__/
+/.claude/skills/telemetry/**/*.pyc
 /.claude/scripts/**/__pycache__/
 /.claude/scripts/**/*.pyc
 

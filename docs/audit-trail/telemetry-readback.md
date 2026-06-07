@@ -7,8 +7,13 @@ sink helper is `.claude/skills/_shared/lib/telemetry_paths.py`. Sinks:
 | Sink | Written by | Shape |
 |------|------------|-------|
 | `invocations.jsonl` | `track_skill_invocation.py` | `{ts, skill, session, via}` |
-| `hook-telemetry.jsonl` | `track_script_execution.py` | `{ts, source, script, exit}` |
+| `hook-telemetry.jsonl` | `track_script_execution.py` (+ `mark_bash_start.py` for `ms`) | `{ts, source, script, exit, ms?}` |
 | `sessions.jsonl` | `emit_session_summary.py` | `{ts, session, skills[], tools{}, files_modified, subagents, duration_s}` |
+| `subagent-outcomes.jsonl` | `track_subagent_outcome.py` (SubagentStop) | `{ts, agent_type, outcome, session}` — outcome ∈ success/api_error/timeout/blocked/unknown |
+
+`ms` (wall-clock script duration, approx) appears only when the PreToolUse:Bash
+`mark_bash_start.py` paired with the PostToolUse:Bash `track_script_execution.py`;
+records with no pair degrade gracefully (no `ms`).
 
 ## Queries
 
@@ -29,7 +34,31 @@ jq -r .skill invocations.jsonl | sort -u
 
 # Session activity — files modified + duration trend
 jq -r '[.ts, (.files_modified|tostring), (.duration_s|tostring)] | @tsv' sessions.jsonl
+
+# Subagent reliability — outcome mix per agent type
+jq -r '[.agent_type, .outcome] | @tsv' subagent-outcomes.jsonl | sort | uniq -c | sort -rn
+
+# Script duration (where paired) — slowest scripts
+jq -r 'select(.ms!=null) | [.script, (.ms|tostring)] | @tsv' hook-telemetry.jsonl | sort -t$'\t' -k2 -rn | head
 ```
+
+## Lenses + the `cleanmatic:telemetry` skill
+
+Beyond raw `jq`, the **usage-&-health lenses** turn these sinks into narrated reports.
+Deterministic gather (script) → narration (the `/cleanmatic:telemetry` skill, plain
+Vietnamese). The lenses are CM-local (NOT shipped); the skill is read-only.
+
+```bash
+# overview dashboard-lite (ascii); --format md|mermaid|json; --lens usage|session|
+# health|reliability|workflow|validate|memory|forensics|all; --days N --top N
+.claude/skills/.venv/bin/python3 .claude/skills/_shared/scripts/analyze_telemetry.py \
+  --lens all --format ascii
+```
+
+The PO normally invokes `/cleanmatic:telemetry` (VI narration + the mandatory
+"Cái này KHÔNG đo được" honesty section); the `jq` queries above are the manual
+fallback. The `validate` lens is an **internal-quality** proxy (did validate pass),
+explicitly NOT market/user outcome (E3, deferred).
 
 ## (Re)registering the hooks
 
