@@ -17,6 +17,7 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.2.1] — 2026-06-08
 ### Added
 - **AGPL-3.0 license + CONTRIBUTING.** Added `LICENSE` (GNU AGPL-3.0, © 2026 Hieu Bui) and
   `CONTRIBUTING.md` (inbound=outbound, DCO sign-off, dev/test/release workflow). Both are added to the
