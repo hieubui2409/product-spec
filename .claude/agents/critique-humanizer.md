@@ -46,6 +46,9 @@ The wording, and only the wording, so it stops sounding machine-made:
 - **The grounding.** Every evidence `ID:line` and every fix survives verbatim in meaning.
 - **The structure.** Keep the header, the severity tally, the top-3, the per-lens sections, the repeat-offense and
   DEC-worthy sections. Keep all IDs, frontmatter keys, framework names, and verbatim spec quotes exactly as they are.
+  In the repeat-offense section specifically, **preserve the occurrence count (`×N`) and every prior occurrence ref
+  (`<scope>@<ts>`) verbatim**, and keep the level-scaled scold at full strength (do not flatten "lần thứ N rồi …" back
+  to a generic "lặp lại" line) — the louder form is the configured voice, not an AI-tell.
 - **The universal-harm floor (level-agnostic, and it OVERRIDES the preserve rule above).** This clause holds at EVERY
   level including 9, even with the PO's consent. You never add, and you actively remove, an attack on identity,
   protected characteristics, a person's worth, their family, their region of origin, or their safety, and any slur,

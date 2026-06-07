@@ -35,3 +35,8 @@ jobs:
       - name: Run pytest (offline-enforced, scoped to skill tests dir)
         working-directory: .claude/skills/product-spec-critique
         run: python -m pytest scripts/tests -v
+
+      - name: Eval gate — run_evals structural subset (offline; reports manual/unmapped)
+        env:
+          CK_OFFLINE: '1'
+        run: python .claude/skills/_shared/lib/run_evals.py --skill product-spec-critique

@@ -7,12 +7,12 @@ A small collection of **Claude Code skills** by cleanmatic. Three skills ship he
 |---|---|---|
 | **[`product-spec`](.claude/skills/product-spec/)** | Non-technical **Product Owners** | Interview-driven product spec hierarchy (**Vision → 1 BRD → many PRDs → Epics → Stories with AC**) with strict traceability, validation, and visualization — in plain language, no code required. Bilingual EN/VI. |
 | **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owners** | An opinionated, brutal-but-grounded tear-down of a `product-spec` spec across four lenses (product/tech/market/craft). Says what `--validate` cannot: why it would die, where it sits in the market, whether the writing holds up. Nine voice levels, never edits the spec, never gates CI. Bilingual EN/VI. |
-| **[`claude-pack`](.claude/skills/claude-pack/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
+| **[`release`](.claude/skills/release/)** | **Developers** | Package a curated subset of the `.claude/` tree (skills, agents, hooks, rules) into a versioned, **deterministic** `tar.gz` for sharing or installing on another machine. Manifest-first; multiplatform recipient installer. |
 
 > 📘 **Usage guides (every use case as a sample conversation):**
 > - product-spec — [`GUIDE-VI.md`](.claude/skills/product-spec/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec/GUIDE-EN.md) (English)
 > - product-spec-critique — [`GUIDE-VI.md`](.claude/skills/product-spec-critique/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/product-spec-critique/GUIDE-EN.md) (English)
-> - claude-pack — [`GUIDE-VI.md`](.claude/skills/claude-pack/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/claude-pack/GUIDE-EN.md) (English)
+> - release — [`GUIDE-VI.md`](.claude/skills/release/GUIDE-VI.md) (Tiếng Việt) · [`GUIDE-EN.md`](.claude/skills/release/GUIDE-EN.md) (English)
 
 The three skills share **one Python virtual environment** at `.claude/skills/.venv/` (created by any installer).
 
@@ -140,7 +140,7 @@ your family, no self-harm or sexual content. The rule is the target of the line,
 
 ---
 
-## `claude-pack` — for Developers
+## `release` — for Developers
 
 Bundles a curated subset of `.claude/` (skills, agents, hooks, rules) plus optional top-level files into a versioned,
 deterministic `tar.gz`. Each bundle ships a `MANIFEST.json` (per-file SHA256), an `INSTALL.md`, and multiplatform
@@ -150,36 +150,36 @@ installers (`install.sh` + `install.ps1`) so the recipient extracts once and run
 
 | You want to… | Run |
 |---|---|
-| Author a manifest interactively, then pack | `/cleanmatic:claude-pack` (no flag → interview) |
+| Author a manifest interactively, then pack | `/cleanmatic:release` (no flag → interview) |
 | Build from an existing manifest | `… -m pack --manifest .claude/pack.manifest.yaml` |
 | Preview the file list + size, no tarball | `… -m pack --manifest … --dry-run` |
 | Override version for an ad-hoc build | `… -m pack --manifest … --version 0.2.0-rc1` |
 | Reproducible CI build pinned to commit date | `SOURCE_DATE_EPOCH=… … -m pack … --source-date-epoch env` |
 
-Output lands in `dist/claude-pack-{version}.tar.gz` + a `.sha256` sidecar (`dist/` is gitignored — tarballs are
+Output lands in `dist/product-spec-{version}.tar.gz` + a `.sha256` sidecar (`dist/` is gitignored — tarballs are
 reproducible artifacts, not source).
 
 ### Install
 
 ```bash
 # POSIX (macOS / Linux / WSL)
-bash .claude/skills/claude-pack/install.sh            # add --dev for pytest
+bash .claude/skills/release/install.sh            # add --dev for pytest
 
 # Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -File .\.claude\skills\claude-pack\install.ps1
+powershell -ExecutionPolicy Bypass -File .\.claude\skills\release\install.ps1
 ```
 
 Requires **Python 3.11+**. Then invoke from Claude Code:
 
 ```
-/cleanmatic:claude-pack
+/cleanmatic:release
 ```
 
 ### Deep links
 
-- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/claude-pack/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/claude-pack/GUIDE-EN.md)
-- **README:** [`.claude/skills/claude-pack/README.md`](.claude/skills/claude-pack/README.md)
-- **Operating contract:** [`.claude/skills/claude-pack/SKILL.md`](.claude/skills/claude-pack/SKILL.md)
+- **Usage guide:** [`GUIDE-VI.md`](.claude/skills/release/GUIDE-VI.md) / [`GUIDE-EN.md`](.claude/skills/release/GUIDE-EN.md)
+- **README:** [`.claude/skills/release/README.md`](.claude/skills/release/README.md)
+- **Operating contract:** [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md)
 
 ### What it does NOT do
 
@@ -223,7 +223,7 @@ Both skills make **no network calls at runtime**. product-spec's one-time instal
 DOMPurify runtimes from the public CDN (`cdn.jsdelivr.net`); each is then stored locally as `mermaid.min.js` /
 `marked.min.js` / `purify.min.js` and verified against a pinned SHA-256 hash. (Degraded-install caveat: if
 `mermaid.min.js` failed to vendor, product-spec's Mermaid **graph** views fall back to a `cdn.jsdelivr.net` `<script>` at
-browser-render time — re-run the installer to vendor it; ASCII and body views never reach a CDN.) claude-pack's safety
+browser-render time — re-run the installer to vendor it; ASCII and body views never reach a CDN.) release's safety
 filter **always drops** `.env`/secrets/keys, `.git/`, runtime caches, and session state from any bundle — non-removable
 via any flag.
 
@@ -245,7 +245,7 @@ Một bộ nhỏ gồm **3 skill cho Claude Code** của cleanmatic, mỗi skill
 |---|---|---|
 | **[`product-spec`](.claude/skills/product-spec/)** | **Product Owner** không chuyên kỹ thuật | Dựng cây tài liệu sản phẩm theo phỏng vấn (**Tầm nhìn → 1 BRD → nhiều PRD → Epic → Story kèm AC**) với truy vết chặt, kiểm tra, trực quan hóa — bằng ngôn ngữ bình thường, không cần code. Song ngữ EN/VI. |
 | **[`product-spec-critique`](.claude/skills/product-spec-critique/)** | **Product Owner** | Bản mổ xẻ thẳng-tay-có-căn-cứ một spec qua bốn lăng kính (product/tech/market/craft). Nói điều `--validate` không nói: vì sao nó chết, đứng đâu trên thị trường, chữ nghĩa có vững không. Chín mức giọng, không bao giờ sửa spec, không bao giờ làm cổng CI. Song ngữ EN/VI. |
-| **[`claude-pack`](.claude/skills/claude-pack/)** | **Developer** | Đóng gói một tập con chọn lọc của cây `.claude/` (skills, agents, hooks, rules) thành `tar.gz` **versioned + deterministic** để chia sẻ hoặc cài máy khác. Manifest-first; installer đa nền tảng cho người nhận. |
+| **[`release`](.claude/skills/release/)** | **Developer** | Đóng gói một tập con chọn lọc của cây `.claude/` (skills, agents, hooks, rules) thành `tar.gz` **versioned + deterministic** để chia sẻ hoặc cài máy khác. Manifest-first; installer đa nền tảng cho người nhận. |
 
 Ba skill dùng chung **một venv Python** ở `.claude/skills/.venv/` (do bất kỳ installer nào tạo).
 
@@ -287,19 +287,19 @@ Phỏng vấn bạn, ghi lại spec thành cây có truy vết chặt, kiểm tr
 
 **KHÔNG làm:** không sinh code, không sửa spec (chỉ ghi báo cáo); không làm cổng CI; không tự ghi bộ nhớ (chỉ thành `DEC-<n>` khi bạn xác nhận); không tự chạy `--validate`.
 
-## `claude-pack` — cho Developer
+## `release` — cho Developer
 
 Đóng gói một tập con chọn lọc của `.claude/` thành `tar.gz` versioned + deterministic. Mỗi bundle kèm `MANIFEST.json` (per-file SHA256), `INSTALL.md`, và installer đa nền tảng (`install.sh` + `install.ps1`).
 
 | Bạn muốn… | Chạy |
 |---|---|
-| Soạn manifest tương tác rồi pack | `/cleanmatic:claude-pack` (không cờ → phỏng vấn) |
+| Soạn manifest tương tác rồi pack | `/cleanmatic:release` (không cờ → phỏng vấn) |
 | Build từ manifest có sẵn | `… -m pack --manifest .claude/pack.manifest.yaml` |
 | Xem trước danh sách file + dung lượng, không tạo tarball | `… -m pack --manifest … --dry-run` |
 | Override version cho build ad-hoc | `… -m pack --manifest … --version 0.2.0-rc1` |
 | Build reproducible cho CI theo commit date | `SOURCE_DATE_EPOCH=… … -m pack … --source-date-epoch env` |
 
-Đầu ra ở `dist/claude-pack-{version}.tar.gz` + sidecar `.sha256` (`dist/` bị gitignore — tarball là artifact reproducible, không phải source).
+Đầu ra ở `dist/product-spec-{version}.tar.gz` + sidecar `.sha256` (`dist/` bị gitignore — tarball là artifact reproducible, không phải source).
 
 **6 điều cốt lõi:** manifest là source-of-truth; determinism là hợp đồng (byte-identical); safety filter không thể tắt (secrets/`.env`/`.git`/caches luôn bị loại, settings/.ck opt-in); script lo cấu trúc, LLM lo UI; không auto-install (người nhận tự chạy); **release chỉ kích bằng tag qua CI — không bao giờ `gh release create` bằng tay** (SHA build tay không khớp build CI).
 
@@ -309,7 +309,7 @@ Phỏng vấn hỏi bằng ngôn ngữ bạn chọn (`--lang en` / `--lang vi`);
 
 ## Quyền riêng tư
 
-Các skill **không gọi mạng khi chạy**. Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi lưu cục bộ + verify SHA-256. Safety filter của claude-pack **luôn loại** `.env`/secrets/keys, `.git/`, caches, session state khỏi mọi bundle — không flag nào kéo lại được.
+Các skill **không gọi mạng khi chạy**. Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi lưu cục bộ + verify SHA-256. Safety filter của release **luôn loại** `.env`/secrets/keys, `.git/`, caches, session state khỏi mọi bundle — không flag nào kéo lại được.
 
 ## Cần trợ giúp?
 

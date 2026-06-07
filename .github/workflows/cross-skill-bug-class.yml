@@ -10,7 +10,7 @@ on:
     paths:
       - '.claude/skills/product-spec/**'
       - '.claude/skills/product-spec-critique/**'
-      - '.claude/skills/claude-pack/**'
+      - '.claude/skills/release/**'
       - '.github/workflows/cross-skill-bug-class.yml'
   workflow_dispatch:
 
@@ -46,6 +46,6 @@ jobs:
           CK_OFFLINE: '1'
         run: python -m pytest scripts/tests -m bug_class -v --no-header || [ $? -eq 5 ]
 
-      - name: claude-pack bug_class
-        working-directory: .claude/skills/claude-pack
+      - name: release bug_class
+        working-directory: .claude/skills/release
         run: python -m pytest scripts/tests -m bug_class -v

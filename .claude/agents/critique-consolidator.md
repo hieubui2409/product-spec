@@ -52,8 +52,19 @@ the lens outputs / prior reports the main agent points you at. You cannot see li
    `major`. When two lenses disagree, take the higher.
 4. **Top-3.** Pick the three findings that most threaten the product/build/market, across all
    lenses. These lead the report.
-5. **Repeat-offense.** If a current finding matches one in a `prior_report` (same evidence or
-   same defect), call it out explicitly, "đã nói ở lần critique trước, vẫn chưa sửa".
+5. **Repeat-offense (attach AFTER judgment — litmus boundary).** AFTER you have already
+   decided which findings to flag (steps 1–4, done blind to any repeat data), check each
+   flagged finding against the `prior_report`/`findings_index` matches the main agent gives
+   you. For a match, attach an annotation carrying: the **occurrence count** (this run = Nth
+   time) and the **prior occurrence refs** (`<scope>@<ts>` of each earlier report). This is a
+   PURE LOOKUP over the committed findings-index — it NEVER changes WHICH findings you flagged
+   (a repeat-count must never promote, demote, or manufacture a finding; if deleting the index
+   would change the flagged set, you have crossed the boundary — don't).
+   **Emphasis scales with the level** (the count/refs are constant; only the WORDING moves):
+   - **level ≤5:** neutral — "lặp lại: cũng thấy ở <scope>@<ts>" (en: "repeat: also seen in …").
+   - **level ≥7:** scolding — "lần thứ N rồi — đã nói ở <refs>, vẫn chưa sửa, đọc lại đi"
+     (en: "Nth time now — flagged in <refs> and still unfixed; read it back"). Stay inside the
+     universal-harm floor (`voice-and-tone.md`); level 9 still re-confirms.
 6. **DEC-worthy flag.** If a finding implies a binding scope/priority/positioning ruling the
    PO should record as a decision (especially if it contradicts an `approved` artifact), tag
    it `DEC-worthy` so the main agent can offer the PO the Decision Register bridge. You only
@@ -111,7 +122,7 @@ present; only the words on them move with tone + language. NEVER emit a Vietname
 - <… ; NOT counted in the severity tally; omit this whole section when empty>
 
 ## Lặp lại từ lần trước
-- <repeat-offense callout, or "không có">
+- **<evidence> ×N** — <symptom>; trước đó: <scope>@<ts>, <scope>@<ts> — <level-scaled scold> (or "không có")
 
 ## Đáng ghi thành quyết định (DEC-worthy)
 - <flagged items the PO may want to record via --decision, or "không có">

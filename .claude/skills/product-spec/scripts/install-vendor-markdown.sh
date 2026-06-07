@@ -10,7 +10,7 @@
 #
 # Mirrors install-vendor-mermaid.sh. The two libraries are COMMITTED to the
 # repo (.gitignore un-ignores product-spec/**) so a fresh clone is offline-ready
-# and claude-pack ships them deterministically.
+# and release ships them deterministically.
 #
 # NOTE: the `</script>` close-tag escape needed for safe inlining is applied at
 # INLINE time in render_html._load_vendored_markdown_libs(), NOT here — so the

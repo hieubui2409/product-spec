@@ -79,8 +79,8 @@ ck.md
 /.claude/skills/*
 !/.claude/skills/product-spec/
 !/.claude/skills/product-spec/**
-!/.claude/skills/claude-pack/
-!/.claude/skills/claude-pack/**
+!/.claude/skills/release/
+!/.claude/skills/release/**
 !/.claude/skills/product-spec-critique/
 !/.claude/skills/product-spec-critique/**
 # Seed manifest for claude-pack (committed source-of-truth)
@@ -92,18 +92,18 @@ ck.md
 !/.claude/scripts/**
 !/.claude/schemas/
 !/.claude/schemas/**
-# /.claude/hooks/ holds ck-managed *.cjs (NOT this repo's) — keep them ignored,
-# but track the one skill-owned hook so it commits and ships in the CI bundle.
+# /.claude/hooks/ holds ck-managed *.cjs (NOT this repo's) — keep them ignored.
+# OUR hooks are Python; track every *.py here (memory_gap_hook,
+# product_spec_critique_nudge, + the A1 telemetry hooks) and leave ck *.cjs ignored.
 !/.claude/hooks/
 /.claude/hooks/*
-!/.claude/hooks/memory_gap_hook.py
-!/.claude/hooks/product_spec_critique_nudge.py
+!/.claude/hooks/*.py
 # Re-ignore Python cache + build artifacts inside tracked skills
 /.claude/skills/product-spec/**/__pycache__/
 /.claude/skills/product-spec/**/*.pyc
-/.claude/skills/claude-pack/**/__pycache__/
-/.claude/skills/claude-pack/**/*.pyc
-/.claude/skills/claude-pack/dist/
+/.claude/skills/release/**/__pycache__/
+/.claude/skills/release/**/*.pyc
+/.claude/skills/release/dist/
 /.claude/skills/product-spec-critique/**/__pycache__/
 /.claude/skills/product-spec-critique/**/*.pyc
 /.claude/skills/product-spec-critique/**/.pytest_cache/
@@ -128,9 +128,9 @@ assets/
 # Exception: product-spec ships templates + vendored Mermaid JS in assets/
 !.claude/skills/product-spec/assets/
 !.claude/skills/product-spec/assets/**
-# Exception: claude-pack ships installer templates + manifest example in assets/
-!.claude/skills/claude-pack/assets/
-!.claude/skills/claude-pack/assets/**
+# Exception: release ships installer templates + manifest example in assets/
+!.claude/skills/release/assets/
+!.claude/skills/release/assets/**
 
 # External repos for study/reference
 external/
@@ -152,3 +152,24 @@ Script.tar.gz
 
 # transient decision-register file lock (never committed)
 **/.decision_register.lock
+
+# --- A1 telemetry (observability) -------------------------------------------
+# Sinks are runtime-only: never committed, never distributed. Created at runtime
+# by telemetry_paths.py, so no tracked placeholder needed.
+/.claude/telemetry/
+# Telemetry tooling is CM-repo source (committed) but NOT bundled to recipients
+# (absent from pack.manifest hooks:[]). The Python hooks are re-included by the
+# `!/.claude/hooks/*.py` rule above; their Python tests need re-including too.
+!/.claude/hooks/__tests__/
+/.claude/hooks/__tests__/*
+!/.claude/hooks/__tests__/*.py
+# Shared CM-owned lib (eval harness run_evals/llm_eval + telemetry_paths.py +
+# register_telemetry_hooks.py + references). Track all of _shared EXCEPT the
+# ck-managed *.cjs (e.g. plan-table-parser.cjs, used by ck plans-kanban /
+# markdown-novel-viewer) and python caches.
+!/.claude/skills/_shared/
+!/.claude/skills/_shared/**
+/.claude/skills/_shared/**/*.cjs
+/.claude/skills/_shared/**/__pycache__/
+/.claude/skills/_shared/**/*.pyc
+/.claude/skills/_shared/**/.pytest_cache/

@@ -5,36 +5,79 @@
       "id": 0,
       "prompt": "Initialize a brand new product spec for a hypothetical product called 'Acme Shop' (a web storefront for boutique fashion brands). Use the cleanmatic:product-spec skill. The PO answers are pre-baked in fixtures/init-answers.json. Produce a valid docs/product/PRODUCT.md and docs/product/vision.md.",
       "expected_output": "docs/product/PRODUCT.md and vision.md exist; both have schema-valid frontmatter; core_value is populated; personas list cap 2-4.",
-      "files": ["fixtures/init-answers.json"],
+      "files": [
+        "fixtures/init-answers.json"
+      ],
       "assertions": [
-        {"id": "files-created", "text": "Both docs/product/PRODUCT.md and docs/product/vision.md are created."},
-        {"id": "frontmatter-valid", "text": "frontmatter_parser.py reports ok=true for both files."},
-        {"id": "core-value-set", "text": "PRODUCT.md frontmatter has a non-empty core_value field."},
-        {"id": "persona-cap", "text": "PRODUCT.md frontmatter personas list has between 2 and 4 entries."}
+        {
+          "id": "files-created",
+          "text": "Both docs/product/PRODUCT.md and docs/product/vision.md are created."
+        },
+        {
+          "id": "frontmatter-valid",
+          "text": "frontmatter_parser.py reports ok=true for both files."
+        },
+        {
+          "id": "core-value-set",
+          "text": "PRODUCT.md frontmatter has a non-empty core_value field."
+        },
+        {
+          "id": "persona-cap",
+          "text": "PRODUCT.md frontmatter personas list has between 2 and 4 entries."
+        }
       ]
     },
     {
       "id": 1,
       "prompt": "Run --auto on the brain-dump in fixtures/braindump.txt and decompose into BRD goals, PRDs, epics, and stories. Confirm-batch on ambiguous items (the pre-baked decisions are in fixtures/auto-decisions.json). Resulting spec must validate without errors.",
       "expected_output": "BRD, at least 2 PRDs, at least 1 epic per PRD, at least 1 story per epic; check_traceability and check_consistency emit zero error-severity findings.",
-      "files": ["fixtures/braindump.txt", "fixtures/auto-decisions.json"],
+      "files": [
+        "fixtures/braindump.txt",
+        "fixtures/auto-decisions.json"
+      ],
       "assertions": [
-        {"id": "brd-exists", "text": "docs/product/brd.md is created with at least one BRD-G* goal."},
-        {"id": "prds-exist", "text": "docs/product/prds/ contains at least 2 PRD files."},
-        {"id": "links-resolve", "text": "check_traceability.py reports zero dangling_link errors."},
-        {"id": "ids-valid", "text": "check_consistency.py reports zero invalid_id or dup_id errors."}
+        {
+          "id": "brd-exists",
+          "text": "docs/product/brd.md is created with at least one BRD-G* goal."
+        },
+        {
+          "id": "prds-exist",
+          "text": "docs/product/prds/ contains at least 2 PRD files."
+        },
+        {
+          "id": "links-resolve",
+          "text": "check_traceability.py reports zero dangling_link errors."
+        },
+        {
+          "id": "ids-valid",
+          "text": "check_consistency.py reports zero invalid_id or dup_id errors."
+        }
       ]
     },
     {
       "id": 2,
       "prompt": "Run --validate (no --strict) against the fixture spec at fixtures/broken-spec/. The spec has a seeded orphan, a missing AC, an off-core-value PRD, and an unaddressed BRD goal. Produce a validation report that flags exactly those issues — structural via the scripts, semantic via LLM judgment.",
       "expected_output": "Validation report contains a structural dangling_link finding, a structural missing_ac finding, a structural orphan_brd_goal warn, AND a semantic core_value_drift finding from the LLM layer.",
-      "files": ["fixtures/broken-spec"],
+      "files": [
+        "fixtures/broken-spec"
+      ],
       "assertions": [
-        {"id": "dangling-flagged", "text": "Report includes a dangling_link finding for the seeded orphan story."},
-        {"id": "missing-ac-flagged", "text": "Report includes a missing_ac finding for the empty-AC story."},
-        {"id": "orphan-goal-flagged", "text": "Report includes an orphan_brd_goal warn for the unaddressed goal."},
-        {"id": "drift-flagged", "text": "Report includes a core_value_drift finding for the off-core-value PRD (LLM judgment)."}
+        {
+          "id": "dangling-flagged",
+          "text": "Report includes a dangling_link finding for the seeded orphan story."
+        },
+        {
+          "id": "missing-ac-flagged",
+          "text": "Report includes a missing_ac finding for the empty-AC story."
+        },
+        {
+          "id": "orphan-goal-flagged",
+          "text": "Report includes an orphan_brd_goal warn for the unaddressed goal."
+        },
+        {
+          "id": "drift-flagged",
+          "text": "Report includes a core_value_drift finding for the off-core-value PRD (LLM judgment)."
+        }
       ]
     },
     {
@@ -43,59 +86,146 @@
       "_note": "A PRODUCT.md core-value change has no deterministic mapping to an affected-artifact set in code (spec_graph.downstream(node_id) is pure graph reachability; PRODUCT has no inbound edges). The 'downstream-correct' assertion is therefore graded by LLM judgment against the seeded expected_downstream_set in delta-change.json, NOT by a structural script. The other three assertions ARE structural: file-body unchanged, change-log appended, delta viz includes IDs.",
       "prompt": "Take the valid fixture spec, run --validate to produce a baseline snapshot, then apply the delta in fixtures/delta-change.json (a PRODUCT.md core-value change). Run --update; expect the affected downstream set to be flagged for review (NEVER auto-rewritten). Render the delta visualization.",
       "expected_output": "Change-log gains a new entry; visualize --view delta renders the change; affected downstream set is presented to the PO for review (LLM-judged against seeded list).",
-      "files": ["fixtures/valid-spec", "fixtures/delta-change.json"],
+      "files": [
+        "fixtures/valid-spec",
+        "fixtures/delta-change.json"
+      ],
       "assertions": [
-        {"id": "downstream-correct", "_gating": "llm_advisory", "text": "LLM presents an affected downstream set that intersects the seeded expected set in delta-change.json. Advisory only — no deterministic script function maps core_value change to an affected set; structural reachability via spec_graph.downstream() requires a real graph node as input."},
-        {"id": "no-auto-rewrite", "_gating": "structural", "text": "No PRD/epic/story file body was modified by --update (only frontmatter status flags may change)."},
-        {"id": "changelog-appended", "_gating": "structural", "text": "docs/product/change-log.md gained at least one new entry after --update."},
-        {"id": "delta-viz-renders", "_gating": "structural", "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."}
+        {
+          "id": "downstream-correct",
+          "_gating": "llm_advisory",
+          "text": "LLM presents an affected downstream set that intersects the seeded expected set in delta-change.json. Advisory only — no deterministic script function maps core_value change to an affected set; structural reachability via spec_graph.downstream() requires a real graph node as input."
+        },
+        {
+          "id": "no-auto-rewrite",
+          "_gating": "structural",
+          "text": "No PRD/epic/story file body was modified by --update (only frontmatter status flags may change)."
+        },
+        {
+          "id": "changelog-appended",
+          "_gating": "structural",
+          "text": "docs/product/change-log.md gained at least one new entry after --update."
+        },
+        {
+          "id": "delta-viz-renders",
+          "_gating": "structural",
+          "text": "visualize --view delta --format ascii produces output that includes the changed artifact ID."
+        }
       ]
     },
     {
       "id": 4,
       "prompt": "Run read-once Export on the valid fixture spec: render_export.py --export PRD-AUTH --format md. The doc must be deterministic, contain a TOC, ordered sections (vision/BRD context before the PRD before its stories), and include the story's acceptance criteria.",
       "expected_output": "A single markdown doc under docs/product/exports/ with provenance frontmatter, a Contents list, sections in hierarchy order, and AC items for the story.",
-      "files": ["fixtures/valid-spec"],
+      "files": [
+        "fixtures/valid-spec"
+      ],
       "assertions": [
-        {"id": "export-deterministic", "_gating": "structural", "text": "render_export.render_markdown_doc(...) called twice with the same inputs returns byte-identical text."},
-        {"id": "export-has-toc-and-ac", "_gating": "structural", "text": "The md doc contains a '## Contents' TOC and the story section includes its acceptance_criteria items."},
-        {"id": "export-stable-filename", "_gating": "structural", "text": "Two exports of identical content produce the same 8-char content-hash suffix in the filename."},
-        {"id": "export-sandboxed", "_gating": "structural", "text": "Nothing is written outside docs/product/exports/."}
+        {
+          "id": "export-deterministic",
+          "_gating": "structural",
+          "text": "render_export.render_markdown_doc(...) called twice with the same inputs returns byte-identical text."
+        },
+        {
+          "id": "export-has-toc-and-ac",
+          "_gating": "structural",
+          "text": "The md doc contains a '## Contents' TOC and the story section includes its acceptance_criteria items."
+        },
+        {
+          "id": "export-stable-filename",
+          "_gating": "structural",
+          "text": "Two exports of identical content produce the same 8-char content-hash suffix in the filename."
+        },
+        {
+          "id": "export-sandboxed",
+          "_gating": "structural",
+          "text": "Nothing is written outside docs/product/exports/."
+        }
       ]
     },
     {
       "id": 5,
       "prompt": "Render the board viewer: visualize.py --view board (default --format html). Columns group by status; cards are goal/PRD/epic/story; artifact bodies render client-side through the sanitize chokepoint.",
       "expected_output": "A self-contained board-<ts>.html under docs/product/visuals/ with an inert JSON data island, column structure, vendored marked+DOMPurify, and no <div class=\"mermaid\"> wrapper.",
-      "files": ["fixtures/valid-spec"],
+      "files": [
+        "fixtures/valid-spec"
+      ],
       "assertions": [
-        {"id": "board-html-self-contained", "_gating": "structural", "text": "The output contains id=\"ps-spec-data\", inlined marked+DOMPurify, and opens with no network."},
-        {"id": "board-not-pre-or-mermaid", "_gating": "structural", "text": "The board HTML is NOT a <pre> dump and contains no <div class=\"mermaid\"> wrapper."},
-        {"id": "board-body-sanitized", "_gating": "structural", "text": "A malicious body payload (</script><script>…) is neutralized: the breakout sequence does not appear; </ is escaped to <\\/ in the JSON island."},
-        {"id": "board-mermaid-fallback", "_gating": "structural", "text": "visualize.py --view board --format mermaid exits 0 (no AttributeError) and prints the ASCII board."}
+        {
+          "id": "board-html-self-contained",
+          "_gating": "structural",
+          "text": "The output contains id=\"ps-spec-data\", inlined marked+DOMPurify, and opens with no network."
+        },
+        {
+          "id": "board-not-pre-or-mermaid",
+          "_gating": "structural",
+          "text": "The board HTML is NOT a <pre> dump and contains no <div class=\"mermaid\"> wrapper."
+        },
+        {
+          "id": "board-body-sanitized",
+          "_gating": "structural",
+          "text": "A malicious body payload (</script><script>…) is neutralized: the breakout sequence does not appear; </ is escaped to <\\/ in the JSON island."
+        },
+        {
+          "id": "board-mermaid-fallback",
+          "_gating": "structural",
+          "text": "visualize.py --view board --format mermaid exits 0 (no AttributeError) and prints the ASCII board."
+        }
       ]
     },
     {
       "id": 6,
       "prompt": "Render the explorer viewer: visualize.py --view explorer (default --format html). It must offer all three modes (Tree / Flat-tabs / Table-tree) with a mode toggle persisted to localStorage, shared search + facet filters, and sanitized bodies.",
       "expected_output": "A self-contained explorer-<ts>.html with three mode containers, a toggle bar, a search box, a treegrid, and the sanitize chokepoint; ASCII fallback equals the tree render.",
-      "files": ["fixtures/valid-spec"],
+      "files": [
+        "fixtures/valid-spec"
+      ],
       "assertions": [
-        {"id": "explorer-three-modes", "_gating": "structural", "text": "The HTML contains ps-view-tree, ps-view-tabs, and ps-view-table containers plus a mode toggle bar (ps-modes)."},
-        {"id": "explorer-persists-mode", "_gating": "structural", "text": "The HTML references localStorage to persist the last selected mode."},
-        {"id": "explorer-ascii-is-tree", "_gating": "structural", "text": "render_ascii.explorer(graph) == render_ascii.tree(graph)."},
-        {"id": "explorer-body-sanitized", "_gating": "structural", "text": "A malicious body payload is neutralized inside the inert JSON island (no breakout)."}
+        {
+          "id": "explorer-three-modes",
+          "_gating": "structural",
+          "text": "The HTML contains ps-view-tree, ps-view-tabs, and ps-view-table containers plus a mode toggle bar (ps-modes)."
+        },
+        {
+          "id": "explorer-persists-mode",
+          "_gating": "structural",
+          "text": "The HTML references localStorage to persist the last selected mode."
+        },
+        {
+          "id": "explorer-ascii-is-tree",
+          "_gating": "structural",
+          "text": "render_ascii.explorer(graph) == render_ascii.tree(graph)."
+        },
+        {
+          "id": "explorer-body-sanitized",
+          "_gating": "structural",
+          "text": "A malicious body payload is neutralized inside the inert JSON island (no breakout)."
+        }
       ]
     },
     {
       "id": 7,
       "prompt": "Confirm all product-spec HTML shares one design system: render a legacy view (visualize.py --view tree --format html) and verify it adopts the shared head (theme toggle, palette, print-CSS) while inlining NO marked/DOMPurify body-render libs (H4 symmetric gating).",
       "expected_output": "The legacy tree HTML carries the shared design-system head (psToggleTheme, .ve-card, @media print, Mermaid theme-var overrides) and the Mermaid runtime, but not the marked copyright banner or the psRenderMarkdown chokepoint.",
-      "files": ["fixtures/valid-spec"],
+      "files": [
+        "fixtures/valid-spec"
+      ],
       "assertions": [
-        {"id": "legacy-shares-design-system", "_gating": "structural", "text": "The tree HTML contains psToggleTheme, .ve-card, and @media print from the shared head."},
-        {"id": "legacy-no-bodyrender-libs", "_gating": "structural", "text": "The tree HTML does NOT contain the marked copyright banner ('marked v18') or psRenderMarkdown (legacy views inline no sanitizer)."},
-        {"id": "ascii-fallback-stays-small", "_gating": "structural", "text": "An ASCII-fallback HTML view (heatmap) stays well under the page-size bound and embeds no Mermaid payload."}
+        {
+          "id": "legacy-shares-design-system",
+          "_gating": "structural",
+          "text": "The tree HTML contains psToggleTheme, .ve-card, and @media print from the shared head."
+        },
+        {
+          "id": "legacy-no-bodyrender-libs",
+          "_gating": "structural",
+          "text": "The tree HTML does NOT contain the marked copyright banner ('marked v18') or psRenderMarkdown (legacy views inline no sanitizer)."
+        },
+        {
+          "id": "ascii-fallback-stays-small",
+          "_gating": "structural",
+          "text": "An ASCII-fallback HTML view (heatmap) stays well under the page-size bound and embeds no Mermaid payload."
+        }
       ]
     },
     {
@@ -104,11 +234,25 @@
       "_note": "time_realism true-positive. `time_realism` is an LLM-judgment warn anchored to SCRIPT-precomputed numbers (time_realism_anchors.py --today pins the wall clock so the anchor is reproducible). The script half (anchor math, eligibility) is graded deterministically by test_time_realism.py; THIS eval grades only the LLM JUDGMENT — does it flag the over-threshold epic AND cite the anchors? The rule: flag only if size=='L' AND child_story_count>=6 AND days_remaining<21.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Pre-compute anchors via scripts/time_realism_anchors.py, then apply the time_realism scaffold in references/validation-rules-spec.md. Epic PRD-ROADMAP-E1 is size L, has 6 child stories, target_date 2026-06-15 (days_remaining 14).",
       "expected_output": "A time_realism warn finding for PRD-ROADMAP-E1 whose context.cited_data carries size=L, child_story_count=6, days_remaining=14, target_date, horizon, plus threshold_crossed. No date math performed by the LLM (days_remaining comes from the anchor).",
-      "files": ["fixtures/time-realism-spec"],
+      "files": [
+        "fixtures/time-realism-spec"
+      ],
       "assertions": [
-        {"id": "realism-flags-over-threshold", "_gating": "llm_advisory", "text": "The LLM emits a time_realism warn for PRD-ROADMAP-E1 (size L AND child_story_count>=6 AND days_remaining<21 all hold per the pinned anchor)."},
-        {"id": "realism-cites-data", "_gating": "llm_advisory", "text": "The finding's context.cited_data includes size, child_story_count, days_remaining, target_date, and horizon taken verbatim from the script anchor — the LLM does no date arithmetic."},
-        {"id": "realism-anchor-deterministic", "_gating": "structural", "text": "time_realism_anchors.build_anchors(graph, date(2026,6,1)) returns PRD-ROADMAP-E1 with days_remaining==14 and eligible==true, identical across two runs."}
+        {
+          "id": "realism-flags-over-threshold",
+          "_gating": "llm_advisory",
+          "text": "The LLM emits a time_realism warn for PRD-ROADMAP-E1 (size L AND child_story_count>=6 AND days_remaining<21 all hold per the pinned anchor)."
+        },
+        {
+          "id": "realism-cites-data",
+          "_gating": "llm_advisory",
+          "text": "The finding's context.cited_data includes size, child_story_count, days_remaining, target_date, and horizon taken verbatim from the script anchor — the LLM does no date arithmetic."
+        },
+        {
+          "id": "realism-anchor-deterministic",
+          "_gating": "structural",
+          "text": "time_realism_anchors.build_anchors(graph, date(2026,6,1)) returns PRD-ROADMAP-E1 with days_remaining==14 and eligible==true, identical across two runs."
+        }
       ]
     },
     {
@@ -117,10 +261,20 @@
       "_note": "time_realism must-not-flag. The conservative default: when the anchors are below the rule on any dimension, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-ROADMAP-E2 is eligible (size + target_date present) but small / far-future.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E2 is size S, has 2 child stories, target_date 2026-12-31 (days_remaining 213) — below the rule on every dimension.",
       "expected_output": "No time_realism finding for PRD-ROADMAP-E2 (the LLM returns {finding: null, reason: 'below_threshold'}).",
-      "files": ["fixtures/time-realism-spec"],
+      "files": [
+        "fixtures/time-realism-spec"
+      ],
       "assertions": [
-        {"id": "realism-no-flag-below-threshold", "_gating": "llm_advisory", "text": "The LLM emits NO time_realism finding for PRD-ROADMAP-E2 — size S and days_remaining 213 are below the rule, so the conservative default returns finding:null."},
-        {"id": "realism-below-threshold-anchor", "_gating": "structural", "text": "time_realism_anchors marks PRD-ROADMAP-E2 eligible==true with days_remaining==213 (anchors present; only the rule does not trip)."}
+        {
+          "id": "realism-no-flag-below-threshold",
+          "_gating": "llm_advisory",
+          "text": "The LLM emits NO time_realism finding for PRD-ROADMAP-E2 — size S and days_remaining 213 are below the rule, so the conservative default returns finding:null."
+        },
+        {
+          "id": "realism-below-threshold-anchor",
+          "_gating": "structural",
+          "text": "time_realism_anchors marks PRD-ROADMAP-E2 eligible==true with days_remaining==213 (anchors present; only the rule does not trip)."
+        }
       ]
     },
     {
@@ -129,10 +283,20 @@
       "_note": "time_realism missing-anchor. Without a target_date the script cannot compute days_remaining, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of inventing a date — the explicit anti-hallucination case.",
       "prompt": "Run the time_realism LLM check against fixtures/time-realism-spec with --today PINNED to 2026-06-01. Epic PRD-ROADMAP-E3 is size L with 8 child stories but has NO target_date.",
       "expected_output": "No time_realism flag for PRD-ROADMAP-E3; the LLM returns {finding: null, reason: 'missing_anchor'} because days_remaining is null. It must NOT fabricate a date or flag on size+stories alone.",
-      "files": ["fixtures/time-realism-spec"],
+      "files": [
+        "fixtures/time-realism-spec"
+      ],
       "assertions": [
-        {"id": "realism-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-ROADMAP-E3 — days_remaining is null, so the rule cannot be evaluated; no fabricated date."},
-        {"id": "realism-missing-anchor-eligibility", "_gating": "structural", "text": "time_realism_anchors marks PRD-ROADMAP-E3 eligible==false with target_date==null and days_remaining==null."}
+        {
+          "id": "realism-missing-anchor-no-flag",
+          "_gating": "llm_advisory",
+          "text": "The LLM returns missing_anchor (no flag) for PRD-ROADMAP-E3 — days_remaining is null, so the rule cannot be evaluated; no fabricated date."
+        },
+        {
+          "id": "realism-missing-anchor-eligibility",
+          "_gating": "structural",
+          "text": "time_realism_anchors marks PRD-ROADMAP-E3 eligible==false with target_date==null and days_remaining==null."
+        }
       ]
     },
     {
@@ -141,11 +305,25 @@
       "_note": "competitive_drift true-positive. `competitive_drift` is an LLM-judgment warn anchored to SCRIPT-resolved parity (competitive_drift_anchors.py resolves the PRD's ID-keyed competitive_parity map against the BRD competitor identity home and pre-computes competitors_with_data + all_behind_competitors). The script half (resolution, counting, eligibility) is graded deterministically by test_competitive_drift.py; THIS eval grades only the LLM JUDGMENT — does it flag the all-behind core-value PRD AND cite the anchors? The rule: flag only if scope=='core-value' AND competitors_with_data>=2 AND every real parity=='behind'.",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. Pre-compute anchors via scripts/competitive_drift_anchors.py, then apply the competitive_drift scaffold in references/validation-rules-spec.md. PRD-CHECKOUT is scope core-value and is `behind` on BOTH tracked competitors (Acme Commerce, Shopify) — 2 real verdicts, all behind.",
       "expected_output": "A competitive_drift warn finding for PRD-CHECKOUT whose context.cited_data carries scope=core-value, competitors_with_data=2, all_behind_competitors=[Acme Commerce, Shopify], and competitive_parity, plus threshold_crossed. No parity invented by the LLM (the verdicts come from the anchor).",
-      "files": ["fixtures/competitive-drift-spec"],
+      "files": [
+        "fixtures/competitive-drift-spec"
+      ],
       "assertions": [
-        {"id": "drift-flags-all-behind", "_gating": "llm_advisory", "text": "The LLM emits a competitive_drift warn for PRD-CHECKOUT (scope core-value AND competitors_with_data>=2 AND every real parity is behind all hold per the resolved anchor)."},
-        {"id": "drift-cites-data", "_gating": "llm_advisory", "text": "The finding's context.cited_data includes scope, competitors_with_data, all_behind_competitors, and competitive_parity taken verbatim from the script anchor — the LLM invents no competitor and no parity verdict."},
-        {"id": "drift-anchor-deterministic", "_gating": "structural", "text": "competitive_drift_anchors.build_anchors(graph) returns PRD-CHECKOUT with competitors_with_data==2, all_behind_competitors==[Acme Commerce, Shopify], and eligible==true, identical across two runs."}
+        {
+          "id": "drift-flags-all-behind",
+          "_gating": "llm_advisory",
+          "text": "The LLM emits a competitive_drift warn for PRD-CHECKOUT (scope core-value AND competitors_with_data>=2 AND every real parity is behind all hold per the resolved anchor)."
+        },
+        {
+          "id": "drift-cites-data",
+          "_gating": "llm_advisory",
+          "text": "The finding's context.cited_data includes scope, competitors_with_data, all_behind_competitors, and competitive_parity taken verbatim from the script anchor — the LLM invents no competitor and no parity verdict."
+        },
+        {
+          "id": "drift-anchor-deterministic",
+          "_gating": "structural",
+          "text": "competitive_drift_anchors.build_anchors(graph) returns PRD-CHECKOUT with competitors_with_data==2, all_behind_competitors==[Acme Commerce, Shopify], and eligible==true, identical across two runs."
+        }
       ]
     },
     {
@@ -154,10 +332,20 @@
       "_note": "competitive_drift must-not-flag (borderline). The conservative default: when an eligible PRD has at least one real parity that is NOT behind, the LLM returns finding:null — it must NOT over-flag (the classic hallucination this design guards against). PRD-SEARCH is eligible (scope core-value AND 2 real verdicts) but one verdict is `parity`, not `behind`.",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-SEARCH is scope core-value with 2 real verdicts, but COMP-SHOPIFY is `parity` (not `behind`) — the rule 'every real parity == behind' does not hold.",
       "expected_output": "No competitive_drift finding for PRD-SEARCH (the LLM returns {finding: null, reason: 'below_threshold'}).",
-      "files": ["fixtures/competitive-drift-spec"],
+      "files": [
+        "fixtures/competitive-drift-spec"
+      ],
       "assertions": [
-        {"id": "drift-no-flag-below-threshold", "_gating": "llm_advisory", "text": "The LLM emits NO competitive_drift finding for PRD-SEARCH — one tracked competitor is at parity, so the rule does not trip and the conservative default returns finding:null."},
-        {"id": "drift-below-threshold-anchor", "_gating": "structural", "text": "competitive_drift_anchors marks PRD-SEARCH eligible==true with competitors_with_data==2 but all_behind_competitors==[Acme Commerce] only (len != competitors_with_data, so the rule does not trip)."}
+        {
+          "id": "drift-no-flag-below-threshold",
+          "_gating": "llm_advisory",
+          "text": "The LLM emits NO competitive_drift finding for PRD-SEARCH — one tracked competitor is at parity, so the rule does not trip and the conservative default returns finding:null."
+        },
+        {
+          "id": "drift-below-threshold-anchor",
+          "_gating": "structural",
+          "text": "competitive_drift_anchors marks PRD-SEARCH eligible==true with competitors_with_data==2 but all_behind_competitors==[Acme Commerce] only (len != competitors_with_data, so the rule does not trip)."
+        }
       ]
     },
     {
@@ -166,10 +354,20 @@
       "_note": "competitive_drift missing-anchor. Without the anchored gate (scope core-value AND >=2 real verdicts) the rule cannot be evaluated, so the anchor is eligible:false. The LLM MUST return missing_anchor instead of flagging on a lone `behind` — the explicit anti-hallucination case. PRD-REPORTS is scope `in` AND has only 1 real verdict (COMP-NICHE is `none`).",
       "prompt": "Run the competitive_drift LLM check against fixtures/competitive-drift-spec. PRD-REPORTS is scope `in` (NOT core-value) and has only 1 real verdict — COMP-NICHE is `none`, which is not a data point.",
       "expected_output": "No competitive_drift flag for PRD-REPORTS; the LLM returns {finding: null, reason: 'missing_anchor'} because it is not core-value and has <2 real verdicts. It must NOT flag on the single `behind` alone.",
-      "files": ["fixtures/competitive-drift-spec"],
+      "files": [
+        "fixtures/competitive-drift-spec"
+      ],
       "assertions": [
-        {"id": "drift-missing-anchor-no-flag", "_gating": "llm_advisory", "text": "The LLM returns missing_anchor (no flag) for PRD-REPORTS — scope is `in` and there are <2 real verdicts, so the gate is not met; no flag on the lone behind."},
-        {"id": "drift-missing-anchor-eligibility", "_gating": "structural", "text": "competitive_drift_anchors marks PRD-REPORTS eligible==false with scope=='in' and competitors_with_data==1 (COMP-NICHE 'none' is not counted)."}
+        {
+          "id": "drift-missing-anchor-no-flag",
+          "_gating": "llm_advisory",
+          "text": "The LLM returns missing_anchor (no flag) for PRD-REPORTS — scope is `in` and there are <2 real verdicts, so the gate is not met; no flag on the lone behind."
+        },
+        {
+          "id": "drift-missing-anchor-eligibility",
+          "_gating": "structural",
+          "text": "competitive_drift_anchors marks PRD-REPORTS eligible==false with scope=='in' and competitors_with_data==1 (COMP-NICHE 'none' is not counted)."
+        }
       ]
     },
     {
@@ -178,14 +376,47 @@
       "_note": "impact-pass. The per-CHANGE propagation pass runs on --update AND --validate (distinct from the per-ARTIFACT catalog checks). The DETERMINISTIC half is graded structurally: on --validate the change-set is the delta view's added∪changed nodes between the two most-recent .snapshots/ (spec_graph.diff_graphs + the per-node status/scope/moscow/horizon/size diff in render_ascii.delta), and downstream() gives the affected set — both pure graph functions. The LLM half (graded advisory) tags each affected node {dim_touched∈{scope,risk,time,competition,ac,traceability}, one_liner, action} per references/validation-rules-spec.md → Impact-Pass LLM Scaffold, writes docs/product/impact/<ts>.md, and — for the APPROVED affected node PRD-AUTH-E1 whose content contradicts the change — surfaces the contradiction protocol (keep/change/hybrid) and NEVER auto-flips (the no-auto-edit-approved branch). Fixture: PRD-AUTH was pulled from horizon:next (seeded baseline snapshot) to horizon:now; downstream = {PRD-AUTH-E1 (approved, contradicted), PRD-AUTH-E1-S1 (draft)}.",
       "prompt": "Run --validate against fixtures/impact-pass-spec, then run the impact-pass. The seeded previous snapshot in docs/product/visuals/.snapshots/ has PRD-AUTH at horizon:next; the live spec has horizon:now — so the snapshot delta change-set is {PRD-AUTH}. Run downstream(PRD-AUTH) and annotate each affected node with {dim_touched, one_liner, action}; write docs/product/impact/<ts>.md; the approved epic PRD-AUTH-E1 (which still mandates email+password, contradicting the PRD's new passwordless scope) must trigger the contradiction protocol.",
       "expected_output": "An impact report under docs/product/impact/ listing PRD-AUTH-E1 and PRD-AUTH-E1-S1 with a dim_touched, a one-liner, and a suggested action each; a change-log entry carrying affected_set + dims; and the contradiction protocol (keep/change/hybrid) surfaced for the APPROVED PRD-AUTH-E1 — never auto-flipped to draft.",
-      "files": ["fixtures/impact-pass-spec"],
+      "files": [
+        "fixtures/impact-pass-spec"
+      ],
       "assertions": [
-        {"id": "impact-change-set-from-snapshot-delta", "_gating": "structural", "text": "The change-set on --validate is derived from the snapshot delta: between the live graph and the seeded previous snapshot, the delta view reports PRD-AUTH changed (horizon next->now). spec_graph.diff_graphs(current, previous) added==[] and the per-node field diff flags PRD-AUTH; no previous snapshot would yield an empty change-set (no impact-pass)."},
-        {"id": "impact-downstream-correct", "_gating": "structural", "text": "spec_graph.downstream(graph, 'PRD-AUTH') == {'PRD-AUTH-E1', 'PRD-AUTH-E1-S1'} — the affected set the impact report annotates."},
-        {"id": "impact-report-lists-nodes-dims-action", "_gating": "llm_advisory", "text": "The impact report (docs/product/impact/<ts>.md) lists each affected node with a dim_touched (from the closed enum), a 1-line interpretation, and a suggested action; the change-log entry carries affected_set and a dims union."},
-        {"id": "impact-approved-contradiction-surfaced", "_gating": "llm_advisory", "text": "The APPROVED affected node PRD-AUTH-E1 (content contradicts the new passwordless scope) triggers the contradiction protocol (keep/change/hybrid) — the engine surfaces it and NEVER auto-flips PRD-AUTH-E1 to draft. The draft story PRD-AUTH-E1-S1 is flagged for AC review with no contradiction protocol."},
-        {"id": "impact-snapshot-write-no-crash", "_gating": "structural", "text": "spec_graph.py --root fixtures/impact-pass-spec --snapshot writes a snapshot without a JSON-serialization crash even though the spec carries target_date (datetime.date) fields — write_snapshot serializes dates via default=str."}
-      ]
+        {
+          "id": "impact-change-set-from-snapshot-delta",
+          "_gating": "structural",
+          "text": "The change-set on --validate is derived from the snapshot delta: between the live graph and the seeded previous snapshot, the delta view reports PRD-AUTH changed (horizon next->now). spec_graph.diff_graphs(current, previous) added==[] and the per-node field diff flags PRD-AUTH; no previous snapshot would yield an empty change-set (no impact-pass)."
+        },
+        {
+          "id": "impact-downstream-correct",
+          "_gating": "structural",
+          "text": "spec_graph.downstream(graph, 'PRD-AUTH') == {'PRD-AUTH-E1', 'PRD-AUTH-E1-S1'} — the affected set the impact report annotates."
+        },
+        {
+          "id": "impact-report-lists-nodes-dims-action",
+          "_gating": "llm_advisory",
+          "text": "The impact report (docs/product/impact/<ts>.md) lists each affected node with a dim_touched (from the closed enum), a 1-line interpretation, and a suggested action; the change-log entry carries affected_set and a dims union."
+        },
+        {
+          "id": "impact-approved-contradiction-surfaced",
+          "_gating": "llm_advisory",
+          "text": "The APPROVED affected node PRD-AUTH-E1 (content contradicts the new passwordless scope) triggers the contradiction protocol (keep/change/hybrid) — the engine surfaces it and NEVER auto-flips PRD-AUTH-E1 to draft. The draft story PRD-AUTH-E1-S1 is flagged for AC review with no contradiction protocol."
+        },
+        {
+          "id": "impact-snapshot-write-no-crash",
+          "_gating": "structural",
+          "text": "spec_graph.py --root fixtures/impact-pass-spec --snapshot writes a snapshot without a JSON-serialization crash even though the spec carries target_date (datetime.date) fields — write_snapshot serializes dates via default=str.",
+          "check": "stdout_json",
+          "path": "version",
+          "equals": "1.0",
+          "exec": [
+            "{py}",
+            "spec_graph.py",
+            "--root",
+            "{root}/eval/fixtures/impact-pass-spec",
+            "--snapshot"
+          ]
+        }
+      ],
+      "cwd": "scripts"
     },
     {
       "id": 15,
@@ -193,12 +424,30 @@
       "_note": "migration. migrate_multidim_fields.py lifts a v1 spec to the v2 schema with EMPTY placeholders, backs up each touched original to *.bak, and DEFERS approved artifacts to a confirm_required list (never auto-edited). Per-type scoping is strict so the migration never writes a field onto a type whose validation guard would reject it: PRD→risks/target_date/depends_on/competitive_parity; Epic→risks/target_date/depends_on (NO competitive_parity); BRD→competitors. Idempotent (2nd --apply is a no-op; first .bak preserved). Fixture: draft PRD/Epic/BRD migrate; approved PRD-BILLING defers.",
       "prompt": "Run migrate_multidim_fields.py --root fixtures/migration-spec (dry-run, then --apply). The draft PRD-AUTH, epic PRD-AUTH-E1, and the BRD lack the v2 fields; PRD-BILLING is approved.",
       "expected_output": "Dry-run reports the three draft files in would_migrate and PRD-BILLING in confirm_required, writing nothing. --apply adds empty placeholders to the three draft files (PRD gets all four incl. competitive_parity; Epic gets three, NO competitive_parity; BRD gets competitors) with a *.bak for each, leaves PRD-BILLING byte-unchanged with no .bak, and a 2nd --apply is a no-op.",
-      "files": ["fixtures/migration-spec"],
+      "files": [
+        "fixtures/migration-spec"
+      ],
       "assertions": [
-        {"id": "migration-dry-run-writes-nothing", "_gating": "structural", "text": "The default (no --apply) run writes no file and creates no .bak; the report lists prds/auth.md, epics/PRD-AUTH-E1.md, and brd.md in would_migrate and PRD-BILLING in confirm_required."},
-        {"id": "migration-apply-scoped-placeholders", "_gating": "structural", "text": "--apply gives prds/auth.md risks:[]/target_date:null/depends_on:[]/competitive_parity:{}; epics/PRD-AUTH-E1.md risks:[]/target_date:null/depends_on:[] and NO competitive_parity; brd.md competitors:[] — the migration never writes a field onto a type whose guard would reject it."},
-        {"id": "migration-backs-up-and-defers-approved", "_gating": "structural", "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (no-auto-edit-approved)."},
-        {"id": "migration-idempotent", "_gating": "structural", "text": "A second --apply is a no-op (fields already present) and does not clobber the first-run .bak. Always exits 0 (analytical-script CLI contract)."}
+        {
+          "id": "migration-dry-run-writes-nothing",
+          "_gating": "structural",
+          "text": "The default (no --apply) run writes no file and creates no .bak; the report lists prds/auth.md, epics/PRD-AUTH-E1.md, and brd.md in would_migrate and PRD-BILLING in confirm_required."
+        },
+        {
+          "id": "migration-apply-scoped-placeholders",
+          "_gating": "structural",
+          "text": "--apply gives prds/auth.md risks:[]/target_date:null/depends_on:[]/competitive_parity:{}; epics/PRD-AUTH-E1.md risks:[]/target_date:null/depends_on:[] and NO competitive_parity; brd.md competitors:[] — the migration never writes a field onto a type whose guard would reject it."
+        },
+        {
+          "id": "migration-backs-up-and-defers-approved",
+          "_gating": "structural",
+          "text": "Each migrated file has a *.bak holding its pre-migration content; the approved PRD-BILLING is byte-unchanged, has no .bak, and is listed in confirm_required (no-auto-edit-approved)."
+        },
+        {
+          "id": "migration-idempotent",
+          "_gating": "structural",
+          "text": "A second --apply is a no-op (fields already present) and does not clobber the first-run .bak. Always exits 0 (analytical-script CLI contract)."
+        }
       ]
     },
     {
@@ -214,7 +463,14 @@
         {
           "id": "backcompat-validates-clean",
           "_gating": "structural",
-          "text": "check_consistency.py + check_traceability.py against fixtures/backcompat-v1-spec produce zero findings of severity 'error' (a v1 spec with no v2 fields is structurally valid under the 2.0.0 schema)."
+          "text": "check_consistency.py + check_traceability.py against fixtures/backcompat-v1-spec produce zero findings of severity 'error' (a v1 spec with no v2 fields is structurally valid under the 2.0.0 schema).",
+          "check": "exit_zero",
+          "exec": [
+            "{py}",
+            "check_consistency.py",
+            "--root",
+            "{root}/eval/fixtures/backcompat-v1-spec"
+          ]
         },
         {
           "id": "backcompat-no-v2-fields",
@@ -226,7 +482,8 @@
           "_gating": "structural",
           "text": "visualize.py --view {tree,risk,competition,dashboard,time} each exits 0 on fixtures/backcompat-v1-spec; the v2 dimension views handle the absent data without error."
         }
-      ]
+      ],
+      "cwd": "scripts"
     },
     {
       "id": 17,
@@ -234,11 +491,25 @@
       "_note": "Memory-write reliability OUTCOME (end-to-end): a contradiction surfaced against an approved artifact must end in a recorded DEC ruling, never a silent flip. The DETERMINISTIC halves are graded structurally — memory_gap.py emits the approved_changed_no_dec signal (closed enum {fence_breach,validate_no_marker,approved_changed_no_dec,judged_not_stored}) once the approved body_hash goes stale with no DEC, and decision_register.py allocates the next DEC-<n> + appends a valid record. The LLM half (advisory, the honest ceiling: write-rate is LLM-behavioral) is whether the engine actually surfaces keep/change/hybrid and persists the chosen ruling to docs/product/decisions.md rather than rubber-stamping. Fixture impact-pass-spec carries the approved PRD-AUTH-E1 whose email+password mandate contradicts the PRD's new passwordless scope.",
       "prompt": "Run --validate against fixtures/impact-pass-spec where the approved epic PRD-AUTH-E1 contradicts the PRD's new passwordless scope. The Memory pass must detect the unrecorded ruling, surface the keep/change/hybrid contradiction protocol, and — on a PO Change choice — record a DEC-<n> in docs/product/decisions.md so the ruling is not re-litigated. Confirm no approved artifact is silently flipped.",
       "expected_output": "memory_gap.py reports an approved_changed_no_dec signal for PRD-AUTH-E1; the contradiction protocol (keep/change/hybrid) is surfaced; a DEC-<n> record is appended to docs/product/decisions.md with affects=PRD-AUTH-E1 + owner + date; PRD-AUTH-E1 keeps status: approved (never auto-flipped to draft).",
-      "files": ["fixtures/impact-pass-spec"],
+      "files": [
+        "fixtures/impact-pass-spec"
+      ],
       "assertions": [
-        {"id": "memory-gap-flags-unrecorded-ruling", "_gating": "structural", "text": "memory_gap.collect() over a state where the approved PRD-AUTH-E1 body_hash is stale with no matching DEC emits a signal of type 'approved_changed_no_dec' for PRD-AUTH-E1 (closed-enum signal, exit 0) — the deterministic trigger for the Memory pass."},
-        {"id": "dec-allocated-and-appended", "_gating": "structural", "text": "decision_register.py --alloc-id returns the next monotonic DEC-<n> and --append writes a valid '## DEC-<n> — <title>' record (id grammar ^DEC-\\d+$, append-only) to docs/product/decisions.md — the authoritative home for the ruled contradiction."},
-        {"id": "contradiction-surfaced-not-flipped", "_gating": "llm_advisory", "text": "The engine surfaces the keep/change/hybrid protocol for the approved contradicted PRD-AUTH-E1 and, on the PO's Change ruling, persists a DEC-<n> (affects PRD-AUTH-E1, owner + date) — it NEVER silently flips PRD-AUTH-E1 from approved to draft (GATE-NO-SILENT-REVERSAL). Advisory: the write itself is LLM-behavioral; this grades whether the outcome — a recorded ruling, no silent reversal — actually lands."}
+        {
+          "id": "memory-gap-flags-unrecorded-ruling",
+          "_gating": "structural",
+          "text": "memory_gap.collect() over a state where the approved PRD-AUTH-E1 body_hash is stale with no matching DEC emits a signal of type 'approved_changed_no_dec' for PRD-AUTH-E1 (closed-enum signal, exit 0) — the deterministic trigger for the Memory pass."
+        },
+        {
+          "id": "dec-allocated-and-appended",
+          "_gating": "structural",
+          "text": "decision_register.py --alloc-id returns the next monotonic DEC-<n> and --append writes a valid '## DEC-<n> — <title>' record (id grammar ^DEC-\\d+$, append-only) to docs/product/decisions.md — the authoritative home for the ruled contradiction."
+        },
+        {
+          "id": "contradiction-surfaced-not-flipped",
+          "_gating": "llm_advisory",
+          "text": "The engine surfaces the keep/change/hybrid protocol for the approved contradicted PRD-AUTH-E1 and, on the PO's Change ruling, persists a DEC-<n> (affects PRD-AUTH-E1, owner + date) — it NEVER silently flips PRD-AUTH-E1 from approved to draft (GATE-NO-SILENT-REVERSAL). Advisory: the write itself is LLM-behavioral; this grades whether the outcome — a recorded ruling, no silent reversal — actually lands."
+        }
       ]
     },
     {
@@ -247,11 +518,25 @@
       "_note": "Memory-write reliability OUTCOME (end-to-end), two faces of the cost/benefit ceiling: (a) a fence breach — a write that landed OUTSIDE docs/product/ — should end in a recorded 3E self-correction so the lesson is not forgotten; (b) re-validating an UNCHANGED spec should reuse cached verdicts and produce ZERO re-judges (the batch-store/key reuse path that collapses the forgetting surface). The DETERMINISTIC halves are graded structurally: memory_gap.py emits a fence_breach signal for an out-of-boundary write (reusing check_fence), and judgment_cache --check returns fresh:true for every unchanged node (body_hash key), so no new verdict is written. The LLM half (advisory) is whether the engine records the 3E slip rather than ignoring the fence nudge. Uses the clean valid-spec for the unchanged-revalidate anchor.",
       "prompt": "Two end-to-end memory outcomes on fixtures/valid-spec. (1) Simulate a write outside docs/product/ (a fence breach): the Memory pass must surface the fence_breach signal and record a 3E self-correction so the slip is captured. (2) Run --validate, then re-run --validate with the spec UNCHANGED: every LLM verdict must be reused from the judgment cache (body_hash key), producing ZERO re-judges.",
       "expected_output": "memory_gap.py reports a fence_breach signal for the out-of-boundary file; a 3E self-correction is recorded in .memory/self-corrections.json; and on the second --validate of the unchanged spec, judgment_cache --check returns fresh:true for every node so no new verdict is stored (0 re-judges).",
-      "files": ["fixtures/valid-spec"],
+      "files": [
+        "fixtures/valid-spec"
+      ],
       "assertions": [
-        {"id": "fence-breach-signal-emitted", "_gating": "structural", "text": "memory_gap.collect() emits a signal of type 'fence_breach' (reusing check_fence.scan) for a file touched outside docs/product/ — the deterministic trigger; the signal carries the offending file path and exits 0."},
-        {"id": "revalidate-unchanged-zero-rejudge", "_gating": "structural", "text": "After a first --validate populates .memory/judgments.json, judgment_cache --check for each node of the UNCHANGED valid-spec returns fresh:true (the body_hash key matches), so the second --validate writes no new verdict — 0 re-judges (the batch-store/key-reuse path)."},
-        {"id": "fence-slip-recorded-3e", "_gating": "llm_advisory", "text": "The engine records a 3E self-correction (behavioral_memory → .memory/self-corrections.json) for the surfaced fence breach so the slip is not forgotten. Advisory: the write is LLM-behavioral (the honest ceiling — enforcement raises the consideration-rate, not the write-quality); this grades whether the slip actually gets captured rather than waved off."}
+        {
+          "id": "fence-breach-signal-emitted",
+          "_gating": "structural",
+          "text": "memory_gap.collect() emits a signal of type 'fence_breach' (reusing check_fence.scan) for a file touched outside docs/product/ — the deterministic trigger; the signal carries the offending file path and exits 0."
+        },
+        {
+          "id": "revalidate-unchanged-zero-rejudge",
+          "_gating": "structural",
+          "text": "After a first --validate populates .memory/judgments.json, judgment_cache --check for each node of the UNCHANGED valid-spec returns fresh:true (the body_hash key matches), so the second --validate writes no new verdict — 0 re-judges (the batch-store/key-reuse path)."
+        },
+        {
+          "id": "fence-slip-recorded-3e",
+          "_gating": "llm_advisory",
+          "text": "The engine records a 3E self-correction (behavioral_memory → .memory/self-corrections.json) for the surfaced fence breach so the slip is not forgotten. Advisory: the write is LLM-behavioral (the honest ceiling — enforcement raises the consideration-rate, not the write-quality); this grades whether the slip actually gets captured rather than waved off."
+        }
       ]
     },
     {
@@ -260,12 +545,27 @@
       "_note": "C11 Half-B: the goal_without_metric check (error). A BRD goal whose metrics is empty or missing must be flagged; a goal with >=1 metric must stay silent. Deterministic + reproducible + enforced by strict_gate (exit 2). Fixture metric-less-goal carries BRD-G1 (has [north-star], silent), BRD-G2 (metrics: [], flagged), BRD-G3 (no metrics key, flagged).",
       "prompt": "Run --validate against fixtures/metric-less-goal. The BRD has one goal with a metric and two goals without (one empty list, one missing the key). The validation must flag exactly the two metric-less goals with goal_without_metric (error) and stay silent on the goal that has a metric.",
       "expected_output": "check_consistency.py emits a goal_without_metric error for BRD-G2 and BRD-G3 and NONE for BRD-G1; strict_gate.py exits 2 (errors present).",
-      "files": ["fixtures/metric-less-goal"],
+      "files": [
+        "fixtures/metric-less-goal"
+      ],
       "assertions": [
-        {"id": "goal-without-metric-flagged", "_gating": "structural", "text": "check_consistency.check over fixtures/metric-less-goal emits a goal_without_metric finding (severity error) for BRD-G2 (metrics: []) and BRD-G3 (no metrics key)."},
-        {"id": "goal-with-metric-silent", "_gating": "structural", "text": "No goal_without_metric finding is emitted for BRD-G1, which carries metrics: [north-star]."},
-        {"id": "strict-gate-blocks", "_gating": "structural", "text": "strict_gate.collect_findings over the fixture yields at least one error-severity goal_without_metric finding, so strict_gate exits 2."}
+        {
+          "id": "goal-without-metric-flagged",
+          "_gating": "structural",
+          "text": "check_consistency.check over fixtures/metric-less-goal emits a goal_without_metric finding (severity error) for BRD-G2 (metrics: []) and BRD-G3 (no metrics key)."
+        },
+        {
+          "id": "goal-with-metric-silent",
+          "_gating": "structural",
+          "text": "No goal_without_metric finding is emitted for BRD-G1, which carries metrics: [north-star]."
+        },
+        {
+          "id": "strict-gate-blocks",
+          "_gating": "structural",
+          "text": "strict_gate.collect_findings over the fixture yields at least one error-severity goal_without_metric finding, so strict_gate exits 2."
+        }
       ]
     }
-  ]
+  ],
+  "_note": ""
 }

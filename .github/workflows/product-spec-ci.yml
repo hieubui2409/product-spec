@@ -37,3 +37,6 @@ jobs:
       - name: Run pytest (scoped to skill tests dir so its conftest + pyproject load)
         working-directory: .claude/skills/product-spec
         run: python -m pytest scripts/tests -v
+
+      - name: Eval gate — run_evals structural subset (no API key)
+        run: python .claude/skills/_shared/lib/run_evals.py --skill product-spec

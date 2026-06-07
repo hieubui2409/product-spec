@@ -177,7 +177,7 @@ pass (§ Step 2.7) makes "structural slip → 3E?" one of the three questions ev
 `self-corrections.json` is committed **now** (per the locked folder-split decision: `decisions.md` visible + `.memory/`
 hidden, all committed). But a `slip` or `reminder` can **echo PO wording** verbatim. So:
 
-- **Privacy toggle flagged for later** — the same always-drop posture `claude-pack`'s safety filter applies to session
+- **Privacy toggle flagged for later** — the same always-drop posture `release`'s safety filter applies to session
   state. When the toggle ships, an opted-out project keeps the store local (gitignored), not committed.
 - **Mirror the agent-memory drop posture:** treat the slip text as potentially sensitive; keep it terse and structural
   ("wrote code into a story body"), not a transcript of the PO's words.

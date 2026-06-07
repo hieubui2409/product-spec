@@ -1,0 +1,186 @@
+{
+  "snapshot_at": "2026-06-06T18:00:25Z",
+  "version": "1.0",
+  "generated_at": "2026-06-06T18:00:25Z",
+  "product": {
+    "name": "Acme Shop",
+    "core_value": "Help boutique brands sell directly to fans without middlemen.",
+    "personas": [
+      "shopper",
+      "store-admin"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "PRODUCT",
+      "type": "product",
+      "body_hash": "69903c38",
+      "title": "Acme Shop",
+      "status": "approved",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "shopper",
+        "store-admin"
+      ],
+      "metrics": [],
+      "owner": "Jane Doe",
+      "version": "1.0.0",
+      "lang": "en",
+      "file": "PRODUCT.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "VISION",
+      "type": "vision",
+      "body_hash": "7bed47b9",
+      "title": "Vision",
+      "status": "approved",
+      "scope": null,
+      "moscow": null,
+      "horizon": null,
+      "size": null,
+      "personas": [
+        "shopper",
+        "store-admin"
+      ],
+      "metrics": [],
+      "owner": "Jane Doe",
+      "version": "1.0.0",
+      "lang": "en",
+      "file": "vision.md",
+      "brd_goals": [],
+      "epic": null,
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    },
+    {
+      "id": "BRD-G1",
+      "type": "goal",
+      "title": "Reach $1M ARR in 12 months",
+      "status": "approved",
+      "metrics": [
+        "arr"
+      ],
+      "owner": null,
+      "file": "brd.md",
+      "body_hash": null
+    },
+    {
+      "id": "PRD-AUTH",
+      "type": "prd",
+      "body_hash": "6c9a6a8a",
+      "title": "Auth PRD",
+      "status": "approved",
+      "scope": "in",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "shopper"
+      ],
+      "metrics": [
+        "signup-conversion"
+      ],
+      "owner": "Jane Doe",
+      "version": "1.1.0",
+      "lang": "en",
+      "file": "prds/auth.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": null,
+      "target_date": "2026-08-01",
+      "depends_on": [],
+      "risks": [],
+      "competitive_parity": {}
+    },
+    {
+      "id": "PRD-AUTH-E1",
+      "type": "epic",
+      "body_hash": "dda23d55",
+      "title": "Sign-In Epic",
+      "status": "approved",
+      "scope": "in",
+      "moscow": "must",
+      "horizon": "now",
+      "size": null,
+      "personas": [
+        "shopper"
+      ],
+      "metrics": [],
+      "owner": "Jane Doe",
+      "version": "1.0.0",
+      "lang": "en",
+      "file": "epics/PRD-AUTH-E1.md",
+      "brd_goals": [
+        "BRD-G1"
+      ],
+      "epic": null,
+      "prd": "PRD-AUTH",
+      "target_date": "2026-07-15",
+      "depends_on": [],
+      "risks": [],
+      "competitive_parity": null
+    },
+    {
+      "id": "PRD-AUTH-E1-S1",
+      "type": "story",
+      "body_hash": "a8d368b7",
+      "title": "Sign-In Story",
+      "status": "draft",
+      "scope": "in",
+      "moscow": "must",
+      "horizon": "now",
+      "size": "S",
+      "personas": [
+        "shopper"
+      ],
+      "metrics": [],
+      "owner": "Jane Doe",
+      "version": "0.1.0",
+      "lang": "en",
+      "file": "stories/PRD-AUTH-E1-S1.md",
+      "brd_goals": [],
+      "epic": "PRD-AUTH-E1",
+      "prd": null,
+      "target_date": null,
+      "depends_on": [],
+      "risks": null,
+      "competitive_parity": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "PRD-AUTH",
+      "to": "BRD-G1",
+      "kind": "brd_goal"
+    },
+    {
+      "from": "PRD-AUTH-E1",
+      "to": "PRD-AUTH",
+      "kind": "prd"
+    },
+    {
+      "from": "PRD-AUTH-E1-S1",
+      "to": "PRD-AUTH-E1",
+      "kind": "epic"
+    }
+  ],
+  "risks": [],
+  "competitors": [],
+  "parse_errors": [],
+  "root_path": "/home/hieubt/Documents/cleanmatic-skills/.claude/skills/product-spec/eval/fixtures/impact-pass-spec"
+}

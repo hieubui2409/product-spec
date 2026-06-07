@@ -160,7 +160,18 @@ the "lens findings arrays" you pass are the cached array loaded from the lens-ca
 consolidator, new level. It dedups cross-lens, enforces the mechanical
 anti-overlap floor (drop byte-identical validate-echoes + findings missing why/fix), assigns final severity
 (structural-backed ≥ major), picks the top-3, detects repeat-offense vs prior reports, flags DEC-worthy items, and
-renders ONE markdown body in the voice. The register knobs apply ONLY at their own threshold: at levels 7 to 9 it
+renders ONE markdown body in the voice.
+
+> **Repeat-offense input-isolation boundary (A9).** Repeat-count is *presentation*, not *judgment*. The
+> findings-index (`prior_reports` / `inherited_context` / `descendant_rollup`) reaches ONLY the consolidator, and the
+> count + occurrence refs are attached AFTER each finding is already judged on its own merits — never fed back into the
+> per-finding LENS inputs (`digest`, `structural_findings`). Litmus: *if the findings-index were deleted, would the set
+> of flagged findings change? Must be NO.* A breach (repeat-count steering what gets flagged) would let a spec
+> "age into" a worse verdict for no new defect. Guarded mechanically by
+> `scripts/tests/test_repeat_offense_litmus.py` (the LLM body is non-deterministic and is not diffed; only the
+> input-isolation is asserted).
+
+The register knobs apply ONLY at their own threshold: at levels 7 to 9 it
 renders the surface register from the prefs (`ông/tôi` vs `bà/tôi` by gender at 7; `mày/tao` vs `mi/tau` by dialect at
 ≥8; work-targeted profanity per `critique_profanity` at 9). **Levels 1 to 6 ignore the register knobs entirely** even
 when passed, level 6 (roast) stays `bạn/tôi`; a `bà/tôi`/`mi/tau`/profanity leak at level ≤6 is a defect. It sizes the
