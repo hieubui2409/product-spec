@@ -44,7 +44,7 @@ VI engineering-speak: "cơ sở dữ liệu", "bảng dữ liệu", "API", "đi�
 
 ### Stop Rule
 
-Stop once the PO has restated the item as **persona + problem + value** (or chosen a `size` for a sizing slip). The LLM then captures it in product terms and continues; the engineering detail the PO mentioned is **not** recorded in the spec — this skill writes stories + AC, the engineering team owns the build (CLAUDE.md → "What This Skill Does NOT Do"). If the PO insists the technical constraint is a real product requirement (e.g. "must work offline"), record it as an acceptance criterion in user-observable terms, not as an implementation note.
+Stop once the PO has restated the item as **persona + problem + value** (or chosen a `size` for a sizing slip). The LLM then captures it in product terms and continues; the engineering detail the PO mentioned is **not** recorded in the spec — this skill writes stories + AC, the engineering team owns the build (see `references/guardrails-and-boundaries.md`). If the PO insists the technical constraint is a real product requirement (e.g. "must work offline"), record it as an acceptance criterion in user-observable terms, not as an implementation note.
 
 ## MoSCoW Gate
 
