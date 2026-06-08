@@ -17,6 +17,17 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.2.2] — 2026-06-08
+### Changed
+- **Root `CLAUDE.md` slimmed to an always-on safety + routing layer** (148 → 60 lines). The three inline
+  skill operating guides collapse into a router table that points at each skill's `SKILL.md` (loaded on
+  demand); only the cross-skill always-on layer stays inline (the two GATEs, Five Operating Principles, the
+  anti-rationalization table). Removed prose (ID grammar, bilingual conventions, workflow pointers, script
+  contract, boundaries, failure handling) already lives in the skills' `SKILL.md` / `references`. The shipped
+  bundle carries the leaner `CLAUDE.md` (`include_claudemd`). Repointed the now-removed "What This Skill Does
+  NOT Do" anchor in `product-spec/references/interview-frameworks.md` to
+  `references/guardrails-and-boundaries.md`.
+
 ## [2.2.1] — 2026-06-08
 ### Added
 - **AGPL-3.0 license + CONTRIBUTING.** Added `LICENSE` (GNU AGPL-3.0, © 2026 Hieu Bui) and
