@@ -90,3 +90,31 @@ def test_remove_strips_new_hooks_too(tmp_path, monkeypatch):
     assert "SubagentStop" not in s.get("hooks", {})
     # ck entries survive
     assert any("descriptive-name.cjs" in c for c in cmds)
+
+
+def test_enforcement_hooks_wired_on_stop_and_posttooluse(tmp_path, monkeypatch):
+    """The 2 enforcement hooks are wired-always (config-gated elsewhere). Stop
+    carries both policy hooks; PostToolUse:Edit|Write|MultiEdit carries the
+    memory_gap touched-flag writer (--post-tool-use)."""
+    _write(tmp_path, CK_SETTINGS)
+    _load(tmp_path, monkeypatch).main([])
+    s = _read(tmp_path)
+    cmds = _cmds(s)
+
+    assert any("memory_gap_hook.py" in c and "--post-tool-use" not in c for c in cmds), "memory_gap Stop"
+    assert any("product_spec_critique_nudge.py" in c for c in cmds), "critique Stop"
+    post = next((g for g in s["hooks"]["PostToolUse"] if g.get("matcher") == "Edit|Write|MultiEdit"), None)
+    assert post is not None
+    assert any("memory_gap_hook.py --post-tool-use" in h["command"] for h in post["hooks"]), "memory_gap PostToolUse writer"
+
+
+def test_enforcement_register_is_idempotent_and_removable(tmp_path, monkeypatch):
+    _write(tmp_path, CK_SETTINGS)
+    _load(tmp_path, monkeypatch).main([])
+    first = len(_cmds(_read(tmp_path)))
+    _load(tmp_path, monkeypatch).main([])  # second run
+    assert len(_cmds(_read(tmp_path))) == first  # no enforcement duplicates
+    _load(tmp_path, monkeypatch).main(["--remove"])
+    cmds = _cmds(_read(tmp_path))
+    assert not any("memory_gap_hook.py" in c for c in cmds)
+    assert not any("product_spec_critique_nudge.py" in c for c in cmds)

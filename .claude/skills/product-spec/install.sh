@@ -18,17 +18,19 @@
 # Usage:
 #   ./install.sh                    # runtime only (pyyaml)
 #   ./install.sh --dev              # runtime + dev (pytest + pytest-cov)
-#   ./install.sh --memory-hook      # opt-in: register the Tier-1 memory Stop hook
-#                                   #   into .claude/settings.local.json (gitignored)
+#   ./install.sh --memory-hook      # opt-in: ENABLE the Tier-1 memory hook by
+#                                   #   flipping memory_gap_hook:true in
+#                                   #   .claude/hooks/product-spec-hooks.json
 #   ./install.sh --memory-hook-shared
-#                                   # same, but target the committed .claude/settings.json
+#                                   # accepted alias (the config is a single
+#                                   #   committed file now — no local/shared split)
 #   ./install.sh --check-memory-hook
-#                                   # passive ≤1/day recommend-nudge (no writes to settings)
+#                                   # passive ≤1/day recommend-nudge (no writes)
 #
-# The memory hook is OPT-IN ONLY and NEVER auto-registered. A plain `./install.sh`
-# (or the bundled recipient installer) does NOT touch your hooks. To remove the
-# hook later, delete the two `memory_gap_hook.py` entries from the Stop and
-# PostToolUse arrays of the settings file you registered into.
+# The memory hook is WIRED into the bundle's Stop chain but config-GATED: it is
+# DISABLED by default and no-ops until you flip the flag. A plain `./install.sh`
+# leaves it OFF. To disable later, set "memory_gap_hook": false in
+# .claude/hooks/product-spec-hooks.json.
 #
 # After install, invoke the skill from Claude Code:
 #   /cleanmatic:product-spec
@@ -47,15 +49,15 @@ VENDOR_SHIM="$SCRIPT_DIR/scripts/install-vendor-mermaid.sh"
 VENDOR_MARKDOWN_SHIM="$SCRIPT_DIR/scripts/install-vendor-markdown.sh"
 
 DEV=0
-MEMORY_HOOK=0          # --memory-hook / --memory-hook-shared requested
-MEMORY_HOOK_SHARED=0   # target settings.json (committed) instead of settings.local.json
+MEMORY_HOOK=0          # --memory-hook (or its --memory-hook-shared alias): flip flag true
 CHECK_MEMORY_HOOK=0    # --check-memory-hook passive recommend-nudge
 MEMORY_HOOK_OPTOUT=0   # --memory-hook-optout: user said "stop asking" → silence the nudge
 for arg in "$@"; do
     case "$arg" in
         --dev) DEV=1 ;;
-        --memory-hook) MEMORY_HOOK=1 ;;
-        --memory-hook-shared) MEMORY_HOOK=1; MEMORY_HOOK_SHARED=1 ;;
+        # --memory-hook-shared is a back-compat alias: the config is one committed
+        # file now (no settings.local/shared split), so both flip the same flag.
+        --memory-hook|--memory-hook-shared) MEMORY_HOOK=1 ;;
         --check-memory-hook) CHECK_MEMORY_HOOK=1 ;;
         --memory-hook-optout) MEMORY_HOOK_OPTOUT=1 ;;
         -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -80,112 +82,56 @@ pick_python() {
 }
 
 # ---------------------------------------------------------------------------
-# Opt-in Tier-1 memory hook: idempotent, non-destructive settings JSON merge.
-# Parses the target settings file with python (NEVER string-replace), adds the
-# Stop + PostToolUse(Write|Edit) entries only when the hook (matched by the
-# memory_gap_hook.py command substring) is absent, and writes back. Pre-existing
-# unrelated hooks are preserved verbatim. NEVER auto-registers — only this
-# explicit flag touches your settings.
+# Opt-in Tier-1 memory hook: flip the config flag (the hook is WIRED-ALWAYS in
+# the bundle now; product-spec-hooks.json gates it, default false). Enabling =
+# set `memory_gap_hook: true` in .claude/hooks/product-spec-hooks.json. The hook
+# reads that flag per-invocation, so the change applies on the next Stop. We edit
+# JSON with python (NEVER string-replace) and preserve every other key.
 # ---------------------------------------------------------------------------
-memory_hook_merge() {
-    local target="$1" py
-    py="$(pick_python)" || fail "python3 not found; cannot safely merge JSON settings"
-    SETTINGS_TARGET="$target" PROJECT_DIR="$PROJECT_DIR" "$py" - <<'PYEOF'
+HOOK_CONFIG="$PROJECT_DIR/.claude/hooks/product-spec-hooks.json"
+
+config_flag_flip() {
+    # $1 = key, $2 = "true"|"false". Echoes ENABLED/DISABLED/ALREADY.
+    local key="$1" val="$2" py
+    py="$(pick_python)" || fail "python3 not found; cannot safely edit JSON config"
+    CONFIG_TARGET="$HOOK_CONFIG" HOOK_KEY="$key" HOOK_VAL="$val" "$py" - <<'PYEOF'
 import json
 import os
-import sys
 from pathlib import Path
 
-target = Path(os.environ["SETTINGS_TARGET"])
+p = Path(os.environ["CONFIG_TARGET"])
+key = os.environ["HOOK_KEY"]
+val = os.environ["HOOK_VAL"] == "true"
 
-# The command strings use the LITERAL "$CLAUDE_PROJECT_DIR" token so they resolve
-# at hook-run time (the documented Claude Code resolver), not at install time.
-PROJ = '"$CLAUDE_PROJECT_DIR"'
-PY = f'{PROJ}/.claude/skills/.venv/bin/python3'
-HOOK = f'{PROJ}/.claude/hooks/memory_gap_hook.py'
-STOP_CMD = f'{PY} {HOOK}'
-POST_CMD = f'{PY} {HOOK} --post-tool-use'
-POST_MATCHER = 'Write|Edit'
+data = {}
+if p.exists():
+    raw = p.read_text(encoding="utf-8").strip()
+    if raw:
+        data = json.loads(raw)  # malformed → loud failure, never string-patch
+        if not isinstance(data, dict):
+            raise ValueError(f'{p} is not a JSON object')
 
-# Idempotency anchor: match on the durable script basename so a second run (or a
-# settings file whose paths were hand-edited) is still recognised as "present".
-MARK = 'memory_gap_hook.py'
-
-
-def load(path):
-    if not path.exists():
-        return {}
-    raw = path.read_text(encoding='utf-8').strip()
-    if not raw:
-        return {}
-    data = json.loads(raw)  # surface malformed JSON loudly — never string-patch
-    if not isinstance(data, dict):
-        raise ValueError(f'{path} is not a JSON object')
-    return data
-
-
-def has_memory_hook(event_arr, *, want_post):
-    """True if `event_arr` already carries a memory_gap_hook entry of the right
-    mode (Stop = no --post-tool-use; PostToolUse = with --post-tool-use)."""
-    for group in event_arr:
-        for h in (group.get('hooks') or []):
-            cmd = h.get('command', '')
-            if MARK in cmd and (('--post-tool-use' in cmd) == want_post):
-                return True
-    return False
-
-
-settings = load(target)
-hooks = settings.setdefault('hooks', {})
-if not isinstance(hooks, dict):
-    raise ValueError(f'{target}: "hooks" is not an object')
-
-stop_arr = hooks.setdefault('Stop', [])
-post_arr = hooks.setdefault('PostToolUse', [])
-
-added = []
-if not has_memory_hook(stop_arr, want_post=False):
-    stop_arr.append({'hooks': [{'type': 'command', 'command': STOP_CMD}]})
-    added.append('Stop')
-if not has_memory_hook(post_arr, want_post=True):
-    post_arr.append({
-        'matcher': POST_MATCHER,
-        'hooks': [{'type': 'command', 'command': POST_CMD}],
-    })
-    added.append('PostToolUse(Write|Edit)')
-
-if added:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(settings, indent=2, ensure_ascii=False) + '\n',
-        encoding='utf-8',
-    )
-    print('ADDED ' + ', '.join(added))
-else:
-    print('PRESENT')
+was = data.get(key)
+data[key] = val
+p.parent.mkdir(parents=True, exist_ok=True)
+p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print("ALREADY" if was is val else ("ENABLED" if val else "DISABLED"))
 PYEOF
 }
 
-# Run the memory-hook merge against the requested settings file and report.
+# Enable the memory hook by flipping its config flag true.
 do_memory_hook() {
-    local rel target
-    if [ "$MEMORY_HOOK_SHARED" -eq 1 ]; then
-        rel=".claude/settings.json"
-    else
-        rel=".claude/settings.local.json"
-    fi
-    target="$PROJECT_DIR/$rel"
-    step "Registering the opt-in memory Stop hook → $rel"
+    step "Enabling the memory hook (config flag in product-spec-hooks.json)"
     local out
-    out="$(memory_hook_merge "$target")" || exit 1
+    out="$(config_flag_flip "memory_gap_hook" "true")" || exit 1
     case "$out" in
-        PRESENT) ok "memory hook already registered in $rel (no change)" ;;
-        ADDED*)  ok "memory hook registered in $rel (${out#ADDED })" ;;
+        ALREADY) ok "memory_gap_hook already enabled (no change)" ;;
+        ENABLED) ok "memory_gap_hook enabled in product-spec-hooks.json" ;;
         *)       ok "$out" ;;
     esac
     echo ""
-    echo "  To remove later: delete the two memory_gap_hook.py entries from the"
-    echo "  Stop and PostToolUse arrays of $rel."
+    echo "  The hook is wired into Stop already; the flag gates it. To disable later,"
+    echo "  set \"memory_gap_hook\": false in .claude/hooks/product-spec-hooks.json."
 }
 
 # Marker dir for the recommend-nudge cadence (project-scoped, under docs/product).
@@ -193,29 +139,22 @@ MEMORY_MARKER_DIR="$PROJECT_DIR/docs/product/.memory"
 HOOK_PROMPTED_LAST="$MEMORY_MARKER_DIR/hook-prompted-last"
 HOOK_OPTOUT="$MEMORY_MARKER_DIR/hook-optout"
 
-# True (0) when either settings file already carries the Stop memory hook.
+# True (0) when the memory hook is ENABLED via the config flag (the hook is
+# wired-always; the flag is what turns it on).
 memory_hook_registered() {
-    local py f
+    local py
     py="$(pick_python)" || return 1
-    for f in "$PROJECT_DIR/.claude/settings.local.json" "$PROJECT_DIR/.claude/settings.json"; do
-        [ -f "$f" ] || continue
-        SETTINGS_TARGET="$f" "$py" - <<'PYEOF' && return 0
+    [ -f "$HOOK_CONFIG" ] || return 1
+    CONFIG_TARGET="$HOOK_CONFIG" "$py" - <<'PYEOF' && return 0
 import json, os, sys
 from pathlib import Path
-p = Path(os.environ["SETTINGS_TARGET"])
+p = Path(os.environ["CONFIG_TARGET"])
 try:
     data = json.loads(p.read_text(encoding="utf-8") or "{}")
 except Exception:
     sys.exit(1)
-stop = (data.get("hooks") or {}).get("Stop") or []
-for group in stop:
-    for h in (group.get("hooks") or []):
-        cmd = h.get("command", "")
-        if "memory_gap_hook.py" in cmd and "--post-tool-use" not in cmd:
-            sys.exit(0)
-sys.exit(1)
+sys.exit(0 if data.get("memory_gap_hook") is True else 1)
 PYEOF
-    done
     return 1
 }
 

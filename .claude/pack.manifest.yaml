@@ -18,6 +18,8 @@ agents:
 - critique-consolidator.md
 - critique-humanizer.md
 hooks:
+- hook_runtime.py
+- product-spec-hooks.json
 - memory_gap_hook.py
 - product_spec_critique_nudge.py
 - track_skill_invocation.py

@@ -73,6 +73,40 @@ Detailed rubric: `references/narration-contract.md`. The non-negotiable parts:
 - **Suggestions, not verdicts.** Phrase any action as a gợi ý the PO may ignore; the skill has no authority to prune skills, edit memory, or change scope.
 - **VI is native-quality** — correct diacritics, natural register for a non-technical owner; numbers stay numbers, skill ids stay ascii.
 
+## Hook config & crash log
+
+The 7 project Python hooks (5 telemetry + 2 enforcement) share one runtime,
+`.claude/hooks/hook_runtime.py`, and one per-hook on/off file,
+`.claude/hooks/product-spec-hooks.json` (key = the hook's filename stem):
+
+| Hook stem (key)                | Kind        | Default when key missing |
+|--------------------------------|-------------|--------------------------|
+| `mark_bash_start`              | telemetry   | **enabled**              |
+| `track_skill_invocation`       | telemetry   | **enabled** (one key gates BOTH its registrations: PreToolUse:Skill + UserPromptExpansion) |
+| `track_script_execution`       | telemetry   | **enabled**              |
+| `track_subagent_outcome`       | telemetry   | **enabled**              |
+| `emit_session_summary`         | telemetry   | **enabled**              |
+| `memory_gap_hook`              | enforcement | **disabled**             |
+| `product_spec_critique_nudge`  | enforcement | **disabled**             |
+
+- **Asymmetry (by design):** a missing *telemetry* key defaults ON; a missing
+  *enforcement* key defaults OFF — a blocking hook must never be fallback-enabled.
+  An explicit `true`/`false` always wins. Set a key `false` to no-op that hook on
+  its next invocation (each hook is a fresh process).
+- **Enabling enforcement:** `product-spec/install.sh --memory-hook` and
+  `product-spec-critique/install.sh --critique-hook` flip the respective key to
+  `true`. The hooks are already wired into Stop by the bundle installer; the flag
+  is what activates them.
+- **`mark_bash_start` ⇒ `ms`:** keep it enabled for per-script wall-clock `ms`
+  (and the health lens's `avg_ms`). Disabled → the health lens degrades `avg_ms`
+  to `—` (no crash).
+- **Global kill-switch:** `CK_TELEMETRY_DISABLED=1` disables all telemetry hooks
+  regardless of config (enforcement hooks are unaffected by it).
+- **Crash log:** a swallowed hook exception leaves one line in
+  `.claude/hooks/.logs/hook-crashes.log` (UTC ts, hook, exception type/message —
+  never the stdin payload). Always-on; disable with `CK_HOOK_AUDIT_DISABLED=1`.
+  The log is gitignored and excluded from the bundle.
+
 ## Boundaries
 
 - **Read-only.** No edits to spec/code/catalog/memory; no network; venv-run.

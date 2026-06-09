@@ -102,6 +102,9 @@ ck.md
 !/.claude/hooks/
 /.claude/hooks/*
 !/.claude/hooks/*.py
+# Track the per-hook config too (not a *.py, so re-include it explicitly). The
+# runtime crash log (.logs/hook-crashes.log) stays ignored via the /* rule above.
+!/.claude/hooks/product-spec-hooks.json
 # Re-ignore Python cache + build artifacts inside tracked skills
 /.claude/skills/product-spec/**/__pycache__/
 /.claude/skills/product-spec/**/*.pyc
@@ -118,7 +121,7 @@ ck.md
 
 # Local-only state inside tracked claude source
 claude/agent-memory/
-claude/hooks/.logs/
+/.claude/hooks/.logs/
 claude/session-state/latest.md
 claude/session-state/archive/
 claude/settings.bak.json

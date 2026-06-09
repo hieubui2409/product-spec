@@ -13,15 +13,16 @@
 # Usage:
 #   ./install.sh                       # ensure shared venv only (no hooks)
 #   ./install.sh --dev                 # + dev deps (pytest) if product-spec's list is present
-#   ./install.sh --critique-hook       # opt-in: register product_spec_critique_nudge.py into
-#                                      #   .claude/settings.local.json (gitignored)
+#   ./install.sh --critique-hook       # opt-in: ENABLE the drift-nudge hook by
+#                                      #   flipping product_spec_critique_nudge:true
+#                                      #   in .claude/hooks/product-spec-hooks.json
 #   ./install.sh --critique-hook-shared
-#                                      # same, but target the committed .claude/settings.json
+#                                      # accepted alias (config is one committed file now)
 #
-# The drift-nudge hook is OPT-IN ONLY and NEVER auto-registered. A plain install
-# (or the bundled recipient installer) does NOT touch your hooks. To remove it
-# later, delete the product_spec_critique_nudge.py entry from the Stop array of the
-# settings file you registered into.
+# The drift-nudge hook is WIRED into the bundle's Stop chain but config-GATED: it
+# is DISABLED by default and no-ops until you flip the flag. A plain install
+# leaves it OFF. To disable later, set "product_spec_critique_nudge": false in
+# .claude/hooks/product-spec-hooks.json.
 
 set -euo pipefail
 
@@ -34,13 +35,13 @@ PSP_REQUIREMENTS="$SKILLS_DIR/product-spec/scripts/requirements.txt"
 PSP_REQUIREMENTS_DEV="$SKILLS_DIR/product-spec/scripts/requirements-dev.txt"
 
 DEV=0
-CRITIQUE_HOOK=0          # --critique-hook / --critique-hook-shared requested
-CRITIQUE_HOOK_SHARED=0   # target settings.json (committed) instead of settings.local.json
+CRITIQUE_HOOK=0          # --critique-hook (or its --critique-hook-shared alias): flip flag true
 for arg in "$@"; do
     case "$arg" in
         --dev) DEV=1 ;;
-        --critique-hook) CRITIQUE_HOOK=1 ;;
-        --critique-hook-shared) CRITIQUE_HOOK=1; CRITIQUE_HOOK_SHARED=1 ;;
+        # --critique-hook-shared is a back-compat alias: the config is one committed
+        # file now (no settings.local/shared split), so both flip the same flag.
+        --critique-hook|--critique-hook-shared) CRITIQUE_HOOK=1 ;;
         -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "unknown arg: $arg (use --dev, --critique-hook, --critique-hook-shared, or --help)" >&2; exit 2 ;;
     esac
@@ -61,87 +62,45 @@ pick_python() {
 }
 
 # ---------------------------------------------------------------------------
-# Opt-in advisory drift-nudge hook: idempotent, non-destructive settings merge.
-# Stop-only (the hook's cheap gate uses last_validated/last_critique stats, so it
-# needs no PostToolUse touched-flag). Parses with python (NEVER string-replace),
-# adds the Stop entry only when absent (matched by the product_spec_critique_nudge.py
-# basename), preserves all unrelated hooks. NEVER auto-registers.
+# Opt-in advisory drift-nudge hook: flip the config flag (the hook is WIRED-ALWAYS
+# in the bundle now; product-spec-hooks.json gates it, default false). Enabling =
+# set `product_spec_critique_nudge: true`. Edit JSON with python (NEVER string-
+# replace); preserve every other key.
 # ---------------------------------------------------------------------------
-critique_hook_merge() {
-    local target="$1" py
-    py="$(pick_python)" || fail "python3 not found; cannot safely merge JSON settings"
-    SETTINGS_TARGET="$target" "$py" - <<'PYEOF'
+HOOK_CONFIG="$PROJECT_DIR/.claude/hooks/product-spec-hooks.json"
+
+do_critique_hook() {
+    local py out
+    py="$(pick_python)" || fail "python3 not found; cannot safely edit JSON config"
+    step "Enabling the drift-nudge hook (config flag in product-spec-hooks.json)"
+    out="$(CONFIG_TARGET="$HOOK_CONFIG" "$py" - <<'PYEOF'
 import json
 import os
 from pathlib import Path
 
-target = Path(os.environ["SETTINGS_TARGET"])
-
-# The command strings use the LITERAL "$CLAUDE_PROJECT_DIR" token (NOT shell-
-# expanded here — this is inside a quoted heredoc) so they resolve at hook-run
-# time, the documented Claude Code resolver, not at install time.
-PROJ = '"$CLAUDE_PROJECT_DIR"'
-PY = f'{PROJ}/.claude/skills/.venv/bin/python3'
-HOOK = f'{PROJ}/.claude/hooks/product_spec_critique_nudge.py'
-STOP_CMD = f'{PY} {HOOK}'
-MARK = 'product_spec_critique_nudge.py'
-
-
-def load(path):
-    if not path.exists():
-        return {}
-    raw = path.read_text(encoding='utf-8').strip()
-    if not raw:
-        return {}
-    data = json.loads(raw)  # surface malformed JSON loudly — never string-patch
-    if not isinstance(data, dict):
-        raise ValueError(f'{path} is not a JSON object')
-    return data
-
-
-def has_hook(event_arr):
-    for group in event_arr:
-        for h in (group.get('hooks') or []):
-            if MARK in h.get('command', ''):
-                return True
-    return False
-
-
-settings = load(target)
-hooks = settings.setdefault('hooks', {})
-if not isinstance(hooks, dict):
-    raise ValueError(f'{target}: "hooks" is not an object')
-stop_arr = hooks.setdefault('Stop', [])
-
-if has_hook(stop_arr):
-    print('PRESENT')
-else:
-    stop_arr.append({'hooks': [{'type': 'command', 'command': STOP_CMD}]})
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + '\n',
-                      encoding='utf-8')
-    print('ADDED Stop')
+p = Path(os.environ["CONFIG_TARGET"])
+data = {}
+if p.exists():
+    raw = p.read_text(encoding="utf-8").strip()
+    if raw:
+        data = json.loads(raw)  # malformed → loud failure, never string-patch
+        if not isinstance(data, dict):
+            raise ValueError(f'{p} is not a JSON object')
+was = data.get("product_spec_critique_nudge")
+data["product_spec_critique_nudge"] = True
+p.parent.mkdir(parents=True, exist_ok=True)
+p.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print("ALREADY" if was is True else "ENABLED")
 PYEOF
-}
-
-do_critique_hook() {
-    local rel target out
-    if [ "$CRITIQUE_HOOK_SHARED" -eq 1 ]; then
-        rel=".claude/settings.json"
-    else
-        rel=".claude/settings.local.json"
-    fi
-    target="$PROJECT_DIR/$rel"
-    step "Registering the opt-in drift-nudge Stop hook → $rel"
-    out="$(critique_hook_merge "$target")" || exit 1
+)" || exit 1
     case "$out" in
-        PRESENT) ok "drift-nudge hook already registered in $rel (no change)" ;;
-        ADDED*)  ok "drift-nudge hook registered in $rel (${out#ADDED })" ;;
+        ALREADY) ok "product_spec_critique_nudge already enabled (no change)" ;;
+        ENABLED) ok "product_spec_critique_nudge enabled in product-spec-hooks.json" ;;
         *)       ok "$out" ;;
     esac
     echo ""
-    echo "  To remove later: delete the product_spec_critique_nudge.py entry from the Stop"
-    echo "  array of $rel."
+    echo "  The hook is wired into Stop already; the flag gates it. To disable later,"
+    echo "  set \"product_spec_critique_nudge\": false in .claude/hooks/product-spec-hooks.json."
 }
 
 # Dispatch the standalone opt-in hook action BEFORE the venv ensure. Registering
