@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 """
-visualize — dispatcher for the 14 visualization views in 3 formats
-(ASCII / Mermaid / inline-vendored HTML). 9 graph views default to --format ascii;
-the risk/competition/dashboard graph views and the 2 body-bearing viewers
+visualize — dispatcher for the 20 visualization views in up to 4 formats
+(ASCII / Mermaid / inline-vendored HTML / md). Most graph views default to --format
+ascii; the risk/competition/dashboard graph views and the 2 body-bearing viewers
 (board, explorer) default to --format html. The body viewers have no Mermaid form
 (a --format mermaid request falls back to their ASCII renderer).
 
-Reads the graph JSON from spec_graph and routes the chosen view through the
-matching renderer.
+Most views read the graph JSON from spec_graph; the `audit`, `--learn` outcome views
+(scorecard/insight-gap/outcome-trend), and learning views (learning-map/learning) are
+self-contained and dispatched in dedicated blocks (they read outcomes.md / the audit
+trail, NOT graph nodes). `md` is valid only for `audit`.
 
 CLI:
-    visualize.py --view <name> --format <ascii|mermaid|html> --root <dir>
+    visualize.py --view <name> --format <ascii|mermaid|html|md> --root <dir>
                  [--lang en|vi] [--group-by status|horizon|moscow]
                  [--layers goal,prd,epic,story] [--filter-wont]
                  [--snapshot <snapshot.json>]   # --diff is the legacy alias
 
-Graph views:  tree | heatmap | scope | roadmap | persona | gap | moscow | risk | competition | time | delta | dashboard
-Body viewers: board | explorer
+Graph views:   tree | heatmap | scope | roadmap | persona | gap | moscow | risk | competition | time | delta | dashboard
+Body viewers:  board | explorer
+Governance:    audit
+--learn views: scorecard | insight-gap | outcome-trend | learning-map | learning
 """
 
 import argparse
@@ -39,7 +43,14 @@ import render_explorer
 configure_utf8_console()
 
 
-VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "dashboard", "board", "explorer", "audit")
+VIEWS = ("tree", "heatmap", "scope", "roadmap", "persona", "gap", "moscow", "risk", "competition", "time", "delta", "dashboard", "board", "explorer", "audit", "scorecard", "insight-gap", "outcome-trend", "learning-map", "learning")
+# --learn outcome views: read outcomes.md + brd goals via load_outcomes (NOT the
+# spec graph), so they are dispatched in a self-contained block like `audit`.
+# scorecard defaults to html (card-rich headline); gap/trend default to ascii.
+OUTCOME_VIEWS = ("scorecard", "insight-gap", "outcome-trend")
+# learning-map = outcome→goal→DEC flow (mermaid default, reusing the audit trail);
+# learning = HTML-only dashboard stacking scorecard/gap/trend + a link to the map.
+LEARNING_VIEWS = ("learning-map", "learning")
 # `md` is accepted ONLY for the `audit` governance view (ASCII + markdown, no HTML this phase);
 # requesting it for any other view is rejected with a friendly note.
 FORMATS = ("ascii", "mermaid", "html", "md")
@@ -266,6 +277,81 @@ def main() -> int:
             print(assemble_audit_trail.render_markdown(data, args.lang))
         else:
             print(assemble_audit_trail.render_ascii(data, args.lang))
+        return 0
+
+    # --learn outcome views: self-contained (load_outcomes joins outcomes.md + brd
+    # goals; no graph dispatch). Special-cased like `audit` so outcome data never has
+    # to masquerade as graph nodes. HTML fragments are escaped server-side in
+    # render_outcomes (the shared render_html._escape chokepoint).
+    if args.view in OUTCOME_VIEWS:
+        import load_outcomes
+        import render_outcomes
+        root = Path(args.root).resolve()
+        data = load_outcomes.load_outcomes(root)
+        ofmt = args.format or ("html" if args.view == "scorecard" else "ascii")
+        if ofmt == "mermaid":
+            print(f"note: '{args.view}' has no Mermaid form; rendering ascii.", file=sys.stderr)
+            ofmt = "ascii"
+        if ofmt == "md":
+            print("--format md is only valid for --view audit.", file=sys.stderr)
+            return 2
+        ascii_fn = {"scorecard": render_outcomes.scorecard,
+                    "insight-gap": render_outcomes.insight_gap,
+                    "outcome-trend": render_outcomes.outcome_trend}[args.view]
+        if ofmt == "html":
+            html_fn = {"scorecard": render_outcomes.scorecard_html,
+                       "insight-gap": render_outcomes.insight_gap_html,
+                       "outcome-trend": render_outcomes.outcome_trend_html}[args.view]
+            frag = html_fn(data, lang=args.lang)
+            try:
+                out = render_html.write(root, args.view, "html", frag, {}, lang=args.lang)
+            except FenceError as exc:
+                print(str(exc), file=sys.stderr)
+                return 2
+            print(_written_json(out, root))
+        else:
+            print(ascii_fn(data, lang=args.lang))
+        return 0
+
+    # --learn learning views: learning-map (outcome→goal→DEC flow over the audit
+    # trail; mermaid default, ascii downgrade, html via the shared mermaid wrapper) +
+    # learning (HTML-only dashboard). Self-contained like the outcome block above.
+    if args.view in LEARNING_VIEWS:
+        import assemble_audit_trail
+        import load_outcomes
+        import render_learning
+        root = Path(args.root).resolve()
+        if args.view == "learning":
+            if args.format and args.format != "html":
+                print("note: 'learning' is HTML-only; rendering HTML.", file=sys.stderr)
+            data = load_outcomes.load_outcomes(root)
+            frag = render_learning.learning_dashboard_html(data, lang=args.lang)
+            try:
+                out = render_html.write(root, "learning", "html", frag, {}, lang=args.lang)
+            except FenceError as exc:
+                print(str(exc), file=sys.stderr)
+                return 2
+            print(_written_json(out, root))
+            return 0
+        # learning-map
+        if args.format == "md":
+            print("--format md is only valid for --view audit.", file=sys.stderr)
+            return 2
+        audit = assemble_audit_trail.assemble(root)
+        lfmt = args.format or "mermaid"
+        if lfmt == "ascii":
+            print(render_learning.learning_map_ascii(audit, lang=args.lang))
+            return 0
+        mermaid_text = render_learning.learning_map_mermaid(audit, lang=args.lang)
+        if lfmt == "mermaid":
+            print(mermaid_text)
+            return 0
+        try:  # html: reuse the generic mermaid→html page wrapper (runtime + <>escape)
+            out = render_html.write(root, "learning-map", "mermaid", mermaid_text, {}, lang=args.lang)
+        except FenceError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(_written_json(out, root))
         return 0
 
     # `md` is audit-only — reject it for every other view (keeps each surface's help honest).

@@ -201,6 +201,39 @@
         {"id": "walk-rollup", "_gating": "structural", "text": "The PRD-CHECKOUT report rolls up its critiqued children with a verdict line."},
         {"id": "walk-relens-then-consolidate", "_gating": "structural", "text": "Re-critiquing the edited story is relens; the subsequent level bump (no further edit) is consolidate_only (lens findings reused)."}
       ]
+    },
+    {
+      "id": "route-level",
+      "_assertion_type": "llm_advisory",
+      "_note": "ROUTING-SELECTION probe (Phase 2, reasoning gate for SKILL.md flag-table compaction). Ambiguous PO ask must route to the right flag/scope WITHOUT naming it.",
+      "prompt": "I want this critique to really rip into the spec — don't hold back, be as brutal as you possibly can.",
+      "expected_output": "Router maps the intensity ask to a HIGH --level (>=6) and loads references/voice-and-tone.md; because level >=6 carries the danger gate, it surfaces the warning/AskUserQuestion rather than silently running, and does NOT pick a warm/low level.",
+      "assertions": [
+        {
+          "id": "route-level-flag",
+          "_gating": "llm_advisory",
+          "text": "The router selects a high --level (>=6, roast/confrontational) and loads references/voice-and-tone.md — not a low/warm level."
+        },
+        {
+          "id": "route-level-gate",
+          "_gating": "llm_advisory",
+          "text": "Because the chosen level is >=6, the danger gate fires (warning + AskUserQuestion / standing-preference reminder) — the level is not run silently."
+        }
+      ]
+    },
+    {
+      "id": "route-scope",
+      "_assertion_type": "llm_advisory",
+      "_note": "ROUTING-SELECTION probe (Phase 2, reasoning gate for SKILL.md flag-table compaction). Ambiguous PO ask must route to the right flag/scope WITHOUT naming it.",
+      "prompt": "Just critique the authentication PRD on its own — I don't want a critique of the whole tree.",
+      "expected_output": "Router critiques only the named PRD by its scope ID (NOT scope=all), pulls its ancestry as context, and loads references/workflow-critique.md.",
+      "assertions": [
+        {
+          "id": "route-scope-id",
+          "_gating": "llm_advisory",
+          "text": "The router sets [scope] to the single auth PRD's ID (not the default 'all') and still pulls full ancestry as context."
+        }
+      ]
     }
   ]
 }

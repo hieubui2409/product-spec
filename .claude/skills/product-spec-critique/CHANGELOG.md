@@ -10,6 +10,20 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **SKILL.md flag-table compaction (per-turn context flow).** Compacted the `--level 1..9` (the
+  biggest row) and `[scope]` rows to one crisp `what · when · see <ref>` line each, relocating the
+  elaboration into `references/voice-and-tone.md` (which already homes the nine levels, the danger
+  gate, the register config, and the universal-harm floor). SKILL.md token proxy **3820 → 3677
+  (−3.7%)**. Every safety-critical fact kept inline: the 6-9 danger gate, level-9
+  re-confirm-every-run + downgrade-to-8, and the universal-harm floor at all levels. Routing
+  preserved (best-of-3 sub-agent judge: `route-level` + `route-scope` HELD).
+
+### Added
+- **Routing-selection eval scenarios** (`eval/evals.json`, `route-level` + `route-scope`) —
+  ambiguous-ask probes gating flag/scope-selection reasoning; sub-agent-judged (advisory), never
+  the deterministic gate.
+
 ## [1.2.0] — 2026-06-06
 
 ### Changed

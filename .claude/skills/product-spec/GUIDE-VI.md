@@ -523,6 +523,46 @@ Trước khi đóng dấu, skill chạy kiểm tra (cảnh báo sẽ nhắc như
 
 ---
 
+### B5 — Học từ kết quả thực tế (Learn)
+
+**Khi nào dùng:** Sản phẩm đã ra thị trường và bạn đã có **tín hiệu thật** — báo cáo tháng, số liệu phân tích,
+dữ liệu đơn hàng, đánh giá khách hàng. Bạn muốn đưa tín hiệu đó ngược về đặc tả: mỗi mục tiêu có đạt chỉ tiêu
+không, và người dùng phát lộ vấn đề mới nào?
+
+`--learn` là một cửa, hai nhánh. Skill hỏi **"số liệu hay phản hồi?"**:
+
+- **Số liệu (outcomes):** với mỗi mục tiêu kinh doanh, bạn khai chỉ tiêu và con số thực tế. Skill tính kết quả
+  — 🟢 đạt / 🟡 một phần / 🔴 trượt — và ghi lại (không hề động vào mục tiêu). Mục tiêu chưa đo hiện ra dưới dạng
+  **điểm mù**. Mục tiêu *trượt* sẽ được nêu lên để bạn quyết: **giữ** nguyên, **đổi** (mở lại phê duyệt — không
+  tự lật ngầm), hoặc ghi một **quyết định**.
+- **Phản hồi (discover-back):** trỏ skill vào các file review/feedback. Nó đề xuất **ứng viên** vấn đề/persona
+  mới — không commit gì cho tới khi bạn xác nhận từng cái — rồi đưa vào luồng Update.
+
+#### Hội thoại
+
+> **Bạn:** Mình có số liệu tháng trước. Ghi lại kết quả so với mục tiêu nhé.
+>
+> **Skill:** Số liệu hay phản hồi? — **Bạn:** Số liệu.
+>
+> **Skill:** Với "Đạt $2M GMV trong năm đầu" — tiêu đề gợi ý chỉ tiêu **$2,000,000**. Đó có phải chỉ tiêu kỳ
+> này không? Và thực tế bao nhiêu? — **Bạn:** Chỉ tiêu 2M, thực tế 760K.
+>
+> **Skill:** Đã ghi `OUT-2`: 🔴 **trượt** (38% chỉ tiêu). Mục tiêu này đang `approved` nên tôi không tự sửa.
+> Bạn muốn **giữ** mục tiêu, **đổi** (cần phê duyệt lại), hay ghi một **quyết định** về lý do trượt? —
+> **Bạn:** Giữ nguyên; ghi quyết định rằng Q3 cắt ngân sách marketing.
+>
+> **Skill:** Đã ghi `DEC-4`. Xem toàn cảnh bằng `--viz scorecard` (và `--viz learning` cho bảng tổng quan 1 trang).
+
+#### Cờ tương đương
+
+```
+/cleanmatic:product-spec --learn
+/cleanmatic:product-spec --viz scorecard      # chỉ tiêu vs thực tế, kèm điểm mù
+/cleanmatic:product-spec --viz learning       # bảng tổng quan học hỏi 1 trang
+```
+
+---
+
 ## Tier C — Chia sẻ & trực quan hóa
 
 ### C1 — Lấy bản tóm tắt 1 trang cho lãnh đạo (Summary)

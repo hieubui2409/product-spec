@@ -33,9 +33,6 @@ rules:
 - orchestration-protocol.md
 - documentation-management.md
 - review-audit-self-decision.md
-- team-coordination-rules.md
-- skill-domain-routing.md
-- skill-workflow-routing.md
 # AGPL-3.0 requires the license (and source) to travel with any distributed copy.
 extra:
 - LICENSE

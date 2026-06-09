@@ -363,6 +363,7 @@ def test_pack_cli_full_run(tmp_root, tmp_path):
          "--manifest", str(manifest_path),
          "--out", str(out_dir),
          "--json"],
+        cwd=str(SKILL_ROOT / "scripts"),  # the `pack` package lives here (-m pack needs it on path)
         capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, f"stderr: {result.stderr}"

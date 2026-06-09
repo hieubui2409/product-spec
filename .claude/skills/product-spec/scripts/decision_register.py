@@ -37,7 +37,6 @@ import argparse
 import contextlib
 import datetime as dt
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -47,48 +46,35 @@ import yaml
 
 from encoding_utils import configure_utf8_console
 from fs_guard import assert_under_docs_product
+# Shared append-only fenced-record machinery (also used by record_outcome): the
+# block-splitter regex, injection escape, file lock, and raw id scan live in ONE home.
+from register_store import (
+    RECORD_RE as _RECORD_RE, escape_injection, register_lock, scan_record_ids,
+)
 
 configure_utf8_console()
 
 
-# A rationale line that is a bare `---` fence would split decisions.md into a phantom
-# record under _RECORD_RE; a line that is a `## DEC-<n>` heading could smuggle a fake
-# decision heading. Both are neutralized on write. We backslash-escape them: the
-# content is preserved + markdown-correct (`\---`, `\## ` render literally) while the
-# line no longer matches the line-anchored record/heading patterns.
-_INJ_FENCE_RE = re.compile(r"(?m)^(---+\s*)$")
+# This register's own heading anchor. A rationale line that is a bare `---` fence would
+# split decisions.md into a phantom record; a `## DEC-<n>` line could smuggle a fake
+# decision heading. Both are neutralized on write by the shared escape_injection, which
+# backslash-escapes the line anchors (content preserved + markdown-correct: `\---`,
+# `\## ` render literally) so the line no longer matches the record/heading patterns.
 _INJ_DEC_HEADING_RE = re.compile(r"(?m)^(##\s+DEC-)")
 
 
 def sanitize_rationale(rationale: str) -> str:
     """Neutralize record-fence / DEC-heading injection in PO/finding-supplied rationale,
-    preserving the text. See the module note above for the threat."""
-    out = _INJ_FENCE_RE.sub(r"\\\1", rationale)
-    out = _INJ_DEC_HEADING_RE.sub(r"\\\1", out)
-    return out
+    preserving the text (shared escape_injection, with this register's DEC anchor)."""
+    return escape_injection(rationale, _INJ_DEC_HEADING_RE)
 
 
 @contextlib.contextmanager
 def _register_lock(root):
-    """Best-effort exclusive file lock so alloc-id + append happen as ONE critical
-    section (closes the TOCTOU window where two looped allocs could collide).
-    POSIX uses fcntl.flock; on platforms without it the lock degrades to a no-op
-    (single-PO desktop use), which is the prior behaviour, not a regression."""
-    lock_path = Path(root) / "docs" / "product" / ".decision_register.lock"
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    fh = open(lock_path, "w")
-    try:
-        try:
-            import fcntl
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-        except (ImportError, OSError):
-            pass  # no flock on this platform → degrade to no-op
+    """alloc-id + append as ONE critical section over this register's lock file (a thin
+    wrapper over the shared register_lock; closes the looped-alloc TOCTOU window)."""
+    with register_lock(Path(root) / "docs" / "product" / ".decision_register.lock"):
         yield
-    finally:
-        with contextlib.suppress(Exception):
-            import fcntl
-            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
-        fh.close()
 
 
 class DecisionError(ValueError):
@@ -101,12 +87,8 @@ class DecisionError(ValueError):
 # cross-cutting ruling with no single parent.
 DECISION_ID_RE = re.compile(r"^DEC-\d+$")
 
-# Splits decisions.md into its record blocks: each starts at a line-anchored
-# `---` fence. We re-join the fence with the block when iterating.
-_RECORD_RE = re.compile(
-    r"^---\s*\n(?P<fm>.*?)\n---\s*\n(?P<body>.*?)(?=^---\s*$|\Z)",
-    re.DOTALL | re.MULTILINE,
-)
+# `_RECORD_RE` (the `---`-fenced block splitter) is imported from register_store —
+# shared byte-identically with the Outcome Register.
 
 TEMPLATE_PATH = (
     Path(__file__).resolve().parent.parent / "assets" / "templates" / "decision-record.md"
@@ -194,12 +176,7 @@ def _scan_all_ids(root) -> List[str]:
         text = path.read_text(encoding="utf-8")
     except (FileNotFoundError, OSError, UnicodeDecodeError):
         return []
-    ids: List[str] = []
-    for m in _RECORD_RE.finditer(text):
-        im = re.search(r"^id:\s*(\S+)\s*$", m.group("fm"), re.MULTILINE)
-        if im:
-            ids.append(im.group(1).strip())
-    return ids
+    return scan_record_ids(text)
 
 
 def _render_record(

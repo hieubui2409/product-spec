@@ -19,11 +19,11 @@ A **read-only** skill that tells the product owner, **in plain Vietnamese**, thr
 2. **Sức khỏe (Health)** — which scripts error or run slow (approx), whether subagents succeed/fail, whether memory is tidy.
 3. **Một tín hiệu chất lượng nội bộ (a thin internal-quality proxy)** — after a `product-spec` run, did `validate` pass.
 
-**Honest framing — this is "mức dùng & sức khỏe", NOT "hiệu quả".** It measures *whether the machinery runs*, never *whether the product wins in the market* (that is E3, deliberately deferred). The narration MUST keep that line bright (see the honesty gate below).
+**Honest framing — this is "mức dùng & sức khỏe", NOT "hiệu quả".** It measures *whether the machinery runs*, never *whether the product wins in the market*. (Product-outcome tracking shipped separately as `product-spec --learn`, but even that records PO-declared outcomes vs goals offline — still NOT a market-effectiveness metric.) The narration MUST keep that line bright (see the honesty gate below).
 
 ## What this is NOT
 
-- **Not** a market/user-outcome metric (E3). The validate proxy = "spec is well-formed", not "users adopted it".
+- **Not** a market/user-outcome metric. The validate proxy = "spec is well-formed", not "users adopted it". (PO-declared outcome tracking lives in `product-spec --learn`; this skill does not read it.)
 - **Not** a writer — it never edits specs, code, the catalog, or memory. No `--apply`, no fixes.
 - **Not** billing-exact — token attribution and `ms` durations are **directional/approx**.
 - **Not** a CI gate — opinion-free numbers for the PO to read, nothing blocks on it.
@@ -55,7 +55,7 @@ Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--
 | `health`     | `hook-telemetry.jsonl`                | per-script runs/errors/error-rate + avg `ms` (approx) |
 | `reliability`| `subagent-outcomes.jsonl`             | subagent success / api_error / timeout / blocked / unknown per type |
 | `workflow`   | `invocations.jsonl` + routing docs    | actual skill chains vs declared chains; deviations |
-| `validate`   | `last_validated.json` + `hook-telemetry` | validate-pass proxy (internal quality, NOT E3) |
+| `validate`   | `last_validated.json` + `hook-telemetry` | validate-pass proxy (internal quality, NOT market outcome) |
 | `memory`     | `~/.claude/projects/<root>/memory/`   | orphans, dead index entries, broken `[[links]]`, staleness (read-only) |
 | `forensics`  | session transcript JSONL              | one session reconstructed (skills/tools/tokens/files/duration) |
 | `all`        | the above (minus forensics)           | the dashboard-lite the PO reads first |
@@ -68,7 +68,7 @@ Below ~5 data points a lens shows raw counts + **"chưa đủ dữ liệu"** and
 
 Detailed rubric: `references/narration-contract.md`. The non-negotiable parts:
 
-- **Separate MEASURED from NOT-MEASURED.** Every report MUST end with a section **"Cái này KHÔNG đo được"** naming at minimum: market/user outcome (E3); plus any lens that is empty/gated on current data → call it "chưa đủ dữ liệu", never spin it.
+- **Separate MEASURED from NOT-MEASURED.** Every report MUST end with a section **"Cái này KHÔNG đo được"** naming at minimum: market/user outcome (this skill measures usage/health, not market effectiveness); plus any lens that is empty/gated on current data → call it "chưa đủ dữ liệu", never spin it.
 - **Approx is approx.** Token weight, `ms`, and `exit` are inferred/directional — say "ước lượng", never present them as exact.
 - **Suggestions, not verdicts.** Phrase any action as a gợi ý the PO may ignore; the skill has no authority to prune skills, edit memory, or change scope.
 - **VI is native-quality** — correct diacritics, natural register for a non-technical owner; numbers stay numbers, skill ids stay ascii.
@@ -111,7 +111,7 @@ The 7 project Python hooks (5 telemetry + 2 enforcement) share one runtime,
 
 - **Read-only.** No edits to spec/code/catalog/memory; no network; venv-run.
 - **GATE-NEVER-ASSUME / GATE-NO-SILENT-REVERSAL:** not applicable in the usual sense (nothing is written/approved), but the skill still never fabricates a metric — an absent signal is reported as absent.
-- **Deferred capabilities** (NOT in this skill): rich crash-log `errors.jsonl` (can't instrument shipped scripts), HTML output, and E3 market-outcome. See `BACKLOG.md`.
+- **Deferred capabilities** (NOT in this skill): rich crash-log `errors.jsonl` (can't instrument shipped scripts), HTML output, and market-outcome measurement (PO-declared outcome tracking lives in `product-spec --learn`, offline; true market effectiveness stays out of scope). See `BACKLOG.md`.
 
 ## CHANGELOG
 

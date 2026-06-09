@@ -9,6 +9,51 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **SKILL.md flag-table compaction (per-turn context flow).** Compacted the 16 verbose
+  product-spec flag rows to one crisp `what · when · GATE · see <ref>` line each, relocating the
+  elaboration into the reference that already loads when the flag fires (net info preserved, not
+  deleted). SKILL.md token proxy **6090 → 5371 (−11.8%)** — the only context paid on every skill
+  activation. Terse flags untouched; the no-flag menu + always-on safety lines unchanged. Routing
+  preserved (best-of-3 sub-agent judge: 18/18 routing scenarios HELD).
+
+### Added
+- **`references/workflow-summary.md`, `workflow-decision.md`, `workflow-lang.md`** — dedicated
+  detail-homes for the three previously ref-less flags (`--summary`/`--decision`/`--lang`), wired
+  into the on-demand reference section.
+- **Routing-selection eval scenarios** (`eval/evals.json`, ids `route-*`) — ambiguous-ask probes
+  (the flag is NOT named) that gate flag-selection reasoning; judged by sub-agent (advisory),
+  never the deterministic CI gate.
+
+## [2.3.0] — 2026-06-09
+
+Learning loop (`--learn`) — un-defers backlog **E3** (outcome tracking) + adds the qualitative
+discover-back edge. Additive + backward-compatible (no existing artifact/schema touched; the BRD
+goal schema is untouched — outcomes live in a separate register).
+
+### Added
+- **`--learn` umbrella mode** — one PO-facing door, two separate code paths routed by a single
+  "metrics or feedback?" question. *Outcomes loop:* per BRD goal, capture target/actual →
+  `record_outcome.py` computes a deterministic 3-tier verdict (hit/partial/miss, direction-aware) →
+  appends an `OUT-<n>` block to `docs/product/outcomes.md`. *Feedback loop (discover-back):* reuses
+  the read-fenced `ingest_raw_inputs.py` → candidate problems/personas → `--update` (vs `--discover`'s
+  cold Vision seed). Never auto-commits; a miss on an approved goal is surfaced Keep/Change/DEC
+  (GATE-NO-SILENT-REVERSAL), never auto-edited (GATE-NEVER-ASSUME). Ref `references/workflow-learn.md`.
+- **Outcome Register `docs/product/outcomes.md`** — append-only `OUT-<n>` fenced record blocks
+  (storage model mirrors the Decision Register: text-append, prior records byte-unchanged), decoupled
+  from the BRD goal definition. Template `assets/templates/outcomes.md`; grammar in
+  `references/frontmatter-and-id-spec.md`.
+- **`record_outcome.py`** — alloc + append + list; 3-tier verdict with floors configurable via
+  `preferences.py` (new `outcome_hit_floor` / `outcome_partial_floor`, default 0.9 / 0.5); Hybrid B3
+  (non-numeric/zero target → PO-asserted verdict); goal-ref + metric-slug validation (`--force` override).
+- **5 viz views** — `scorecard` (+blind-spot for unmeasured goals; `actual=0` is a miss, not a blind
+  spot), `insight-gap` (clamped ≥0 delta bars), `outcome-trend` (verdict grid goal×period),
+  `learning-map` (Mermaid flow outcome→goal→`DEC-<n>`, extending `assemble_audit_trail` with NO schema
+  bump), `learning` (HTML-only dashboard). New modules `load_outcomes.py` + `render_outcomes.py`; every
+  dynamic field escaped server-side (XSS-regression tested).
+- **Docs + example** — GUIDE-VI/EN use case B5; `examples/acme-shop/docs/product/outcomes.md` (hit /
+  miss / lower-is-better latency / blind-spot); eval scenarios; BACKLOG E3 marked shipped.
+
 ## [2.2.0] — 2026-06-04
 
 PO engagement-profile knobs. Additive + backward-compatible (13 → 15 preference keys; old

@@ -161,6 +161,8 @@ Script.tar.gz
 
 # transient decision-register file lock (never committed)
 **/.decision_register.lock
+# transient outcome-register file lock (never committed)
+**/.outcome_register.lock
 
 # --- A1 telemetry (observability) -------------------------------------------
 # Sinks are runtime-only: never committed, never distributed. Created at runtime

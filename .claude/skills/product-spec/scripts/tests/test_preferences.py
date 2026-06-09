@@ -47,10 +47,14 @@ def test_defaults_has_exactly_fifteen_keys(tmp_path):
     # 10 + the 3 product-spec-critique cross-critique keys (critique_inherit/rollup/depth)
     # + the 2 product-spec engagement knobs (interview_rigor/action_prompting).
     assert set(preferences.load(tmp_path)) == set(preferences.DEFAULTS)
-    assert len(preferences.DEFAULTS) == 15
-    # Both new knobs are closed enums (not free scalars).
+    assert len(preferences.DEFAULTS) == 17
+    # Both engagement knobs are closed enums (not free scalars).
     assert "interview_rigor" in preferences.ENUMS
     assert "action_prompting" in preferences.ENUMS
+    # The two learning-loop verdict floors are float scalars (range-validated by the
+    # consumer), so they are deliberately NOT in ENUMS.
+    assert "outcome_hit_floor" not in preferences.ENUMS
+    assert "outcome_partial_floor" not in preferences.ENUMS
 
 
 def test_cross_critique_defaults(tmp_path):
@@ -348,3 +352,25 @@ def test_set_unknown_key_rejected_nonzero(tmp_path):
     prefs = preferences.load(tmp_path)
     assert prefs["interview_rigor"] == "standard"
     assert prefs["lang"] == "vi"
+
+
+def test_set_float_floor_rejects_non_numeric_at_write_time(tmp_path):
+    # A non-numeric float-key value must FAIL AT WRITE (exit non-zero, nothing saved) —
+    # not save with exit 0 and break a later --learn run (the delayed-failure trap).
+    res = _run_cli(tmp_path, "--set", "outcome_hit_floor=notanumber")
+    assert res.returncode != 0
+    assert preferences.load(tmp_path)["outcome_hit_floor"] == 0.9  # untouched default
+
+
+def test_set_float_floor_rejects_out_of_range(tmp_path):
+    # Range [0,1] is guarded at write time so a 1.5 floor can't reach --learn.
+    res = _run_cli(tmp_path, "--set", "outcome_partial_floor=1.5")
+    assert res.returncode != 0
+    assert preferences.load(tmp_path)["outcome_partial_floor"] == 0.5
+
+
+def test_set_float_floor_valid_persists_as_float(tmp_path):
+    res = _run_cli(tmp_path, "--set", "outcome_hit_floor=0.95")
+    assert res.returncode == 0, res.stderr
+    val = preferences.load(tmp_path)["outcome_hit_floor"]
+    assert val == 0.95 and isinstance(val, float)

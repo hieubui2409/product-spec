@@ -329,6 +329,14 @@
   has_references: true
   argument_hint: "[agent or feature]"
   keywords: ["google-adk", "agents", "a2a", "mcp", "vertex-ai"]
+- name: "html-video"
+  path: "html-video/SKILL.md"
+  description: "Create local MP4 videos from HTML/CSS/JS templates with nexu-io/html-video. Covers source checkout setup, template discovery, studio customization, preview, and render verification."
+  category: "frontend"
+  has_scripts: false
+  has_references: false
+  argument_hint: "[video brief, source URL, repo, template id, or project id]"
+  keywords: ["html", "video", "mp4", "templates", "animation", "chromium", "ffmpeg", "studio", "hyperframes"]
 - name: "journal"
   path: "journal/SKILL.md"
   description: "Write technical journal entries analyzing recent changes. Use for session reflections, change analysis, decision documentation."

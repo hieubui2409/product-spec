@@ -1,0 +1,64 @@
+{
+  "product-spec": {
+    "refs": {
+      "behavioral-memory.md": 3137,
+      "document-model-and-hierarchy.md": 2530,
+      "frontmatter-and-id-spec.md": 3999,
+      "guardrails-and-boundaries.md": 2603,
+      "interview-brd.md": 1451,
+      "interview-epic.md": 887,
+      "interview-frameworks.md": 1481,
+      "interview-prd.md": 1786,
+      "interview-story.md": 719,
+      "interview-vision.md": 939,
+      "memory-enforcement.md": 2409,
+      "validation-rules-spec.md": 5261,
+      "visualization-spec.md": 3669,
+      "workflow-apply-critique.md": 1131,
+      "workflow-auto.md": 910,
+      "workflow-decision.md": 391,
+      "workflow-discover.md": 682,
+      "workflow-export.md": 1666,
+      "workflow-interview.md": 5812,
+      "workflow-lang.md": 278,
+      "workflow-learn.md": 1733,
+      "workflow-reflect.md": 2154,
+      "workflow-status.md": 1634,
+      "workflow-summary.md": 389,
+      "workflow-update.md": 2372,
+      "workflow-validate.md": 6844
+    },
+    "skill_md_tokens": 5371,
+    "total_tokens": 62238
+  },
+  "product-spec-critique": {
+    "refs": {
+      "humanizer-and-anti-ai-tells.md": 2617,
+      "lens-frameworks.md": 1343,
+      "voice-and-tone.md": 7203,
+      "workflow-critique.md": 5704
+    },
+    "skill_md_tokens": 3677,
+    "total_tokens": 20544
+  },
+  "release": {
+    "refs": {
+      "error-catalog.md": 1719,
+      "flag-reference.md": 1319,
+      "maintainers-guide.md": 1279,
+      "manifest-spec.md": 1286,
+      "safety-rules.md": 1506,
+      "troubleshooting.md": 674,
+      "workflow-pack.md": 1350
+    },
+    "skill_md_tokens": 2863,
+    "total_tokens": 11996
+  },
+  "telemetry": {
+    "refs": {
+      "narration-contract.md": 871
+    },
+    "skill_md_tokens": 2205,
+    "total_tokens": 3076
+  }
+}

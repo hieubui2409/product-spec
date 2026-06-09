@@ -13,6 +13,8 @@ Parent-scoped — globally unique by construction, lineage readable, no central 
 | Epic       | `PRD-<SLUG>-E<n>`      | `PRD-AUTH-E1`, `PRD-AUTH-E2`     | `<n>` = next free integer within that PRD.                                                 |
 | Story      | `PRD-<SLUG>-E<n>-S<n>` | `PRD-AUTH-E1-S1`                 | `<n>` = next free integer within that epic.                                                |
 | Competitor | `COMP-<SLUG>`          | `COMP-SHOPIFY`, `COMP-BIGCARTEL` | Declared in the BRD's `competitors:` list (the DRY identity home). Same slug rules as PRD. |
+| Decision   | `DEC-<n>`              | `DEC-1`, `DEC-2`                 | Parent-free, globally monotonic. Allocated `max+1` in `docs/product/decisions.md`. Never reused. |
+| Outcome    | `OUT-<n>`              | `OUT-1`, `OUT-2`                 | Parent-free, globally monotonic. Allocated `max+1` in `docs/product/outcomes.md`. Never reused. |
 
 **Slug rules:** must begin with an uppercase ASCII letter; remaining characters may be uppercase ASCII letters, digits, or hyphens; ≤16 characters total (enforced regex: `^[A-Z][A-Z0-9-]{0,15}$`). Prefer flat slugs (e.g., `AUTH`, `BILLING`, `ONBOARDING`). No spaces, no diacritics. The slug is permanent — renaming a PRD does not update existing epic/story IDs (they keep the original lineage).
 
@@ -303,6 +305,35 @@ acceptance_criteria:
   - "Given a visitor with a duplicate email, when they submit, then they see a clear duplicate-email message."
 ---
 ```
+
+## Outcome records (under `outcomes.md` record blocks)
+
+`docs/product/outcomes.md` is an append-only register written by `record_outcome.py`
+(the quantitative half of `--learn`). Each measurement is one `---`-fenced YAML block +
+a `## OUT-<n>` heading + a free-text note — the SAME storage model as the Decision
+Register (text-append, prior records byte-unchanged), NOT a frontmatter list-of-dicts.
+
+An outcome is a measurement-in-time of a BRD goal metric; it POINTS at the goal by ID and
+NEVER duplicates the goal definition (title/owner live in `brd.md`). Per-block fields:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | `OUT-<n>` | yes | monotonic, max+1, never reused |
+| `goal` | BRD goal ID | yes | must exist in `brd.md` `goals:` (else rejected) |
+| `metric` | slug | yes | must be in the referenced goal's `metrics:` (else rejected unless `--force`) |
+| `target` | number \| string | yes | captured AT measure time; a non-numeric/0 target → Hybrid (PO asserts verdict) |
+| `actual` | number \| string | yes | `actual: 0` is a real measurement (≠ unmeasured), recorded as a normal row |
+| `unit` | string | no | e.g. `USD`, `days`, `%` |
+| `direction` | `higher` \| `lower` | yes | default `higher`; `lower` = lower-is-better (latency/defects) |
+| `measured_on` | ISO 8601 date | yes | the measurement date |
+| `source` | string | no | a human LABEL, NEVER a fetchable path (offline) |
+| `verdict` | `hit` \| `partial` \| `miss` | yes | numeric → computed (3-tier); non-numeric → PO-asserted |
+
+**Verdict math (deterministic, 3-tier):** `higher` → `ratio = actual/target`; `lower` →
+`ratio = target/actual` (`actual=0` → best → hit). `ratio ≥ hit_floor` → hit ·
+`partial_floor ≤ ratio < hit_floor` → partial · else miss. Floors default `0.9 / 0.5`,
+overridable via `preferences.py` (`outcome_hit_floor` / `outcome_partial_floor`, floats in
+`[0,1]` with `partial_floor < hit_floor`; a bad pair is a hard error).
 
 ## What This Spec Does NOT Carry
 

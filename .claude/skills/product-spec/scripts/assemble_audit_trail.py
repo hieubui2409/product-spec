@@ -25,9 +25,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
-
 from decision_register import parse_decisions
+from record_outcome import parse_outcomes
 from encoding_utils import configure_utf8_console
 from spec_graph import build_graph_with_artifacts
 from status import build_status
@@ -139,6 +138,21 @@ def assemble(root, today: Optional[str] = None) -> Dict[str, Any]:
             "date": d.get("date", ""), "artifact": (d.get("affects") or "").strip(),
             "action": f"decision ({d.get('status','active')})", "who_approved": "",
             "what_drifted": d.get("title", ""), "dec_ref": d["id"], "reconciled": True,
+        })
+
+    # Outcome measurements (the --learn quantitative loop) map into the SAME six event
+    # keys — NO new columns, NO schema bump (red-team #3): the artifact is the measured
+    # goal, the action carries the verdict, what_drifted carries target/actual/metric.
+    # With no outcomes.md this loop adds nothing → the audit trail is byte-identical to
+    # before (back-compat). The learning-map view consumes these outcome rows as its
+    # source nodes (it keeps them, not filters them out).
+    for o in parse_outcomes(root):
+        gid = str(o.get("goal") or "").strip()
+        events.append({
+            "date": str(o.get("measured_on") or ""), "artifact": gid,
+            "action": f"outcome: {o.get('verdict')}", "who_approved": "",
+            "what_drifted": f"target {o.get('target')} / actual {o.get('actual')} ({o.get('metric')})",
+            "dec_ref": ",".join(dec_by_artifact.get(gid, [])), "reconciled": True,
         })
 
     events.sort(key=lambda ev: (ev["date"] or "", ev["artifact"], ev["dec_ref"]))

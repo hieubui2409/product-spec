@@ -136,6 +136,12 @@ DEFAULTS: Dict[str, Any] = {
     # workflow-interview.md; the only writers are PO-invoked (--set) or PO-confirmed.
     "interview_rigor": "standard",
     "action_prompting": "standard",
+    # Learning-loop verdict thresholds (consumed by outcome_verdict.load_floors). Floats
+    # in [0,1] with partial_floor < hit_floor. NON-enum (a continuous range, not a
+    # discrete set): `--set` range-checks [0,1] at write time (below); the cross-key
+    # partial<hit invariant is enforced at read by outcome_verdict.load_floors.
+    "outcome_hit_floor": 0.9,
+    "outcome_partial_floor": 0.5,
 }
 
 # Closed enums per scalar key. A value outside its set is treated as absent
@@ -278,8 +284,26 @@ def main() -> int:
         # argparse hands us strings; for keys whose canonical type is int (the
         # `critique_level` enum + the `critique_drift_threshold` passthrough), coerce a
         # digit string so the value matches the int enum / keeps the on-disk type int.
-        if isinstance(DEFAULTS[key], int) and value.isdigit():
+        if isinstance(DEFAULTS[key], bool):
+            pass  # no bool-typed preferences today; reserved branch
+        elif isinstance(DEFAULTS[key], int) and value.isdigit():
             value = int(value)
+        elif isinstance(DEFAULTS[key], float):
+            # Float-typed keys (the outcome verdict floors). Reject a bad value AT WRITE
+            # TIME with a non-zero exit — mirroring the enum/unknown-key paths — so the PO
+            # learns immediately, not on a later `--learn` run pointing at a file we told
+            # them "saved" (the delayed-failure trap). Range [0,1] guards both floor keys;
+            # the cross-key partial<hit invariant is still enforced at read (load_floors).
+            try:
+                value = float(value)
+            except ValueError:
+                print(f"--set: preference {key!r} must be a number; got {value!r}",
+                      file=sys.stderr)
+                return 2
+            if not 0 <= value <= 1:
+                print(f"--set: preference {key!r} must be in [0,1]; got {value}",
+                      file=sys.stderr)
+                return 2
         prefs[key] = value
 
     try:

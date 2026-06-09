@@ -524,6 +524,47 @@ skill **never** sets `approved` unless you ask to approve and provide an owner +
 
 ---
 
+### B5 — Learn from real-world results (Learn)
+
+**When to use:** Your product is live and you finally have **real signal** — a monthly report, analytics, order
+data, customer reviews. You want to feed that back into the spec: did each goal hit its target, and what new
+problems did users surface?
+
+`--learn` is one door with two paths. The skill asks **"metrics or feedback?"**:
+
+- **Metrics (outcomes):** for each business goal, you give the target and the actual number. The skill computes
+  a verdict — 🟢 hit / 🟡 partial / 🔴 miss — and records it (it never touches the goal itself). Goals you
+  never measured show as **blind spots**. A goal that *missed* is surfaced for your call: **keep** the goal,
+  **change** it (which re-opens approval — nothing flips silently), or record a **decision**.
+- **Feedback (discover-back):** point the skill at review/feedback files. It proposes **candidate** new
+  problems or personas — never committing anything until you confirm each — and routes them into an Update.
+
+#### Conversation
+
+> **You:** I have last month's numbers. Let's record how we did against our goals.
+>
+> **Skill:** Metrics or feedback? — **You:** Metrics.
+>
+> **Skill:** For "Reach $2M GMV in the first year" — the title suggests a target of **$2,000,000**. Is that the
+> target for this period? And what's the actual? — **You:** Target 2M, actual was 760K.
+>
+> **Skill:** Recorded `OUT-2`: 🔴 **miss** (38% of target). This goal is `approved`, so I won't change it on my
+> own. Do you want to **keep** the goal as-is, **change** it (re-approval required), or record a **decision**
+> about why it missed? — **You:** Keep it; record a decision that Q3 marketing spend was cut.
+>
+> **Skill:** Recorded `DEC-4`. You can see the whole picture with `--viz scorecard` (and `--viz learning` for
+> the one-page dashboard).
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --learn
+/cleanmatic:product-spec --viz scorecard      # target vs actual, with blind spots
+/cleanmatic:product-spec --viz learning       # one-page learning dashboard
+```
+
+---
+
 ## Tier C — Share & visualize
 
 ### C1 — Get a 1-page summary for leadership (Summary)
