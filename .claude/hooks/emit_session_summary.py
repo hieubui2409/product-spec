@@ -8,7 +8,8 @@ Reconstructs activity from the transcript (the Stop payload carries no tool
 list / duration). Reads the head (real start ts → duration) + a bounded tail
 (recent activity) so it stays fast (<5s) on huge transcripts; counts over the
 tail window are an approximation, sufficient for adoption trending. `tokens`
-are deliberately dropped (not needed for CM v1). Fail-open + non-blocking.
+are deliberately dropped (not needed for CM v1). Fail-open + non-blocking +
+config gate are owned by hook_runtime.run_telemetry_hook.
 
 Hook stdin protocol: { session_id, transcript_path }.
 """
@@ -22,14 +23,18 @@ from pathlib import Path
 _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 _LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "telemetry", "scripts")
 sys.path.insert(0, _LIB_DIR)
+if _HOOKS_DIR not in sys.path:
+    sys.path.append(_HOOKS_DIR)
+import hook_runtime  # noqa: E402
 
-from telemetry_paths import append_event, sessions_dir  # noqa: E402
+_STEM = Path(__file__).stem
 
 TAIL_BYTES = 256 * 1024
 FILE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 
 
 def resolve_transcript(data: dict):
+    from telemetry_paths import sessions_dir  # lazy: skipped when disabled
     # Prefer the explicit transcript_path from the Stop payload.
     tp = data.get("transcript_path") if data else None
     if tp and Path(tp).exists():
@@ -128,30 +133,27 @@ def summarize(text: str, start_ts) -> dict:
     }
 
 
+def core(data: dict) -> None:
+    from telemetry_paths import append_event  # lazy: skipped when disabled
+    p = resolve_transcript(data)
+    if not p:
+        return
+    s = summarize(read_tail(p), first_timestamp(p))
+    session = data.get("session_id") or Path(p).stem
+    append_event(
+        "sessions.jsonl",
+        {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "session": session,
+            **s,
+        },
+    )
+
+
 def main(raw: str) -> None:
-    try:
-        data = json.loads(raw or "{}")
-        p = resolve_transcript(data)
-        if p:
-            s = summarize(read_tail(p), first_timestamp(p))
-            session = data.get("session_id") or Path(p).stem
-            append_event(
-                "sessions.jsonl",
-                {
-                    "ts": datetime.now(timezone.utc).isoformat(),
-                    "session": session,
-                    **s,
-                },
-            )
-    except Exception:
-        pass  # fail-open
-    sys.stdout.write(json.dumps({"continue": True}))
-    sys.stdout.flush()
+    """Test-compat shim: existing tests call main(raw) directly."""
+    hook_runtime.run_telemetry_hook(_STEM, core, raw=raw)
 
 
 if __name__ == "__main__":
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        raw = ""
-    main(raw)
+    hook_runtime.run_telemetry_hook(_STEM, core)

@@ -18,6 +18,8 @@ import time
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import pytest
+
 from critique_test_support import make_proj, append_to, run_scan
 
 HOOK_PATH = (
@@ -30,6 +32,19 @@ def _load_hook():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+@pytest.fixture(autouse=True)
+def _enable_critique_nudge(tmp_path, monkeypatch):
+    """The hook is config-gated (default DISABLED). These tests verify the nudge
+    behavior, so they ENABLE it via an isolated product-spec-hooks.json and drop
+    the runtime's per-process config cache. The gate test overrides afterwards."""
+    cfg = tmp_path / "enabled-hooks.json"
+    cfg.write_text(json.dumps({"product_spec_critique_nudge": True}), encoding="utf-8")
+    monkeypatch.setenv("CK_HOOK_CONFIG", str(cfg))
+    sys.modules.pop("hook_runtime", None)
+    yield
+    sys.modules.pop("hook_runtime", None)
 
 
 def _isolate_tmp(tmp_path, monkeypatch):
@@ -169,3 +184,19 @@ def test_never_writes_under_docs_product(tmp_path, monkeypatch):
     _run_stop(mod, proj)
     after = {p.name for p in (proj / "docs" / "product" / ".memory").iterdir()}
     assert before == after  # hook created nothing under docs/product/
+
+
+def test_config_disabled_noops_even_when_drifted(tmp_path, monkeypatch):
+    """Wired-in-bundle but config-gated: a disabled nudge hook stays silent even
+    when the spec drifted past threshold (default-off + explicit-off both)."""
+    _isolate_tmp(tmp_path, monkeypatch)
+    mod = _load_hook()
+    proj = _drifted_project(tmp_path, threshold=1)
+    for cfg in ({}, {"product_spec_critique_nudge": False}):
+        p = tmp_path / "gate.json"
+        p.write_text(json.dumps(cfg), encoding="utf-8")
+        monkeypatch.setenv("CK_HOOK_CONFIG", str(p))
+        sys.modules.pop("hook_runtime", None)
+        rc, out = _run_stop(mod, proj)
+        assert rc == 0
+        assert out.strip() == ""

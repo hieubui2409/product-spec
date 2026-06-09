@@ -38,7 +38,9 @@ def _reload_lib(tmp_path, monkeypatch, extra: dict | None = None):
     if extra:
         for k, v in extra.items():
             monkeypatch.setenv(k, v)
-    for mod_name in ("telemetry_paths",):
+    # Drop hook_runtime too so its per-process config cache is re-read fresh
+    # (no CK_HOOK_CONFIG here → the real config loads; telemetry keys default on).
+    for mod_name in ("telemetry_paths", "hook_runtime"):
         sys.modules.pop(mod_name, None)
     import telemetry_paths
     importlib.reload(telemetry_paths)

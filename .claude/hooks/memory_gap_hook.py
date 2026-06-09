@@ -10,8 +10,11 @@ re-implements it.
 
 It ships at the top-level `.claude/hooks/` (the hook convention) ALONGSIDE the
 ck-managed `*.cjs` handlers — which it never touches. It runs under the shared
-skill venv (`./.claude/skills/.venv/bin/python3`); the installer registers it
-in the gitignored `.claude/settings.local.json` (opt-in only, never auto).
+skill venv (`./.claude/skills/.venv/bin/python3`). It is WIRED-ALWAYS into Stop
+(+ PostToolUse touched-flag) by `register_telemetry_hooks.py` (the bundle
+installer auto-runs it), but config-GATED: `hook_enabled("memory_gap_hook")`
+reads `.claude/hooks/product-spec-hooks.json` and defaults this enforcement hook
+to DISABLED, so it no-ops until the PO flips the flag (install.sh --memory-hook).
 
 Two modes (one file):
   - default (no flag) → `Stop` policy. Reads Stop stdin, runs the no-op guard,
@@ -68,6 +71,22 @@ _NUDGE_ONCE_SIGNALS = frozenset({"validate_no_marker", "approved_changed_no_dec"
 # The cap is an internal guarantee here, not a dependency on host behaviour; the
 # fence breach is independently caught by the check_fence chokepoint regardless.
 _FENCE_BLOCK_CAP = 8
+
+
+# ---------------------------------------------------------------------------
+# Shared runtime (config gate + crash audit). Imported lazily so the hot
+# allow-path and the detector import order are never perturbed by it.
+# ---------------------------------------------------------------------------
+
+def _hook_runtime():
+    """Import the top-level shared runtime (.claude/hooks/hook_runtime.py). The
+    hooks dir is APPENDED (never index-0-inserted) so it can't shadow the
+    skill-scripts path the detector import relies on."""
+    hd = os.path.dirname(os.path.abspath(__file__))
+    if hd not in sys.path:
+        sys.path.append(hd)
+    import hook_runtime  # noqa: E402
+    return hook_runtime
 
 
 # ---------------------------------------------------------------------------
@@ -293,6 +312,16 @@ def _decide(signals: List[Dict[str, Any]],
 def handle_stop(payload: Dict[str, Any], project_dir: Optional[str]) -> int:
     """Run the Stop policy. Returns the process exit code (BLOCK_EXIT / ALLOW_EXIT)
     and, on a block, prints the decision JSON to stdout + the reason to stderr."""
+    # Config gate (default-DISABLED for this enforcement hook): if not explicitly
+    # enabled in product-spec-hooks.json, no-op immediately — no detector, no
+    # graph, no block. A gate error fails to the SAFE default (disabled): a
+    # blocking hook must never run on an ambiguous gate.
+    try:
+        if not _hook_runtime().hook_enabled("memory_gap_hook"):
+            return ALLOW_EXIT
+    except Exception:  # noqa: BLE001
+        return ALLOW_EXIT
+
     project_dir = project_dir or _project_dir(payload.get("cwd"))
     if not project_dir:
         return ALLOW_EXIT  # no resolvable root → nothing to do (degrade)
@@ -339,6 +368,13 @@ def handle_post_tool_use(payload: Dict[str, Any],
     """Set the touched-flag when a Write/Edit landed under docs/product/. Reads
     ONLY `tool_input.file_path` (never the ambiguous result field). Always allows
     (exit 0) — this handler only records state, never blocks a tool."""
+    # Same config gate as handle_stop: a disabled hook is fully inert (no flag).
+    try:
+        if not _hook_runtime().hook_enabled("memory_gap_hook"):
+            return ALLOW_EXIT
+    except Exception:  # noqa: BLE001
+        return ALLOW_EXIT
+
     project_dir = project_dir or _project_dir(payload.get("cwd"))
     if not project_dir:
         return ALLOW_EXIT
@@ -387,7 +423,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         if post_mode:
             return handle_post_tool_use(payload, project_dir)
         return handle_stop(payload, project_dir)
-    except Exception:  # noqa: BLE001 — a hook crash must never break the turn
+    except Exception as e:  # noqa: BLE001 — a hook crash must never break the turn
+        # Leave a trace of the swallowed crash (fail-open: the logger never raises).
+        try:
+            _hook_runtime().log_hook_error("memory_gap_hook", e)
+        except Exception:
+            pass
         return ALLOW_EXIT
 
 

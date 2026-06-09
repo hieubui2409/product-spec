@@ -23,7 +23,7 @@ def _reload(tmp_path, monkeypatch, extra=None):
     monkeypatch.delenv("CK_TELEMETRY_DISABLED", raising=False)
     for k, v in (extra or {}).items():
         monkeypatch.setenv(k, v)
-    for m in ("telemetry_paths", "track_subagent_outcome"):
+    for m in ("telemetry_paths", "hook_runtime", "track_subagent_outcome"):
         sys.modules.pop(m, None)
     import telemetry_paths, track_subagent_outcome  # noqa
     importlib.reload(telemetry_paths)

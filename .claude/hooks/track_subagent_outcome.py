@@ -16,8 +16,8 @@ Outcome inference (in priority order):
 agent_type comes from the payload (`agent_type`/`subagent_type`) or, failing
 that, the transcript filename (agent-<type>-<id>.jsonl).
 
-Fail-open + non-blocking: always emits {"continue": true}; no-op under
-CK_TELEMETRY_DISABLED / pytest.
+Fail-open + non-blocking + config gate are owned by hook_runtime.run_telemetry_hook
+(no-op under CK_TELEMETRY_DISABLED / pytest / config-disabled).
 
 Hook stdin protocol: { session_id, transcript_path, agent_type?, outcome? }.
 """
@@ -32,8 +32,11 @@ from pathlib import Path
 _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 _LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "telemetry", "scripts")
 sys.path.insert(0, _LIB_DIR)
+if _HOOKS_DIR not in sys.path:
+    sys.path.append(_HOOKS_DIR)
+import hook_runtime  # noqa: E402
 
-from telemetry_paths import append_event  # noqa: E402
+_STEM = Path(__file__).stem
 
 OUTCOMES = {"success", "api_error", "timeout", "blocked", "unknown"}
 
@@ -134,33 +137,29 @@ def infer_outcome(data: dict) -> str:
     return "unknown"
 
 
+def core(data: dict) -> None:
+    from telemetry_paths import append_event  # lazy: skipped when disabled
+    agent_type = str(
+        data.get("agent_type") or data.get("subagent_type")
+        or _agent_type_from_filename(data.get("transcript_path") or "")
+    ) or "unknown"
+    outcome = infer_outcome(data)
+    session = data.get("session_id") or os.environ.get("CK_SESSION_ID") or ""
+    append_event(
+        "subagent-outcomes.jsonl",
+        {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "agent_type": agent_type,
+            "outcome": outcome,
+            "session": session,
+        },
+    )
+
+
 def main(raw: str) -> None:
-    try:
-        data = json.loads(raw or "{}")
-        agent_type = str(
-            data.get("agent_type") or data.get("subagent_type")
-            or _agent_type_from_filename(data.get("transcript_path") or "")
-        ) or "unknown"
-        outcome = infer_outcome(data)
-        session = data.get("session_id") or os.environ.get("CK_SESSION_ID") or ""
-        append_event(
-            "subagent-outcomes.jsonl",
-            {
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "agent_type": agent_type,
-                "outcome": outcome,
-                "session": session,
-            },
-        )
-    except Exception:
-        pass  # fail-open
-    sys.stdout.write(json.dumps({"continue": True}))
-    sys.stdout.flush()
+    """Test-compat shim: existing tests call main(raw) directly."""
+    hook_runtime.run_telemetry_hook(_STEM, core, raw=raw)
 
 
 if __name__ == "__main__":
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        raw = ""
-    main(raw)
+    hook_runtime.run_telemetry_hook(_STEM, core)

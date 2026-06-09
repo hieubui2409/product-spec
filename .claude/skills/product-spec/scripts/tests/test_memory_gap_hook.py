@@ -40,6 +40,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -57,6 +59,20 @@ from conftest import VALID, make_proj, validate_baseline, append_to  # noqa: E40
 _proj = make_proj
 _validate_baseline = validate_baseline
 _append_to = append_to
+
+
+@pytest.fixture(autouse=True)
+def _enable_memory_gap_hook(tmp_path, monkeypatch):
+    """The hook is config-gated (default DISABLED). These tests verify the POLICY
+    behavior, so they explicitly ENABLE it via an isolated product-spec-hooks.json
+    and drop the runtime's per-process config cache so it re-reads. Tests that
+    assert the gate itself override CK_HOOK_CONFIG after this fixture runs."""
+    cfg = tmp_path / "enabled-hooks.json"
+    cfg.write_text(json.dumps({"memory_gap_hook": True}), encoding="utf-8")
+    monkeypatch.setenv("CK_HOOK_CONFIG", str(cfg))
+    sys.modules.pop("hook_runtime", None)
+    yield
+    sys.modules.pop("hook_runtime", None)
 
 
 # ---------------------------------------------------------------------------
@@ -438,3 +454,46 @@ def test_nudge_once_loop_backstop(tmp_path, monkeypatch):
                                    session_id="sess-nudge")
     assert first is True   # blocks once
     assert second is False  # marker self-limits even though stop_hook_active never flips
+
+
+# ---------------------------------------------------------------------------
+# Config gate — the hook is wired-in-bundle but default-DISABLED. A disabled
+# hook must NEVER block, even on a real fence breach (the top plan risk).
+# ---------------------------------------------------------------------------
+
+def _arm_fence_breach(tmp_path, monkeypatch):
+    """A project with a real fence breach + the touched-flag set (would block if
+    the hook were enabled)."""
+    _isolate_tmp(tmp_path, monkeypatch)
+    mod = _load_hook()
+    proj = _proj(tmp_path)
+    _validate_baseline(proj)
+    _git(proj, "add", "-A")
+    _git(proj, "commit", "-q", "-m", "validated")
+    (proj / "src").mkdir(parents=True, exist_ok=True)
+    (proj / "src" / "app.py").write_text("print('x')\n", encoding="utf-8")
+    mod.set_touched_flag("sess-1")
+    return mod, proj
+
+
+def _point_config(monkeypatch, tmp_path, cfg: dict):
+    p = tmp_path / "gate-config.json"
+    p.write_text(json.dumps(cfg), encoding="utf-8")
+    monkeypatch.setenv("CK_HOOK_CONFIG", str(p))
+    sys.modules.pop("hook_runtime", None)
+
+
+def test_missing_config_key_noops_fence_breach(tmp_path, monkeypatch):
+    """THE safety-critical default: with no key in config, the blocking hook is
+    fallback-DISABLED and must allow Stop even on a real breach."""
+    mod, proj = _arm_fence_breach(tmp_path, monkeypatch)
+    _point_config(monkeypatch, tmp_path, {})  # no memory_gap_hook key
+    rc = mod.handle_stop(_load_stdin_dict(_stop_stdin(proj)), str(proj))
+    assert rc == mod.ALLOW_EXIT
+
+
+def test_explicit_false_config_noops_fence_breach(tmp_path, monkeypatch):
+    mod, proj = _arm_fence_breach(tmp_path, monkeypatch)
+    _point_config(monkeypatch, tmp_path, {"memory_gap_hook": False})
+    rc = mod.handle_stop(_load_stdin_dict(_stop_stdin(proj)), str(proj))
+    assert rc == mod.ALLOW_EXIT

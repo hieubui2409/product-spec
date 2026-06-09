@@ -38,6 +38,18 @@ ALLOW_EXIT = 0
 
 
 # ---------------------------------------------------------------------------
+# Shared runtime (config gate + crash audit), imported lazily.
+# ---------------------------------------------------------------------------
+
+def _hook_runtime():
+    hd = os.path.dirname(os.path.abspath(__file__))
+    if hd not in sys.path:
+        sys.path.append(hd)
+    import hook_runtime  # noqa: E402
+    return hook_runtime
+
+
+# ---------------------------------------------------------------------------
 # Resolution
 # ---------------------------------------------------------------------------
 
@@ -150,6 +162,15 @@ def _nudge_text(changed_count: int) -> str:
 # ---------------------------------------------------------------------------
 
 def handle_stop(payload: Dict[str, Any], project_dir: Optional[str]) -> int:
+    # Config gate (default-DISABLED): only nudge when explicitly enabled in
+    # product-spec-hooks.json. Advisory-only hook, but the gate keeps it silent
+    # until a PO opts in. Gate error → safe default (disabled).
+    try:
+        if not _hook_runtime().hook_enabled("product_spec_critique_nudge"):
+            return ALLOW_EXIT
+    except Exception:  # noqa: BLE001
+        return ALLOW_EXIT
+
     project_dir = project_dir or _project_dir(payload.get("cwd"))
     if not project_dir:
         return ALLOW_EXIT
@@ -208,7 +229,11 @@ def main(argv: Optional[list] = None) -> int:
     project_dir = _project_dir(payload.get("cwd"))
     try:
         return handle_stop(payload, project_dir)
-    except Exception:  # noqa: BLE001 - a hook crash must never break Stop
+    except Exception as e:  # noqa: BLE001 - a hook crash must never break Stop
+        try:
+            _hook_runtime().log_hook_error("product_spec_critique_nudge", e)
+        except Exception:
+            pass
         return ALLOW_EXIT
 
 

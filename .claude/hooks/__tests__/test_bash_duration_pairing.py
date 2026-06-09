@@ -24,7 +24,7 @@ def _reload(tmp_path, monkeypatch, extra=None):
     monkeypatch.delenv("CK_TELEMETRY_DISABLED", raising=False)
     for k, v in (extra or {}).items():
         monkeypatch.setenv(k, v)
-    for m in ("telemetry_paths", "mark_bash_start", "track_script_execution"):
+    for m in ("telemetry_paths", "hook_runtime", "mark_bash_start", "track_script_execution"):
         sys.modules.pop(m, None)
     import telemetry_paths, mark_bash_start, track_script_execution  # noqa
     importlib.reload(telemetry_paths)

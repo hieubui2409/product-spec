@@ -14,25 +14,31 @@ Duration: if the PreToolUse:Bash counterpart (mark_bash_start.py) stamped a
 start mark for this command, `ms` (wall-clock milliseconds) is included;
 otherwise the record degrades gracefully without `ms`.
 
-Fail-open + non-blocking: always emits {"continue": true}.
+Fail-open + non-blocking + config gate are owned by the shared
+hook_runtime.run_telemetry_hook wrapper; this file holds only the record-building
+logic.
 
 Hook stdin protocol: { tool_name, tool_input: { command }, tool_response, session_id }.
 """
 
-import json
 import os
 import re
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 _HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 _LIB_DIR = os.path.join(_HOOKS_DIR, "..", "skills", "telemetry", "scripts")
 sys.path.insert(0, _LIB_DIR)
+if _HOOKS_DIR not in sys.path:
+    sys.path.append(_HOOKS_DIR)
+import hook_runtime  # noqa: E402
 
-from telemetry_paths import append_event, read_and_clear_bash_start  # noqa: E402
+# Shared matcher (single home in hook_runtime) — paired with mark_bash_start.
+# group(1) = the skill-relative path skills/<skill>/scripts/<file>.py|sh.
+SCRIPT_RE = hook_runtime.SCRIPT_RE
 
-# Capture the skill-relative script path: skills/<skill>/scripts/<file>.py|sh
-SCRIPT_RE = re.compile(r"\.claude/skills/([^\s/]+/scripts/[^\s]+\.(?:py|sh))")
+_STEM = Path(__file__).stem
 
 
 def infer_exit(resp, stderr: str) -> int:
@@ -43,36 +49,33 @@ def infer_exit(resp, stderr: str) -> int:
     return 0
 
 
+def core(data: dict) -> None:
+    from telemetry_paths import append_event, read_and_clear_bash_start  # lazy
+    tool_input = data.get("tool_input") or {}
+    cmd = tool_input.get("command") or ""
+    m = SCRIPT_RE.search(cmd)
+    if not m:
+        return
+    resp = data.get("tool_response")
+    stderr = (resp.get("stderr") or "") if isinstance(resp, dict) else ""
+    session = data.get("session_id") or os.environ.get("CK_SESSION_ID") or ""
+    record = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "source": "hook:bash",
+        "script": m.group(1),
+        "exit": infer_exit(resp, stderr),
+    }
+    # Pair with the PreToolUse start mark, if present. Missing → no `ms`.
+    ms = read_and_clear_bash_start(session, cmd)
+    if ms is not None:
+        record["ms"] = ms
+    append_event("hook-telemetry.jsonl", record)
+
+
 def main(raw: str) -> None:
-    try:
-        data = json.loads(raw or "{}")
-        tool_input = data.get("tool_input") or {}
-        cmd = tool_input.get("command") or ""
-        m = SCRIPT_RE.search(cmd)
-        if m:
-            resp = data.get("tool_response")
-            stderr = (resp.get("stderr") or "") if isinstance(resp, dict) else ""
-            session = data.get("session_id") or os.environ.get("CK_SESSION_ID") or ""
-            record = {
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "source": "hook:bash",
-                "script": m.group(1),
-                "exit": infer_exit(resp, stderr),
-            }
-            # Pair with the PreToolUse start mark, if present. Missing → no `ms`.
-            ms = read_and_clear_bash_start(session, cmd)
-            if ms is not None:
-                record["ms"] = ms
-            append_event("hook-telemetry.jsonl", record)
-    except Exception:
-        pass  # fail-open
-    sys.stdout.write(json.dumps({"continue": True}))
-    sys.stdout.flush()
+    """Test-compat shim: existing tests call main(raw) directly."""
+    hook_runtime.run_telemetry_hook(_STEM, core, raw=raw)
 
 
 if __name__ == "__main__":
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        raw = ""
-    main(raw)
+    hook_runtime.run_telemetry_hook(_STEM, core)
