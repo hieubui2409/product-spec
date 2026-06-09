@@ -17,6 +17,26 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-06-09
+### Added
+- **product-spec `--learn` (learning loop)** — post-launch outcomes (target vs actual → `OUT-<n>`
+  register, 3-tier verdict, learning views) + a discover-back feedback path. (product-spec 2.3.0/2.3.1)
+- **Context-footprint harness** (`_shared/lib/context_footprint.py`) — per-skill SKILL.md/ref token
+  proxy + size gate + a mechanical GATE co-presence guard, wired into pytest as a regression guard.
+- **Telemetry hook hardening** — shared `hook_runtime` with crash audit, per-hook config gate, and a
+  hook registrar/installer.
+
+### Changed
+- **SKILL.md flag-table compaction (per-turn context flow)** — product-spec SKILL.md −11.8%,
+  product-spec-critique −3.7%; elaboration relocated into the references that load when each flag
+  fires (net info preserved; routing held — best-of-3 sub-agent judge 18/18). (product-spec 2.3.1,
+  critique 1.2.1)
+- **Root `CLAUDE.md` / `.claude/rules` slimmed** to an always-on safety + skill-routing layer.
+
+### Fixed
+- **`pack.manifest.yaml`** no longer lists three deleted rules files; `test_pack_cli_full_run` sets
+  the working dir so `python -m pack` resolves the package.
+
 ## [2.2.2] — 2026-06-08
 ### Changed
 - **Root `CLAUDE.md` slimmed to an always-on safety + routing layer** (148 → 60 lines). The three inline

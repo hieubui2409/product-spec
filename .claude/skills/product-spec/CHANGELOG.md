@@ -9,6 +9,8 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-06-09
+
 ### Changed
 - **SKILL.md flag-table compaction (per-turn context flow).** Compacted the 16 verbose
   product-spec flag rows to one crisp `what · when · GATE · see <ref>` line each, relocating the
