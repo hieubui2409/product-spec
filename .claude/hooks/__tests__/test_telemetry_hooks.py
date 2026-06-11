@@ -185,6 +185,21 @@ class TestTrackScriptExecution:
         assert lines[0]["exit"] == 0
         assert lines[0]["source"] == "hook:bash"
 
+    def test_script_record_carries_session_join_key(self, tmp_path, monkeypatch):
+        # The record must carry `session` so the workflow/health lenses can join it to
+        # the other three sinks (which all record it). Previously computed but dropped.
+        mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+        mod.main(json.dumps({
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Bash",
+            "session_id": "sess-join-1",
+            "tool_input": {"command": ".claude/skills/.venv/bin/python3 .claude/skills/product-spec/scripts/visualize.py --root ."},
+            "tool_response": {"stdout": "ok", "stderr": ""},
+        }))
+        rec = _sink_lines(tmp_path, "hook-telemetry.jsonl")[0]
+        assert rec["session"] == "sess-join-1"
+
     def test_error_in_tool_response_infers_exit_1(self, tmp_path, monkeypatch):
         mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)
         monkeypatch.setattr(sys.stdout, "write", lambda _: None)
@@ -263,6 +278,35 @@ class TestEmitSessionSummary:
         assert rec["subagents"] == 1
         assert rec["duration_s"] == 300
         assert rec["session"] == "sess-x"
+
+    def test_duration_nonzero_when_first_record_has_no_timestamp(self, tmp_path, monkeypatch):
+        # A leading meta/summary record with no timestamp must not zero out duration:
+        # scan forward to the first record that has one (the 43/43 duration_s:0 bug).
+        mod = _reload_hook("emit_session_summary", tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda s: None)
+        transcript = tmp_path / "no-leading-ts.jsonl"
+        rows = [
+            {"type": "summary", "summary": "meta record, no timestamp"},
+            {"timestamp": "2026-06-06T10:00:00Z", "message": {"content": [{"type": "tool_use", "name": "Skill", "input": {"skill": "product-spec"}}]}},
+            {"timestamp": "2026-06-06T10:05:00Z", "message": {"content": [{"type": "tool_use", "name": "Write", "input": {"file_path": "/a.md"}}]}},
+        ]
+        transcript.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        mod.main(json.dumps({"session_id": "s", "transcript_path": str(transcript)}))
+        rec = _sink_lines(tmp_path, "sessions.jsonl")[0]
+        assert rec["duration_s"] == 300  # 10:00 → 10:05, not 0
+        assert rec["skills"] == ["product-spec"]
+
+    def test_scan_head_returns_first_ts_and_early_skills(self, tmp_path, monkeypatch):
+        mod = _reload_hook("emit_session_summary", tmp_path, monkeypatch)
+        transcript = tmp_path / "head.jsonl"
+        rows = [
+            {"type": "summary", "summary": "no timestamp here"},
+            {"timestamp": "2026-06-06T09:00:00Z", "message": {"content": [{"type": "tool_use", "name": "Skill", "input": {"skill": "product-spec"}}]}},
+        ]
+        transcript.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        ts, skills = mod.scan_head(str(transcript))
+        assert ts == "2026-06-06T09:00:00Z"
+        assert skills == ["product-spec"]
 
     def test_no_transcript_still_emits_continue_true(self, tmp_path, monkeypatch):
         mod = _reload_hook("emit_session_summary", tmp_path, monkeypatch)

@@ -64,6 +64,7 @@ def core(data: dict) -> None:
         "source": "hook:bash",
         "script": m.group(1),
         "exit": infer_exit(resp, stderr),
+        "session": session,  # join key — the other three sinks carry it; lenses join on it.
     }
     # Pair with the PreToolUse start mark, if present. Missing → no `ms`.
     ms = read_and_clear_bash_start(session, cmd)

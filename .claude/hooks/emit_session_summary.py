@@ -30,6 +30,7 @@ import hook_runtime  # noqa: E402
 _STEM = Path(__file__).stem
 
 TAIL_BYTES = 256 * 1024
+HEAD_BYTES = 256 * 1024
 FILE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 
 
@@ -58,15 +59,45 @@ def resolve_transcript(data: dict):
         return None
 
 
-def first_timestamp(p: str):
+def scan_head(p: str):
+    """Scan the bounded head and return (first_timestamp, early_skills).
+
+    The first transcript record is often a meta/summary line with no timestamp;
+    reading only the literal first line then yields no start ts, so duration was
+    computed as zero. Scan forward to the first record that HAS a timestamp.
+    Also capture Skill invocations in the head — they cluster early and would be
+    missed by the recent-activity tail on a long session (the empty-`skills` bug).
+    """
+    first_ts = None
+    skills: list = []
     try:
         with open(p, "rb") as fh:
-            chunk = fh.read(8192)
-        first_line = chunk.split(b"\n")[0]
-        rec = json.loads(first_line.decode("utf-8", errors="replace"))
-        return rec.get("timestamp") or (rec.get("message") or {}).get("timestamp")
-    except Exception:
-        return None
+            head = fh.read(HEAD_BYTES)
+    except OSError:
+        return None, []
+    for line in head.split(b"\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if first_ts is None:
+            first_ts = rec.get("timestamp") or (rec.get("message") or {}).get("timestamp")
+        msg = rec.get("message")
+        if msg and isinstance(msg.get("content"), list):
+            for b in msg["content"]:
+                if b and b.get("type") == "tool_use" and b.get("name") == "Skill":
+                    sk = (b.get("input") or {}).get("skill")
+                    if sk:
+                        skills.append(sk)
+    return first_ts, skills
+
+
+def first_timestamp(p: str):
+    """Back-compat thin wrapper: first record timestamp (scans past leading no-ts records)."""
+    return scan_head(p)[0]
 
 
 def read_tail(p: str) -> str:
@@ -138,7 +169,10 @@ def core(data: dict) -> None:
     p = resolve_transcript(data)
     if not p:
         return
-    s = summarize(read_tail(p), first_timestamp(p))
+    first_ts, head_skills = scan_head(p)
+    s = summarize(read_tail(p), first_ts)
+    # Merge skills seen early (head) with recent (tail); dedup, preserve order.
+    s["skills"] = list(dict.fromkeys(head_skills + s["skills"]))
     session = data.get("session_id") or Path(p).stem
     append_event(
         "sessions.jsonl",

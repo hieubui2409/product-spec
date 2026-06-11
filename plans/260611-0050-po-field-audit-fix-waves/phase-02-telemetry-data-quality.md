@@ -1,13 +1,15 @@
 ---
 phase: 2
 title: "Telemetry data-quality pack"
-status: pending
+status: in-progress
 priority: P1
 effort: "1.5d"
 dependencies: [1]
 ---
 
 # Phase 02: Telemetry data-quality pack (đề xuất #3)
+
+> **COOK PROGRESS 2026-06-11 (partial):** ✅ **LIB-4** (HIGH — `scan_head` quét tới record đầu có ts → duration không còn 0; + bắt early skills ở head → skills không còn rỗng; 2 test) · ✅ **LIB-8** (record mang `session` join key; 1 test) · ⚠ **LIB-9 DEFER** (verify CC docs: `UserPromptExpansion` HỢP LỆ — không rename; điều tra matcher+e2e). **Suite 205 passed.** **CÒN LẠI:** LIB-7 (SCRIPT_RE matcher), LIB-10 (CLAUDE.md routing+four), LIB-12 (i18n reason_code), LIB-13 (telemetry-readback doc), LIB-14 (fixture id), carry-in (gather_all per-lens isolation), + LIB-9 điều tra. **Review 3-wave + critique chạy khi phase xong.**
 
 ## Overview
 Telemetry "có ống chưa có nước": 3 trường chủ lực chết trên data thật + data còn lại bẩn. Sửa parse,
@@ -19,7 +21,7 @@ classify, matcher, key join để mọi lens phía sau có data thật mà narra
 - **LIB-4** (HIGH, ARC-F04) — `emit_session_summary.py:60-68,115` `first_timestamp()` chỉ đọc dòng đầu (record đầu không ts) → 43/43 `duration_s:0`; 46/46 subagent `outcome:unknown`; 41/43 `skills:[]`.
 - **LIB-7** (MED, ARC-M2) — `hook_runtime.py:41` + `track_script_execution.py:57-59` SCRIPT_RE substring-match → grep/ls/glob đếm như "script run"; validate-proxy đếm grep `check_*` như PASS.
 - **LIB-8** (MED, ARC-M3) — `track_script_execution.py:61-68` biến `session` tính nhưng không ghi vào record (414/414 thiếu key).
-- **LIB-9** (MED, ARC-F08) — `register_telemetry_hooks.py:107-108` kênh `UserPromptExpansion` 0 record. **Root cause (lens xác minh): SAI TÊN EVENT** — mọi hook khác + harness dùng `UserPromptSubmit` (event Claude Code thật); `UserPromptExpansion` chỉ xuất hiện trong file đăng ký telemetry → event không fire. Fix = sửa tên `UserPromptExpansion`→`UserPromptSubmit` (đối chiếu CC hook docs) HOẶC gỡ registration nếu trùng `PreToolUse:Skill`. **Test TĨNH, KHÔNG cần phiên live.**
+- **LIB-9** (MED, ARC-F08) — `register_telemetry_hooks.py:107-108` kênh `UserPromptExpansion` 0 record. **⚠ ĐÃ VERIFY (claude-code-guide, dẫn CC hooks docs): `UserPromptExpansion` LÀ event HỢP LỆ** (fire khi slash-command expand, matcher = TÊN command). Giả định "sai tên event" của lens-B → **REFUTED**. 0-record KHÔNG phải do tên sai → nghi `matcher: None` (cần tên command/regex, không None) HOẶC handler không bắt đúng payload, HOẶC PO không gọi skill qua slash trong cửa sổ đo. **KHÔNG rename mù.** Cần: kiểm matcher config + e2e 1 phiên thật → quyết sửa matcher / thêm `UserPromptSubmit` fallback / gỡ. **Defer tới khi điều tra matcher+handler** (không phải fix 1 dòng).
 - **LIB-10** (MED, ARC-F07) — `CLAUDE.md:4,8-13` "three PO-facing skills", bảng 3 hàng → telemetry vô hình.
 - **LIB-12** (LOW, BUG-F09) — `lens_validate_proxy.py:82` + `telemetry_render.py:182` reason EN hardcode giữa output VI; bản dịch `val_na` có sẵn không dùng.
 - **LIB-13** (LOW, DRY-F09) — `telemetry-readback.md` thiếu sink `.logs/hook-crashes.log` + config gate `product-spec-hooks.json`; README.md:26 gán memory-gap hook nhầm critique.
@@ -33,7 +35,7 @@ classify, matcher, key join để mọi lens phía sau có data thật mà narra
 - **LIB-4**: `first_timestamp()` scan tới record ĐẦU TIÊN có `ts` (không đọc mỗi dòng đầu). `outcome` classify từ TAIL theo Status-protocol (`DONE|DONE_WITH_CONCERNS|BLOCKED|NEEDS_CONTEXT`). `skills` rút từ PreToolUse:Skill records trong transcript.
 - **LIB-7**: SCRIPT_RE đòi path đứng-đầu-lệnh hoặc sau-interpreter (`python3? <path>`), bỏ substring/glob. Đồng bộ matcher ở `hook_runtime.py` và `track_script_execution.py` (DRY — 1 nguồn).
 - **LIB-8**: thêm `"session"` vào record (biến đã có sẵn). Cập nhật mọi test đọc record.
-- **LIB-9**: sửa tên event sai (`UserPromptExpansion`→`UserPromptSubmit`) ở registrar + settings.json + product-spec-hooks.json + catalog.py + track_skill_invocation.py + SKILL.md; test tĩnh assert settings dùng event-name hợp lệ. Nếu kênh trùng `PreToolUse:Skill` (dedup) → gỡ registration thay vì sửa. KHÔNG treo vào "phiên live".
+- **LIB-9** (DEFER — đã verify event hợp lệ): điều tra `matcher: None` (CC docs: matcher nên là tên command/regex) + e2e 1 phiên thật gõ slash-command → assert record. Theo kết quả: (a) sửa matcher; (b) thêm `UserPromptSubmit` làm fallback rộng (bắt mọi prompt-submit); (c) gỡ nếu thật trùng `PreToolUse:Skill`. KHÔNG rename `UserPromptExpansion` (nó hợp lệ).
 - **LIB-10**: thêm hàng `telemetry` vào bảng routing CLAUDE.md + sửa "three"→"four"; 1 dòng nudge trong `--status`.
 - **LIB-12**: lens trả `reason_code`; render map label localize (dùng `val_na` sẵn có).
 
@@ -48,7 +50,7 @@ classify, matcher, key join để mọi lens phía sau có data thật mà narra
 1. LIB-4: fixture transcript thật (record đầu KHÔNG ts) → assert `duration_s>0`, `outcome∈{done,...}`, `skills` non-empty cho phiên có skill. RED hiện tại (0/unknown/[]).
 2. LIB-7: fixture record chứa `grep ... check_consistency.py` literal → assert KHÔNG đếm như script-run; fixture `python3 .../check_x.py` → đếm. RED hiện tại (substring bắt nhầm).
 3. LIB-8: assert mọi record script-run có key `session`. RED (414/414 thiếu).
-4. LIB-9: `test_registered_event_name_is_valid_claude_code_event` — assert settings/registrar dùng `UserPromptSubmit` (không `UserPromptExpansion`); HOẶC `test_userpromptexpansion_registration_removed`. Test TĨNH, không phiên live.
+4. LIB-9 (defer): KHÔNG test rename. Sau điều tra matcher: test assert matcher hợp lệ (không None) HOẶC e2e phiên thật assert record. `UserPromptExpansion` giữ nguyên (hợp lệ).
 5. LIB-12: assert output telemetry VI không chứa câu EN hardcode.
 
 ## Implementation Steps
@@ -58,7 +60,7 @@ classify, matcher, key join để mọi lens phía sau có data thật mà narra
 - [ ] Trên fixture data thật: `duration_s>0`, `outcome` phân loại đúng, `skills` non-empty.
 - [ ] grep/ls/glob không còn đếm như script-run; validate-proxy không tính grep `check_*` là PASS.
 - [ ] 100% record script-run có `session`.
-- [ ] Event-name sửa `UserPromptSubmit` (hoặc gỡ registration); test tĩnh assert event hợp lệ (KHÔNG phiên live).
+- [ ] LIB-9 (defer): `UserPromptExpansion` đã verify hợp lệ — điều tra matcher/handler, KHÔNG rename. Quyết sửa-matcher/fallback/gỡ sau e2e.
 - [ ] CLAUDE.md routing có telemetry, "four"; output telemetry VI thuần.
 
 ## Risk Assessment
