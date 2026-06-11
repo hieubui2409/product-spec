@@ -1,0 +1,17 @@
+# skill-chains.yaml — DECLARED skill→skill workflow chains for the workflow-chains lens.
+#
+# Owned by the telemetry skill. Read ON-DEMAND only when the lens runs
+# (lens_workflow_chains.py) — never loaded into always-on context. This replaces two
+# routing markdown docs that used to live under .claude/rules/ and were removed during a
+# context-flow optimization: the data sat in per-session context (paying tokens every
+# turn) while the lens only needs it when it runs, and the lens silently reported an empty
+# declared-set once the docs vanished. Keeping the declared source here fixes both: zero
+# always-on cost, and the lens fails loud if this file ever goes missing.
+#
+# Each entry is an ordered list of skill dir-ids (normalized via catalog.to_dir_id). Keep
+# entries to the canonical hand-offs documented in each skill's "Workflow Position". Add a
+# chain when a new documented hand-off is introduced.
+chains:
+  - [product-spec, product-spec-critique]   # draft/refine a spec, then critique it
+  - [product-spec-critique, product-spec]   # apply critique findings back into the spec
+  - [product-spec, release]                 # spec/bundle work, then cut a release

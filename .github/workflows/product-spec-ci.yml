@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - '.claude/skills/product-spec/**'
+      # The eval gate below runs _shared/lib/run_evals.py, so a _shared change can
+      # break this workflow without touching product-spec/.
+      - '.claude/skills/_shared/**'
       - '.github/workflows/product-spec-ci.yml'
   workflow_dispatch:
 

@@ -1,28 +1,38 @@
 """lens_workflow_chains.py — actual per-session skill chains (from invocations.jsonl)
-vs the chains DECLARED in the routing docs; ranks common chains + flags deviations.
+vs the chains DECLARED in data/skill-chains.yaml; ranks common chains + flags deviations.
 Ported from human-analyzer's analyze-workflow-chains.py; framework-prefix logic
 stripped — both sides normalize to flat dir slugs via catalog.py (D1).
 
-Pure gather → render-agnostic dict. READ-ONLY, fail-soft. Ships in the release bundle.
+The declared side reads an on-demand data file owned by this skill (not always-on
+routing docs); it fails loud when that file is missing rather than silently reporting
+zero declared chains.
+
+Pure gather → render-agnostic dict. READ-ONLY. The actual-chains side is fail-soft on
+telemetry invocation data; the declared side fails LOUD if its data file is missing or
+malformed (a packaging/authoring bug, never silently zero chains). Ships in the bundle.
 """
 from __future__ import annotations
 
 import json
-import re
+import os
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import yaml
+
 import telemetry_paths
 from catalog import load_catalog, to_dir_id
 
-# A declared chain in the routing docs: "/ck:plan → /ck:cook → /ck:test".
-CHAIN_RE = re.compile(r"(/?[a-z]+:[a-z-]+(?:\s*→\s*/?[a-z]+:[a-z-]+)+)")
 
-
-def _routing_docs() -> list[Path]:
-    root = Path(telemetry_paths.project_dir()) / ".claude" / "rules"
-    return [root / "skill-workflow-routing.md", root / "skill-domain-routing.md"]
+def _declared_chains_path() -> Path:
+    """On-demand source of declared skill→skill chains, owned by this skill
+    (data/skill-chains.yaml) — never always-on context. Overridable via the
+    CK_SKILL_CHAINS env var so tests can point at a fixture."""
+    override = os.environ.get("CK_SKILL_CHAINS")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parent.parent / "data" / "skill-chains.yaml"
 
 
 def _invocations_path():
@@ -60,15 +70,33 @@ def actual_chains(days: int, catalog: dict) -> list[list[str]]:
 
 
 def declared_chains(catalog: dict) -> list[list[str]]:
+    path = _declared_chains_path()
+    if not path.exists():
+        raise FileNotFoundError(
+            f"declared skill-chains data file missing: {path} — the workflow-chains lens "
+            "needs it; restore .claude/skills/telemetry/data/skill-chains.yaml (it ships "
+            "with the skill). A missing file here is a packaging bug, not zero chains."
+        )
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw = data.get("chains")
+    if raw is None:  # `chains:` absent or explicitly null → deliberately no declared chains.
+        return []
+    if not isinstance(raw, list):
+        raise ValueError(f"{path}: 'chains' must be a list, got {type(raw).__name__}")
     out = []
-    for doc in _routing_docs():
-        if not doc.exists():
-            continue
-        for m in CHAIN_RE.findall(doc.read_text(encoding="utf-8")):
-            steps = [to_dir_id(s.strip().lstrip("/"), catalog) for s in m.split("→")]
-            steps = [s for s in steps if s]
-            if len(steps) >= 2:
-                out.append(steps)
+    for chain in raw:
+        # Fail loud on a malformed entry rather than silently char-splitting a bare string
+        # or coercing a null into a "None" skill — silent corruption is the LIB-5 class of bug.
+        if not isinstance(chain, list):
+            raise ValueError(f"{path}: each chain must be a list of skill ids, got {chain!r}")
+        steps = []
+        for s in chain:
+            if not isinstance(s, str) or not s.strip():
+                raise ValueError(f"{path}: chain step must be a non-empty string, got {s!r} in {chain!r}")
+            steps.append(to_dir_id(s.strip().lstrip("/"), catalog))
+        steps = [s for s in steps if s]  # drop ids not in the catalog (coverage, not corruption)
+        if len(steps) >= 2:
+            out.append(steps)
     return out
 
 

@@ -54,7 +54,7 @@ Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--
 | `session`    | `sessions.jsonl`                      | session count, avg/median duration, files, subagents, skill co-occurrence |
 | `health`     | `hook-telemetry.jsonl`                | per-script runs/errors/error-rate + avg `ms` (approx) |
 | `reliability`| `subagent-outcomes.jsonl`             | subagent success / api_error / timeout / blocked / unknown per type |
-| `workflow`   | `invocations.jsonl` + routing docs    | actual skill chains vs declared chains; deviations |
+| `workflow`   | `invocations.jsonl` + `data/skill-chains.yaml` | actual skill chains vs declared chains; deviations |
 | `validate`   | `last_validated.json` + `hook-telemetry` | validate-pass proxy (internal quality, NOT market outcome) |
 | `memory`     | `~/.claude/projects/<root>/memory/`   | orphans, dead index entries, broken `[[links]]`, staleness (read-only) |
 | `forensics`  | session transcript JSONL              | one session reconstructed (skills/tools/tokens/files/duration) |

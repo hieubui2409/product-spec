@@ -39,8 +39,48 @@ def test_thin_data_marked_insufficient_and_gated(lens):
     assert d["gated"] is True
 
 
-def test_declared_chains_parsed_from_routing_docs(lens):
+def test_declared_chains_loaded_from_data_file(lens, monkeypatch, tmp_path):
+    # Declared chains now live in an on-demand YAML data file owned by the skill,
+    # not in always-on routing docs. Point the lens at a fixture data file.
+    data = tmp_path / "skill-chains.yaml"
+    data.write_text("chains:\n  - [product-spec, product-spec-critique]\n", encoding="utf-8")
+    monkeypatch.setenv("CK_SKILL_CHAINS", str(data))
     d = lens.gather(days=BIG_DAYS, skills_dir=FIX / "skills")
-    # The real .claude/rules routing docs declare multi-step chains.
     assert isinstance(d["declared_chains"], list)
     assert len(d["declared_chains"]) >= 1
+    assert "product-spec → product-spec-critique" in d["declared_chains"]
+
+
+def test_declared_chains_raises_when_data_file_missing(lens, monkeypatch, tmp_path):
+    # A missing declared-source file is a packaging bug — fail loud, never silently
+    # report zero declared chains (the failure mode that shipped a red test before).
+    monkeypatch.setenv("CK_SKILL_CHAINS", str(tmp_path / "does-not-exist.yaml"))
+    with pytest.raises(FileNotFoundError):
+        lens.gather(days=BIG_DAYS, skills_dir=FIX / "skills")
+
+
+def test_declared_chains_null_key_is_empty_not_crash(lens, monkeypatch, tmp_path):
+    # `chains:` explicitly null means "deliberately no declared chains" — empty, not an error.
+    data = tmp_path / "skill-chains.yaml"
+    data.write_text("chains: null\n", encoding="utf-8")
+    monkeypatch.setenv("CK_SKILL_CHAINS", str(data))
+    d = lens.gather(days=BIG_DAYS, skills_dir=FIX / "skills")
+    assert d["declared_chains"] == []
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "chains:\n  - product-spec\n",          # entry is a bare string → would char-split
+        "chains:\n  - [product-spec, null]\n",  # null step → would become a "None" skill
+        "chains: not-a-list\n",                 # chains is a scalar
+    ],
+)
+def test_declared_chains_raises_on_malformed_data(lens, monkeypatch, tmp_path, bad):
+    # Malformed declared data fails loud — never silently char-splits a string into a fake
+    # multi-step chain or coerces a null step into a literal "None" skill id.
+    data = tmp_path / "skill-chains.yaml"
+    data.write_text(bad, encoding="utf-8")
+    monkeypatch.setenv("CK_SKILL_CHAINS", str(data))
+    with pytest.raises(ValueError):
+        lens.gather(days=BIG_DAYS, skills_dir=FIX / "skills")

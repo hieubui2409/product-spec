@@ -65,8 +65,8 @@ _T: dict[str, dict] = {
         "wf_common": "**Most common chains:**",
         "wf_cols": ["Chain", "Count"],
         "wf_none": "_No multi-skill chains observed yet._",
-        "wf_dev": "\n**Deviations from routing docs:**",
-        "wf_declared": "\n**Declared chains in routing docs:** {n}",
+        "wf_dev": "\n**Deviations from declared chains:**",
+        "wf_declared": "\n**Declared chains (data/skill-chains.yaml):** {n}",
         "a_wf": "WORKFLOW — {n} sessions, {c} chains, {d} deviations",
         # memory
         "mem_h": "## Memory Health — {status} ({n} memories, {issues} issues)\n",
@@ -147,8 +147,8 @@ _T: dict[str, dict] = {
         "wf_common": "**Chuỗi phổ biến nhất:**",
         "wf_cols": ["Chuỗi", "Số lần"],
         "wf_none": "_Chưa quan sát thấy chuỗi nhiều kỹ năng._",
-        "wf_dev": "\n**Sai lệch so với tài liệu routing:**",
-        "wf_declared": "\n**Số chuỗi khai báo trong tài liệu routing:** {n}",
+        "wf_dev": "\n**Sai lệch so với chuỗi khai báo:**",
+        "wf_declared": "\n**Số chuỗi khai báo (data/skill-chains.yaml):** {n}",
         "a_wf": "WORKFLOW — {n} phiên, {c} chuỗi, {d} sai lệch",
         # memory
         "mem_h": "## Sức khỏe bộ nhớ — {status} ({n} bộ nhớ, {issues} vấn đề)\n",

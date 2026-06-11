@@ -17,6 +17,39 @@ roll the oldest cycle into `## Archive` when exceeded.
 
 ---
 
+## Cycle 3 — 2026-06-11 (PO field-audit fixes)
+
+### LIB-5 · CORRECTNESS · HIGH · `telemetry/scripts/lens_workflow_chains.py`
+- **Root cause:** the declared-chains source lived in two `.claude/rules/*.md` routing docs that a
+  context-flow optimization deleted; the lens read them by hardcoded path and silently returned `[]`
+  when they vanished, while a test asserted ≥1 chain → a red test on the default branch.
+- **Before:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry -q -k declared_chains`
+  → `test_declared_chains_parsed_from_routing_docs FAILED` (`assert 0 >= 1`).
+- **Fix:** moved declared chains into an on-demand, in-skill `data/skill-chains.yaml` (read only when the
+  lens runs → zero always-on token cost); `declared_chains()` reads it and raises `FileNotFoundError`
+  when missing — and `ValueError` on malformed data (non-list `chains`, a string/scalar entry, a null
+  step) — instead of silently returning `[]` or char-splitting a string into a fake chain. The SKILL.md
+  source-cell label grew +2 tokens; the committed footprint baseline was regenerated in the same change.
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q`
+  → `202 passed` (was `1 failed`); new tests `test_declared_chains_loaded_from_data_file`,
+  `test_declared_chains_raises_when_data_file_missing`, `..._null_key_is_empty_not_crash`,
+  `..._raises_on_malformed_data` all green.
+- **Note:** the `data/` dir ships with the skill via the recursive `skills:` walk — no manifest edit.
+
+### LIB-6 · CONSISTENCY · HIGH · `.github/workflows/`
+- **Root cause:** 26 tracked test files (telemetry 18, hooks 4, _shared 4) had no workflow;
+  `product-spec-ci.yml` path filter omitted `_shared/**` though its eval gate runs
+  `_shared/lib/run_evals.py`; CONTRIBUTING's "all tests must pass" was unenforced — LIB-5 was exhibit A.
+- **Before:** `grep -l telemetry .github/workflows/*.yml` → no workflow ran the telemetry/hooks/_shared suite.
+- **Fix:** added `.github/workflows/internal-test-suite.yml` running the exact CONTRIBUTING.md command on
+  telemetry+hooks+_shared; added `_shared/**` to `product-spec-ci.yml` paths; added a guard test asserting
+  the workflow and CONTRIBUTING document the same canonical pytest targets.
+- **After:** the `_shared` leg of the suite now includes `test_internal_ci_runs_canonical_suite.py`
+  (3 tests) → `202 passed`, `0 failed`.
+- **Note:** drift guard is a path-presence + co-presence check (workflow ⇄ CONTRIBUTING share the same
+  pytest targets); it intentionally does not lock the interpreter, since CI runs system `python` while
+  CONTRIBUTING documents the venv path.
+
 ## Archive
 
 ### Cycle 0 — 2026-06 (condensed; full before/after rolled off per the size cap)
