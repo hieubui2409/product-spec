@@ -147,15 +147,31 @@ def _node_index(graph: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     return {n["id"]: n for n in graph.get("nodes", [])}
 
 
+# Cap on individually-listed fence breaches before they collapse into one aggregate
+# signal. `check_fence` already drops the kit's own `.claude/` tree, but a session that
+# legitimately touches many out-of-fence files must still never flood `--status` into an
+# over-report — so the tail is summarized, not enumerated, with the full count preserved.
+_FENCE_SIGNAL_CAP = 10
+
+
 def _fence_signals(root) -> List[Dict[str, Any]]:
-    """One `fence_breach` per file `check_fence.scan` reports outside the boundary.
-    Reuses the imported scan verbatim — no re-implementation of the porcelain walk."""
+    """One `fence_breach` per file `check_fence.scan` reports outside the boundary, up to
+    `_FENCE_SIGNAL_CAP`; any overflow collapses into a single aggregate signal carrying the
+    total count. Reuses the imported scan verbatim — no re-implementation of the porcelain walk."""
+    breaches = check_fence.scan(Path(root))
     out: List[Dict[str, Any]] = []
-    for f in check_fence.scan(Path(root)):
+    for f in breaches[:_FENCE_SIGNAL_CAP]:
         out.append(_signal(
             "fence_breach", "warn", f["file"],
             f.get("detail") or f"{f['file']} touched outside docs/product/.",
             "move the file under docs/product/ (the skill only writes specs there)",
+        ))
+    extra = len(breaches) - _FENCE_SIGNAL_CAP
+    if extra > 0:
+        out.append(_signal(
+            "fence_breach", "warn", None,
+            f"+{extra} more files touched outside docs/product/ ({len(breaches)} total).",
+            "review the out-of-fence changes; move any that are specs under docs/product/",
         ))
     return out
 

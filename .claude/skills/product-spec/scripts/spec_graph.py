@@ -652,6 +652,10 @@ HORIZON_ORDER = ("now", "next", "later")
 # "kept in sync" comments. `<SLUG>` = uppercase ASCII letter start, then up to 15
 # letters/digits/hyphens.
 ID_PATTERN_BY_TYPE = {
+    # Singletons carry a fixed id so a missing/typo'd one is caught (previously these
+    # two types had no pattern, so an absent id slipped through unflagged).
+    "product": re.compile(r"^PRODUCT$"),
+    "vision": re.compile(r"^VISION$"),
     "goal": re.compile(r"^BRD-G[0-9]+$"),
     "prd": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}$"),
     "epic": re.compile(r"^PRD-[A-Z][A-Z0-9-]{0,15}-E[0-9]+$"),
@@ -676,14 +680,26 @@ def parse_semver(v: Any) -> Optional[tuple]:
 
 
 def make_finding(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:
-    """The single home for the finding-record constructor shared by
-    check_consistency and check_traceability (both previously defined a
-    byte-identical `_f`). Keeps the finding shape in one place so the two
-    checkers cannot drift."""
+    """The single home for the finding-record constructor shared by check_consistency, its
+    sibling rule modules, and check_traceability (all previously defined a byte-identical
+    `_f`). Keeps the finding shape in one place so the checkers cannot drift.
+
+    Sentinel hygiene: when the node's id is an internal absent/malformed sentinel
+    (`<missing-id>`/`<invalid-id>`), `artifact_id` is nulled and any occurrence of that
+    sentinel inside the (caller-interpolated) `detail` is rewritten to the file path — so the
+    internal sentinel can NEVER reach a PO-facing finding from any checker, however the detail
+    was composed."""
+    nid = node.get("id")
+    if nid in ID_SENTINELS:
+        label = node.get("file") or "(unknown file)"
+        detail = detail.replace(nid, label)
+        artifact_id = None
+    else:
+        artifact_id = nid
     return {
         "check": check_id,
         "severity": severity,
-        "artifact_id": node.get("id"),
+        "artifact_id": artifact_id,
         "file": node.get("file"),
         "detail": detail,
         "context": context or None,

@@ -65,12 +65,15 @@ def _resolve_targets(spec_graph, graph: Dict[str, Any], scope: str) -> Tuple[Lis
     Returns (target_ids, error). scope == 'all' -> every node. An unknown scope
     yields ([], error) so the caller records a parse_error and emits an empty
     bundle rather than crashing."""
-    ids = [n["id"] for n in graph.get("nodes", [])]
+    # Never surface the internal absent/malformed-id sentinels as selectable targets —
+    # they would otherwise leak into target_ids / source_files and the PO-facing bundle.
+    sentinels = set(getattr(spec_graph, "ID_SENTINELS", ()))
+    ids = [n["id"] for n in graph.get("nodes", []) if n["id"] not in sentinels]
     if scope == "all":
         return sorted(ids), None
     if scope not in set(ids):
         return [], f"unknown scope {scope!r}: not an artifact id in the spec"
-    targets = {scope} | spec_graph.downstream(graph, scope)
+    targets = {t for t in ({scope} | spec_graph.downstream(graph, scope)) if t not in sentinels}
     return sorted(targets), None
 
 

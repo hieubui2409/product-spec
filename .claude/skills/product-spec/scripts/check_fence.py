@@ -35,6 +35,13 @@ configure_utf8_console()
 # The spec boundary, as a POSIX path prefix relative to the project root.
 FENCE_PREFIX = "docs/product/"
 
+# Kit infrastructure: the skill installs its own tree under `.claude/`. Those files
+# are NOT PO-authored spec content, so a change there is not a spec-boundary breach —
+# and a fresh install dirties thousands of them, which would flood this advisory into
+# a useless over-report. Excluded from the scan (only `.claude/`; every other path
+# outside FENCE_PREFIX is still surfaced).
+KIT_PREFIX = ".claude/"
+
 
 def _porcelain_paths(root: Path) -> List[str]:
     """Return repo-relative POSIX paths of every changed file per
@@ -87,6 +94,9 @@ def scan(root: Path) -> List[Dict[str, Any]]:
         # Normalize to POSIX separators so the prefix test is OS-agnostic.
         posix = rel.replace("\\", "/")
         if posix == "docs/product" or posix.startswith(FENCE_PREFIX):
+            continue
+        # Kit's own installed tree — not a spec breach (see KIT_PREFIX).
+        if posix == ".claude" or posix.startswith(KIT_PREFIX):
             continue
         findings.append({
             "check": "fence_breach",

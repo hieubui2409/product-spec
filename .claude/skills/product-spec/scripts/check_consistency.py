@@ -26,6 +26,7 @@ from spec_graph import (
     build_graph,
     _now,
     ID_PATTERN_BY_TYPE,
+    ID_SENTINELS,
     make_finding as _f,
     resolve_ac as _resolve_ac,
     parse_semver as _parse_semver,
@@ -126,9 +127,21 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     for n in graph["nodes"]:
         ntype = n.get("type")
         nid = n.get("id") or ""
-        pattern = ID_PATTERN_BY_TYPE.get(ntype)
-        if pattern and not pattern.match(nid):
-            findings.append(_f("invalid_id", "error", n, f"ID {nid!r} does not match expected pattern for {ntype}.", expected_pattern=pattern.pattern))
+        if nid in ID_SENTINELS:
+            # Absent / non-string `id:`. Name the FILE; make_finding nulls the sentinel
+            # artifact_id and scrubs the sentinel from any detail (single home), so nothing
+            # leaks. The remaining per-node field checks below still run (no early continue).
+            where = n.get("file") or "(unknown file)"
+            if nid == "<missing-id>":
+                findings.append(_f("missing_id", "error", n,
+                                   f"Artifact in {where} has no `id:` in its frontmatter."))
+            else:
+                findings.append(_f("malformed_id", "error", n,
+                                   f"Artifact in {where} has a non-string `id:` (must be a plain string)."))
+        else:
+            pattern = ID_PATTERN_BY_TYPE.get(ntype)
+            if pattern and not pattern.match(nid):
+                findings.append(_f("invalid_id", "error", n, f"ID {nid!r} does not match expected pattern for {ntype}.", expected_pattern=pattern.pattern))
 
         for field in ("status", "scope", "moscow", "horizon", "size", "lang"):
             v = n.get(field)

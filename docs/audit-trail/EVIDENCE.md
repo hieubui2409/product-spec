@@ -19,7 +19,7 @@ roll the oldest cycle into `## Archive` when exceeded.
 
 ## Cycle 3 — 2026-06-11 (PO field-audit fixes)
 
-### Cycle 3 · P01–P03 landed (condensed; full before/after rolled off per the size cap)
+### Cycle 3 · P01–P04 landed (condensed; full before/after rolled off per the size cap)
 - LIB-5 · CORRECTNESS · HIGH · `telemetry/.../lens_workflow_chains.py` — declared-chains read a deleted
   routing-doc path → silent `[]` vs a ≥1 assertion. Fix: chains → on-demand `data/skill-chains.yaml`,
   `declared_chains()` fail-loud. (`test_declared_chains_loaded_from_data_file` +3)
@@ -48,44 +48,15 @@ roll the oldest cycle into `## Archive` when exceeded.
   installer force-replaces an un-gated enforcement hook (`.bak`, `[CONFLICT]` on a PO-edited copy) +
   `memory_gap_mode()` advisory default (warn exit 0; blocking opt-in; missing key = disabled) + a read-only
   product_memory lens. (`test_upgrade_replaces_pre_config_gate_enforcement_hook` +5; baseline regenerated.)
-
-### PS-14 · CORRECTNESS · HIGH · `product-spec/scripts/spec_graph.py` + `parse_critique_report.py`
-- **Root cause:** the critique provenance/freshness fingerprint hashed only body bytes; an AC-only edit (AC
-  lives in frontmatter) — or any BRD-goal edit, which had no node in the map at all — left it unchanged →
-  the next critique reused a STALE fast-path result for an artifact the PO had changed.
-- **Before:** edit only a story's `acceptance_criteria`, rebuild the graph → its provenance fingerprint is unchanged.
-- **Fix:** a SEPARATE per-node `content_hash = sha256(body + canonical(acceptance_criteria))[:8]` (goals hash
-  title/status/metrics/owner), used ONLY by provenance + apply-freshness; `body_hash` stays body-only so the
-  wide judgment/drift/memory caches never churn. Every artifact + goal now has a node; `CHANGED_FIELDS` gained it.
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec -q` → green incl
-  `test_ac_only_edit_changes_content_hash_only`, `test_every_node_carries_content_hash`,
-  `test_goal_content_edit_changes_goal_content_hash`, `test_changed_fields_includes_content_hash`.
-- **Note:** the frontmatter keeps wire-name `body_hash` (back-compat) now holding the content fingerprint → a one-time cache rebuild on the first post-upgrade run is expected, not a regression.
-
-### PSC-2 · CORRECTNESS · HIGH · `product-spec-critique/scripts/critique_signals.py` + `critique_bundle.py`
-- **Root cause:** `source_files` packed the WHOLE corpus into the bundle regardless of `--scope`, so a
-  single-target critique shipped every off-target artifact to all four lenses in parallel.
-- **Before:** a scoped bundle and a `--scope all` bundle pulled the SAME source set.
-- **Fix:** `_source_files(include_ids)` filters to `target_ids ∪ ancestry ∪ digest ∪ BRD`; `_source_include_ids`
-  computes it (None = whole corpus, only for scope=all).
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec-critique -q` → green incl
-  `test_source_files_scoped_to_target_and_ancestry` (an off-target goal ABSENT from a scoped bundle) +
-  `test_source_files_all_scope_keeps_whole_corpus`.
-- **Note:** the "scope=all descendants → verbosity:struct" sub-optimization is deliberately deferred (YAGNI):
-  all-scope critique legitimately needs every source, and struct risks under-informing the lenses.
-
-### PSC-3 · CORRECTNESS · HIGH · `product-spec-critique/scripts/critique_persist.py` (new) + `parse_critique_report.py`
-- **Root cause:** the lens-cache / findings-index / critique-state were three separate writes the consolidator
-  had to remember; skipping one (usually the lens-cache) made the next apply-critique parse `findings: 0` and
-  the state stick on an earlier pass.
-- **Before:** a report written without the lens-cache step → apply-critique yields `findings: 0`.
-- **Fix:** one `critique_scan.py --persist --input <envelope>` writes all three together; `parse_critique_report`
-  gained a prose-fallback recovering `**[severity][lens] id:line**` markers when the cache is absent; `--doctor`
-  reconciles critique-state vs the critique/ dir + lens-cache.
-- **After:** the two product-spec trees run PER-TREE → green incl `test_persist_writes_lens_cache_index_and_state`,
-  `test_prose_fallback_recovers_findings_when_cache_absent`,
-  `test_prose_fallback_two_markers_on_one_line_keep_distinct_critiques`, `test_doctor_flags_missing_lens_cache_and_report`.
-- **Note:** the persist envelope degrades to a clean `bad_input` record (never a crash; a non-int `level` is caught, not leaked).
+- PS-14 · CORRECTNESS · HIGH · `spec_graph.py` + `parse_critique_report.py` — provenance fingerprint hashed
+  only body → an AC-only / BRD-goal edit reused a STALE critique. Fix: a separate per-node `content_hash`
+  (body + canonical AC; goals hash title/status/metrics/owner), provenance/apply-only; `body_hash` stays
+  AC-blind so the wide caches never churn. (`test_ac_only_edit_changes_content_hash_only` +3)
+- PSC-2 · CORRECTNESS · HIGH · `critique_signals.py` + `critique_bundle.py` — `source_files` shipped the WHOLE
+  corpus regardless of `--scope`. Fix: filter to `target_ids ∪ ancestry ∪ digest ∪ BRD`. (`test_source_files_scoped_to_target_and_ancestry`)
+- PSC-3 · CORRECTNESS · HIGH · `critique_persist.py` (new) + `parse_critique_report.py` — lens-cache/index/state
+  were 3 separate writes; skipping one → apply-critique parsed `findings: 0`. Fix: one `--persist` writes all
+  three + a prose-fallback marker recovery + `--doctor` reconcile. (`test_persist_writes_lens_cache_index_and_state` +3)
 
 ### PS-13 · CORRECTNESS · HIGH · `product-spec/scripts/check_consistency_schema.py` + `migrate_metric_to_metrics.py` (new)
 - **Root cause:** a BRD authored by an older skill carries the singular `metric:` goal key; the missing-metric
@@ -142,6 +113,31 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **Fix:** a single-home `emit_json()` helper writes/flushes and swallows `BrokenPipeError` (redirecting the fd
   to devnull), wired into both script mains.
 - **After:** `test_check_consistency_survives_broken_pipe` (400 stories piped to `head -c 16`) → returncode 0, no traceback.
+
+### PS-15 · CORRECTNESS · HIGH · `product-spec/scripts/check_fence.py` + `memory_gap.py`
+- **Root cause:** the advisory fence scan listed EVERY changed path outside `docs/product/` — including the
+  kit's own `.claude/` tree, which a fresh install dirties wholesale → ~2258 warnings / ~1MB `--status` JSON,
+  contradicting the "never an over-report" contract.
+- **Before:** `--status` on a freshly-installed tree embeds thousands of `.claude/...` fence breaches.
+- **Fix:** `check_fence` skips `.claude/` (kit infra, never PO spec content; every other out-of-fence path —
+  e.g. `src/` — still surfaces); `_fence_signals` caps the enumerated breaches at 10 and collapses any overflow
+  into ONE aggregate signal carrying the full total count.
+- **After:** green incl `test_fence_scan_excludes_kit_tree`, `test_fence_signals_cap_with_total`.
+
+### PS-16 · CORRECTNESS · MED · `product-spec/scripts/spec_graph.py` + `check_consistency.py` + `critique_common.py`
+- **Root cause:** an artifact with no `id:` was indexed under the internal `<missing-id>` sentinel and (a) was
+  never flagged for product/vision (no id pattern), (b) leaked the sentinel into PO-facing findings
+  (`artifact_id` + interpolated detail prose) and into the critique bundle's `target_ids`/`source_files`.
+- **Before:** an id-less `PRODUCT.md` validated clean; an id-less node with >4 personas emitted a
+  `persona_cap_exceeded` finding reading `<missing-id> declares 6 personas…`.
+- **Fix:** `^PRODUCT$`/`^VISION$` added to `ID_PATTERN_BY_TYPE`; a sentinel id → `missing_id`/`malformed_id`
+  naming the FILE; `make_finding` (the single finding-record home) nulls a sentinel `artifact_id` AND rewrites
+  the sentinel to the file path in ANY detail, so no checker can leak it; `_resolve_targets` filters the
+  sentinels out of the critique target set.
+- **After:** green incl `test_missing_id_names_file_no_sentinel_leak`, `test_sentinel_not_leaked_via_other_checks`,
+  `test_product_wrong_id_flagged_invalid`, `test_resolve_targets_all_scope_drops_id_sentinels`.
+- **Note:** the `id: PRODUCT` template backfill migrator for legacy id-less specs is deferred to the proposals
+  stage (no in-tree spec needs it; the dogfood already carries ids) — the artifact is now flagged, which is the defect.
 
 ---
 

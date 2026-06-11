@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Validation coverage + over-report fixes"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [1, 5]
@@ -43,9 +43,15 @@ bảng phân hệ ↔ frontmatter không ai check, persona DEC áp nửa vời. 
 1. Viết RED tests. 2. fence exclude+aggregate+cap. 3. sentinel: ID_PATTERN+formatter+lọc bundle+template+migrate. 4. rule horizon↔PRD + persona. 5. GREEN. 6. Tick PS-15/PS-16 + EVIDENCE; #9 ghi vào EVIDENCE nếu sửa data PO.
 
 ## Success Criteria
-- [ ] `status` trên cây sau-cài: output cap, exclude `.claude/`, giữ tổng count, << 1MB.
-- [ ] Thiếu `id:` → finding nêu tên file; sentinel không rò vào bundle.
-- [ ] horizon PRODUCT.md ↔ PRD frontmatter lệch → warn; persona DEC nửa vời → warn.
+- [x] `status` trên cây sau-cài: output cap (≤10 + 1 aggregate giữ tổng), exclude `.claude/`, << 1MB.
+- [x] Thiếu `id:` → finding `missing_id`/`malformed_id` nêu tên file; sentinel KHÔNG rò vào finding (artifact_id + detail) lẫn bundle `target_ids`.
+- [~] (DỜI) horizon PRODUCT.md ↔ PRD frontmatter + persona frontmatter↔body lint → **đề xuất #9**, dời sang cụm proposals (hỏi PO).
+
+## Decisions + review fold (3-wave + critique-challenge)
+- **DEC-P06-1 — exclude CHỈ `.claude/`:** fence loại trừ đúng kit-tree `.claude/` (không phải PO spec); mọi path ngoài-fence khác (vd `src/`) VẪN flag. Trade-off đã ghi: spec viết nhầm vào `.claude/` sẽ vô hình — nhưng `.claude/` không phải vị trí spec hợp lệ.
+- **DEC-P06-2 — sentinel-scrub single-home:** thay vì sửa từng call-site, `make_finding` (nhà chung của mọi checker) null `artifact_id` sentinel + rewrite sentinel→file trong detail → mọi checker (persona_cap, version, self-ref, schema, time, risk) không thể rò. Reviewer bắt đúng lỗ persona_cap mà test 1-persona của tôi che; đã thêm `test_sentinel_not_leaked_via_other_checks` (>cap personas).
+- **DEC-P06-3 — #9 + id-backfill migrator DỜI:** là đề xuất kiến trúc (POX-F02/F06), không phải defect; artifact id-less GIỜ đã bị flag (đó là defect đã đóng), auto-backfill id là proposal — hỏi PO ở cụm proposals.
+- **Minor folds:** xoá PS-code khỏi comment test (review-audit-self-decision.md:34); xoá dead override `product`/`vision` ở `template_id_alloc.py` (đã có qua `**ID_PATTERN_BY_TYPE`). Pre-existing: `build_graph` unused-import ở template_id_alloc (có từ HEAD, ngoài scope).
 
 ## Risk Assessment
 - Exclude `.claude/` quá rộng → miss breach thật trong docs/product. Mitigate: exclude CHỈ `.claude/`, giữ FENCE_PREFIX docs/product.

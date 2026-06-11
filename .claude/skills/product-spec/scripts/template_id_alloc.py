@@ -29,9 +29,9 @@ SLUG_PATTERN_FOR_PRD = re.compile(r"^[A-Z][A-Z0-9-]{0,15}$")
 # so an --auto batch caller that pre-allocates IDs cannot smuggle an invalid one
 # past the generator.
 ID_PATTERN_OVERRIDE: Dict[str, re.Pattern] = {
+    # product/vision now live in the canonical ID_PATTERN_BY_TYPE (spread above); only the
+    # types absent from it are added here.
     **ID_PATTERN_BY_TYPE,
-    "product": re.compile(r"^PRODUCT$"),
-    "vision": re.compile(r"^VISION$"),
     "brd": re.compile(r"^BRD$"),
     "exec_summary": re.compile(r"^EXEC-SUMMARY$"),
     "sign_off": re.compile(r".+"),
