@@ -219,6 +219,24 @@ def hook_enabled(name: str) -> bool:
     return explicit if explicit is not None else True
 
 
+def memory_gap_mode() -> str:
+    """Enforcement MODE for the memory-gap hook WHEN it is enabled.
+
+      * 'advisory' → the hook WARNS (reason on stderr) but exits 0, so turn-end is
+        never blocked. This is the auto-enable default.
+      * 'blocking' → the hook emits the CC block contract (exit 2), forcing a
+        continuation so the missing memory is recorded.
+
+    Default 'advisory'. Auto-enabling the hook must NEVER fallback to blocking; a
+    user gets the exit-2 behaviour only by OPTING IN with memory_gap_mode='blocking'
+    in product-spec-hooks.json. Orthogonal to hook_enabled(), which still decides
+    whether the hook runs at all (default OFF for this enforcement stem). Any
+    non-'blocking' value (absent, malformed) falls to the SAFE advisory default.
+    """
+    cfg = _load_config()
+    return "blocking" if cfg.get("memory_gap_mode") == "blocking" else "advisory"
+
+
 # --- telemetry convenience wrapper ------------------------------------------
 
 def run_telemetry_hook(name: str, core, raw=None) -> None:

@@ -118,6 +118,33 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry .claude/hooks -q` green;
   doc claims cross-checked against `hook_runtime.py` + the product-spec / critique installers.
 
+### LIB-3 · CORRECTNESS · HIGH · `release/.../install.sh.template` + `hooks/memory_gap_hook.py` + `hooks/hook_runtime.py`
+- **Root cause:** the installer copied `.claude/hooks/*.py` via generic skip-existing, so an upgrade KEPT a
+  pre-config-gate `memory_gap_hook.py` (an old copy that blocks turn-end unconditionally with no
+  `hook_enabled` check); the registrar then wired it → exit-2 blocking switched on for a PO who never opted
+  in. Separately, the hook had only a single blocking mode, so any future auto-enable would impose blocking.
+- **Before:** install over a tree whose `memory_gap_hook.py` lacks a `hook_enabled` call → the old unsafe
+  copy survives (generic `[SKIP]`), and once wired it blocks Stop unconditionally.
+- **Fix (3 parts):**
+  1. **Upgrade safety** — the installer treats the two enforcement hooks as kit code: a copy with no
+     `hook_enabled` call is force-replaced with the gated bundle copy + `.bak.<ts>`; a gate-aware copy the PO
+     edited is KEPT and flagged `[CONFLICT]` (never blind-overwritten; `FORCE_OVERWRITE=1` takes the bundle).
+  2. **Advisory mode** — `memory_gap_mode()` (default `advisory`) gates the block decision: advisory warns on
+     stderr at exit 0; `blocking` (opt-in) keeps the exit-2 contract. The shipped config auto-enables the
+     hook in advisory mode. A missing key is still DISABLED, and a non-`blocking` mode value falls to the safe
+     advisory default — auto-enable can never silently impose blocking.
+  3. **product-memory lens** — read-only `lens_product_memory.gather()` narrates `docs/product/.memory`
+     health (last-validated age, missing state files, critique-cache size) under `--lens product_memory|all`.
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/release/scripts/tests/test_installer_e2e.py
+  .claude/skills/product-spec/scripts/tests/test_memory_gap_hook.py .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q`
+  → green incl. `test_upgrade_replaces_pre_config_gate_enforcement_hook`,
+  `test_upgrade_preserves_po_edited_gate_aware_hook`, `test_auto_enable_defaults_to_advisory_warn_exit_zero`,
+  `test_opted_in_blocking_is_not_downgraded`, `test_memory_gap_mode_defaults_to_advisory_and_honors_blocking`,
+  `test_absent_store_is_flagged`. The telemetry SKILL.md grew +41 tokens (new lens row) → footprint baseline regenerated.
+- **Note:** advisory is the new shipped default but the runtime "missing enforcement key ⇒ disabled" invariant
+  is unchanged; blocking remains opt-in (`memory_gap_mode: "blocking"`). Recorded in the config `_README` +
+  `telemetry-readback.md` (no kit-level DEC-<n> registry exists; product `decisions.md` is for PO rulings).
+
 ---
 
 ## Archive

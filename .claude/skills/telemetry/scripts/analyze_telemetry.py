@@ -30,6 +30,7 @@ import lens_session_shape  # noqa: E402
 import lens_health  # noqa: E402
 import lens_forensics  # noqa: E402
 import lens_memory_health  # noqa: E402
+import lens_product_memory  # noqa: E402
 import lens_workflow_chains  # noqa: E402
 import lens_reliability  # noqa: E402
 import lens_validate_proxy  # noqa: E402
@@ -41,13 +42,15 @@ LENSES: dict[str, callable] = {
     "health": lambda a: lens_health.gather(),
     "forensics": lambda a: lens_forensics.gather(session=a.session, all_sessions=a.all_sessions),
     "memory": lambda a: lens_memory_health.gather(),
+    "product_memory": lambda a: lens_product_memory.gather(),
     "workflow": lambda a: lens_workflow_chains.gather(days=a.days, top=(a.top or 10)),
     "reliability": lambda a: lens_reliability.gather(days=a.days),
     "validate": lambda a: lens_validate_proxy.gather(days=a.days),
 }
 
 # The order lenses appear in --lens all / --overview.
-OVERVIEW_ORDER = ["usage", "session", "health", "reliability", "workflow", "validate", "memory"]
+OVERVIEW_ORDER = ["usage", "session", "health", "reliability", "workflow", "validate",
+                  "memory", "product_memory"]
 
 
 def gather_lens(name: str, args) -> dict:

@@ -40,6 +40,17 @@ process via `hook_runtime.hook_enabled`, cached in `_load_config`):
   ⇒ **DISABLED** (a blocking hook is never fallback-enabled); the installer's
   `--memory-hook` / `--critique-hook` flip the flag true. The telemetry kill-switch does
   not affect them.
+- **Memory-hook MODE** (`memory_gap_mode`): the shipped config now AUTO-ENABLES
+  `memory_gap_hook` in **advisory** mode — it warns on stderr at exit 0 (never blocks
+  turn-end). The exit-2 block contract is OPT-IN only: set `memory_gap_mode: "blocking"`.
+  Any non-`blocking` value (absent, typo) falls to the safe advisory default, so
+  auto-enable can never silently impose blocking. The runtime rule above is unchanged —
+  a *missing* `memory_gap_hook` key is still DISABLED; the bundle simply ships it `true`.
+- **Upgrade safety**: the installer treats the two enforcement hooks as kit code. A
+  pre-config-gate copy (one that never calls `hook_enabled`) is force-replaced with the
+  gated bundle copy + a `.bak.<ts>`, so an old unconditional-blocking hook can't survive
+  an upgrade. A gate-aware copy the PO locally edited is kept and flagged `[CONFLICT]`
+  (never blind-overwritten; `FORCE_OVERWRITE=1` takes the bundle).
 
 ## Queries
 
@@ -76,7 +87,7 @@ Vietnamese). The lenses ship in the release bundle; the skill is read-only.
 
 ```bash
 # overview dashboard-lite (ascii); --format md|mermaid|json; --lens usage|session|
-# health|reliability|workflow|validate|memory|forensics|all; --days N --top N
+# health|reliability|workflow|validate|memory|product_memory|forensics|all; --days N --top N
 .claude/skills/.venv/bin/python3 .claude/skills/telemetry/scripts/analyze_telemetry.py \
   --lens all --format ascii
 ```

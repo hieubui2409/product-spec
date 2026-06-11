@@ -45,7 +45,7 @@ def test_all_lenses_json_is_a_list(cli, capsys, monkeypatch):
     assert isinstance(out, list)
     assert {d["lens"] for d in out} == {
         "usage_tokens", "session_shape", "health", "reliability",
-        "workflow_chains", "validate_proxy", "memory_health",
+        "workflow_chains", "validate_proxy", "memory_health", "product_memory",
     }
 
 

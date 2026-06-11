@@ -1,10 +1,11 @@
 {
-  "_README": "Per-hook on/off for the 7 product-spec project hooks. Key = the hook's filename stem. Telemetry hooks default ENABLED when their key is missing; the 2 enforcement hooks (memory_gap_hook, product_spec_critique_nudge) default DISABLED when missing (a blocking hook must never be fallback-enabled). Set a key false to no-op that hook on its next invocation. track_skill_invocation's single key gates BOTH its registrations (PreToolUse:Skill and UserPromptExpansion). Global kill-switch CK_TELEMETRY_DISABLED disables all telemetry hooks regardless; crash audit is CK_HOOK_AUDIT_DISABLED.",
+  "_README": "Per-hook on/off for the 7 product-spec project hooks. Key = the hook's filename stem. Telemetry hooks default ENABLED when their key is missing; the 2 enforcement hooks (memory_gap_hook, product_spec_critique_nudge) default DISABLED when missing (a blocking hook must never be fallback-enabled). Set a key false to no-op that hook on its next invocation. memory_gap_hook now ships AUTO-ENABLED in ADVISORY mode (warns on stderr, exit 0 — never blocks turn-end); memory_gap_mode='blocking' is OPT-IN and restores the exit-2 contract. track_skill_invocation's single key gates BOTH its registrations (PreToolUse:Skill and UserPromptExpansion). Global kill-switch CK_TELEMETRY_DISABLED disables all telemetry hooks regardless; crash audit is CK_HOOK_AUDIT_DISABLED.",
   "mark_bash_start": true,
   "track_skill_invocation": true,
   "track_script_execution": true,
   "track_subagent_outcome": true,
   "emit_session_summary": true,
-  "memory_gap_hook": false,
+  "memory_gap_hook": true,
+  "memory_gap_mode": "advisory",
   "product_spec_critique_nudge": false
 }

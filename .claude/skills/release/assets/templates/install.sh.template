@@ -31,6 +31,18 @@ MANIFEST_JSON="$BUNDLE_DIR/MANIFEST.json"
 log()  { echo "[claude-pack] $*"; }
 note() { echo "  $*"; }
 
+# True when $1 is one of the two BLOCKING enforcement hooks. These are treated as
+# KIT CODE on upgrade: a pre-config-gate copy (which blocks turn-end uncondition-
+# ally once wired) is force-replaced with the config-gated bundle copy, unlike the
+# read-only telemetry hooks which follow the generic skip-existing path. The `*`
+# prefix tolerates the walk's `./`-prefixed relative paths.
+is_enforcement_hook() {
+    case "$1" in
+        *.claude/hooks/memory_gap_hook.py|*.claude/hooks/product_spec_critique_nudge.py) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # Extract metadata.version from a SKILL.md frontmatter block.
 # Returns empty string if absent or unparseable.
 read_skill_version() {
@@ -271,6 +283,30 @@ while IFS= read -r REL; do
                 # Skill is new — fall through to the generic file logic below.
                 ;;
         esac
+    fi
+
+    # Enforcement-hook upgrade safety (runs before the generic skip path; the
+    # FORCE_OVERWRITE=1 branch below already overwrites-with-backup, so this only
+    # governs the default no-force upgrade). A blocking enforcement hook that does
+    # NOT call the config gate `hook_enabled` is a pre-config-gate copy: once the
+    # registrar wires it, it blocks turn-end unconditionally for a PO who never
+    # opted in. Replace it with the gated bundle copy (backup first). A gate-aware
+    # copy that merely DIFFERS may be a deliberate PO edit — keep it, flag a
+    # CONFLICT, and let FORCE_OVERWRITE=1 take the bundle (never blind-overwrite).
+    if is_enforcement_hook "$REL" && [ -f "$DST" ] && [ "$FORCE_OVERWRITE" != "1" ]; then
+        if ! grep -q 'hook_enabled' "$DST"; then
+            mkdir -p "$DST_DIR"
+            cp -f "$DST" "$DST.bak.$BACKUP_TS"
+            cp -f "$SRC" "$DST"
+            note "[SECURITY OVERWRITE] $REL (pre-config-gate hook replaced; backup: $DST.bak.$BACKUP_TS)"
+            OVERWROTE=$((OVERWROTE+1))
+            continue
+        elif ! cmp -s "$SRC" "$DST"; then
+            note "[CONFLICT] $REL (locally modified gate-aware hook kept; bundle NOT applied — FORCE_OVERWRITE=1 to take bundle)"
+            SKIPPED=$((SKIPPED+1))
+            continue
+        fi
+        # Identical gate-aware copy → fall through to the generic SKIP (idempotent).
     fi
 
     # Generic file logic (non-skill files, or new skill files with verdict=ADD).

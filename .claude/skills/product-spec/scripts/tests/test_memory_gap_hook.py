@@ -63,12 +63,15 @@ _append_to = append_to
 
 @pytest.fixture(autouse=True)
 def _enable_memory_gap_hook(tmp_path, monkeypatch):
-    """The hook is config-gated (default DISABLED). These tests verify the POLICY
-    behavior, so they explicitly ENABLE it via an isolated product-spec-hooks.json
-    and drop the runtime's per-process config cache so it re-reads. Tests that
-    assert the gate itself override CK_HOOK_CONFIG after this fixture runs."""
+    """The hook is config-gated (default DISABLED) AND, once enabled, mode-gated
+    (default ADVISORY → warn/exit-0). The POLICY tests below assert the exit-2
+    BLOCK contract, so they explicitly enable it in BLOCKING mode via an isolated
+    product-spec-hooks.json and drop the runtime's per-process config cache so it
+    re-reads. Advisory is the auto-enable default and gets its own dedicated tests;
+    tests that assert the gate/mode itself override CK_HOOK_CONFIG after this."""
     cfg = tmp_path / "enabled-hooks.json"
-    cfg.write_text(json.dumps({"memory_gap_hook": True}), encoding="utf-8")
+    cfg.write_text(json.dumps({"memory_gap_hook": True, "memory_gap_mode": "blocking"}),
+                   encoding="utf-8")
     monkeypatch.setenv("CK_HOOK_CONFIG", str(cfg))
     sys.modules.pop("hook_runtime", None)
     yield
@@ -497,3 +500,34 @@ def test_explicit_false_config_noops_fence_breach(tmp_path, monkeypatch):
     _point_config(monkeypatch, tmp_path, {"memory_gap_hook": False})
     rc = mod.handle_stop(_load_stdin_dict(_stop_stdin(proj)), str(proj))
     assert rc == mod.ALLOW_EXIT
+
+
+# ---------------------------------------------------------------------------
+# Enforcement MODE — auto-enable defaults to ADVISORY (warn, exit 0); BLOCKING
+# (exit 2) is opt-in only and is never silently downgraded.
+# ---------------------------------------------------------------------------
+
+def test_auto_enable_defaults_to_advisory_warn_exit_zero(tmp_path, monkeypatch, capsys):
+    """Auto-enable posture: enabled with NO mode key → ADVISORY. A real fence
+    breach that WOULD block in blocking mode instead surfaces the reason on stderr
+    and ALLOWS turn-end (exit 0), with NO block JSON on stdout."""
+    mod, proj = _arm_fence_breach(tmp_path, monkeypatch)
+    _point_config(monkeypatch, tmp_path, {"memory_gap_hook": True})  # no mode → advisory
+    rc = mod.handle_stop(_load_stdin_dict(_stop_stdin(proj)), str(proj))
+    assert rc == mod.ALLOW_EXIT
+    out = capsys.readouterr()
+    assert "docs/product/" in out.err          # nudge surfaced as an advisory warning
+    assert out.out.strip() == ""               # no block JSON on stdout in advisory mode
+
+
+def test_opted_in_blocking_is_not_downgraded(tmp_path, monkeypatch, capsys):
+    """Opt-in safety: a user who set memory_gap_mode='blocking' keeps the exit-2
+    block contract — the advisory auto-enable default never silently downgrades a
+    deliberately blocking install."""
+    mod, proj = _arm_fence_breach(tmp_path, monkeypatch)
+    _point_config(monkeypatch, tmp_path,
+                  {"memory_gap_hook": True, "memory_gap_mode": "blocking"})
+    rc = mod.handle_stop(_load_stdin_dict(_stop_stdin(proj)), str(proj))
+    assert rc == mod.BLOCK_EXIT
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False and payload["decision"] == "block"

@@ -1,13 +1,17 @@
 ---
 phase: 3
 title: "Hooks/registrar safety + memory enforcement"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [1]
 ---
 
 # Phase 03: Hooks/registrar safety + memory enforcement (đề xuất #10, Q6-hook)
+
+> **COOKED 2026-06-11 — canonical `219 passed` · installer-e2e `5` · memory_gap_hook `17`.** ✅ LIB-3 (installer coi 2 enforcement hook là code-kit: guard HÀNH VI `grep hook_enabled` → hook không-gate overwrite-with-backup, hook gate-aware PO-sửa → `[CONFLICT]` giữ không đè mù; +2 e2e + 1 idempotent negative) · ✅ advisory mode Q6=a (`memory_gap_mode` default advisory warn/exit-0 auto-enable, blocking opt-in KHÔNG hạ cấp im lặng; missing-key vẫn DISABLED — invariant giữ; +3 test) · ✅ #10 product_memory lens (read-only `docs/product/.memory`: tuổi last_validated, file thiếu, cache size; wired LENSES+OVERVIEW+md/ascii+i18n vi/en; SKILL.md +41 token → baseline regen; +5 test).
+>
+> **Review 3-wave (correctness · cleanup/DRY · consistency+plan-coverage) + critique-challenge** xong: 0 CRIT/HIGH/MED. Critique fold 3 fix — finding `_findings_count` reviewer đúng-hướng nhưng fix SAI (index thật là `{"entries":...}` KHÔNG phải `findings`/flat-map → đọc `entries`, lens giờ báo 5 đúng thay vì 2), + test stale-baseline (os.utime back-date), + test idempotent-reinstall (constraint #6 negative). A1-duplication installer BÁC fix (YAGNI: body 4 dòng, message khác nhau; defer nếu P8/P9 thêm copy thứ 4). **DEC advisory** ghi ở config `_README` + EVIDENCE LIB-3 + readback (KHÔNG có registry DEC-N cấp-kit; `decisions.md` là của PO).
 
 ## Overview
 Sửa lỗ hổng Critical: upgrade default wire NGẦM blocking hook đời cũ không config-gate. Đồng thời (Q6=a)
@@ -52,11 +56,11 @@ HEAD v2.3.0 **đã default-safe**: `register_telemetry_hooks.py` wire `memory_ga
 1. Viết RED tests. 2. Kiểm-hành-vi thay marker trong registrar. 3. Installer hooks overwrite-with-backup + hash-diff-hỏi. 4. Advisory mode + auto-enable default advisory + giữ blocking opt-in. 5. Memory-lens read-only. 6. GREEN. 7. Ghi DEC advisory + tick LIB-3 + EVIDENCE.
 
 ## Success Criteria
-- [ ] Upgrade overwrite hook đời-cũ bằng bản HEAD config-gated (test); không bật ngầm blocking cũ.
-- [ ] Hook PO-sửa-tay → hỏi trước khi đè (không đè mù).
-- [ ] Auto-enable memory = advisory exit-0; opt-in-blocking KHÔNG bị hạ cấp im lặng (test).
-- [ ] Config vắng → enforcement OFF.
-- [ ] Memory-lens narrate sức khoẻ `docs/product/.memory`; DEC advisory ghi.
+- [x] Upgrade overwrite hook đời-cũ bằng bản HEAD config-gated (test); không bật ngầm blocking cũ. — `test_upgrade_replaces_pre_config_gate_enforcement_hook`
+- [x] Hook PO-sửa-tay → hỏi trước khi đè (không đè mù). — `[CONFLICT]` + `test_upgrade_preserves_po_edited_gate_aware_hook` (+ negative `test_reinstall_identical_enforcement_hook_is_clean_skip`)
+- [x] Auto-enable memory = advisory exit-0; opt-in-blocking KHÔNG bị hạ cấp im lặng (test). — `test_auto_enable_defaults_to_advisory_warn_exit_zero` + `test_opted_in_blocking_is_not_downgraded`
+- [x] Config vắng → enforcement OFF. — `test_enforcement_missing_key_defaults_disabled` (HEAD invariant giữ nguyên)
+- [x] Memory-lens narrate sức khoẻ `docs/product/.memory`; DEC advisory ghi (config `_README` + EVIDENCE LIB-3 + readback).
 
 ## Risk Assessment
 - **[red-team D4/D7] marker config-gate không tồn tại → guard grep-marker sai.** Mitigate: kiểm HÀNH VI (import/gọi `hook_enabled`) hoặc MANIFEST version, KHÔNG grep comment.

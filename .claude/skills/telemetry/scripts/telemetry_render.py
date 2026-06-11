@@ -81,6 +81,15 @@ _T: dict[str, dict] = {
         "mem_missing": "missing",
         "mem_invtype": "invalid type",
         "a_mem": "MEMORY — {status}, {n} memories, {issues} issues (orphans={o} dead={d} broken={b})",
+        # product memory (docs/product/.memory)
+        "pmem_h": "## Product Memory — {status} ({issues} issues)\n",
+        "pmem_absent": "_Store absent — no spec memory yet._",
+        "pmem_validated": "**Last validated:** {age}",
+        "pmem_never": "never",
+        "pmem_missing": "Missing state files",
+        "pmem_cache": "**Critique cache:** {n} file(s), {bytes} B",
+        "pmem_findings": "**Indexed findings:** {n}",
+        "a_pmem": "PRODUCT MEMORY — {status}, {issues} issues (validated={age}, cache={cache})",
         # forensics
         "fx_h": "## Session Forensics",
         "fx_none": "_No session transcripts found._",
@@ -165,6 +174,15 @@ _T: dict[str, dict] = {
         "mem_missing": "thiếu",
         "mem_invtype": "type sai",
         "a_mem": "BỘ NHỚ — {status}, {n} bộ nhớ, {issues} vấn đề (mồ côi={o} chết={d} hỏng={b})",
+        # product memory (docs/product/.memory)
+        "pmem_h": "## Bộ nhớ sản phẩm — {status} ({issues} vấn đề)\n",
+        "pmem_absent": "_Chưa có store — spec chưa sinh bộ nhớ._",
+        "pmem_validated": "**Validate gần nhất:** {age}",
+        "pmem_never": "chưa bao giờ",
+        "pmem_missing": "Tệp trạng thái thiếu",
+        "pmem_cache": "**Cache critique:** {n} tệp, {bytes} B",
+        "pmem_findings": "**Findings đã index:** {n}",
+        "a_pmem": "BỘ NHỚ SẢN PHẨM — {status}, {issues} vấn đề (validate={age}, cache={cache})",
         # forensics
         "fx_h": "## Phân tích phiên (forensics)",
         "fx_none": "_Không tìm thấy transcript phiên nào._",
@@ -347,6 +365,22 @@ def _md_memory(a, lang):
     return "\n".join(out)
 
 
+def _md_product_memory(a, lang):
+    def t(k): return _t(lang, k)
+    out = [t("pmem_h").format(status=a["status"], issues=a["issue_count"]),
+           f"`{a['memory_dir']}` {t('mem_readonly')}\n"]
+    if not a["present"]:
+        out.append(t("pmem_absent"))
+        return "\n".join(out)
+    age = a["last_validated_age_days"]
+    out.append(t("pmem_validated").format(age=(t("pmem_never") if age is None else f"{age}d")))
+    if a["missing_files"]:
+        out.append(f"**{t('pmem_missing')}:** " + ", ".join(a["missing_files"]))
+    out.append(t("pmem_cache").format(n=a["cache_count"], bytes=a["cache_bytes"]))
+    out.append(t("pmem_findings").format(n=a["findings_count"]))
+    return "\n".join(out)
+
+
 def _md_forensics(a, lang):
     def t(k): return _t(lang, k)
     if a["count"] == 0:
@@ -384,6 +418,7 @@ _MD = {
     "reliability": lambda a, top, lang: _md_reliability(a, lang),
     "workflow_chains": lambda a, top, lang: _md_workflow(a, lang),
     "memory_health": lambda a, top, lang: _md_memory(a, lang),
+    "product_memory": lambda a, top, lang: _md_product_memory(a, lang),
     "forensics": lambda a, top, lang: _md_forensics(a, lang),
     "validate_proxy": lambda a, top, lang: _md_validate(a, lang),
 }
@@ -448,6 +483,12 @@ def render_ascii(aggregates: list[dict], lang: str = "vi") -> str:
                          + t("a_mem").format(status=a["status"], n=a["count"], issues=a["issue_count"],
                                              o=len(a["orphans"]), d=len(a["dead_entries"]),
                                              b=len(a["broken_links"])))
+        elif lens == "product_memory":
+            age = a["last_validated_age_days"]
+            age_s = t("pmem_never") if age is None else f"{age}d"
+            lines.append("\n" + _light(a["status"] == "GREEN") + " "
+                         + t("a_pmem").format(status=a["status"], issues=a["issue_count"],
+                                              age=age_s, cache=a["cache_count"]))
         elif lens == "forensics":
             lines.append("\n[i] " + t("a_fx").format(n=a["count"], tok=_fmt_tokens(a["agg_total_tokens"])))
         elif lens == "validate_proxy":

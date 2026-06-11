@@ -198,14 +198,44 @@ _ALL_STEMS = {
     "memory_gap_hook", "product_spec_critique_nudge",
 }
 
+# Non-stem config keys: MODE/policy knobs that hook_enabled ignores (it only reads
+# the 7 stems above). memory_gap_mode selects advisory|blocking for the memory hook.
+_NON_STEM_CONFIG_KEYS = {"memory_gap_mode"}
+
 
 def test_config_keys_equal_all_seven_hook_stems():
     cfg = json.loads((_HOOKS / "product-spec-hooks.json").read_text())
     keys = {k for k in cfg.keys() if not k.startswith("_")}
-    assert keys == _ALL_STEMS
+    assert keys - _NON_STEM_CONFIG_KEYS == _ALL_STEMS
+    # Every key is either a known stem or a known non-stem knob (no typos / drift).
+    assert keys <= _ALL_STEMS | _NON_STEM_CONFIG_KEYS
     # And every stem maps to a real hook file (drift guard both directions).
     for stem in _ALL_STEMS:
         assert (_HOOKS / f"{stem}.py").is_file(), f"missing hook file for {stem}"
+    # The shipped mode, if present, is one of the two valid values.
+    if "memory_gap_mode" in cfg:
+        assert cfg["memory_gap_mode"] in {"advisory", "blocking"}
+
+
+def test_memory_gap_mode_defaults_to_advisory_and_honors_blocking(tmp_path, monkeypatch):
+    """memory_gap_mode(): blocking ONLY when explicitly set; everything else
+    (absent, empty, typo) falls to the SAFE advisory default."""
+    import importlib
+
+    def _mode_for(cfg_obj):
+        p = tmp_path / "m.json"
+        p.write_text(json.dumps(cfg_obj))
+        monkeypatch.setenv("CK_HOOK_CONFIG", str(p))
+        sys.modules.pop("hook_runtime", None)
+        hr = importlib.import_module("hook_runtime")
+        return hr.memory_gap_mode()
+
+    assert _mode_for({}) == "advisory"                                  # absent → advisory
+    assert _mode_for({"memory_gap_mode": "advisory"}) == "advisory"
+    assert _mode_for({"memory_gap_mode": "blocking"}) == "blocking"     # explicit opt-in
+    assert _mode_for({"memory_gap_mode": "BLOCKING"}) == "advisory"     # case-strict → advisory
+    assert _mode_for({"memory_gap_mode": "weird"}) == "advisory"        # typo → safe default
+    sys.modules.pop("hook_runtime", None)
 
 
 def test_disabled_telemetry_hook_does_not_import_telemetry_paths(tmp_path):

@@ -39,9 +39,14 @@ Per-signal policy (locked):
                                 `--ack-no-dec` escape that silences a recurring
                                 false fire.
 
-Block contract (dual-path, so the model gets the reason whichever CC honors):
-  JSON `{"ok": false, "decision": "block", "reason": ..., "signals": [...]}` on
-  stdout, the same reason on stderr, exit 2.
+Enforcement mode (config `memory_gap_mode`, default advisory — the auto-enable
+default; blocking is opt-in via `memory_gap_mode: "blocking"`):
+  - advisory → the block reason is surfaced on stderr at exit 0 (informational,
+    never blocks turn-end). No block JSON is emitted (that path could block
+    regardless of exit code).
+  - blocking → dual-path block, so the model gets the reason whichever CC honors:
+    JSON `{"ok": false, "decision": "block", "reason": ..., "signals": [...]}` on
+    stdout, the same reason on stderr, exit 2.
 
 The hook NEVER writes the memory layer — it only nudges; the LLM writes via the
 existing writers (`--decision`, `--validate`, `--ack-no-dec`). The only file it
@@ -344,6 +349,22 @@ def handle_stop(payload: Dict[str, Any], project_dir: Optional[str]) -> int:
     stop_hook_active = bool(payload.get("stop_hook_active", False))
     block, reason, blocking = _decide(signals, stop_hook_active, session_id)
     if not block:
+        return ALLOW_EXIT
+
+    # MODE gate (orthogonal to the enabled gate above). Auto-enable defaults to
+    # 'advisory': surface the nudge but never block turn-end. 'blocking' is opt-in
+    # only. A mode-read failure falls to the SAFE advisory default (never block on
+    # an ambiguous mode), mirroring the enabled-gate's fail-safe.
+    try:
+        mode = _hook_runtime().memory_gap_mode()
+    except Exception:  # noqa: BLE001
+        mode = "advisory"
+
+    if mode != "blocking":
+        # Advisory: the reason is informational (stderr, exit 0). No block JSON on
+        # stdout — that path can block regardless of exit code, which would defeat
+        # advisory. The detector still ran, so the nudge is real, just non-binding.
+        print(reason, file=sys.stderr)
         return ALLOW_EXIT
 
     decision = {
