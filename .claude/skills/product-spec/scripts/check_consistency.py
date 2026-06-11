@@ -61,6 +61,9 @@ from check_consistency_competition import (
     COMP_ID_PATTERN,
     COMPETITION_ENUMS,
 )
+# Session-staleness lives in its own module (it reconciles `.session.md` against the
+# artifact edit-clock + the Decision Register); this gate only wires its warn findings.
+from session_staleness import staleness_findings as _session_staleness
 
 configure_utf8_console()
 
@@ -203,6 +206,7 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings.extend(_version_inconsistency(graph))
     findings.extend(_self_reference(graph))
     findings.extend(_session_md_gitignore(graph))
+    findings.extend(_session_staleness(graph))
     findings.extend(_risk_high_ratio(graph))
     findings.extend(_risk_blindspot(graph))
     findings.extend(_time_child_late(graph))

@@ -258,6 +258,7 @@ When generating reports or summaries:
 2. If errors exist → tell the PO: "Open issues: {n_errors}. Approval will record these as outstanding. Continue?" Warn-not-block per brainstorm decisions.
 3. If contradictions exist → run the contradiction protocol first; abort approval until resolved.
 4. Ask: "Approve which artifact? (default: the most recently edited)"
+4b. **Open-questions gate.** Run `open_questions.py --root <dir>` (or `scan_file` on the chosen artifact). If the artifact still carries an unresolved marker (`cần PO xác định` / `TBD` / `Vẫn còn mở`) — anywhere in it: an acceptance-criterion, a body line, or a note — surface it verbatim and ask: "This artifact carries an unresolved open question ({marker}, line {n}) — resolve it now, approve as-is (recorded outstanding), or cancel?" Warn-not-block: an artifact with a hanging parameter is approvable only with the PO's eyes open, never silently.
 5. Ask: "Who is approving (owner)? Stakeholders to record?"
 6. Update the artifact:
    - Frontmatter: set `status: approved`, add `approval: {approved_by, approved_at, approved_version}`, bump `version` minor.

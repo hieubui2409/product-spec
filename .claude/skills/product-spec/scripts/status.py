@@ -34,6 +34,10 @@ What it reports (all deterministic — Script-vs-LLM split):
                      home (Script-vs-LLM split); status only IMPORTS and reports it —
                      no second detector lives here. Degrades to `[]` when there is
                      nothing to flag (incl. an absent `.memory/`).
+  - `open_questions` — PO-facing markers ("cần PO xác định"/"TBD"/"Vẫn còn mở")
+                     riding inside artifacts that look done, via the single
+                     `open_questions.scan` home. The `--approve` flow consults the same
+                     detector per-file before sealing. `[]` when none.
   - `reflect_suggestion` — a soft, one-line advisory string pointing at `--reflect`,
                      present ONLY when drift-since-last-validate is high (the
                      existing `unvalidated` metric crosses `HIGH_DRIFT_THRESHOLD`);
@@ -49,7 +53,8 @@ CLI:
     status.py --root <project-dir> [--today YYYY-MM-DD]
         Prints {schema_version, root, baseline, checked_at, today, unvalidated,
         added, removed, drafts, stale_approvals, overdue, unrecorded_signals,
-        reflect_suggestion} to stdout. Exits 0, EXCEPT on a malformed --today (the
+        open_questions, reflect_suggestion} to stdout. Exits 0, EXCEPT on a
+        malformed --today (the
         one input error, mirroring time_advisory) → exit 1. The nudge itself never
         gates.
 """
@@ -135,6 +140,16 @@ def _unrecorded_signals(root: Path) -> List[Dict[str, Any]]:
     return memory_gap.collect(root)
 
 
+def _open_questions(root: Path) -> List[Dict[str, Any]]:
+    """Open-question markers across the spec, via the single detection home.
+
+    DRY: `open_questions.scan` owns ALL "cần PO xác định"/"TBD"/"Vẫn còn mở" marker
+    detection; status only surfaces it (the `--approve` flow consults the same module
+    per-file). Local import keeps status cheap to import and adds no scan logic here."""
+    import open_questions  # local: keep status import-light
+    return open_questions.scan(root)
+
+
 def _reflect_suggestion(unvalidated: List[str]) -> Optional[str]:
     """A soft one-line `--reflect` hint when drift-since-last-validate is high.
 
@@ -192,6 +207,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
             "stale_approvals": [],
             "overdue": overdue,
             "unrecorded_signals": _unrecorded_signals(root),
+            "open_questions": _open_questions(root),
             "reflect_suggestion": _reflect_suggestion([]),
         }
 
@@ -223,6 +239,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
         "stale_approvals": stale_approvals,
         "overdue": overdue,
         "unrecorded_signals": _unrecorded_signals(root),
+        "open_questions": _open_questions(root),
         "reflect_suggestion": _reflect_suggestion(unvalidated),
     }
 

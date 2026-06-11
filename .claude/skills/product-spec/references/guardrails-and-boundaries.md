@@ -129,6 +129,14 @@ PO's explicit approval plus an owner and a date. No exceptions, no "it's obvious
 
 **Escalation:** when in doubt about whether you're allowed to assume, you're not — ask.
 
+**Reconcile a `.session.md` assume before trusting it (Q5).** `.session.md` is an authorised assume-source,
+but a frozen session keeps asserting facts the spec has since moved past. Before assuming a value from it, run
+`session_staleness.py --root <dir>`: if `stale` is true (the session predates the newest artifact edit) **or**
+`superseding_decisions` is non-empty (a `DEC-<n>` was ruled after the session snapshot), **`decisions.md` is the
+authority — the session value loses.** Surface the divergence (`session says X; DEC-n says Y — using Y`); **never
+auto-rewrite `.session.md`** (no-silent-reversal — the session keeps its resume value). The same warns ride the
+`--validate` gate as `session_stale` / `session_superseded`.
+
 ---
 
 ## 5. Surface the residual risk when a confirmation is skipped

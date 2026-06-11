@@ -44,6 +44,7 @@ The feeder JSON shape:
 | `stale_approvals` | **Approved** node ids that ALSO changed since the baseline — the approval predates the new wording. | `approved` ∩ `unvalidated`. |
 | `overdue` | Artifacts whose `target_date` is before `--today`. | **reuses** `time_advisory.check_overdue` (one home for the date math; pin `--today` to reproduce). |
 | `unrecorded_signals` | What looks unrecorded in the memory layer (fence breach / drift-since-validate / approved-changed-no-DEC / judged-not-stored). | **reuses** `memory_gap.collect` (the SINGLE detection home — `references/memory-enforcement.md` § signal catalogue; status never re-detects). |
+| `open_questions` | PO-facing hanging parameters (`cần PO xác định` / `TBD` / `Vẫn còn mở`) riding inside artifacts that look done. | **reuses** `open_questions.scan` (the SINGLE marker home; the `--approve` gate consults the same module per-file). |
 | `reflect_suggestion` | A soft one-line `--reflect` hint, present only when drift-since-last-validate is high. | derived advisory string — points at a retroactive `--reflect` harvest of rulings/observations never recorded. |
 
 ## How the LLM composes the nudge
@@ -60,6 +61,7 @@ The feeder JSON shape:
      fix); point at it, never block. These are advisory and may be false positives (an `approved_changed_no_dec` on a
      legitimate edit is expected) — frame them as "worth a look", not "you did something wrong". The detector is the
      single home (`memory_gap` → `references/memory-enforcement.md`); `--status` only reports it.
+   - **Open questions** (`open_questions`): surface each hanging parameter in plain language — "**`PRD-AUTH-E1-S1`** (line {n}) still says `cần PO xác định` — that decision has no home yet." Point at the file+line; these block nothing, but a `must` carrying one is not approvable silently (the `--approve` gate re-checks).
    - **Reflect hint** (`reflect_suggestion`): when present (high drift-since-validate), pass it through as a soft
      one-liner — "a lot has changed unrecorded; `--reflect` can retroactively harvest any rulings/observations that
      were never recorded." A suggestion only; `--status` never runs it.

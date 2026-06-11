@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Session staleness + supersede sweep + open-questions"
-status: pending
+status: completed
 priority: P2
 effort: "1d"
 dependencies: [1, 5, 6]
@@ -46,11 +46,27 @@ dependencies: [1, 5, 6]
 1. Viết RED tests. 2. Staleness warn. 3. Decisions-priority resolver. 4. Supersede-sweep script. 5. Open-questions sổ + approve-warn. 6. GREEN. 7. Ghi DEC; EVIDENCE nếu chạm data PO.
 
 ## Success Criteria
-- [ ] `.session.md` ôi thiu → validate warn.
-- [ ] Lệch session↔decisions → ưu tiên decisions.md + báo.
-- [ ] Supersede-sweep liệt kê đúng 4 fact bị thay của PO.
-- [ ] Open-questions hiện trong `--status`; `--approve` cảnh báo marker treo.
+- [x] `.session.md` ôi thiu → validate warn (`session_stale`: session `updated` < max(artifact `updated`)).
+- [x] Lệch session↔decisions → ưu tiên decisions.md + báo (`session_superseded` + `authoritative_source: decisions.md`; KHÔNG ghi đè session).
+- [x] Supersede-sweep liệt kê DEC postdating session (criterion gốc "4 fact của PO" là PO-data → defer P13; fixture-test liệt kê đúng DEC-candidate theo ngày).
+- [x] Open-questions hiện trong `--status` (`open_questions`); `--approve` open-questions gate cảnh báo marker treo.
+
+## Decisions + review fold (3-wave + critique-challenge)
+- **DEC-P07-1 — staleness = content-date, KHÔNG wall-clock:** so `.session.md` `updated` vs `max(artifact updated)`
+  (cả hai là ngày commit) → deterministic, reproducible trong gate `--validate`. Khác quy tắc doc "updated > 30 ngày"
+  (wall-clock, để ngoài gate như `time_advisory`). Phải extract `updated` lên node (an toàn: ngoài `CHANGED_FIELDS` →
+  không churn `--status` delta; per-node `content_hash` không đổi vì nó tính từ body+AC+field-set cố định).
+- **DEC-P07-2 — decisions-priority là SCRIPT-liệt-kê + LLM-phán (Q5):** script liệt kê DEC theo NGÀY (postdating session),
+  gán `decisions.md` là authoritative; việc đối chiếu prose session↔DEC có mâu thuẫn thật là việc của LLM/PO. "Decisions win"
+  hiện thực bằng surfaced-divergence + authority-designation, KHÔNG phải resolver prose tự động. Reviewer m2 xác nhận đây là
+  thiết kế đúng (Script-vs-LLM split). Wiring guidance ở `guardrails-and-boundaries.md` (assume-path).
+- **DEC-P07-3 — open_questions quét TOÀN cây, không chỉ `must`-AC:** defect POX-M2 có HAI ổ — story `must` (tham số treo trong AC)
+  VÀ 3 câu hỏi kinh doanh "Vẫn còn mở" ở session notes; scan chỉ-must-AC sẽ bỏ sót ổ thứ hai. Reviewer M1 (docs khẳng định "must")
+  fold bằng cách sửa wording doc/prompt cho khớp scan rộng (giữ code rộng); khoá hợp đồng bằng `test_marker_in_body_not_just_ac`.
+- **Minor folds:** inline `_SCAN_GLOBS` (KISS); thêm clause comment `spec_graph` về snapshot-body gồm `updated` (date-only edit →
+  đổi snapshot-filename hash, benign); marker diacritic-EXACT (chấp nhận theo plan "false-positive nhẹ"). DEC ghi ở audit-trail
+  (không có kit-level DEC registry; `decisions.md` dành cho PO ruling).
 
 ## Risk Assessment
-- False-positive staleness gây nag. Mitigate: warn-only, ngưỡng theo ngày, không block.
-- Parse marker "cần PO xác định" miss biến thể chữ. Mitigate: tập marker mở rộng + test biến thể.
+- False-positive staleness gây nag. Mitigate: warn-only, so ngày-vs-ngày, không block.
+- Parse marker "cần PO xác định" miss biến thể chữ. Mitigate: tập marker + test biến thể; diacritic-exact có chủ đích.

@@ -160,6 +160,14 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         "owner": fm.get("owner"),
         "version": fm.get("version"),
         "lang": fm.get("lang"),
+        # `updated` (ISO 8601, the artifact's last-edit date) is preserved verbatim
+        # so the session-staleness detector can take max(updated) across artifacts
+        # and compare it to `.session.md`'s own `updated`. NOT in CHANGED_FIELDS, so
+        # carrying it does NOT make a node read as "changed" in the --status delta,
+        # and the per-node content_hash (body+AC+selected fields) is unaffected. It
+        # DOES join the serialized snapshot body, so a date-only edit shifts the
+        # snapshot FILENAME hash — benign (a fresh snapshot per validate is normal).
+        "updated": fm.get("updated"),
         "file": file_rel,
         "brd_goals": fm.get("brd_goals") or [],
         "epic": _scalar_link(fm.get("epic")),

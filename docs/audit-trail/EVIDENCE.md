@@ -19,7 +19,7 @@ roll the oldest cycle into `## Archive` when exceeded.
 
 ## Cycle 3 — 2026-06-11 (PO field-audit fixes)
 
-### Cycle 3 · P01–P04 landed (condensed; full before/after rolled off per the size cap)
+### Cycle 3 · P01–P05 landed (condensed; full before/after rolled off per the size cap)
 - LIB-5 · CORRECTNESS · HIGH · `telemetry/.../lens_workflow_chains.py` — declared-chains read a deleted
   routing-doc path → silent `[]` vs a ≥1 assertion. Fix: chains → on-demand `data/skill-chains.yaml`,
   `declared_chains()` fail-loud. (`test_declared_chains_loaded_from_data_file` +3)
@@ -57,62 +57,22 @@ roll the oldest cycle into `## Archive` when exceeded.
 - PSC-3 · CORRECTNESS · HIGH · `critique_persist.py` (new) + `parse_critique_report.py` — lens-cache/index/state
   were 3 separate writes; skipping one → apply-critique parsed `findings: 0`. Fix: one `--persist` writes all
   three + a prose-fallback marker recovery + `--doctor` reconcile. (`test_persist_writes_lens_cache_index_and_state` +3)
-
-### PS-13 · CORRECTNESS · HIGH · `product-spec/scripts/check_consistency_schema.py` + `migrate_metric_to_metrics.py` (new)
-- **Root cause:** a BRD authored by an older skill carries the singular `metric:` goal key; the missing-metric
-  check fired an ERROR per goal → `strict_gate` exit 2 blocked an approved artifact, and no migrator moved the
-  value `metric:`→`metrics:` (an approved file the placeholder-only migrator must never touch).
-- **Before:** `check_consistency.py` on a legacy `metric:` BRD → `goal_without_metric` ERROR ×N, exit 2.
-- **Fix:** a goal with no plural `metrics:` but an intrinsic singular `metric:` key emits `legacy_metric_key`
-  WARN (names the key, never blocks); a SEPARATE GATE-safe `migrate_metric_to_metrics.py` does the rename —
-  dry-run writes 0 bytes, `--apply` demands BOTH `--confirmed-by` AND `--date` (the approved-artifact
-  re-approval), wraps a scalar into a list, stamps `schema_version: 2`, backs up `.bak`. A truly metric-LESS
-  goal still ERRORs (the gate is not loosened).
-- **After:** `.../python3 -m pytest .claude/skills/product-spec -q` → 678 green incl
-  `test_singular_metric_key_warns_not_errors_on_legacy`, `test_draft_missing_metric_still_errors`,
-  `test_migrate_dry_run_writes_zero_bytes`, `test_migrate_apply_requires_confirmed_by_and_date`.
-- **Note:** the migrator rename is scoped per goal entry — an entry already on plural `metrics:` is skipped
-  (no duplicate key) and a trailing inline comment on a scalar `metric:` is preserved (stays valid YAML):
-  `test_migrate_skips_goal_already_on_plural_metrics`, `test_migrate_preserves_inline_comment_on_scalar_metric`.
-
-### PS-17 · CORRECTNESS · MED · `product-spec/scripts/check_consistency_schema.py` + `spec_graph.py`
-- **Root cause:** a goal missing the spec-required `status` was caught by no check, and a goal's `moscow` was
-  silently dropped from the graph node.
-- **Before:** a goal with no `status:` passed `check_consistency.py` clean; `moscow` absent from the node.
-- **Fix:** `goal_without_status` keyed on the BRD `schema_version` marker — WARN when the artifact predates the
-  marker (legacy lenience), ERROR at `schema_version >= 2` (a migrated/fresh spec must comply); `moscow` +
-  `unknown_goal_keys` now ride the goal node (an unknown key → `unknown_goal_key` WARN).
-- **After:** green incl `test_goal_without_status_warns_on_legacy_errors_on_schema_v2`, `test_moscow_preserved_in_graph_node`.
-- **Note:** `moscow` is deliberately NOT folded into the provenance `content_hash` (it would re-churn the prior
-  wave's caches); it rides `CHANGED_FIELDS` instead.
-
-### PS-18 · CONSISTENCY · MED · `product-spec/scripts/check_consistency_schema.py` + `spec_graph.py`
-- **Root cause:** an LLM-authored artifact could carry parent-only fields (a story holding `prd`/`brd_goals`,
-  whose parent is an epic) and a non-semver `version`, and the validator stayed silent.
-- **Before:** a story with `prd:`/`brd_goals:` and `version: "0.3"` validated clean.
-- **Fix:** `misplaced_parent_field` WARN (a story carrying `prd`/non-empty `brd_goals`) + `bad_version_format`
-  WARN (a `version` not matching semver-lite `MAJOR.MINOR.PATCH`); `parse_semver` consolidated to a single
-  home in `spec_graph.py` (consumed by both the parent/child compare and this lint).
-- **After:** green incl `test_misplaced_parent_field_and_bad_version_flagged`.
-- **Note (deferred, by design):** a generic per-type frontmatter whitelist + a derived-`title`-in-frontmatter
-  flag are NOT shipped — both would false-positive on legit `created`/`updated`/`version`; scope is held to the
-  two node-derivable signals. Recorded here (no kit-level DEC registry; `decisions.md` is for PO rulings).
-
-### PS-21 · CONSISTENCY · MED · `product-spec/SKILL.md` + `references/frontmatter-and-id-spec.md`
-- **Root cause:** `migrate_multidim_fields.py` was orphaned from all routing (0 SKILL.md/reference hits) → a v1
-  spec hitting post-upgrade warn-noise had no signposted path to migration.
-- **Fix:** a trimmed "schema migration" callout in SKILL.md routes BOTH migrators (empty-shape vs the
-  value-moving `metric→metrics`); the frontmatter reference gained `schema_version`, the `moscow` goal field,
-  and a version-format warn note. (SKILL.md + ref grew → footprint baseline regenerated in the same change.)
-- **After:** `grep -c migrate_metric_to_metrics product-spec/SKILL.md` ≥ 1; the footprint regression guard is green.
-
-### PS-23 · CORRECTNESS · LOW · `product-spec/scripts/encoding_utils.py` + `check_consistency.py` + `spec_graph.py`
-- **Root cause:** piping a large JSON emitter into `head` closed the pipe early → a `BrokenPipeError` traceback
-  + exit 1, violating the "analytical script always exits 0" contract.
-- **Before:** `check_consistency.py ... | head -c 16` → traceback, returncode 1.
-- **Fix:** a single-home `emit_json()` helper writes/flushes and swallows `BrokenPipeError` (redirecting the fd
-  to devnull), wired into both script mains.
-- **After:** `test_check_consistency_survives_broken_pipe` (400 stories piped to `head -c 16`) → returncode 0, no traceback.
+- PS-13 · CORRECTNESS · HIGH · `check_consistency_schema.py` + `migrate_metric_to_metrics.py` (new) — legacy
+  singular `metric:` goal key ERROR-blocked an approved BRD + no value-mover. Fix: `legacy_metric_key` WARN +
+  a SEPARATE GATE-safe migrator (dry-run 0-byte; `--apply` demands `--confirmed-by`+`--date`; entry-scoped,
+  comment-safe rename; stamps `schema_version:2`). A metric-LESS goal still ERRORs. (+6 tests)
+- PS-17 · CORRECTNESS · MED · `check_consistency_schema.py` + `spec_graph.py` — goal missing `status` uncaught;
+  `moscow` dropped from the node. Fix: `goal_without_status` (WARN legacy / ERROR at `schema_version≥2`); `moscow`
+  + `unknown_goal_keys` ride the node. (moscow on CHANGED_FIELDS, NOT content_hash — no cache re-churn.)
+- PS-18 · CONSISTENCY · MED · `check_consistency_schema.py` + `spec_graph.py` — a story holding parent-only
+  `prd`/`brd_goals` + a non-semver `version` stayed silent. Fix: `misplaced_parent_field` + `bad_version_format`
+  WARN; `parse_semver` single-home. (Generic per-type whitelist deferred — would false-positive on `created`/`updated`.)
+- PS-21 · CONSISTENCY · MED · `SKILL.md` + `references/frontmatter-and-id-spec.md` — `migrate_multidim_fields.py`
+  orphaned from routing. Fix: a "schema migration" callout routes BOTH migrators; frontmatter ref gained
+  `schema_version`/`moscow`/version-note. (footprint baseline regenerated.)
+- PS-23 · CORRECTNESS · LOW · `encoding_utils.py` + `check_consistency.py` + `spec_graph.py` — piping a JSON
+  emitter to `head` → `BrokenPipeError` exit 1, breaking the always-exit-0 contract. Fix: single-home
+  `emit_json()` swallows `BrokenPipeError` → exit 0. (`test_check_consistency_survives_broken_pipe`)
 
 ### PS-15 · CORRECTNESS · HIGH · `product-spec/scripts/check_fence.py` + `memory_gap.py`
 - **Root cause:** the advisory fence scan listed EVERY changed path outside `docs/product/` — including the
@@ -138,6 +98,31 @@ roll the oldest cycle into `## Archive` when exceeded.
   `test_product_wrong_id_flagged_invalid`, `test_resolve_targets_all_scope_drops_id_sentinels`.
 - **Note:** the `id: PRODUCT` template backfill migrator for legacy id-less specs is deferred to the proposals
   stage (no in-tree spec needs it; the dogfood already carries ids) — the artifact is now flagged, which is the defect.
+
+### P07 · CORRECTNESS · HIGH · `product-spec/scripts/session_staleness.py` + `open_questions.py` (both new) + `spec_graph.py` + `check_consistency.py` + `status.py`
+- **Root cause:** `.session.md` is an authorised assume-source, yet a session frozen at date D keeps asserting
+  facts that artifacts edited after D — or decisions ruled after D — have moved past; no check flagged this, so a
+  new session assuming from a stale session could silently reverse an approved fact. Separately, hanging
+  parameters (`cần PO xác định` / `TBD` / `Vẫn còn mở`) rode inside artifacts that look done, with no home: they
+  did not block `--validate` and were easy to seal `approved` over.
+- **Before:** `--validate` on a spec whose `.session.md` `updated` predates the newest artifact edit (or predates
+  an active `DEC-<n>`) reported nothing; `--status` had no open-questions surface; `--approve` could seal an
+  artifact carrying an unresolved marker silently.
+- **Fix:** `session_staleness.py` reconciles `.session.md` `updated` against `max(artifact updated)` and the
+  Decision Register — emitting `session_stale` / `session_superseded` WARN findings on the gate and a `sweep`
+  CLI; `decisions.md` is named authoritative (Q5) and the session is NEVER auto-rewritten. `open_questions.py`
+  is the single marker-scan home (whole spec tree, skips visuals/snapshots/memory) wired into `--status` and the
+  `--approve` open-questions gate. `spec_graph` now carries each artifact's `updated` (NOT in `CHANGED_FIELDS`,
+  so no `--status` delta churn; per-node `content_hash` unaffected).
+- **After:** `.../python3 -m pytest .claude/skills/product-spec -q` → 697 green incl
+  `test_session_stale_when_predates_artifact_edit`, `test_superseding_decisions_listed_decisions_authoritative`,
+  `test_staleness_findings_emit_warn_no_sentinel`, `test_marker_in_body_not_just_ac`, `test_status_surfaces_open_questions`.
+- **Note:** the supersede-sweep lists DEC candidates by DATE (deterministic); judging whether a session line
+  actually contradicts a ruling is the LLM/PO's job (Script-vs-LLM split) — so "decisions win" is realized as
+  surfaced-divergence + authority designation, not an automated prose resolver. The whole-tree marker scan
+  (vs a `must`-AC-only scan) is intentional: the defect spanned BOTH a story `must` AND free business questions
+  in the session notes, which an AC-only scan would miss. Reviewer M1 (docs asserted "must"-only) folded by
+  broadening the doc/prompt wording to match the broad scan; the broad contract is locked by a body-line test.
 
 ---
 
