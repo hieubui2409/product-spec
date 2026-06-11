@@ -110,9 +110,25 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
     return nodes
 
 
+def _content_fingerprint(parts: List[Any]) -> str:
+    """sha256 (first 8 hex) over a canonical JSON of `parts`. The CONTENT fingerprint
+    that folds MORE than the raw body bytes — notably `acceptance_criteria`, a
+    frontmatter field that `body_hash` (body bytes only) cannot see. The critique
+    provenance fast-path and apply-critique freshness key off this, so an AC-only edit
+    (body byte-identical) is no longer served a stale critique. Deliberately kept
+    SEPARATE from `body_hash`: that one stays the memory/drift/judgment cache key and is
+    left AC-blind so those caches are not churned by this addition. List order is
+    significant (reordering acceptance_criteria IS a content change); only dict keys are
+    sorted for stability."""
+    canon = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:8]
+
+
 def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[str],
                         body: str = "") -> Dict[str, Any]:
     nid = _scalar_id(fm.get("id"))
+    raw_ac = fm.get("acceptance_criteria")
+    ac = [x for x in raw_ac if x not in (None, "")] if isinstance(raw_ac, list) else []
     return {
         "id": nid,
         "type": node_type,
@@ -122,6 +138,10 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
         # frontmatter-only fields below would otherwise miss. Deterministic: same
         # body bytes → same hash. See CHANGED_FIELDS / changed_nodes.
         "body_hash": hashlib.sha256(body.encode("utf-8")).hexdigest()[:8],
+        # CONTENT fingerprint = body + acceptance_criteria (a frontmatter field body_hash
+        # cannot see). The critique provenance + apply-freshness path key off THIS so an
+        # AC-only edit is not served a stale critique. See _content_fingerprint.
+        "content_hash": _content_fingerprint([body, ac]),
         # Frontmatter `name`/`title` win when present; otherwise fall back to the
         # body H1 so the title is never empty (see _title_from_h1).
         "title": fm.get("name") or fm.get("title") or _title_from_h1(body, nid) or "",
@@ -180,6 +200,15 @@ def _node_from_goal(goal: Dict[str, Any], parent_file: str) -> Dict[str, Any]:
         # fingerprint, so body_hash is None. changed_nodes treats a None/absent
         # body_hash as "unknown" → never a body-change signal (back-compat).
         "body_hash": None,
+        # ...but a goal DOES carry mutable content (title/status/metrics/owner). Its
+        # content_hash folds those so a BRD-goal edit shifts the provenance fingerprint
+        # — body_hash-None previously dropped goals out of the map entirely (a BRD edit
+        # was invisible to the critique fast-path). Tagged "goal" to avoid colliding
+        # with a (hypothetically bodyless) artifact fingerprint.
+        "content_hash": _content_fingerprint([
+            "goal", goal.get("title"), goal.get("status"),
+            goal.get("metrics"), goal.get("owner"),
+        ]),
         # No `parent` edge field: goals attach to PRODUCT directly in the rendered
         # tree (build_edges emits no goal->BRD edge — see its comment). A stored
         # `parent: BRD` here would be an inert field no consumer reads.
@@ -462,8 +491,11 @@ def parents_of(graph: Dict[str, Any]) -> Dict[str, List[str]]:
 # (instead of repeating the literal tuple in render_ascii.delta + the validate
 # prose + the rules spec) keeps one home: add/remove a tracked field once and
 # both the `--viz delta` surface and the `--validate` impact-pass move together.
-# `body_hash` is the body-content signal; the rest are frontmatter facts.
-CHANGED_FIELDS = ("status", "scope", "moscow", "horizon", "size", "body_hash")
+# `body_hash` is the body-content signal; `content_hash` additionally covers
+# acceptance_criteria (a frontmatter field body_hash cannot see), so an approved
+# story's AC edit registers as a change (e.g. memory_gap's approved-changed-no-DEC
+# guard); the rest are frontmatter facts.
+CHANGED_FIELDS = ("status", "scope", "moscow", "horizon", "size", "body_hash", "content_hash")
 
 
 def changed_nodes(current: Dict[str, Any], previous: Dict[str, Any]) -> List[str]:

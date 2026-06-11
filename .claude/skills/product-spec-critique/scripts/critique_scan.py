@@ -39,7 +39,7 @@ from typing import Any, Dict, List, Optional
 # so `critique_scan.<name>` keeps resolving for callers/tests/orchestration ---------
 from critique_common import (  # noqa: F401
     BUNDLE_VERSION, DEFAULT_THRESHOLD, _HASH_SENTINELS, _import_psp, _live_body_hashes,
-    _node_index, _now, _provenance_hash, _psp_dir, _resolve_targets, _scoped_body_hashes,
+    _node_index, _now, _provenance_hash, _psp_dir, _resolve_targets, _scoped_content_hashes,
 )
 from critique_provenance import (  # noqa: F401
     _decide_unchanged, _latest_frontmatter_prior, _prior_reports, _read_report_frontmatter,
@@ -54,6 +54,40 @@ from critique_bundle import (  # noqa: F401
 from critique_signals import (  # noqa: F401
     _build_ancestry, _cached_verdicts, _source_files, _structural_findings,
 )
+from critique_persist import (  # noqa: F401
+    doctor, persist_critique_outputs,
+)
+
+
+def _run_persist(root: Path, input_path: Optional[str]) -> Dict[str, Any]:
+    """Read the persist JSON envelope (from `--input <file>` or stdin via `-`) and write
+    every reuse cache in one shot. Envelope keys: scope, level, lang, lens_findings,
+    blocker_count, register (opt), report (opt). Missing input / malformed JSON degrades
+    to an `error` record (advisory contract — never a crash)."""
+    if not input_path:
+        return {"error": "no_input", "message": "--persist requires --input <file|->"}
+    try:
+        raw = sys.stdin.read() if input_path == "-" else Path(input_path).read_text(encoding="utf-8")
+        env = json.loads(raw)
+    except (OSError, ValueError) as exc:
+        return {"error": "bad_input", "message": str(exc)}
+    if not isinstance(env, dict):
+        return {"error": "bad_input", "message": "envelope must be a JSON object"}
+    try:
+        level = int(env.get("level", 5))
+        blocker_count = int(env.get("blocker_count", 0))
+    except (TypeError, ValueError) as exc:
+        return {"error": "bad_input", "message": f"level/blocker_count not an int: {exc}"}
+    return persist_critique_outputs(
+        root,
+        scope=env.get("scope", "all"),
+        level=level,
+        lang=env.get("lang", "vi"),
+        lens_findings=env.get("lens_findings") or [],
+        blocker_count=blocker_count,
+        register=env.get("register"),
+        report=env.get("report"),
+    )
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -75,11 +109,23 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--drift", action="store_true", help="count body_hash drift vs last_critique.json")
     ap.add_argument("--vs-validated", action="store_true",
                     help="(with --drift) compare validate-time hashes, no live build")
+    ap.add_argument("--persist", action="store_true",
+                    help="write lens-cache + findings-index + critique-state in one shot "
+                         "from the --input JSON envelope (script-enforced, replaces the "
+                         "three LLM-remembered writes)")
+    ap.add_argument("--input", default=None,
+                    help="(with --persist) path to the JSON envelope, or '-' for stdin")
+    ap.add_argument("--doctor", action="store_true",
+                    help="reconcile critique-state vs the critique/ dir + lens-cache")
     args = ap.parse_args(argv)
 
     root = Path(args.root).resolve()
     try:
-        if args.snapshot:
+        if args.persist:
+            result = _run_persist(root, args.input)
+        elif args.doctor:
+            result = doctor(root)
+        elif args.snapshot:
             result = write_snapshot(root, args.scope)
         elif args.drift:
             _sg, _ad, _jc, preferences, _fs = _import_psp()

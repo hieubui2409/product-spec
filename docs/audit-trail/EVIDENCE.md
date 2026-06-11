@@ -20,45 +20,24 @@ roll the oldest cycle into `## Archive` when exceeded.
 ## Cycle 3 — 2026-06-11 (PO field-audit fixes)
 
 ### LIB-5 · CORRECTNESS · HIGH · `telemetry/scripts/lens_workflow_chains.py`
-- **Root cause:** the declared-chains source lived in two `.claude/rules/*.md` routing docs that a
-  context-flow optimization deleted; the lens read them by hardcoded path and silently returned `[]`
-  when they vanished, while a test asserted ≥1 chain → a red test on the default branch.
-- **Before:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry -q -k declared_chains`
-  → `test_declared_chains_parsed_from_routing_docs FAILED` (`assert 0 >= 1`).
-- **Fix:** moved declared chains into an on-demand, in-skill `data/skill-chains.yaml` (read only when the
-  lens runs → zero always-on token cost); `declared_chains()` reads it and raises `FileNotFoundError`
-  when missing — and `ValueError` on malformed data (non-list `chains`, a string/scalar entry, a null
-  step) — instead of silently returning `[]` or char-splitting a string into a fake chain. The SKILL.md
-  source-cell label grew +2 tokens; the committed footprint baseline was regenerated in the same change.
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q`
-  → `202 passed` (was `1 failed`); new tests `test_declared_chains_loaded_from_data_file`,
-  `test_declared_chains_raises_when_data_file_missing`, `..._null_key_is_empty_not_crash`,
-  `..._raises_on_malformed_data` all green.
-- **Note:** the `data/` dir ships with the skill via the recursive `skills:` walk — no manifest edit.
+- The declared-chains source lived in two routing docs a context-flow change deleted; the lens read them
+  by hardcoded path and silently returned `[]` while a test asserted ≥1 chain → a red test on the default
+  branch. Fix: chains moved to an on-demand in-skill `data/skill-chains.yaml` (zero always-on cost),
+  `declared_chains()` fail-loud (`FileNotFoundError` missing / `ValueError` malformed) instead of `[]`.
+  (`test_declared_chains_loaded_from_data_file` + 3 siblings; 202 passed.)
 
 ### LIB-6 · CONSISTENCY · HIGH · `.github/workflows/`
-- **Root cause:** 26 tracked test files (telemetry 18, hooks 4, _shared 4) had no workflow;
-  `product-spec-ci.yml` path filter omitted `_shared/**` though its eval gate runs
-  `_shared/lib/run_evals.py`; CONTRIBUTING's "all tests must pass" was unenforced — LIB-5 was exhibit A.
-- **Before:** `grep -l telemetry .github/workflows/*.yml` → no workflow ran the telemetry/hooks/_shared suite.
-- **Fix:** added `.github/workflows/internal-test-suite.yml` running the exact CONTRIBUTING.md command on
-  telemetry+hooks+_shared; added `_shared/**` to `product-spec-ci.yml` paths; added a guard test asserting
-  the workflow and CONTRIBUTING document the same canonical pytest targets.
-- **After:** the `_shared` leg of the suite now includes `test_internal_ci_runs_canonical_suite.py`
-  (3 tests) → `202 passed`, `0 failed`.
-- **Note:** drift guard is a path-presence + co-presence check (workflow ⇄ CONTRIBUTING share the same
-  pytest targets); it intentionally does not lock the interpreter, since CI runs system `python` while
-  CONTRIBUTING documents the venv path.
+- 26 tracked test files (telemetry/hooks/_shared) had no workflow; `product-spec-ci.yml` omitted
+  `_shared/**` though its eval gate runs `_shared/lib/run_evals.py`. Fix: `internal-test-suite.yml` runs
+  the exact CONTRIBUTING pytest command + a drift-guard test ties workflow ⇄ CONTRIBUTING targets;
+  `_shared/**` added to the path filter. (`test_internal_ci_runs_canonical_suite.py`; 202 passed.)
 
 ### LIB-4 · CORRECTNESS · HIGH · `hooks/emit_session_summary.py`
-- **Root cause:** `first_timestamp()` read only the literal first transcript line; that record is often a
-  meta line with no `ts`, so duration computed as 0; early `Skill` invocations clustered in the head were
-  missed by the recent-activity tail → empty `skills[]`.
-- **Before:** on a real transcript whose first record has no `ts`, `sessions.jsonl` got `duration_s:0` and `skills:[]`.
-- **Fix:** `scan_head()` scans the bounded head to the first record that HAS a `ts` (→ real duration) and
-  collects head `Skill` invocations, merged with the tail (dedup, order-preserving).
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/hooks -q` → green incl
-  `test_duration_nonzero_when_first_record_has_no_timestamp`, `test_scan_head_returns_first_ts_and_early_skills`.
+- `first_timestamp()` read only the literal first transcript line (often a ts-less meta line) →
+  `duration_s:0` and empty `skills[]`. Fix: `scan_head()` scans the bounded head to the first record WITH
+  a `ts` (real duration) + collects early head `Skill` invocations, merged with the tail.
+  (`test_duration_nonzero_when_first_record_has_no_timestamp`, `test_scan_head_returns_first_ts_and_early_skills`.)
+  Subagent-outcome classification deferred to a real-transcript pass.
 
 ### LIB-7 · CORRECTNESS · MED · `hooks/hook_runtime.py` (SCRIPT_RE)
 - **Root cause:** the skill-script matcher was a bare substring — `grep/ls/cat` of a script path counted as
@@ -84,15 +63,10 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **After:** `test_script_record_carries_session_join_key` asserts the record carries the session id.
 
 ### carry-in · ROBUSTNESS · MED · `telemetry/scripts/analyze_telemetry.py` (gather_all) + `telemetry_render.py`
-- **Root cause:** `gather_all` was a list-comprehension with no isolation — one lens raising (e.g. the
-  workflow lens fail-loud when `data/skill-chains.yaml` is absent on a recipient) crashed the entire
-  `--lens all` overview (all seven lenses dark).
-- **Fix:** wrap each lens → a VISIBLE `{lens, error}` entry (never a silent drop); the per-lens `gather()`
-  still raises at the function level (loud for unit tests). The renderers surface the error in md, ascii AND
-  mermaid — the `error` check precedes lens-name dispatch, so a registry-name vs lens-name mismatch can't
-  swallow it.
-- **After:** `test_overview_isolates_a_failing_lens` (six lenses survive + a visible error entry),
-  `test_error_entry_surfaced_in_md` / `_ascii` / `_mermaid`.
+- `gather_all` had no isolation — one lens raising (e.g. the workflow lens fail-loud on a recipient missing
+  `data/skill-chains.yaml`) crashed the entire `--lens all` overview. Fix: wrap each lens → a VISIBLE
+  `{lens, error}` entry (never a silent drop); renderers surface it in md/ascii/mermaid before lens dispatch.
+  (`test_overview_isolates_a_failing_lens`, `test_error_entry_surfaced_in_md`/`_ascii`/`_mermaid`.)
 
 ### LIB-10 · CONSISTENCY · MED · `CLAUDE.md` + `product-spec/references/workflow-status.md`
 - **Root cause:** the always-on routing layer said "three PO-facing skills" with a 3-row table → the
@@ -144,6 +118,44 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **Note:** advisory is the new shipped default but the runtime "missing enforcement key ⇒ disabled" invariant
   is unchanged; blocking remains opt-in (`memory_gap_mode: "blocking"`). Recorded in the config `_README` +
   `telemetry-readback.md` (no kit-level DEC-<n> registry exists; product `decisions.md` is for PO rulings).
+
+### PS-14 · CORRECTNESS · HIGH · `product-spec/scripts/spec_graph.py` + `parse_critique_report.py`
+- **Root cause:** the critique provenance/freshness fingerprint hashed only body bytes; an AC-only edit (AC
+  lives in frontmatter) — or any BRD-goal edit, which had no node in the map at all — left it unchanged →
+  the next critique reused a STALE fast-path result for an artifact the PO had changed.
+- **Before:** edit only a story's `acceptance_criteria`, rebuild the graph → its provenance fingerprint is unchanged.
+- **Fix:** a SEPARATE per-node `content_hash = sha256(body + canonical(acceptance_criteria))[:8]` (goals hash
+  title/status/metrics/owner), used ONLY by provenance + apply-freshness; `body_hash` stays body-only so the
+  wide judgment/drift/memory caches never churn. Every artifact + goal now has a node; `CHANGED_FIELDS` gained it.
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec -q` → green incl
+  `test_ac_only_edit_changes_content_hash_only`, `test_every_node_carries_content_hash`,
+  `test_goal_content_edit_changes_goal_content_hash`, `test_changed_fields_includes_content_hash`.
+- **Note:** the frontmatter keeps wire-name `body_hash` (back-compat) now holding the content fingerprint → a one-time cache rebuild on the first post-upgrade run is expected, not a regression.
+
+### PSC-2 · CORRECTNESS · HIGH · `product-spec-critique/scripts/critique_signals.py` + `critique_bundle.py`
+- **Root cause:** `source_files` packed the WHOLE corpus into the bundle regardless of `--scope`, so a
+  single-target critique shipped every off-target artifact to all four lenses in parallel.
+- **Before:** a scoped bundle and a `--scope all` bundle pulled the SAME source set.
+- **Fix:** `_source_files(include_ids)` filters to `target_ids ∪ ancestry ∪ digest ∪ BRD`; `_source_include_ids`
+  computes it (None = whole corpus, only for scope=all).
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec-critique -q` → green incl
+  `test_source_files_scoped_to_target_and_ancestry` (an off-target goal ABSENT from a scoped bundle) +
+  `test_source_files_all_scope_keeps_whole_corpus`.
+- **Note:** the "scope=all descendants → verbosity:struct" sub-optimization is deliberately deferred (YAGNI):
+  all-scope critique legitimately needs every source, and struct risks under-informing the lenses.
+
+### PSC-3 · CORRECTNESS · HIGH · `product-spec-critique/scripts/critique_persist.py` (new) + `parse_critique_report.py`
+- **Root cause:** the lens-cache / findings-index / critique-state were three separate writes the consolidator
+  had to remember; skipping one (usually the lens-cache) made the next apply-critique parse `findings: 0` and
+  the state stick on an earlier pass.
+- **Before:** a report written without the lens-cache step → apply-critique yields `findings: 0`.
+- **Fix:** one `critique_scan.py --persist --input <envelope>` writes all three together; `parse_critique_report`
+  gained a prose-fallback recovering `**[severity][lens] id:line**` markers when the cache is absent; `--doctor`
+  reconciles critique-state vs the critique/ dir + lens-cache.
+- **After:** the two product-spec trees run PER-TREE → green incl `test_persist_writes_lens_cache_index_and_state`,
+  `test_prose_fallback_recovers_findings_when_cache_absent`,
+  `test_prose_fallback_two_markers_on_one_line_keep_distinct_critiques`, `test_doctor_flags_missing_lens_cache_and_report`.
+- **Note:** the persist envelope degrades to a clean `bad_input` record (never a crash; a non-int `level` is caught, not leaked).
 
 ---
 

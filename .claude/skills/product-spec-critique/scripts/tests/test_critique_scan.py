@@ -67,5 +67,5 @@ def test_facade_reexports_resolve():
     # The split modules are re-exported under critique_scan for back-compat.
     for name in ("emit_bundle", "write_snapshot", "compute_drift",
                  "build_report_frontmatter", "compute_provenance_reuse",
-                 "record_critique_state", "_scoped_body_hashes", "BUNDLE_VERSION"):
+                 "record_critique_state", "_scoped_content_hashes", "BUNDLE_VERSION"):
         assert hasattr(critique_scan, name), f"facade missing {name}"

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Critique provenance + cache enforcement"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1]
@@ -46,10 +46,12 @@ ghi bằng LLM-flow không cưỡng chế → 12/15 report PO mất đường pa
 1. Viết RED tests (1-3). 2. Mở rộng hash AC + node BRD + CHANGED_FIELDS. 3. Lọc bundle theo scope + struct descendants. 4. Script-enforce ghi cache/index + prose-fallback + `--doctor`. 5. GREEN. 6. Ghi note "cache rebuild lần đầu". 7. Tick 3 row + EVIDENCE.
 
 ## Success Criteria
-- [ ] Sửa AC-only/BRD → critique KHÔNG fast-path reuse (provenance đổi).
-- [ ] Mọi artifact có node trong body_hash map (test).
-- [ ] Bundle PRD-X chỉ chứa target∪ancestry; payload giảm rõ rệt vs all.
-- [ ] Consolidator ghi cache/index không phụ thuộc LLM; prose-fallback parse được report cũ; `--doctor` báo lệch.
+- [x] Sửa AC-only/BRD → critique KHÔNG fast-path reuse (provenance đổi). — `content_hash` riêng (body+AC); `test_ac_only_edit_changes_content_hash_only`, `test_goal_content_edit_changes_goal_content_hash`, `test_provenance_shifts_on_ac_only_edit`, `test_provenance_shifts_on_brd_goal_edit`.
+- [x] Mọi artifact (gồm goal/BRD) có node trong provenance map. — `test_every_node_carries_content_hash`, `test_scoped_content_map_includes_every_artifact_and_goal`, `test_changed_fields_includes_content_hash`.
+- [x] Bundle scope chỉ chứa target∪ancestry; payload giảm rõ rệt vs all. — `_source_files(include_ids)`; `test_source_files_scoped_to_target_and_ancestry` (off-target goal vắng), `test_source_files_all_scope_keeps_whole_corpus`.
+- [x] Consolidator ghi cache/index/state qua 1 script-call; prose-fallback parse report cũ; `--doctor` báo lệch. — `critique_scan --persist`; `test_persist_writes_lens_cache_index_and_state`, `test_prose_fallback_recovers_findings_when_cache_absent`, `test_prose_fallback_two_markers_on_one_line_keep_distinct_critiques`, `test_doctor_flags_missing_lens_cache_and_report`.
+
+> **DEC/YAGNI:** tối-ưu-phụ "descendants ở scope=all dùng `verbosity: struct`" hoãn chủ đích — critique scope=all cần đủ nguồn, struct rủi ro thiếu thông tin cho lens. Chỉ làm filter single-scope (bug đã đo). Back-compat: report cũ (map body-based) đọc 1 lần ra stale/unknown → rebuild cache lần đầu là mong đợi, không phải regression.
 
 ## Risk Assessment
 - Đổi hash → invalidate toàn bộ cache critique cũ 1 lần. Mitigate: ghi rõ trong CHANGELOG/note "rebuild mong đợi"; không phải lỗi.

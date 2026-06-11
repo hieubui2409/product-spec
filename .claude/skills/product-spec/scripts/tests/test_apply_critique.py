@@ -102,11 +102,13 @@ def test_fingerprint_stable_under_whitespace_and_case(tmp_path):
 
 def test_cache_absent_sets_prose_fallback(tmp_path):
     root = _make_root(tmp_path)
+    # default body `# critique` has no finding markers → prose parse yields nothing.
     _write_report(root, "r.md", "lang: en\nlens_findings_hash: missinghash0000")
     out = pcr.parse_report(root / "docs/product/critique/r.md", root)
     assert out["cache_present"] is False
+    assert out["prose_fallback"] is False
     assert out["findings"] == []
-    assert "manual prose walk" in out["note"]
+    assert "re-run" in out["note"]
 
 
 # --------------------------------------------------------------------------- freshness None-handling
@@ -230,3 +232,77 @@ def test_supersedes_flips_prior_to_superseded(tmp_path):
     active_ids = {r["id"] for r in dr.list_active(root)}
     assert "DEC-2" in active_ids
     assert "DEC-1" not in active_ids  # flipped to superseded → exactly one active ruling
+
+
+# --------------------------------------------------------------------------- prose fallback
+
+def test_prose_fallback_recovers_findings_when_cache_absent(tmp_path):
+    """A report with NO lens-cache (written before script-enforced persistence) must
+    still yield findings parsed from the prose — not the old `findings: []` dead end.
+    Lens comes from the inline 2nd bracket (Top-3) or the `### <Lens>` section; severity
+    + evidence from the bold marker; rows are tagged source=prose-fallback."""
+    root = _make_root(tmp_path)
+    body = (
+        "# Critique: all  ·  level 1\n\n"
+        "## Top 3: fix now\n"
+        "1. **[major][product · market] PRD-MOBILE:5**. Mobile needs a distinct value.\n\n"
+        "## By lens\n"
+        "### Tech\n"
+        "- **[major] PRD-MOBILE-E1-S1:18**. Story is too big, split it.\n"
+        "### Craft\n"
+        "- **[minor] PRD-MOBILE-E1-S1:29**. Replace 'fast' with a number.\n"
+    )
+    rep = _write_report(
+        root, "260601-all.md",
+        "critique_scope: all\nlevel: 1\nlang: en\nlens_findings_hash: deadbeef",
+        body=body)
+    result = pcr.parse_report(rep, root)
+    assert result["cache_present"] is False
+    assert result["prose_fallback"] is True
+    by_ev = {f["evidence"]: f for f in result["findings"]}
+    assert set(by_ev) == {"PRD-MOBILE:5", "PRD-MOBILE-E1-S1:18", "PRD-MOBILE-E1-S1:29"}
+    assert by_ev["PRD-MOBILE:5"]["lens"] == "product"      # first of "product · market"
+    assert by_ev["PRD-MOBILE:5"]["severity"] == "major"
+    assert by_ev["PRD-MOBILE-E1-S1:18"]["lens"] == "tech"  # from the ### Tech section
+    assert by_ev["PRD-MOBILE-E1-S1:29"]["lens"] == "craft"
+    for f in result["findings"]:
+        assert f["source"] == "prose-fallback"
+        assert f["artifact_id"] and f["fingerprint"]
+
+
+def test_prose_fallback_two_markers_on_one_line_keep_distinct_critiques(tmp_path):
+    """Two finding markers on a single line each carry their OWN trailing prose — the
+    first marker's text must not smear onto the second, and neither critique may swallow
+    the raw second marker."""
+    root = _make_root(tmp_path)
+    body = (
+        "# Critique: all  ·  level 1\n\n"
+        "## Top 3: fix now\n"
+        "1. **[major][product] PRD-MOBILE:5** first crit here. "
+        "**[minor][tech] PRD-MOBILE-E1-S1:18** second crit here.\n"
+    )
+    rep = _write_report(
+        root, "260603-all.md",
+        "critique_scope: all\nlevel: 1\nlang: en\nlens_findings_hash: deadbeef",
+        body=body)
+    result = pcr.parse_report(rep, root)
+    assert result["prose_fallback"] is True
+    by_ev = {f["evidence"]: f for f in result["findings"]}
+    assert set(by_ev) == {"PRD-MOBILE:5", "PRD-MOBILE-E1-S1:18"}
+    assert by_ev["PRD-MOBILE:5"]["critique"] == "first crit here"
+    assert by_ev["PRD-MOBILE-E1-S1:18"]["critique"] == "second crit here"
+    assert "PRD-MOBILE-E1-S1:18" not in by_ev["PRD-MOBILE:5"]["critique"]
+    assert "**" not in by_ev["PRD-MOBILE-E1-S1:18"]["critique"]
+
+
+def test_prose_fallback_absent_when_no_findings_parseable(tmp_path):
+    """A cache-less report with no parseable finding markers degrades cleanly:
+    findings empty, prose_fallback False, and a re-run note (never a crash)."""
+    root = _make_root(tmp_path)
+    rep = _write_report(root, "260602-all.md", "critique_scope: all\nlang: en",
+                        body="# Critique: all\n\nNothing structured here.\n")
+    result = pcr.parse_report(rep, root)
+    assert result["cache_present"] is False
+    assert result["prose_fallback"] is False
+    assert result["findings"] == []
+    assert "re-run" in result["note"]

@@ -230,22 +230,28 @@ Write the humanized markdown from step 5b (not the raw consolidator draft).
      leave dashes inside `inline code`, fenced blocks, and verbatim spec quotes untouched.
      The sanitized body begins at `# Critique:` and contains the report exactly once, dash-clean; then prepend the
      frontmatter block so the file on disk is `---`…`---` + body.
-2. **Lens-cache (this is what makes a FUTURE `consolidate_only` possible).** Persist the FULL combined lens
-   array verbatim: `critique_cache.put_lens_findings(root, lens_findings_hash, all_lens_findings)` (same hash the
-   frontmatter carries). On a `consolidate_only` rebuild the array already exists — re-`put` is a harmless idempotent
-   write. Skip this only if there were no lens findings at all.
-3. **Findings-index.** Feed this run's blockers + DEC-worthy to the index for the next critique's inherit /
-   repeat-offense: `critique_inherit.index_report_findings(root, <ts>, scope, all_lens_findings)` (it filters to
-   blockers + DEC-worthy itself).
-4. **Snapshot**, refresh the drift marker:
+2. **Persist the reuse caches in ONE script call (script-enforced — do NOT hand-write these).** The lens-cache,
+   findings-index, and critique-state are written together by `critique_scan.py --persist`, so a forgotten step can no
+   longer leave the next `--apply-critique` parsing `findings: 0`. Build a JSON envelope and pipe it in:
+   ```bash
+   ./.claude/skills/.venv/bin/python3 \
+     .claude/skills/product-spec-critique/scripts/critique_scan.py --root <project> --persist --input - <<'JSON'
+   {"scope": "<scope>", "level": <N>, "lang": "<lang>", "blocker_count": <N>,
+    "register": <prefs-dict-or-null>, "report": "docs/product/critique/<ts>-<scope>.md",
+    "lens_findings": [ ...the FULL combined lens array... ]}
+   JSON
+   ```
+   It returns `lens_findings_hash` (the SAME hash the frontmatter carries — recomputed deterministically, so step 1's
+   `_lens_findings_hash` and this agree), `wrote_lens_cache`, and `indexed_findings`. An empty `lens_findings` writes no
+   lens-cache (nothing to key) but STILL records critique-state so the fast-path stays anchored. Idempotent: a
+   `consolidate_only` rebuild re-persists the same array harmlessly. To audit a project's caches later (a state record
+   whose report or lens-cache vanished), run `critique_scan.py --root <project> --doctor`.
+3. **Snapshot**, refresh the drift marker:
    ```bash
    ./.claude/skills/.venv/bin/python3 \
      .claude/skills/product-spec-critique/scripts/critique_scan.py --root <project> --snapshot --scope <scope>
    ```
-5. **Critique-state (the provenance fast-path source).** Record the per-scope marker so the NEXT run's fast-path
-   can decide reuse without reading this report:
-   `critique_provenance.record_critique_state(root, scope, level, lang, lens_findings_hash, blocker_count, register=<prefs-or-None>, report="docs/product/critique/<ts>-<scope>.md")`.
-6. **DEC bridge (opt-in, GATEs apply):** for each DEC-worthy item the consolidator flagged, AskUserQuestion
+4. **DEC bridge (opt-in, GATEs apply):** for each DEC-worthy item the consolidator flagged, AskUserQuestion
    (Keep / Change / Hybrid, or simply "record this as a decision?"). On PO confirm only:
    ```bash
    ./.claude/skills/.venv/bin/python3 \

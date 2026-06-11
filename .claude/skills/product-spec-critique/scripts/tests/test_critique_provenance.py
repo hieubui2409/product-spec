@@ -122,6 +122,47 @@ def test_provenance_consolidate_only_missing_lens_cache_degrades_relens(tmp_path
     assert res["reuse"] == "relens"  # never a broken half-reuse
 
 
+def test_provenance_shifts_on_ac_only_edit(tmp_path):
+    """Editing ONLY a story's acceptance_criteria (body byte-identical) must change the
+    provenance fingerprint so the next critique does not fast-path a stale result.
+    Body-only hashing missed this (AC lives in frontmatter)."""
+    proj = make_proj(tmp_path)
+    sg = _spec_graph()
+    before = critique_scan._provenance_hash(critique_scan._scoped_content_hashes(sg, proj, "all"))
+    story = proj / "docs" / "product" / "stories" / "PRD-AUTH-E1-S1.md"
+    txt = story.read_text(encoding="utf-8")
+    txt2 = txt.replace("they reach the home page.", "they reach the DASHBOARD page.")
+    assert txt2 != txt
+    story.write_text(txt2, encoding="utf-8")
+    after = critique_scan._provenance_hash(critique_scan._scoped_content_hashes(sg, proj, "all"))
+    assert after != before
+
+
+def test_provenance_shifts_on_brd_goal_edit(tmp_path):
+    """A BRD goal edit must move the provenance fingerprint — goals (body_hash None)
+    used to drop out of the map entirely, so a goal change was invisible."""
+    proj = make_proj(tmp_path)
+    sg = _spec_graph()
+    before = critique_scan._provenance_hash(critique_scan._scoped_content_hashes(sg, proj, "all"))
+    brd = proj / "docs" / "product" / "brd.md"
+    txt = brd.read_text(encoding="utf-8")
+    txt2 = txt.replace("Reach $1M ARR in 12 months", "Reach $2M ARR in 12 months")
+    assert txt2 != txt
+    brd.write_text(txt2, encoding="utf-8")
+    after = critique_scan._provenance_hash(critique_scan._scoped_content_hashes(sg, proj, "all"))
+    assert after != before
+
+
+def test_scoped_content_map_includes_every_artifact_and_goal(tmp_path):
+    """The all-scope provenance map must contain a node for every artifact INCLUDING
+    BRD goals (the BRD-blind regression: body_hash-None goals vanished from the map)."""
+    proj = make_proj(tmp_path)
+    sg = _spec_graph()
+    m = critique_scan._scoped_content_hashes(sg, proj, "all")
+    for nid in ("PRD-AUTH", "PRD-AUTH-E1", "PRD-AUTH-E1-S1", "BRD-G1", "BRD-G2"):
+        assert nid in m, f"{nid} missing from content-hash map"
+
+
 def test_provenance_relens_one_node(tmp_path):
     proj = make_proj(tmp_path)
     fm = critique_scan.build_report_frontmatter(proj, "all", 5, "vi", None, "lh")
@@ -139,7 +180,7 @@ def test_provenance_fast_path_skips_report_read(tmp_path, monkeypatch):
     proj = make_proj(tmp_path)
     _write_report(proj, "260603-0001-all.md", "")  # report exists so `full` stands
     sg = _spec_graph()
-    bh = critique_scan._scoped_body_hashes(sg, proj, "all")
+    bh = critique_scan._scoped_content_hashes(sg, proj, "all")
     ph = critique_scan._provenance_hash(bh)
     critique_cache.save_state(proj, "all", provenance_hash=ph, level=5, lang="vi",
                               report="docs/product/critique/260603-0001-all.md",
@@ -157,7 +198,7 @@ def test_fast_path_dangling_report_falls_through(tmp_path):
     # slow path (here → none, no real prior) instead of returning a dangling full.
     proj = make_proj(tmp_path)
     sg = _spec_graph()
-    bh = critique_scan._scoped_body_hashes(sg, proj, "all")
+    bh = critique_scan._scoped_content_hashes(sg, proj, "all")
     ph = critique_scan._provenance_hash(bh)
     critique_cache.save_state(proj, "all", provenance_hash=ph, level=5, lang="vi",
                               report="docs/product/critique/GONE-all.md",

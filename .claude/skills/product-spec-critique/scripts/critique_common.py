@@ -86,16 +86,20 @@ def _live_body_hashes(spec_graph, root: Path) -> Dict[str, str]:
     return out
 
 
-def _scoped_body_hashes(spec_graph, root: Path, scope: str) -> Dict[str, str]:
-    """Per-node body_hash for the in-scope nodes (scope node + descendants). For
-    scope=='all' this is every bodied node. Reuses build_graph; skips sentinel/None
-    hashes (goals)."""
+def _scoped_content_hashes(spec_graph, root: Path, scope: str) -> Dict[str, str]:
+    """Per-node CONTENT fingerprint (body + acceptance_criteria — see
+    spec_graph.content_hash) for the in-scope nodes (scope node + descendants). For
+    scope=='all' this is every node. Goals carry a real content_hash (their body_hash
+    is None), so a BRD-goal edit now shifts the provenance fingerprint and goals no
+    longer vanish from the map. The critique fast-path + apply-critique freshness key
+    off THIS (NOT body_hash — that stays AC-blind so the memory/drift caches are not
+    churned). Reuses build_graph; skips sentinel/None hashes."""
     graph = spec_graph.build_graph(root)
     out: Dict[str, str] = {}
     for n in graph.get("nodes", []):
-        bh = n.get("body_hash")
-        if isinstance(bh, str) and bh not in _HASH_SENTINELS:
-            out[n["id"]] = bh
+        ch = n.get("content_hash")
+        if isinstance(ch, str) and ch not in _HASH_SENTINELS:
+            out[n["id"]] = ch
     if scope == "all":
         return out
     target_ids, _err = _resolve_targets(spec_graph, graph, scope)
@@ -103,9 +107,9 @@ def _scoped_body_hashes(spec_graph, root: Path, scope: str) -> Dict[str, str]:
     return {i: h for i, h in out.items() if i in tset}
 
 
-def _provenance_hash(body_hash_map: Dict[str, str]) -> str:
-    """A stable 16-hex fingerprint of the scoped body_hash map (sorted, no
+def _provenance_hash(content_hash_map: Dict[str, str]) -> str:
+    """A stable 16-hex fingerprint of the scoped content_hash map (sorted, no
     whitespace) — the critique-state fast-path key for 'spec unchanged since last
-    critique'."""
-    canon = json.dumps(body_hash_map, sort_keys=True, separators=(",", ":"))
+    critique'. Content-based (folds acceptance_criteria), so an AC-only edit changes it."""
+    canon = json.dumps(content_hash_map, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]

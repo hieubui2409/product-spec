@@ -186,3 +186,74 @@ def test_delta_uses_body_hash():
     assert "PRD-X" in out
     assert "body_hash" in out
     assert out != "(no changes)", "body-only edit must not render as no-change"
+
+
+# ---------- Test 8: every node (incl goals) carries a content_hash ----------
+
+def test_every_node_carries_content_hash():
+    """content_hash is the AC-aware provenance fingerprint. Unlike body_hash (None for
+    goals), EVERY node carries a string content_hash — a BRD goal must not vanish from
+    the provenance map (else a goal edit is invisible to the critique fast-path)."""
+    graph = build_graph(VALID)
+    for n in graph["nodes"]:
+        assert isinstance(n.get("content_hash"), str), f"{n['id']} has no content_hash"
+        assert len(n["content_hash"]) == 8
+    # goals included specifically (this is the BRD-blind regression)
+    goal_ids = {n["id"] for n in graph["nodes"] if n["type"] == "goal"}
+    assert {"BRD-G1", "BRD-G2"} <= goal_ids
+
+
+# ---------- Test 9: an AC-only edit shifts content_hash but NOT body_hash ----------
+
+def test_ac_only_edit_changes_content_hash_only(tmp_path):
+    """Editing ONLY a story's acceptance_criteria (frontmatter; body byte-identical)
+    must change content_hash (the critique provenance signal) while leaving body_hash
+    untouched (the memory/drift cache key stays AC-blind by design)."""
+    import shutil
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    story_path = proj / "docs" / "product" / "stories" / "PRD-AUTH-E1-S1.md"
+
+    before = _node(build_graph(proj), "PRD-AUTH-E1-S1")
+    text = story_path.read_text(encoding="utf-8")
+    text2 = text.replace("they reach the home page.", "they reach the DASHBOARD page.")
+    assert text2 != text, "fixture AC line not found — update the test anchor"
+    story_path.write_text(text2, encoding="utf-8")
+
+    after = _node(build_graph(proj), "PRD-AUTH-E1-S1")
+    assert after["content_hash"] != before["content_hash"], "AC edit must shift content_hash"
+    assert after["body_hash"] == before["body_hash"], "AC edit must NOT touch body_hash"
+
+
+# ---------- Test 10: a goal content edit shifts that goal's content_hash ----------
+
+def test_goal_content_edit_changes_goal_content_hash(tmp_path):
+    """A BRD goal's mutable content (title/metrics) folds into its content_hash, so a
+    goal-only edit is detectable even though goals have no body."""
+    import shutil
+    proj = tmp_path / "proj"
+    shutil.copytree(VALID, proj)
+    brd = proj / "docs" / "product" / "brd.md"
+
+    before = _node(build_graph(proj), "BRD-G1")
+    text = brd.read_text(encoding="utf-8")
+    text2 = text.replace("Reach $1M ARR in 12 months", "Reach $2M ARR in 12 months")
+    assert text2 != text
+    brd.write_text(text2, encoding="utf-8")
+
+    after = _node(build_graph(proj), "BRD-G1")
+    assert after["content_hash"] != before["content_hash"]
+
+
+# ---------- Test 11: CHANGED_FIELDS includes content_hash ----------
+
+def test_changed_fields_includes_content_hash():
+    """The shared changed-field rule must track content_hash so an approved story's
+    AC edit registers as a change (e.g. the approved-changed-no-DEC guard)."""
+    assert "content_hash" in CHANGED_FIELDS
+    # AC-only style change: body_hash identical, content_hash differs → flagged.
+    base = {"id": "S", "status": "approved", "scope": "in", "moscow": "must",
+            "horizon": "now", "size": "S", "body_hash": "aaaaaaaa", "content_hash": "11111111"}
+    cur = {"nodes": [{**base, "content_hash": "22222222"}]}
+    prev = {"nodes": [base]}
+    assert changed_nodes(cur, prev) == ["S"]

@@ -13,7 +13,7 @@ The signal gatherers live in critique_signals; this module owns the per-run reso
 (level / drift threshold / inherit gating) + the emit_bundle assembly."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import critique_inherit
 from critique_common import BUNDLE_VERSION, _import_psp, _psp_dir, _resolve_targets
@@ -71,6 +71,30 @@ def _resolve_inherit(prefs: Dict[str, Any], no_inherit: bool,
     return prefs.get("critique_inherit") == "on", prefs.get("critique_inherit_depth", "nearest")
 
 
+def _source_include_ids(scope: str, target_ids: List[str], ancestry: Dict[str, Any],
+                        digest: List[Dict[str, Any]]) -> Optional[Set[str]]:
+    """The id-set whose source files a `--scope <id>` critique may legitimately cite:
+    the scope target + its descendants (`target_ids`), the explicit ancestry frame
+    (vision/goals/prd/epic), and anything already in the assembled digest. `None` for
+    scope=='all' (no filtering — every artifact ships). The literal `"BRD"` key is
+    included so the goals' shared-file fallback survives the filter."""
+    if scope == "all":
+        return None
+    ids: Set[str] = set(target_ids)
+    ids.add("BRD")
+    for key in ("vision", "prd", "epic"):
+        node = ancestry.get(key)
+        if isinstance(node, dict) and node.get("id"):
+            ids.add(node["id"])
+    for g in ancestry.get("brd_goals") or []:
+        if isinstance(g, dict) and g.get("id"):
+            ids.add(g["id"])
+    for e in digest:
+        if isinstance(e, dict) and e.get("id"):
+            ids.add(e["id"])
+    return ids
+
+
 def emit_bundle(root: Path, scope: str, lang: str, level: Optional[int] = None,
                 fresh: bool = False, no_inherit: bool = False,
                 no_rollup: bool = False, inherit_depth: Optional[str] = None,
@@ -100,6 +124,11 @@ def emit_bundle(root: Path, scope: str, lang: str, level: Optional[int] = None,
 
     ancestry = _build_ancestry(spec_graph, graph, digest, scope)
 
+    # Scope the line-numbered source_files so a narrow critique does not ship the whole
+    # corpus to every lens. scope=='all' → None (every artifact); else target ∪ ancestry
+    # ∪ digest (everything a lens may legitimately cite for this subtree).
+    source_include = _source_include_ids(scope, target_ids, ancestry, digest)
+
     inh_on, inh_depth = _resolve_inherit(prefs, no_inherit, inherit_depth)
     inherited_context = (critique_inherit.build_inherited_context(root, graph, scope, inh_depth)
                          if inh_on else [])
@@ -114,7 +143,7 @@ def emit_bundle(root: Path, scope: str, lang: str, level: Optional[int] = None,
         "target_ids": target_ids,
         "ancestry": ancestry,
         "digest": digest,
-        "source_files": _source_files(root, graph),
+        "source_files": _source_files(root, graph, source_include),
         "structural_findings": findings,
         "cached_verdicts": _cached_verdicts(judgment_cache, root, scope, target_ids),
         "competitors": [c for c in (graph.get("competitors") or []) if isinstance(c, dict)],

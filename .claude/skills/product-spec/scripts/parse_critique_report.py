@@ -16,9 +16,11 @@ What it does:
      repeats IDs, so regex over it is unreliable. Prose fallback only when the cache is absent.
   3. Emit a deterministic per-finding FINGERPRINT = sha8(lens + artifact_id + normalized critique) —
      the stable key for dedup, resume, and DEC cross-reference (findings have no native id).
-  4. FRESHNESS with None-handling: compare the artifact's current `body_hash` against the
-     critique-time per-node `body_hash` in the report frontmatter. If the report predates freshness
-     tracking (`body_hash` absent or None for the artifact) → `freshness: "unknown"` so the loop WARNS
+  4. FRESHNESS with None-handling: compare the artifact's current CONTENT fingerprint (body +
+     acceptance_criteria, see spec_graph.content_hash) against the critique-time per-node map in the
+     report frontmatter (wire-name `body_hash`, kept for back-compat but content-based). An AC-only
+     edit now reads as `stale` (body_hash alone missed frontmatter AC). If the report predates this
+     tracking (map absent or None for the artifact) → `freshness: "unknown"` so the loop WARNS
      ("re-critique or proceed without staleness check") rather than silently skipping.
 
 Output: JSON to stdout, exit 0 (analytical-script contract — a bad input surfaces as a finding,
@@ -112,13 +114,107 @@ def _load_lens_findings(root: Path, lens_findings_hash: Optional[str]) -> Option
     return data if isinstance(data, list) else None
 
 
-def _current_body_hashes(root: Path) -> Dict[str, Optional[str]]:
+# --- prose fallback: recover findings from the report markdown when the lens-cache
+#     is absent (a report written before script-enforced persistence). Best-effort and
+#     LOSSY (no why/fix), but enough to drive the apply loop instead of `findings: 0`.
+_SEVERITY_TOKENS = {
+    "blocker": "blocker", "chặn": "blocker",
+    "major": "major", "nặng": "major",
+    "minor": "minor", "nhẹ": "minor",
+}
+_LENS_TOKENS = {
+    "product": "product", "sản phẩm": "product",
+    "tech": "tech", "feasibility": "tech", "kỹ thuật": "tech",
+    "market": "market", "thị trường": "market",
+    "craft": "craft", "editorial": "craft", "biên tập": "craft",
+}
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_HEAD_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$")
+_BRACKET_RE = re.compile(r"\[([^\]]+)\](?:\s*\[([^\]]+)\])?")
+_EVIDENCE_RE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*:\d+)")
+
+
+def _canon_from(tok: Optional[str], table: Dict[str, str]) -> str:
+    """First recognized token (split on ·,/ and whitespace) mapped via `table`, else ''."""
+    if not tok:
+        return ""
+    low = tok.strip().lower()
+    for part in re.split(r"[·,/\s]+", low):
+        if part in table:
+            return table[part]
+    for key, val in table.items():  # substring fallback (e.g. a multi-word section head)
+        if key in low:
+            return val
+    return ""
+
+
+def _prose_findings(text: str, critique_time: Dict[str, Any],
+                    current: Dict[str, Optional[str]]) -> List[Dict[str, Any]]:
+    """Parse `**[severity][lens] <id>:<line>**` finding markers from the report prose.
+    Lens comes from the inline 2nd bracket (Top-3 form) or the enclosing `### <Lens>`
+    section. Deduped by (lens, evidence) so a Top-3 item and its per-lens echo collapse.
+    why/fix are unavailable in prose → left empty; each row is tagged
+    `source: prose-fallback` so the apply loop knows it is best-effort."""
+    findings: List[Dict[str, Any]] = []
+    seen: set = set()
+    cur_lens = ""
+    for line in text.splitlines():
+        head = _HEAD_RE.match(line)
+        if head:
+            lens = _canon_from(head.group(1), _LENS_TOKENS)
+            if lens:
+                cur_lens = lens
+            continue
+        spans = list(_BOLD_RE.finditer(line))
+        for idx, match in enumerate(spans):
+            span = match.group(1)
+            bracket = _BRACKET_RE.search(span)
+            if not bracket:
+                continue
+            severity = _canon_from(bracket.group(1), _SEVERITY_TOKENS)
+            if not severity:
+                continue
+            ev = _EVIDENCE_RE.search(span)
+            if not ev:
+                continue
+            evidence = ev.group(1)
+            lens = _canon_from(bracket.group(2), _LENS_TOKENS) or cur_lens
+            key = (lens, evidence)
+            if key in seen:
+                continue
+            seen.add(key)
+            aid = _artifact_id_from_evidence(evidence)
+            # critique = prose AFTER this marker up to the next marker (or line end), so a
+            # line carrying two markers never smears the first marker's text onto the second
+            nxt = spans[idx + 1].start() if idx + 1 < len(spans) else len(line)
+            critique = line[match.end():nxt].strip(" .:)-")
+            findings.append({
+                "fingerprint": fingerprint(lens, aid, critique or evidence),
+                "lens": lens,
+                "artifact_id": aid,
+                "evidence": evidence,
+                "severity": severity,
+                "critique": critique,
+                "why_it_dies": "",
+                "fix": "",
+                "freshness": _freshness(aid, critique_time, current),
+                "source": "prose-fallback",
+            })
+    return findings
+
+
+def _current_content_hashes(root: Path) -> Dict[str, Optional[str]]:
+    """Per-node CONTENT fingerprint (body + acceptance_criteria) of the live spec — the
+    freshness comparison base. Keyed to spec_graph.content_hash so an AC-only edit on a
+    critiqued artifact reads as `stale`, not silently `fresh` (body_hash alone could not
+    see frontmatter AC). The report frontmatter's per-node map (wire-name `body_hash`,
+    kept for back-compat) carries these same content fingerprints."""
     graph = build_graph(root)
     out: Dict[str, Optional[str]] = {}
     for node in graph.get("nodes", []):
         nid = node.get("id")
         if nid:
-            out[nid] = node.get("body_hash")
+            out[nid] = node.get("content_hash")
     return out
 
 
@@ -177,9 +273,10 @@ def parse_report(report_path, root) -> Dict[str, Any]:
 
     raw_findings = _load_lens_findings(root, lens_findings_hash)
     cache_present = raw_findings is not None
-    current = _current_body_hashes(root)
+    current = _current_content_hashes(root)
 
     findings: List[Dict[str, Any]] = []
+    prose_fallback = False
     if cache_present:
         for f in raw_findings:
             if not isinstance(f, dict):
@@ -199,6 +296,11 @@ def parse_report(report_path, root) -> Dict[str, Any]:
                 "fix": str(f.get("fix", "")),
                 "freshness": _freshness(artifact_id, critique_time_hashes, current),
             })
+    else:
+        # No lens-cache (report written before script-enforced persistence) → recover
+        # what we can from the report prose so the apply loop gets findings, not zero.
+        findings = _prose_findings(text, critique_time_hashes, current)
+        prose_fallback = bool(findings)
 
     return {
         "report": str(resolved.relative_to(root)) if _is_within(resolved, root) else str(resolved),
@@ -207,12 +309,16 @@ def parse_report(report_path, root) -> Dict[str, Any]:
         "critique_scope": fm.get("critique_scope"),
         "lens_findings_hash": lens_findings_hash,
         "cache_present": cache_present,
+        "prose_fallback": prose_fallback,
         "freshness_trackable": bool(critique_time_hashes),
         "findings": findings,
         "note": (
             "" if cache_present else
-            "lens-cache absent — fall back to a manual prose walk of the report (best-effort); "
-            "recommend re-running the critique with --fresh to regenerate the cache."
+            "lens-cache absent — findings recovered from the report prose (best-effort, no "
+            "why/fix); re-run the critique with --fresh to regenerate the structured cache."
+            if prose_fallback else
+            "lens-cache absent and no findings could be parsed from the prose; re-run the "
+            "critique with --fresh to regenerate the cache."
         ),
     }
 

@@ -16,7 +16,7 @@ import yaml  # pyyaml — vendored in the shared venv (product-spec dep)
 
 import critique_cache
 from critique_common import (
-    BUNDLE_VERSION, _import_psp, _now, _provenance_hash, _scoped_body_hashes,
+    BUNDLE_VERSION, _import_psp, _now, _provenance_hash, _scoped_content_hashes,
 )
 
 
@@ -77,16 +77,20 @@ def build_report_frontmatter(root: Path, scope: str, level: int, lang: str,
                              register: Optional[Dict[str, str]],
                              lens_findings_hash: str) -> str:
     """Emit the YAML frontmatter block (`---` … `---\\n`) a critique report carries
-    so the next run can decide reuse. `body_hash` reuses the live scoped hashes (NOT
-    recomputed elsewhere — DRY). `register` is included only at level >= 7. The full
-    lens-findings array is NOT inlined here — it lives in the lens-cache keyed by
-    `lens_findings_hash`; the report only carries the key."""
+    so the next run can decide reuse. The per-node map reuses the live scoped CONTENT
+    hashes (NOT recomputed elsewhere — DRY). Its frontmatter key stays the wire-name
+    `body_hash` for back-compat with already-shipped reports, but the values are the
+    content fingerprint (body + acceptance_criteria) — see spec_graph.content_hash.
+    `register` is included only at level >= 7. The full lens-findings array is NOT
+    inlined here — it lives in the lens-cache keyed by `lens_findings_hash`; the report
+    only carries the key."""
     spec_graph = _import_psp()[0]
     fm: Dict[str, Any] = {
         "critique_scope": scope,
         "level": level,
         "lang": lang,
-        "body_hash": _scoped_body_hashes(spec_graph, root, scope),
+        # wire-name kept for back-compat; holds the content fingerprint (body + AC).
+        "body_hash": _scoped_content_hashes(spec_graph, root, scope),
         "lens_findings_hash": lens_findings_hash,
         "bundle_version": BUNDLE_VERSION,
     }
@@ -146,7 +150,7 @@ def compute_provenance_reuse(root: Path, scope: str, level: int, lang: str,
     if fresh:
         return {"reuse": "none"}
     spec_graph = _import_psp()[0]
-    live = _scoped_body_hashes(spec_graph, root, scope)
+    live = _scoped_content_hashes(spec_graph, root, scope)
     prov_hash = _provenance_hash(live)
 
     # FAST PATH: trust critique-state on a provenance_hash match — body is known
@@ -183,7 +187,7 @@ def record_critique_state(root: Path, scope: str, level: int, lang: str,
     report so the next run's fast-path can fully decide reuse (incl. the register
     voice axis) without reading the report."""
     spec_graph = _import_psp()[0]
-    prov_hash = _provenance_hash(_scoped_body_hashes(spec_graph, root, scope))
+    prov_hash = _provenance_hash(_scoped_content_hashes(spec_graph, root, scope))
     return critique_cache.save_state(
         root, scope,
         last_ts=now_iso or _now(),

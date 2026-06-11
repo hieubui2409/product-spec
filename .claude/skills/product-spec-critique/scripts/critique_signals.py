@@ -9,7 +9,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from critique_common import _node_index
 
@@ -25,12 +25,19 @@ def _numbered_source(root: Path, rel_file: str) -> Optional[str]:
     return "\n".join(f"{i}: {ln}" for i, ln in enumerate(text.splitlines(), 1))
 
 
-def _source_files(root: Path, graph: Dict[str, Any]) -> Dict[str, str]:
-    """Map every artifact ID to its file's line-numbered content (`<n>: <text>`).
+def _source_files(root: Path, graph: Dict[str, Any],
+                  include_ids: Optional[Set[str]] = None) -> Dict[str, str]:
+    """Map artifact IDs to their file's line-numbered content (`<n>: <text>`).
 
     Keyed by ARTIFACT ID (the citation prefix itself) so the lens cites `<id>:<line>`
     without path-vs-id ambiguity. Nodes sharing a file each get their own ID key; the
-    BRD container (file None) falls back to its goals' file. Per-file reads cached."""
+    BRD container (file None) falls back to its goals' file. Per-file reads cached.
+
+    `include_ids` scopes the map: when given, only those ids (the scope target ∪
+    ancestry ∪ digest) ship — so a narrow `--scope PRD-X` critique does not pack the
+    WHOLE corpus into every lens prompt (×4 cost) just to cite one subtree. `None` =>
+    every artifact (scope=='all'). The literal `"BRD"` fallback key rides along whenever
+    it (or any goal id) is in scope."""
     nodes = graph.get("nodes", [])
     goal_file = next((n.get("file") for n in nodes
                       if n.get("type") == "goal" and n.get("file")), None)
@@ -47,11 +54,13 @@ def _source_files(root: Path, graph: Dict[str, Any]) -> Dict[str, str]:
         rel = n.get("file")
         if not nid or not rel:
             continue
+        if include_ids is not None and nid not in include_ids:
+            continue
         numbered = _numbered_cached(rel)
         if numbered is not None:
             out[nid] = numbered
 
-    if goal_file and "BRD" not in out:
+    if goal_file and "BRD" not in out and (include_ids is None or "BRD" in include_ids):
         numbered = _numbered_cached(goal_file)
         if numbered is not None:
             out["BRD"] = numbered

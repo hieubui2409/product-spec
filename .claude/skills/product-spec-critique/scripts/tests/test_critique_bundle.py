@@ -32,6 +32,29 @@ def test_source_files_keyed_by_id_are_line_numbered_ground_truth(tmp_path):
     assert "BRD-G1" in sources
 
 
+def test_source_files_scoped_to_target_and_ancestry(tmp_path):
+    """A narrow `--scope <story>` critique must NOT pack the whole corpus into
+    source_files: only the target ∪ ancestry ship. BRD-G2 is a sibling goal NOT in this
+    story's ancestry → it must be absent, while the in-frame BRD-G1 and the target
+    remain. Off-target artifacts ride ×4 lens prompts for nothing otherwise."""
+    proj = make_proj(tmp_path)
+    _code, bundle = run_scan(proj, "--scope", "PRD-AUTH-E1-S1")
+    sources = bundle["source_files"]
+    assert "PRD-AUTH-E1-S1" in sources          # the target
+    assert "PRD-AUTH" in sources and "PRD-AUTH-E1" in sources  # ancestry chain
+    assert "BRD-G1" in sources                  # the story's own goal (in ancestry)
+    assert "BRD-G2" not in sources, "off-target sibling goal must not ship in a scoped bundle"
+
+
+def test_source_files_all_scope_keeps_whole_corpus(tmp_path):
+    """scope=='all' is unfiltered: every artifact (including every goal) still ships."""
+    proj = make_proj(tmp_path)
+    _code, bundle = run_scan(proj, "--scope", "all")
+    sources = bundle["source_files"]
+    for nid in ("PRD-AUTH", "PRD-AUTH-E1", "PRD-AUTH-E1-S1", "BRD-G1", "BRD-G2"):
+        assert nid in sources, f"all-scope bundle dropped {nid}"
+
+
 def test_ancestry_for_deep_story(tmp_path):
     proj = make_proj(tmp_path)
     _code, bundle = run_scan(proj, "--scope", "PRD-AUTH-E1-S1")

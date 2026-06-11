@@ -6,10 +6,11 @@ file này giữ **kế hoạch xử lý** đã được chủ kit chốt nhưng 
 
 ## Từ Cycle 3 — field audit Cleanmatic-ERP (2026-06-11)
 
-**Trạng thái: ĐANG KHỞI CÔNG — P01·P02·P03 đã land** (2026-06-11). Đã đóng: LIB-5,6 (P01) ·
-LIB-7,8,10,12,13,14 + carry-in (P02) · LIB-3 + advisory Q6=a-hook + #10 product_memory lens (P03).
+**Trạng thái: ĐANG KHỞI CÔNG — P01·P02·P03·P04 đã land** (2026-06-11). Đã đóng: LIB-5,6 (P01) ·
+LIB-7,8,10,12,13,14 + carry-in (P02) · LIB-3 + advisory Q6=a-hook + #10 product_memory lens (P03) ·
+PS-14 + PSC-2 + PSC-3 (P04: content_hash provenance + scoped bundle + script-enforced persist/prose-fallback/--doctor).
 Partial: LIB-4 `[~]` (duration/skills xong; outcome-classify defer). Defer bucket real-transcript:
-LIB-9 + LIB-4-outcome. Còn lại 4-13 (P04→P13). Plan + hiện vật:
+LIB-9 + LIB-4-outcome. Còn lại P05→P13. Plan + hiện vật:
 `plans/260611-0050-po-field-audit-fix-waves/` (plan.md + 13 phase-*.md + reports).
 
 **Quyết định đã chốt (đừng re-litigate):** Q1=a(upgrade.sh+legacy-sweep) · Q2=a(migrate metric→metrics
