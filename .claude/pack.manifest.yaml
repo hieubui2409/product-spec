@@ -6,7 +6,6 @@ version: 2.3.0
 bundle_name: product-spec
 skills:
 - product-spec
-- release
 - product-spec-critique
 - telemetry
 agents:
@@ -27,16 +26,13 @@ hooks:
 - emit_session_summary.py
 - mark_bash_start.py
 - track_subagent_outcome.py
-rules:
-- primary-workflow.md
-- development-rules.md
-- orchestration-protocol.md
-- documentation-management.md
-- review-audit-self-decision.md
+rules: []
 # AGPL-3.0 requires the license (and source) to travel with any distributed copy.
+# CONTRIBUTING.md is intentionally NOT shipped: it is dev-kit content (DCO,
+# pull-request flow, internal pytest setup) of no use to a recipient end-user.
+# Recipients receive LICENSE + source, which is all AGPL-3.0 mandates.
 extra:
 - LICENSE
-- CONTRIBUTING.md
 # Ship the shared EVAL-GATE code from _shared/lib (run_evals, llm_eval) so each
 # skill's bundled eval/golden fixtures are runnable on the recipient. The telemetry
 # skill is now SELF-CONTAINED: its lenses/CLI/render/registrar live under
@@ -49,4 +45,5 @@ top_level:
   include_claudemd: true
   include_settings: false
   include_ck_config: false
+  source: ".claude/skills/release/assets/recipient"
 follow_shared: false

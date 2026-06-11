@@ -1,4 +1,4 @@
-# Claude Pack v{{VERSION}}
+# {{BUNDLE_NAME}} v{{VERSION}}
 
 Built: {{BUILT_AT}}
 Source commit: {{SOURCE_COMMIT}}
@@ -67,9 +67,18 @@ into the matching path in your repo; any top-level files (e.g. `README.md`,
 `CLAUDE.md`) that were included in the bundle are installed at your repo root.
 See `MANIFEST.json` for the full list with per-file SHA256.
 
+## Gitignore
+
+The installer automatically adds `.claude/telemetry/` to your `.gitignore` (idempotent — safe
+to run multiple times). The telemetry skill writes local usage data to that directory; it should
+not be committed to source control.
+
 ## Troubleshooting
 
-After install, see `.claude/skills/claude-pack/references/troubleshooting.md` for common failures and fixes.
+If a skill fails to load, verify that Claude Code can find `.claude/skills/<skill-name>/SKILL.md`
+in your repo root. Re-run `bash install.sh` (or `install.ps1`) to repair missing files, or
+set `FORCE_OVERWRITE=1` to replace them. For skill-specific setup (e.g. Python venv), re-run
+with `RUN_HOOKS=1`.
 
 ## Uninstall
 

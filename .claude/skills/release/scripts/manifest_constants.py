@@ -26,6 +26,7 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset({
 ALLOWED_NESTED_TOP_LEVEL_KEYS = frozenset({
     "include_readme", "include_claudemd",
     "include_settings", "include_ck_config",
+    "source",  # optional path (relative to repo root) to recipient-variant README.md/CLAUDE.md
 })
 
 # Opt-in flags that set defaults.include_scripts / defaults.include_schemas to True

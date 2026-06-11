@@ -109,11 +109,26 @@ def validate(manifest: dict, root: Path, allow_dev_version: bool = False) -> lis
         for key in top_level:
             if key not in ALLOWED_NESTED_TOP_LEVEL_KEYS:
                 errors.append(f"[MANIFEST_E031] unknown top_level key: {key!r}")
-        for key in ALLOWED_NESTED_TOP_LEVEL_KEYS:
+        # Bool flags — all keys except `source` must be bool.
+        bool_keys = ALLOWED_NESTED_TOP_LEVEL_KEYS - {"source"}
+        for key in bool_keys:
             if key in top_level and not isinstance(top_level[key], bool):
                 errors.append(
                     f"[MANIFEST_E032] top_level.{key} must be bool; got {top_level[key]!r}"
                 )
+        # `source` must be a non-empty string when present, AND a repo-relative
+        # path. selection.py resolves it as `root / source` and ships files from
+        # there; an absolute path or `..` traversal would let the bundle pull docs
+        # from outside the repo. Reject those at validate-time (E020/E021) rather
+        # than relying on selection.py's downstream WARN-and-skip mitigation.
+        if "source" in top_level:
+            src_val = top_level["source"]
+            if not isinstance(src_val, str) or not src_val.strip():
+                errors.append(
+                    f"[MANIFEST_E033] top_level.source must be a non-empty string; got {src_val!r}"
+                )
+            else:
+                check_path_safety([src_val], "top_level.source", errors)
 
     defaults = manifest.get("defaults", {}) or {}
     if defaults and not isinstance(defaults, dict):

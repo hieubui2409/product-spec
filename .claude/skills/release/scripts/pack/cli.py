@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import manifest_loader  # type: ignore[import-not-found]
+import release_check_guard  # type: ignore[import-not-found]
 import safety_check  # type: ignore[import-not-found]
 
 from .args import build_parser, resolve_epoch
@@ -69,6 +70,10 @@ def _load_and_validate(args: argparse.Namespace, root: Path) -> tuple[dict, int]
     manifest = manifest_loader.merge_cli(manifest, args)
     errors = manifest_loader.validate(manifest, root,
                                       allow_dev_version=args.allow_dev_version)
+    # Cross-reference guard: a shipped rule that invokes /<slug>: for a skill not
+    # in the bundle would hand the recipient a dangling reference. Run it here so
+    # the check actually gates the build (a no-op when rules: is empty).
+    errors += release_check_guard.check_rule_skill_refs(manifest, root)
     if errors:
         _emit(args, {"errors": errors}, fp=sys.stderr)
         return {}, EXIT_VALIDATION

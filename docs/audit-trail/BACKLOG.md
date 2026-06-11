@@ -6,7 +6,7 @@ file này giữ **kế hoạch xử lý** đã được chủ kit chốt nhưng 
 
 ## Từ Cycle 3 — field audit Cleanmatic-ERP (2026-06-11)
 
-**Trạng thái: ĐANG KHỞI CÔNG — P01·P02·P03·P04·P05·P06·P07 đã land** (2026-06-11/12). Đã đóng: LIB-5,6 (P01) ·
+**Trạng thái: ĐANG KHỞI CÔNG — P01·P02·P03·P04·P05·P06·P07·P08 đã land** (2026-06-11/12). Đã đóng: LIB-5,6 (P01) ·
 LIB-7,8,10,12,13,14 + carry-in (P02) · LIB-3 + advisory Q6=a-hook + #10 product_memory lens (P03) ·
 PS-14 + PSC-2 + PSC-3 (P04: content_hash provenance + scoped bundle + script-enforced persist/prose-fallback/--doctor) ·
 PS-13,17,18,21,23 (P05: legacy `metric:` WARN + GATE-safe `migrate_metric_to_metrics.py` entry-scoped/comment-safe +
@@ -15,10 +15,13 @@ PS-15,16 (P06: fence exclude `.claude/` + cap-with-total; absent-id → `missing
 single-home `make_finding` sentinel-scrub + critique target sentinel filter) ·
 CVR-F03/POX-F03 + POX-M2 (P07: đề xuất #4 — `session_staleness` warn `.session.md` ôi-thiu vs max(artifact updated) +
 supersede-sweep vs DEC postdating session, decisions.md ưu tiên Q5; `open_questions` marker scan → `--status` sổ +
-`--approve` gate; artifact `updated` lên node).
+`--approve` gate; artifact `updated` lên node) ·
+PACK-3,4,5,6 (P08: parallel-array bash-3.2 thay `declare -A` + brand→`{{BUNDLE_NAME}}` + `top_level.source` ship
+recipient-variant README/CLAUDE.md & `rules: []` + release-check guard `check_rule_skill_refs` wired vào pack build +
+installer gitignore `.claude/telemetry/` idempotent với newline-guard chống corruption).
 Partial: LIB-4 `[~]` (duration/skills xong; outcome-classify defer). Defer bucket real-transcript:
 LIB-9 + LIB-4-outcome. **Đề xuất #9 (horizon↔PRD + persona frontmatter↔body lint + id backfill migrator) DỜI sang cụm
-proposals (hỏi PO trước khi làm).** Còn lại P08→P13. Plan + hiện vật:
+proposals (hỏi PO trước khi làm).** Còn lại P09→P13. Plan + hiện vật:
 `plans/260611-0050-po-field-audit-fix-waves/` (plan.md + 13 phase-*.md + reports).
 
 **Quyết định đã chốt (đừng re-litigate):** Q1=a(upgrade.sh+legacy-sweep) · Q2=a(migrate metric→metrics

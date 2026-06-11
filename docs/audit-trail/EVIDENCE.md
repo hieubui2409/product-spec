@@ -124,6 +124,33 @@ roll the oldest cycle into `## Archive` when exceeded.
   in the session notes, which an AC-only scan would miss. Reviewer M1 (docs asserted "must"-only) folded by
   broadening the doc/prompt wording to match the broad scan; the broad contract is locked by a body-line test.
 
+### P08 · PACKAGING · HIGH · `release/assets/templates/install.{sh,ps1}.template` + `pack.manifest.yaml` + `pack/{selection,cli}.py` + `manifest_validator.py`
+- **Root cause:** the installer + bundle were authored for the dev kit, not the recipient — `declare -A`
+  (bash-4) aborts on macOS's stock bash 3.2 (PACK-3); a hard-coded `claude-pack` brand + a dead
+  `/cleanmatic:claude-pack` hint shipped despite an available `{{BUNDLE_NAME}}` token (PACK-4); the bundle shipped
+  the dev-repo README/CLAUDE.md and dev rules that invoke `/ck:` skills the recipient never receives (PACK-5);
+  nothing gitignored the telemetry JSONL the install writes into the PO's tree (PACK-6).
+- **Before:** `bash install.sh` on macOS → `declare: -A: invalid option`; the rendered installer still carried
+  `claude-pack`; the bundle's top-level docs were the dev-kit copies; a fresh install left `.claude/telemetry/`
+  un-ignored (committable to the PO's GitHub).
+- **Fix:** bash-3.2-safe parallel arrays (`SKILL_VERDICT_SLUGS`/`_VALUES` + `_set`/`_get_skill_verdict`) replace
+  `declare -A`; brand literals route through `{{BUNDLE_NAME}}`; a new `top_level.source` ships recipient-variant
+  README/CLAUDE.md from `assets/recipient/` (repo-root fallback for back-compat) and `rules: []` drops the dev
+  rules — backed by a release-check guard (`check_rule_skill_refs`, wired into `pack/cli._load_and_validate`)
+  that fails the build if any shipped rule invokes a skill absent from the bundle; the installer appends
+  `.claude/telemetry/` to `.gitignore` idempotently, inserting a separator when the file's last line lacks a
+  trailing newline so the entry never joins onto the prior line. `top_level.source` is path-safety-checked at
+  validate-time (no absolute / `..`).
+- **After:** `.../python3 -m pytest .claude/skills/release/scripts/tests -q` → 237 passed / 19 skipped incl
+  `test_pack_build_aborts_on_dangling_rule_skill_ref`, `test_install_sh_gitignore_real_block_runtime` (incl the
+  no-trailing-newline case), `test_install_sh_skill_verdict_helpers_roundtrip`; `docker run bash:3.2 bash -n` on
+  the rendered installer OK + the gitignore/verdict blocks execute correctly under bash 3.2.
+- **Note:** DEC-P08-1 — the guard runs at PACK-build time (recipient-bundle composition), not publish-time; it
+  is a no-op while `rules: []`, a forward safety net. DEC-P08-2 — the install.ps1 newline-guard is
+  correct-by-construction (no PowerShell runtime in CI); the bash leg is the runtime-proven one. DEC-P08-4 (PO
+  ruling) — CONTRIBUTING.md dropped from the bundle (dev-kit content; only LICENSE travels per AGPL);
+  `test_contributing_md_not_in_bundle` guards it.
+
 ---
 
 ## Archive

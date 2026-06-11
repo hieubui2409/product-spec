@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — recipient installer for claude-pack v{{VERSION}}.
+# install.sh — recipient installer for {{BUNDLE_NAME}} v{{VERSION}}.
 #
 # Run from the extracted bundle directory. Installs the bundle contents
 # (selected .claude/ artifacts PLUS any packed top-level files such as
@@ -28,7 +28,7 @@ MANIFEST_JSON="$BUNDLE_DIR/MANIFEST.json"
 [ -f "$MANIFEST_JSON" ] || { echo "MANIFEST.json missing — corrupt bundle?" >&2; exit 1; }
 
 # --- Helpers ---
-log()  { echo "[claude-pack] $*"; }
+log()  { echo "[{{BUNDLE_NAME}}] $*"; }
 note() { echo "  $*"; }
 
 # True when $1 is one of the two BLOCKING enforcement hooks. These are treated as
@@ -158,7 +158,31 @@ NEWER=0
 # Computed once per skill slug from its SKILL.md, then applied to ALL files in
 # that skill's directory. This prevents the split-brain scenario where SKILL.md
 # is kept at NEWER but other files under the same skill are silently overwritten.
-declare -A SKILL_VERDICT  # slug -> "SKIP" | "OVERWRITE" | "ADD"
+#
+# Parallel arrays (bash-3.2-compatible; associative arrays via 'declare -A' require
+# bash 4+ and are absent on macOS which ships bash 3.2 by default):
+#   SKILL_VERDICT_SLUGS  — ordered list of skill slugs seen during compute
+#   SKILL_VERDICT_VALUES — verdict for the slug at the same index ("SKIP"|"OVERWRITE"|"ADD")
+# Lookup: _get_skill_verdict "$slug" prints the verdict (or "" when absent).
+SKILL_VERDICT_SLUGS=()
+SKILL_VERDICT_VALUES=()
+
+_set_skill_verdict() {
+    local slug="$1" verdict="$2"
+    SKILL_VERDICT_SLUGS+=("$slug")
+    SKILL_VERDICT_VALUES+=("$verdict")
+}
+
+_get_skill_verdict() {
+    local slug="$1" i
+    for i in "${!SKILL_VERDICT_SLUGS[@]}"; do
+        if [ "${SKILL_VERDICT_SLUGS[$i]}" = "$slug" ]; then
+            echo "${SKILL_VERDICT_VALUES[$i]}"
+            return
+        fi
+    done
+    echo ""
+}
 
 compute_skill_verdicts() {
     local bundle_skills="$BUNDLE_DIR/.claude/skills"
@@ -180,21 +204,21 @@ compute_skill_verdicts() {
                         if [ "$FORCE_OVERWRITE" = "1" ]; then
                             note "[STALE] skill '$slug' ($exist_v → $bundle_v; overwriting)"
                             STALE_WROTE=$((STALE_WROTE+1))
-                            SKILL_VERDICT["$slug"]="OVERWRITE"
+                            _set_skill_verdict "$slug" "OVERWRITE"
                         else
                             note "[STALE] skill '$slug' ($exist_v → $bundle_v; set FORCE_OVERWRITE=1 to update)"
                             STALE_KEPT=$((STALE_KEPT+1))
-                            SKILL_VERDICT["$slug"]="SKIP"
+                            _set_skill_verdict "$slug" "SKIP"
                         fi
                         ;;
                     0)
                         note "[OK SAME] skill '$slug' ($exist_v)"
-                        SKILL_VERDICT["$slug"]="SKIP"
+                        _set_skill_verdict "$slug" "SKIP"
                         ;;
                     1)
                         note "[NEWER] skill '$slug' ($exist_v > $bundle_v; refusing downgrade)"
                         NEWER=$((NEWER+1))
-                        SKILL_VERDICT["$slug"]="SKIP"
+                        _set_skill_verdict "$slug" "SKIP"
                         ;;
                 esac
                 continue
@@ -202,18 +226,18 @@ compute_skill_verdicts() {
                 # Existing install has a version but the bundle does not — ambiguous;
                 # skip to avoid overwriting a potentially newer installed version.
                 note "[UNKNOWN VERSION] skill '$slug' (installed: $exist_v; bundle version unreadable — skipping)"
-                SKILL_VERDICT["$slug"]="SKIP"
+                _set_skill_verdict "$slug" "SKIP"
                 continue
             elif [ -z "$exist_v" ] && [ -n "$bundle_v" ]; then
                 # Installed copy has no parseable version but bundle does — ambiguous;
                 # skip to avoid accidentally downgrading an untagged manual install.
                 note "[UNKNOWN VERSION] skill '$slug' (installed: unversioned; bundle: $bundle_v — skipping)"
-                SKILL_VERDICT["$slug"]="SKIP"
+                _set_skill_verdict "$slug" "SKIP"
                 continue
             fi
             # Neither side has a parseable version — fall through to ADD (existing behavior).
         fi
-        SKILL_VERDICT["$slug"]="ADD"
+        _set_skill_verdict "$slug" "ADD"
     done
 }
 
@@ -254,8 +278,11 @@ while IFS= read -r REL; do
     fi
 
     # Apply the per-skill verdict when we have one.
-    if [ -n "$local_slug" ] && [ "${SKILL_VERDICT[$local_slug]+_}" ]; then
-        verdict="${SKILL_VERDICT[$local_slug]}"
+    verdict=""
+    if [ -n "$local_slug" ]; then
+        verdict=$(_get_skill_verdict "$local_slug")
+    fi
+    if [ -n "$local_slug" ] && [ -n "$verdict" ]; then
         case "$verdict" in
             SKIP)
                 # Skill version is OK SAME or NEWER — skip all files unconditionally.
@@ -371,6 +398,27 @@ if [ -f "$REGISTRAR" ]; then
     fi
 fi
 
+# --- Gitignore: protect telemetry data from accidental commits ---
+# The telemetry skill writes runtime data to .claude/telemetry/ — usage JSONL files
+# that are local to the recipient's machine and should never be committed to source
+# control. Append the entry to .gitignore if it is not already there (idempotent).
+echo ""
+GITIGNORE_FILE="$TARGET_DIR/.gitignore"
+if ! grep -q '\.claude/telemetry/' "$GITIGNORE_FILE" 2>/dev/null; then
+    # If the file exists and its last byte is NOT a newline, a bare append would
+    # join the entry onto the final line (e.g. "node_modules.claude/telemetry/"):
+    # the prior entry is corrupted AND telemetry stays un-ignored. Insert a
+    # separating newline first. tail -c1 + command-substitution is portable to
+    # bash 3.2 (no associative arrays / process-substitution needed here).
+    if [ -s "$GITIGNORE_FILE" ] && [ -n "$(tail -c1 "$GITIGNORE_FILE")" ]; then
+        printf '\n' >> "$GITIGNORE_FILE"
+    fi
+    printf '%s\n' '.claude/telemetry/' >> "$GITIGNORE_FILE"
+    log "Added .claude/telemetry/ to .gitignore (prevents accidental commit of telemetry data)"
+else
+    log ".claude/telemetry/ already in .gitignore — skipping"
+fi
+
 # --- Summary ---
 echo ""
 log "Summary"
@@ -381,4 +429,4 @@ note "Stale kept:      $STALE_KEPT"
 note "Stale overwrote: $STALE_WROTE"
 note "Newer kept:      $NEWER"
 echo ""
-log "Done. Invoke skills from Claude Code, e.g. /cleanmatic:claude-pack"
+log "Done. Invoke the bundled skills from Claude Code (e.g. type / in a Claude Code session to see available skills)."

@@ -1,4 +1,4 @@
-# install.ps1 — recipient installer for claude-pack v{{VERSION}}.
+# install.ps1 — recipient installer for {{BUNDLE_NAME}} v{{VERSION}}.
 #
 # Run from the extracted bundle directory. Installs the bundle contents
 # (selected .claude/ artifacts PLUS any packed top-level files such as
@@ -31,7 +31,7 @@ if (-not (Test-Path $ManifestJson)) {
 
 $BackupTs = (Get-Date -Format "yyyyMMddTHHmmssZ")
 
-function Log($msg)  { Write-Host "[claude-pack] $msg" }
+function Log($msg)  { Write-Host "[{{BUNDLE_NAME}}] $msg" }
 function Note($msg) { Write-Host "  $msg" }
 
 # Read metadata.version from a SKILL.md frontmatter block (returns "" if absent).
@@ -306,6 +306,34 @@ if (Test-Path $Registrar) {
     }
 }
 
+# --- Gitignore: protect telemetry data from accidental commits ---
+# The telemetry skill writes runtime data to .claude/telemetry/ — usage JSONL files
+# that are local to the recipient's machine and should never be committed to source
+# control. Append the entry to .gitignore if it is not already there (idempotent).
+Write-Host ""
+$GitignoreFile = Join-Path $TargetDir ".gitignore"
+$TelemetryEntry = ".claude/telemetry/"
+$alreadyIgnored = $false
+if (Test-Path $GitignoreFile) {
+    $existingContent = Get-Content $GitignoreFile -Raw -ErrorAction SilentlyContinue
+    if ($existingContent -and $existingContent.Contains($TelemetryEntry)) {
+        $alreadyIgnored = $true
+    }
+}
+if (-not $alreadyIgnored) {
+    # If the file exists and does not end in a newline, Add-Content would join the
+    # entry onto the last line (corrupting it AND leaving telemetry un-ignored).
+    # $existingContent was read with -Raw above, so it preserves any trailing
+    # newline; insert a separator first when it is missing.
+    if ((Test-Path $GitignoreFile) -and $existingContent -and -not $existingContent.EndsWith("`n")) {
+        Add-Content -Path $GitignoreFile -Value ""
+    }
+    Add-Content -Path $GitignoreFile -Value $TelemetryEntry
+    Log "Added .claude/telemetry/ to .gitignore (prevents accidental commit of telemetry data)"
+} else {
+    Log ".claude/telemetry/ already in .gitignore — skipping"
+}
+
 # --- Summary ---
 Write-Host ""
 Log "Summary"
@@ -316,4 +344,4 @@ Note "Stale kept:      $StaleKept"
 Note "Stale overwrote: $StaleWrote"
 Note "Newer kept:      $Newer"
 Write-Host ""
-Log "Done. Invoke skills from Claude Code, e.g. /cleanmatic:claude-pack"
+Log "Done. Invoke the bundled skills from Claude Code (e.g. type / in a Claude Code session to see available skills)."

@@ -66,7 +66,12 @@ def test_install_clean_then_idempotent(tmp_path):
     # A representative shipped artifact must have landed.
     installed = target / ".claude" / "skills" / "product-spec" / "SKILL.md"
     assert installed.is_file(), f"product-spec SKILL.md not installed:\n{r1.stdout}\n{r1.stderr}"
-    assert (target / ".claude" / "skills" / "release" / "SKILL.md").is_file()
+    # The release skill is NOT shipped to recipients (dev-only toolchain).
+    assert not (target / ".claude" / "skills" / "release" / "SKILL.md").is_file(), \
+        "release skill must not be installed to recipients"
+    # Verify another shipped skill (product-spec-critique) landed too.
+    assert (target / ".claude" / "skills" / "product-spec-critique" / "SKILL.md").is_file(), \
+        "product-spec-critique SKILL.md not installed"
 
     # 2) Re-run is idempotent: exit 0, existing skills skipped (not clobbered), files still present.
     r2 = _run_install(extract, target)

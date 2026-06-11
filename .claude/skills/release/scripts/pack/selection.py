@@ -72,10 +72,27 @@ def resolve_selection(manifest: dict, root: Path) -> list[tuple[Path, str]]:
             entries.append((src, path_entry))
 
     top = manifest.get("top_level") or {}
-    if top.get("include_readme") and (root / "README.md").is_file():
-        entries.append((root / "README.md", "README.md"))
-    if top.get("include_claudemd") and (root / "CLAUDE.md").is_file():
-        entries.append((root / "CLAUDE.md", "CLAUDE.md"))
+    # When `top_level.source` is set, ship README.md/CLAUDE.md from that directory
+    # (recipient-variant copies) instead of the repo root (dev-kit copies).
+    # Falls back to repo root when the source dir or file is absent — back-compat.
+    _top_src_str = top.get("source", "")
+    _top_src_dir: Path | None = (root / _top_src_str) if _top_src_str else None
+    def _top_file(filename: str) -> Path:
+        """Return the best available source for a top-level file."""
+        if _top_src_dir is not None:
+            candidate = _top_src_dir / filename
+            if candidate.is_file():
+                return candidate
+        return root / filename
+
+    if top.get("include_readme"):
+        readme_src = _top_file("README.md")
+        if readme_src.is_file():
+            entries.append((readme_src, "README.md"))
+    if top.get("include_claudemd"):
+        claudemd_src = _top_file("CLAUDE.md")
+        if claudemd_src.is_file():
+            entries.append((claudemd_src, "CLAUDE.md"))
     if top.get("include_settings") and (claude_dir / "settings.json").is_file():
         entries.append((claude_dir / "settings.json", ".claude/settings.json"))
     if top.get("include_ck_config") and (claude_dir / ".ck.json").is_file():

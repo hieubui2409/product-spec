@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Packaging/installer recipient variant"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1, 3]
@@ -49,11 +49,17 @@ dev vào repo recipient. Sửa installer + biến thể recipient trọn gói + 
 1. Viết RED tests. 2. bash-3 compat + guard. 3. token + sửa hint/path 3 file. 4. recipient variant manifest + assets + rules trung tính. 5. gitignore append + INSTALL doc. 6. release-check skill⊆bundle. 7. GREEN. 8. Tick 4 row + EVIDENCE.
 
 ## Success Criteria
-- [ ] Installer chạy/fail-sớm-rõ trên bash 3.2; e2e leg xanh.
-- [ ] Không còn literal `claude-pack` ngoài back-compat chủ đích (test).
-- [ ] Bundle recipient README/CLAUDE.md không danh tính dev/`-ck:`; release-check skill⊆bundle.
-- [ ] Installer gitignore telemetry recipient.
+- [x] Installer chạy/fail-sớm-rõ trên bash 3.2; e2e leg xanh. (`docker bash:3.2 bash -n` + runtime verdict round-trip)
+- [x] Không còn literal `claude-pack` ngoài back-compat chủ đích (test). (`test_installer_branding.py`)
+- [x] Bundle recipient README/CLAUDE.md không danh tính dev/`-ck:`; release-check skill⊆bundle. (`test_bundle_recipient_variant.py` + guard wired vào `pack/cli`)
+- [x] Installer gitignore telemetry recipient. (+ newline-guard chống corruption; regression test chạy block thật)
 
 ## Risk Assessment
 - **[red-team] Brand rename phá literal back-compat cần giữ.** Mitigate: test phân biệt literal-giữ vs literal-đổi (whitelist back-compat).
 - Bỏ skill `release` khỏi bundle có thể mất tính re-share. Mitigate: quyết + ghi lý do vào manifest (Q3 cho phép "cân nhắc").
+
+## Decisions (DEC-P08)
+- **DEC-P08-1 — release-check guard chạy ở PACK-build, không phải publish-time.** `check_rule_skill_refs` wired vào `pack/cli._load_and_validate` (gate mọi build), KHÔNG ở `release.py` publish-time, vì nó canh *thành phần recipient-bundle* (rule ship trỏ skill ngoài bundle). Hiện `rules: []` → guard là no-op (safety-net hướng tương lai). Owner: hieubt · 2026-06-12.
+- **DEC-P08-2 — install.ps1 newline-guard correct-by-construction.** Không có PowerShell runtime trong CI nên leg PS1 chỉ verify tĩnh (`EndsWith("`n")` guard trước `Add-Content`); leg bash là leg runtime-proven (docker bash:3.2 + test chạy block thật). Owner: hieubt · 2026-06-12.
+- **DEC-P08-3 — `top_level.source` hard E-code path-safety tại validate-time.** Traversal/absolute trong `source` bị reject sớm (E020/E021 qua `check_path_safety`) thay vì dựa WARN-and-skip ở `selection.py` — nhất quán với `_include_shared`. Owner: hieubt · 2026-06-12.
+- **DEC-P08-4 — bỏ CONTRIBUTING.md khỏi recipient bundle (PO ruling 2026-06-12).** CONTRIBUTING.md là nội dung dev-kit (DCO, pull-request flow, internal pytest setup) vô dụng với end-user; AGPL-3.0 chỉ bắt buộc LICENSE + source. Gỡ khỏi manifest `extra:`, regression test `test_contributing_md_not_in_bundle` canh giữ. Owner: hieubt · 2026-06-12.
