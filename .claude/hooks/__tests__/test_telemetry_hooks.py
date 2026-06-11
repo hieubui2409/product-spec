@@ -130,7 +130,7 @@ class TestTrackSkillInvocation:
         payload = json.dumps({
             "hook_event_name": "PreToolUse",
             "tool_name": "Skill",
-            "tool_input": {"skill": "claude-pack"},
+            "tool_input": {"skill": "sample-skill"},
             "session_id": "sess-dedup",
         })
         mod.main(payload)
@@ -206,7 +206,7 @@ class TestTrackScriptExecution:
 
         mod.main(json.dumps({
             "tool_name": "Bash",
-            "tool_input": {"command": "python3 .claude/skills/claude-pack/scripts/foo.py"},
+            "tool_input": {"command": "python3 .claude/skills/sample-skill/scripts/foo.py"},
             "tool_response": {"is_error": True, "stderr": "Traceback (most recent call last):"},
         }))
 
@@ -238,6 +238,53 @@ class TestTrackScriptExecution:
         }))
 
         assert _sink_lines(tmp_path, "hook-telemetry.jsonl") == []
+
+    def test_reference_only_command_is_not_counted_as_run(self, tmp_path, monkeypatch):
+        # grep/ls/cat that merely REFERENCE a skill-script path must not be recorded
+        # as an execution — otherwise the validate-proxy (reading these records)
+        # inflates the pass rate with greps over check_*.py.
+        mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+        for cmd in (
+            "grep -n foo .claude/skills/product-spec/scripts/check_consistency.py",
+            "ls .claude/skills/product-spec/scripts/visualize.py",
+            "cat .claude/skills/release/scripts/release.py",
+        ):
+            mod.main(json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd},
+                                 "tool_response": {"stdout": "x"}}))
+        assert _sink_lines(tmp_path, "hook-telemetry.jsonl") == []
+
+    def test_direct_and_compound_execution_are_counted(self, tmp_path, monkeypatch):
+        # path at command start (direct exec) and after an interpreter in a
+        # cd && python3 compound both count as real runs.
+        mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+        mod.main(json.dumps({"tool_name": "Bash",
+            "tool_input": {"command": ".claude/skills/product-spec/scripts/visualize.py --root ."},
+            "tool_response": {"stdout": "ok"}}))
+        mod.main(json.dumps({"tool_name": "Bash",
+            "tool_input": {"command": "cd /repo && python3 .claude/skills/release/scripts/release.py --bump patch"},
+            "tool_response": {"stdout": "ok"}}))
+        lines = _sink_lines(tmp_path, "hook-telemetry.jsonl")
+        assert [l["script"] for l in lines] == [
+            "product-spec/scripts/visualize.py", "release/scripts/release.py"]
+
+    def test_absolute_and_var_prefixed_execution_are_counted(self, tmp_path, monkeypatch):
+        # An executed script reached via an absolute or "$CLAUDE_PROJECT_DIR"-prefixed
+        # path still counts; the leading dir prefix must not break detection and
+        # group(1) stays the skill-relative path. (A grep/ls of such a path stays
+        # rejected — the prefix cannot bridge the space at an argument position.)
+        mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+        mod.main(json.dumps({"tool_name": "Bash",
+            "tool_input": {"command": "python3 /home/u/proj/.claude/skills/product-spec/scripts/validate.py --root ."},
+            "tool_response": {"stdout": "ok"}}))
+        mod.main(json.dumps({"tool_name": "Bash",
+            "tool_input": {"command": '"$CLAUDE_PROJECT_DIR"/.claude/skills/.venv/bin/python3 "$CLAUDE_PROJECT_DIR"/.claude/skills/release/scripts/release.py'},
+            "tool_response": {"stdout": "ok"}}))
+        lines = _sink_lines(tmp_path, "hook-telemetry.jsonl")
+        assert [l["script"] for l in lines] == [
+            "product-spec/scripts/validate.py", "release/scripts/release.py"]
 
     def test_always_emits_continue_true(self, tmp_path, monkeypatch):
         mod = _reload_hook("track_script_execution", tmp_path, monkeypatch)

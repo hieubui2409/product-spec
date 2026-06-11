@@ -76,10 +76,12 @@ def gather(days: int = 30) -> dict:
     marker = _read_marker()
     runs, passes = _validate_runs(days)
     if marker is None and runs == 0:
+        # reason_code is language-neutral; the renderer localizes it (no EN prose
+        # baked into the gathered dict, which would leak into VI output).
         return {
             "lens": "validate_proxy",
             "available": False,
-            "reason": "not available on current data (no validate marker, no validate-script runs)",
+            "reason_code": "no_data",
             "internal_quality": True,
             "not_e3": True,
         }

@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Telemetry data-quality pack"
-status: in-progress
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1]
@@ -9,7 +9,9 @@ dependencies: [1]
 
 # Phase 02: Telemetry data-quality pack (đề xuất #3)
 
-> **COOK PROGRESS 2026-06-11 (partial):** ✅ **LIB-4** (HIGH — `scan_head` quét tới record đầu có ts → duration không còn 0; + bắt early skills ở head → skills không còn rỗng; 2 test) · ✅ **LIB-8** (record mang `session` join key; 1 test) · ⚠ **LIB-9 DEFER** (verify CC docs: `UserPromptExpansion` HỢP LỆ — không rename; điều tra matcher+e2e). **Suite 205 passed.** **CÒN LẠI:** LIB-7 (SCRIPT_RE matcher), LIB-10 (CLAUDE.md routing+four), LIB-12 (i18n reason_code), LIB-13 (telemetry-readback doc), LIB-14 (fixture id), carry-in (gather_all per-lens isolation), + LIB-9 điều tra. **Review 3-wave + critique chạy khi phase xong.**
+> **COOKED 2026-06-11 — canonical suite `213 passed`.** ✅ LIB-7 (SCRIPT_RE → exec-position, reject grep/ls/cat kể cả abs-path; +3 test) · ✅ LIB-8 (session join key) · ✅ LIB-10 (CLAUDE.md three→four + routing row + `--status` nudge; baseline regen +107 ref token) · ✅ LIB-12 (reason_code, hết EN-leak trong VI/json) · ✅ LIB-13/14 (readback sink+config-gate doc, README attribution EN+VI, fixture `sample-skill`) · ✅ carry-in (gather_all per-lens isolation, error HIỆN ở md/ascii/mermaid). LIB-4 **[~]** duration+skills landed (synthetic-verified); phần subagent-outcome classify defer (cần transcript thật).
+>
+> **Review 3-wave (correctness · cleanup/DRY · consistency) + critique-challenge** chạy xong: 0 CRIT/HIGH/MED; critique fold 4 fix — A2 (regex nhận abs/`$VAR` exec path), B2 (mermaid không nuốt lens lỗi), C1/C2 (readback precision `_README`/`_load_config`). A1 (`-W ignore` space-arg) BÁC fix (sẽ phá `-u <path>`), ghi nhận under-count an toàn. **Defer:** LIB-9 (event verified hợp lệ, e2e matcher) + LIB-4-outcome → bucket real-transcript; **LIB-16** mới (SKILL.md `--memory-hook` doc-drift → Phase 12).
 
 ## Overview
 Telemetry "có ống chưa có nước": 3 trường chủ lực chết trên data thật + data còn lại bẩn. Sửa parse,
@@ -57,11 +59,11 @@ classify, matcher, key join để mọi lens phía sau có data thật mà narra
 1. Viết RED tests (1-5). 2. Sửa `first_timestamp`+classify+skills. 3. Siết SCRIPT_RE (1 nguồn). 4. Thêm `session` key. 5. e2e UserPromptExpansion → quyết giữ/gỡ. 6. routing+i18n+docs. 7. GREEN full suite. 8. Tick 8 row + 8 EVIDENCE.
 
 ## Success Criteria
-- [ ] Trên fixture data thật: `duration_s>0`, `outcome` phân loại đúng, `skills` non-empty.
-- [ ] grep/ls/glob không còn đếm như script-run; validate-proxy không tính grep `check_*` là PASS.
-- [ ] 100% record script-run có `session`.
+- [~] Fixture synthetic: `duration_s>0` ✓, `skills` non-empty ✓; `outcome` classify defer (cần transcript thật).
+- [x] grep/ls/glob (kể cả abs-path) không còn đếm như script-run; validate-proxy không tính grep `check_*` là PASS.
+- [x] 100% record script-run có `session`.
 - [ ] LIB-9 (defer): `UserPromptExpansion` đã verify hợp lệ — điều tra matcher/handler, KHÔNG rename. Quyết sửa-matcher/fallback/gỡ sau e2e.
-- [ ] CLAUDE.md routing có telemetry, "four"; output telemetry VI thuần.
+- [x] CLAUDE.md routing có telemetry, "four"; output telemetry VI thuần (hết EN-leak).
 
 ## Risk Assessment
 - Đổi outcome-classify dựa tail-protocol có thể miss format lạ. Mitigate: default `unknown` an toàn + fixture đa dạng.

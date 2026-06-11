@@ -15,6 +15,32 @@ sink helper is `.claude/skills/telemetry/scripts/telemetry_paths.py`. Sinks:
 `mark_bash_start.py` paired with the PostToolUse:Bash `track_script_execution.py`;
 records with no pair degrade gracefully (no `ms`).
 
+### Crash-audit sink (not a usage sink)
+
+Separate from the four usage sinks above, the shared `hook_runtime.log_hook_error`
+appends a crash-audit line whenever a hook raises — so a fail-open hook still leaves a
+trace instead of vanishing silently:
+
+| Sink | Written by | Shape |
+|------|------------|-------|
+| `.claude/hooks/.logs/hook-crashes.log` | `hook_runtime.log_hook_error` (any hook crash) | `{ts, hook, type, msg, tb}` — exception **metadata only**, never the stdin payload (no PII); coarse-rotated at 256 KB → `.1` |
+
+This is diagnostic, not telemetry — the lenses do not read it. `CK_HOOK_AUDIT_DISABLED`
+(and any pytest run) silences it; `CK_HOOK_LOG_DIR` redirects it.
+
+### Per-hook config gate
+
+All seven Python hooks are gated by `.claude/hooks/product-spec-hooks.json` (a flat
+stem→bool map — plus a `_README` note key that `hook_enabled` ignores — read once per
+process via `hook_runtime.hook_enabled`, cached in `_load_config`):
+
+- **Telemetry stems** (the 5 sink hooks): a missing/absent key ⇒ **ENABLED** by default;
+  the global `CK_TELEMETRY_DISABLED` env forces all of them OFF.
+- **Enforcement stems** (`memory_gap_hook`, `product_spec_critique_nudge`): a missing key
+  ⇒ **DISABLED** (a blocking hook is never fallback-enabled); the installer's
+  `--memory-hook` / `--critique-hook` flip the flag true. The telemetry kill-switch does
+  not affect them.
+
 ## Queries
 
 ```bash

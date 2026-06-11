@@ -61,6 +61,30 @@ def test_unknown_lens_exits_2(cli, capsys):
     assert cli.main(["--lens", "nope"]) == 2
 
 
+def test_overview_isolates_a_failing_lens(cli, monkeypatch):
+    # One lens raising (e.g. workflow fail-loud when skill-chains.yaml is absent)
+    # must NOT blank the overview — it degrades to a VISIBLE error entry while the
+    # other lenses still gather. The per-lens gather() keeps raising (loud for unit
+    # tests); only gather_all isolates.
+    monkeypatch.setenv("CK_MEMORY_DIR", str(FIX / "memory"))
+
+    def boom(_a):
+        raise RuntimeError("kaboom")
+    monkeypatch.setitem(cli.LENSES, "workflow", boom)
+
+    class _Args:
+        days = 36500
+        top = 10
+        no_tokens = False
+        session = None
+        all_sessions = False
+
+    data = cli.gather_all(_Args())
+    failed = [d for d in data if d.get("lens") == "workflow"]
+    assert failed and "kaboom" in failed[0].get("error", "")     # error surfaced, not swallowed
+    assert any(d.get("lens") == "usage_tokens" and "error" not in d for d in data)  # others survive
+
+
 def test_health_lens_json(cli, capsys):
     cli.main(["--lens", "health", "--format", "json"])
     out = json.loads(capsys.readouterr().out)

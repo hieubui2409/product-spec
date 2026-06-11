@@ -38,12 +38,15 @@ def _tele(tele_dir, lines):
     (tele_dir / "hook-telemetry.jsonl").write_text("\n".join(json.dumps(x) for x in lines) + "\n")
 
 
-def test_unavailable_when_no_marker_and_no_runs(tmp_path, monkeypatch):
+def test_unavailable_emits_language_neutral_reason_code(tmp_path, monkeypatch):
+    # No English prose in the gathered dict — only a neutral reason_code the
+    # renderer localizes. Guards the EN-leaking-into-VI bug at the source.
     lens = _load(monkeypatch, tmp_path / "proj", tmp_path / "tele")
     d = lens.gather(days=BIG)
     assert d["available"] is False
     assert d["not_e3"] is True
-    assert "not available" in d["reason"]
+    assert d["reason_code"] == "no_data"
+    assert "reason" not in d  # prose must not be baked in
 
 
 def test_marker_gives_last_status_validated(tmp_path, monkeypatch):

@@ -34,11 +34,28 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Shared "is this a skill script" matcher for the Pre/Post Bash duration pair
-# (mark_bash_start + track_script_execution). ONE home so the two can never drift
-# out of lockstep — a divergence would silently break `ms` pairing with no test
-# to catch it. group(1) = the skill-relative path skills/<skill>/scripts/<f>.py|sh.
-SCRIPT_RE = re.compile(r"\.claude/skills/([^\s/]+/scripts/[^\s]+\.(?:py|sh))")
+# Shared "is this a skill script being EXECUTED" matcher for the Pre/Post Bash
+# duration pair (mark_bash_start + track_script_execution). ONE home so the two
+# can never drift out of lockstep — a divergence would silently break `ms`
+# pairing with no test to catch it. group(1) = the skill-relative path
+# skills/<skill>/scripts/<f>.py|sh.
+#
+# The path must sit at a command boundary (start / ; | & ( newline, after optional
+# VAR=val env assignments) OR immediately after an interpreter (python[3]/bash/sh,
+# possibly a venv path like .venv/bin/python3). A bare substring is NOT enough — it
+# would count `grep ... scripts/check_x.py`, `ls .../scripts/y.py`, `cat ...` as
+# "script runs" and (via the validate-proxy reading these records) inflate the
+# pass-rate with greps. Requiring execution position is what keeps the signal real.
+# The script path may carry an arbitrary leading dir prefix (`./`, an absolute path,
+# or `"$CLAUDE_PROJECT_DIR"/…`): `(?:\S*/)?` consumes it WITHOUT re-opening the
+# substring hole — it cannot bridge the space at an argument position, so a grep/ls/cat
+# of the path (even an absolute one) still has no boundary in front and stays rejected.
+SCRIPT_RE = re.compile(
+    r"(?:^|[\n;|&(])\s*"                                   # command boundary
+    r"(?:[A-Za-z_]\w*=\S*\s+)*"                            # optional leading VAR=val env
+    r"(?:(?:\S*/)?(?:python3?|bash|sh)(?:\s+-\S+)*\s+)?"   # optional interpreter (+ flags)
+    r"(?:\S*/)?\.claude/skills/([^\s/]+/scripts/[^\s]+\.(?:py|sh))"  # optional dir prefix (abs/$VAR/.)
+)
 
 # --- crash audit ------------------------------------------------------------
 

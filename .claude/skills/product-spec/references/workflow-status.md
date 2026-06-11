@@ -63,6 +63,10 @@ The feeder JSON shape:
    - **Reflect hint** (`reflect_suggestion`): when present (high drift-since-validate), pass it through as a soft
      one-liner — "a lot has changed unrecorded; `--reflect` can retroactively harvest any rulings/observations that
      were never recorded." A suggestion only; `--status` never runs it.
+   - **Telemetry pointer** (optional, read-only): if the PO also wants the *usage/health* picture — how often each
+     skill runs, which scripts error or run slow, whether validate has been passing as a trend — point them at the
+     `telemetry` skill (`/cleanmatic:telemetry --lens all`). `--status` reports THIS spec's drift; `telemetry` reads
+     usage & health across all skills. A pointer only; `--status` never runs it.
 3. Always close with the **soft-fence reminder** (below) when anything is unvalidated.
 
 ## Honesty caveat — this is a NUDGE, not a guard

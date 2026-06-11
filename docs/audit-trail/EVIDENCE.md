@@ -50,6 +50,76 @@ roll the oldest cycle into `## Archive` when exceeded.
   pytest targets); it intentionally does not lock the interpreter, since CI runs system `python` while
   CONTRIBUTING documents the venv path.
 
+### LIB-4 · CORRECTNESS · HIGH · `hooks/emit_session_summary.py`
+- **Root cause:** `first_timestamp()` read only the literal first transcript line; that record is often a
+  meta line with no `ts`, so duration computed as 0; early `Skill` invocations clustered in the head were
+  missed by the recent-activity tail → empty `skills[]`.
+- **Before:** on a real transcript whose first record has no `ts`, `sessions.jsonl` got `duration_s:0` and `skills:[]`.
+- **Fix:** `scan_head()` scans the bounded head to the first record that HAS a `ts` (→ real duration) and
+  collects head `Skill` invocations, merged with the tail (dedup, order-preserving).
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/hooks -q` → green incl
+  `test_duration_nonzero_when_first_record_has_no_timestamp`, `test_scan_head_returns_first_ts_and_early_skills`.
+
+### LIB-7 · CORRECTNESS · MED · `hooks/hook_runtime.py` (SCRIPT_RE)
+- **Root cause:** the skill-script matcher was a bare substring — `grep/ls/cat` of a script path counted as
+  a "script run", and (via the validate-proxy reading those records) a `grep check_*.py` exit 0 inflated the
+  validate pass-rate.
+- **Before:** `SCRIPT_RE.search("grep -n x .claude/skills/product-spec/scripts/check_consistency.py")` → matched.
+- **Fix:** require execution position — the path must sit at a command boundary or after an interpreter
+  (`python[3]`/`bash`/`sh`, incl. a venv/abs/`$VAR` dir prefix). `(?:\S*/)?` admits absolute and
+  `$CLAUDE_PROJECT_DIR` exec paths without reopening the substring hole (it cannot bridge the space at an
+  argument position, so a grep/ls/cat of the path — even an absolute one — stays rejected).
+- **After:** grep/ls/cat → no match; direct / `python3 <path>` / venv-python / `cd && python3` / env-prefixed /
+  absolute / `$VAR`-prefixed exec → match, group(1) = `<skill>/scripts/<file>`.
+  (`test_reference_only_command_is_not_counted_as_run`, `test_direct_and_compound_execution_are_counted`,
+  `test_absolute_and_var_prefixed_execution_are_counted`)
+- **Note:** the matcher deliberately under-counts the safe direction — an exotic `python3 -W ignore <path>`
+  (a flag that takes a space-separated argument) is missed; no documented invocation uses that form, and the
+  alternative (a wider flag rule) would mis-eat `python3 -u <path>`.
+
+### LIB-8 · CORRECTNESS · MED · `hooks/track_script_execution.py`
+- **Root cause:** the `session` join key was computed but never written to the record, so the workflow and
+  health lenses could not join a script run to the other three sinks (all of which record `session`).
+- **Fix:** add `"session"` to the emitted record dict.
+- **After:** `test_script_record_carries_session_join_key` asserts the record carries the session id.
+
+### carry-in · ROBUSTNESS · MED · `telemetry/scripts/analyze_telemetry.py` (gather_all) + `telemetry_render.py`
+- **Root cause:** `gather_all` was a list-comprehension with no isolation — one lens raising (e.g. the
+  workflow lens fail-loud when `data/skill-chains.yaml` is absent on a recipient) crashed the entire
+  `--lens all` overview (all seven lenses dark).
+- **Fix:** wrap each lens → a VISIBLE `{lens, error}` entry (never a silent drop); the per-lens `gather()`
+  still raises at the function level (loud for unit tests). The renderers surface the error in md, ascii AND
+  mermaid — the `error` check precedes lens-name dispatch, so a registry-name vs lens-name mismatch can't
+  swallow it.
+- **After:** `test_overview_isolates_a_failing_lens` (six lenses survive + a visible error entry),
+  `test_error_entry_surfaced_in_md` / `_ascii` / `_mermaid`.
+
+### LIB-10 · CONSISTENCY · MED · `CLAUDE.md` + `product-spec/references/workflow-status.md`
+- **Root cause:** the always-on routing layer said "three PO-facing skills" with a 3-row table → the
+  `telemetry` skill was invisible, so the model never routed to it.
+- **Fix:** "three"→"four" + a telemetry routing row + a voice note (CLAUDE.md is not token-measured by the
+  footprint guard); added a read-only telemetry pointer to the `--status` reference (an on-demand ref; the
+  committed baseline was regenerated for the +107-token ref growth).
+- **After:** the footprint regression guard is green; `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec -q` green.
+
+### LIB-12 · CLEANUP(i18n) · LOW · `telemetry/scripts/lens_validate_proxy.py` + `telemetry_render.py`
+- **Root cause:** the validate lens baked an English `reason` string into the gathered dict; under
+  `--lang vi` that English prose leaked into Vietnamese output (and into the json path).
+- **Fix:** the lens emits a language-neutral `reason_code`; the renderer localizes it via
+  `_reason_label`/`_REASON_KEYS` (the `val_na_reason` label is defined in both `en` and `vi`).
+- **After:** `test_unavailable_emits_language_neutral_reason_code` (asserts `"reason" not in d`) +
+  `test_unavailable_reason_localized_no_english_leak_in_vi` (English absent from VI render).
+
+### LIB-13/14 · CONSISTENCY+CLEANUP · LOW · audit/readback docs + test fixtures
+- **Fix:** `telemetry-readback.md` gained the crash-audit sink (`.claude/hooks/.logs/hook-crashes.log`) +
+  the per-hook config-gate (`product-spec-hooks.json`) sections, each claim verified against `hook_runtime`;
+  `README.md` (EN+VI) re-attributed the memory-gap hook to `product-spec` (it had been scoped under
+  `product-spec-critique`); test fixtures dropped the stale `claude-pack` id for a neutral `sample-skill`.
+- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry .claude/hooks -q` green;
+  doc claims cross-checked against `hook_runtime.py` + the product-spec / critique installers.
+
+---
+
 ## Archive
 
 ### Cycle 0 — 2026-06 (condensed; full before/after rolled off per the size cap)
@@ -62,135 +132,30 @@ roll the oldest cycle into `## Archive` when exceeded.
   path (always SKIP). Fix: golden-fixture judge via injectable LLM client (PASS/FAIL/MISSING/ERROR,
   never fabricates); local-on-demand, not CI. (`test_llm_eval.py`, 16 passed)
 
-## Cycle 1 — 2026-06 (release-skill rename + bundle restructure)
+### Cycle 1 — 2026-06 (release-skill rename + bundle restructure; condensed)
+- PACK-2 · CORRECTNESS · HIGH · `release/scripts/release.py:26` — repo-root resolution: the migration plan
+  guessed `parents[3]` (→ `.claude/`), which would make every release read/write the WRONG CHANGELOG +
+  manifest. Fix: `parents[4]`, established by running the resolution (not trusting the plan); a unit test
+  asserts `REPO/.claude/pack.manifest.yaml` + `REPO/CHANGELOG.md` exist. Bundle-A4 (root CHANGELOG top ==
+  manifest) stays RED until the owner-time `release.py --release 2.0.0 --apply`.
 
-### PACK-2 · CORRECTNESS · HIGH · `.claude/skills/release/scripts/release.py:26`
-- **Root cause:** the new release-lifecycle engine resolves the repo root by parent-walking from its own path;
-  the migration plan *guessed* `REPO=parents[3]`, which would land on `.claude/` (not the repo root) and make
-  every `--release/--extract` read/write the WRONG `CHANGELOG.md` + `pack.manifest.yaml` — a release cut against
-  a non-file, or worse a silent write to a stray path.
-- **Before:** plan text "verify `REPO = parents[?]` — expected `parents[3]`" — unverified assumption.
-- **Fix:** `REPO = Path(__file__).resolve().parents[4]` (scripts → release → skills → .claude → repo), matching
-  the file's real nesting (identical depth to human-analyzer's `_framework-shared/release.py`). Locked by a unit
-  test that asserts `REPO/.claude/pack.manifest.yaml` and `REPO/CHANGELOG.md` both exist.
-- **After:**
-  ```
-  $ .claude/skills/.venv/bin/python3 -m pytest .claude/skills/release/scripts/tests/test_release.py -q
-  ....................                                                      [100%]
-  $ .claude/skills/.venv/bin/python3 -m pack --manifest .claude/pack.manifest.yaml --out /tmp/relbuild --json \
-      | python3 -c "import sys,json;print(json.load(sys.stdin)['output_path'])"
-  /home/.../dist/.../product-spec-2.0.0.tar.gz   # build twice → identical sha256 90910ffe…
-  ```
-- **Note:** empirical-over-assumption (`review-audit-self-decision.md` rule 4): the plan's `parents[3]` guess was
-  rejected by running the resolution, not by trusting the plan. Bundle-A4 (`root /CHANGELOG.md top == manifest`)
-  stays RED until the owner-time `release.py --release 2.0.0 --apply` locks the `[Unreleased]` → `[2.0.0]` section.
-
-## Cycle 2 — 2026-06-09 (learning loop `--learn`)
-
-### PS-1 · CONSISTENCY · LOW · `.claude/skills/product-spec/scripts/assemble_audit_trail.py` (outcomes loop)
-- **Root cause:** the outcomes-source loop's comment asserted the learning-map "filters these outcome rows back
-  out" — but `render_outcomes._learning_edges` KEEPS rows whose `action` starts with `"outcome:"` (they are the
-  map's source nodes). A future maintainer trusting the comment would look for a non-existent filter.
-- **Before:** `# … The learning-map view filters these outcome rows back out.`
-- **Fix:** reworded to state the truth — the learning-map consumes the outcome rows as its source nodes (keeps,
-  not filters). Comment-only; no code path changed.
-- **After:**
-  ```
-  $ cd .claude/skills/product-spec && ../../../.claude/skills/.venv/bin/python3 -m pytest scripts/tests/ -q
-  ... 649 passed ...
-  ```
-- **Note:** no DEC (a doc-accuracy fix, no contradiction with an approved artifact).
-
-### PS-2 · CLEANUP · LOW · `.claude/skills/product-spec/scripts/{record_outcome,render_outcomes}.py`
-- **Root cause:** measured by EXECUTABLE lines (not docstrings), `record_outcome.py` was 254 and
-  `render_outcomes.py` 211 — both over the 200-LOC guideline, each fusing two concerns.
-- **Fix:** extracted the pure verdict core (`_num`/`compute_verdict`/`load_floors`/`load_goals`/enums)
-  → `outcome_verdict.py` (re-exported from `record_outcome`, callers unbroken; also fixes `load_outcomes`
-  reaching into `record_outcome` for `_num`); Phase-5 learning views → `render_learning.py`.
-- **After:** `record_outcome 207 · render_outcomes 147 · outcome_verdict 51 · render_learning 67`;
-  `pytest scripts/tests/ -q` → 649 passed.
-- **Note:** `record_outcome` stays ~7 over (writer + argparse CLI, one irreducible concern).
-
-### PS-3 · CORRECTNESS · LOW · `.claude/skills/product-spec/scripts/outcome_verdict.py` `_num`
-- **Root cause:** `float("inf")` / `float("nan")` parse without error, so `_num` returned a non-finite
-  number; an `actual`/`target` of `inf`/`nan` would have flowed into `compute_verdict` and produced a
-  nonsense ratio instead of being treated as un-computable.
-- **Before:** `_num("inf") → inf` (then `compute_verdict` divides with inf).
-- **Fix:** `_num` returns the value only when `math.isfinite(n)`, else `None` — a non-finite token now
-  routes to the Hybrid path (a PO-asserted `--verdict` is required), same as any other non-numeric input.
-- **After:**
-  ```
-  $ python3 -c "from outcome_verdict import _num; print(_num('inf'), _num('nan'), _num('1.5'))"
-  None None 1.5
-  ```
-- **Note:** absurd input, but now fails safe (asks the PO) rather than emitting a junk verdict.
-
-### PS-4 · CLEANUP · LOW · `.claude/skills/product-spec/scripts/load_outcomes.py`
-- **Root cause:** a bare `except Exception` around `load_goals(root)` (to tolerate a missing/broken
-  `brd.md`) also swallowed any programming error inside the loader — a silent-failure hazard.
-- **Before:** `except Exception:  # noqa: BLE001` → goals = {} on ANY exception.
-- **Fix:** narrowed to `except OutcomeError` — the only exception `load_goals` raises for a
-  missing/unparseable BRD. A genuine bug (e.g. an AttributeError) now propagates instead of degrading to
-  "no goals".
-- **After:**
-  ```
-  $ .claude/skills/.venv/bin/python3 -m pytest scripts/tests/test_outcome_viz.py -q   #  20 passed
-  ```
-- **Note:** behavior unchanged for the intended case (broken brd.md → orphan-only render); only genuine
-  errors are now surfaced.
-
-### PS-5 · CORRECTNESS · MED · `.claude/skills/product-spec/scripts/preferences.py` (`--set` float branch)
-- **Root cause:** the float-key branch swallowed a bad value (`contextlib.suppress(ValueError)`), so
-  `--set outcome_hit_floor=notanumber` saved + exited 0; the failure surfaced only on the NEXT `--learn`
-  (in a different module), pointing at a file the PO was told "saved" — unlike every enum key, which
-  rejects at write time.
-- **Before:** `$ preferences.py --set outcome_hit_floor=notanumber` → `saved preferences →` exit 0.
-- **Fix:** reject non-numeric (and out-of-`[0,1]`) at write time, exit 2, nothing written — mirroring
-  the enum/unknown-key paths. `contextlib` import dropped (its only use).
-- **After:**
-  ```
-  $ preferences.py --set outcome_hit_floor=notanumber   # exit 2, "must be a number"
-  $ preferences.py --set outcome_hit_floor=1.5           # exit 2, "must be in [0,1]"
-  $ preferences.py --set outcome_hit_floor=0.95          # exit 0, persists as float 0.95
-  $ .claude/skills/.venv/bin/python3 -m pytest scripts/tests/test_preferences.py -q   # passed (+3 new)
-  ```
-
-### PS-6/8/9 · CLEANUP+CONSISTENCY · LOW · product-spec scripts (regression-sweep tidy)
-- **Fix:** removed unused imports (`load_outcomes` `Path`, `render_outcomes` `Optional`,
-  `assemble_audit_trail` `yaml` [pre-existing]); refreshed the stale `visualize.py` module docstring
-  (14→20 views, 3→4 formats, +audit/outcome/learning groups); corrected `preferences.py` comments that
-  named the renamed `record_outcome._load_floors` → `outcome_verdict.load_floors`.
-- **After:** `$ python3 -m pyflakes scripts/*.py` → clean; `pytest scripts/tests/ -q` → 652 passed.
-
-### PS-7 · DRY · MED · `record_outcome.py` ↔ `decision_register.py` (shared register store)
-- **Root cause:** the two append-only fenced-record registers reimplemented the same machinery in
-  lockstep — `_RECORD_RE`, the fence/heading injection escape, `_register_lock`, and the raw id scan were
-  byte-identical twins, so a fix had to land in both.
-- **Fix:** extracted the shared primitives into `register_store.py` (`RECORD_RE`, `escape_injection`,
-  `register_lock`, `scan_record_ids`). Both registers now import them; each keeps only its own specifics
-  (id grammar, heading anchor, field schema, supersede-vs-verdict, atomic-vs-plain write). Behavior is
-  byte-identical — same regex object, same lock semantics, same escape — so it is a pure de-dup.
-- **After (old feature retested — `decision_register` is critical + heavily used):**
-  ```
-  $ pytest scripts/tests/test_decision_register.py test_record_outcome.py \
-      test_audit_trail.py test_apply_critique.py -q   # all passed
-  $ pytest scripts/tests/ -q                          # full suite passed
-  $ python3 -m pyflakes scripts/*.py                  # clean (also dropped a pre-existing unused `os`)
-  ```
-- **Note:** the `[~]` deferral in the Cycle-1 sweep was reversed on PO instruction ("fix all deferred,
-  retest old features") — done + retested, no behavior change.
-
-### PS-10 · CORRECTNESS · MINOR · `record_outcome.py` `append_alloc` (`--measured-on`)
-- **Root cause:** `--measured-on` accepted any string (exit 0); the field is a typed ISO 8601 date
-  (frontmatter-and-id-spec), and a non-date would sort/group wrong in trend columns / latest tiebreak.
-- **Fix:** validate with `dt.date.fromisoformat` → `OutcomeError` on failure (nothing written), mirroring
-  the goal/metric ref validation already in that function.
-- **After:** `record_outcome.py --measured-on not-a-date` → exit non-zero, no write; a valid ISO date
-  records. (`test_non_iso_measured_on_rejected`)
-
-### PS-11 · CLEANUP(test-gap) · LOW · learning views test coverage
-- **Fix:** added a direct test for `render_learning.learning_map_ascii` (empty + populated) and a
-  dispatcher-level test driving all 5 `--learn` views through `visualize.py` (scorecard/insight-gap/
-  outcome-trend ascii; learning-map ascii+mermaid; learning-map `--format md` rejected; learning HTML-only
-  note). Closes the gap Cycle 2 flagged (production-reachable ASCII downgrade was untested).
-- **After:** `pytest scripts/tests/test_outcome_viz.py -q` → passed (new dispatcher + ascii tests green).
+### Cycle 2 — 2026-06-09 (learning loop `--learn`; condensed)
+- PS-1 · CONSISTENCY · LOW · `assemble_audit_trail.py` — a comment claimed the learning-map "filters" the
+  outcome rows; it KEEPS them as source nodes. Fix: reworded (comment-only).
+- PS-2 · CLEANUP · LOW · `record_outcome.py`/`render_outcomes.py` — both >200 exec-LOC, each fusing two
+  concerns. Fix: extracted `outcome_verdict.py` (verdict core) + `render_learning.py` (callers unbroken). 649 passed.
+- PS-3 · CORRECTNESS · LOW · `outcome_verdict.py` `_num` — `inf`/`nan` parsed → junk ratio. Fix: return the
+  value only when `math.isfinite`, else `None` → routes to the PO-asserted Hybrid path.
+- PS-4 · CLEANUP · LOW · `load_outcomes.py` — a bare `except Exception` around `load_goals` swallowed real
+  bugs. Fix: narrow to `except OutcomeError` (the only exception a missing/broken BRD raises).
+- PS-5 · CORRECTNESS · MED · `preferences.py` (`--set` float) — a bad float saved + exited 0, failing only
+  later in another module. Fix: reject non-numeric / out-of-`[0,1]` at write time, exit 2, nothing written.
+- PS-6/8/9 · CLEANUP+CONSISTENCY · LOW · product-spec scripts — removed unused imports; refreshed the stale
+  `visualize.py` docstring; corrected comments naming the renamed `outcome_verdict.load_floors`. pyflakes clean.
+- PS-7 · DRY · MED · `record_outcome.py` ↔ `decision_register.py` — byte-identical fenced-register machinery
+  twinned. Fix: extracted `register_store.py` (`RECORD_RE`, `escape_injection`, `register_lock`,
+  `scan_record_ids`); pure de-dup, decision_register retested.
+- PS-10 · CORRECTNESS · MINOR · `record_outcome.py` `append_alloc` — `--measured-on` accepted any string; the
+  field is an ISO date. Fix: validate via `date.fromisoformat`.
+- PS-11 · CLEANUP(test-gap) · LOW · learning views — added a direct `render_learning.learning_map_ascii` test
+  + a dispatcher test driving all 5 `--learn` views through `visualize.py`.

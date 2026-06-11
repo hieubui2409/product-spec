@@ -55,7 +55,20 @@ def gather_lens(name: str, args) -> dict:
 
 
 def gather_all(args) -> list[dict]:
-    return [gather_lens(n, args) for n in OVERVIEW_ORDER if n in LENSES]
+    """Overview = every lens, each isolated. A single lens raising (e.g. the
+    workflow lens fail-loud when data/skill-chains.yaml is absent on a recipient)
+    must NOT blank the other six — it degrades to a VISIBLE error entry the
+    renderer surfaces (never a silent drop). The per-lens gather() keeps raising
+    at the function level (loud for unit tests); isolation lives only here."""
+    out: list[dict] = []
+    for n in OVERVIEW_ORDER:
+        if n not in LENSES:
+            continue
+        try:
+            out.append(gather_lens(n, args))
+        except Exception as e:  # noqa: BLE001 — one lens must not kill the overview
+            out.append({"lens": n, "error": f"{type(e).__name__}: {e}"})
+    return out
 
 
 def _render(data, fmt: str, args) -> str:

@@ -53,13 +53,13 @@ class TestAppendEvent:
         mod = _load(tmp_path)
 
         mod.append_event("invocations.jsonl", {"ts": "T", "skill": "product-spec", "session": "s1"})
-        mod.append_event("invocations.jsonl", {"ts": "T", "skill": "claude-pack",   "session": "s1"})
+        mod.append_event("invocations.jsonl", {"ts": "T", "skill": "sample-skill", "session": "s1"})
 
         sink = tmp_path / "invocations.jsonl"
         lines = _read_lines(sink)
         assert len(lines) == 2
         assert lines[0]["skill"] == "product-spec"
-        assert lines[1]["skill"] == "claude-pack"
+        assert lines[1]["skill"] == "sample-skill"
 
     # (b) disabled via CK_TELEMETRY_DISABLED
     def test_disabled_ck_telemetry_disabled_no_write(self, tmp_path, monkeypatch):

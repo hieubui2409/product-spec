@@ -1,7 +1,7 @@
 # Product-Spec Bundle — LLM Operating Guide
 
 Auto-loaded by Claude Code (always in context). This is the **always-on safety + routing
-layer** for three PO-facing skills. Each skill's full contract — flags, references-on-demand,
+layer** for four PO-facing skills. Each skill's full contract — flags, references-on-demand,
 script CLIs, output model, voice/safety specifics — lives in its `SKILL.md`. **When a request
 matches a skill below, load that skill's `SKILL.md` before acting; don't operate from memory.**
 
@@ -11,9 +11,11 @@ matches a skill below, load that skill's `SKILL.md` before acting; don't operate
 | export, decision, discover, reflect, update, status                             |      |
 | Critiquing an existing spec (4 lenses product/tech/market/craft, voice levels)  | `.claude/skills/product-spec-critique/SKILL.md` |
 | Packing/releasing the bundle, CHANGELOG lifecycle, tag-triggered CI             | `.claude/skills/release/SKILL.md` |
+| Usage/health read: which skills get used, script/subagent health, validate-pass | `.claude/skills/telemetry/SKILL.md` |
+| proxy — plain-Vietnamese analytics over local telemetry (read-only)             |      |
 
 Speak product language (personas/problems/value/scope/acceptance) for the two product skills;
-code/CLI vocabulary for `release`.
+code/CLI vocabulary for `release`; plain-Vietnamese usage/health narration for `telemetry`.
 
 ---
 

@@ -30,6 +30,7 @@ _T: dict[str, dict] = {
         "gate": "_Insufficient data (not enough data) — raw counts only, no recommendations._",
         "no_lenses": "_No lenses to render._",
         "no_chart": "> No chart-friendly data yet.",
+        "lens_error": "⚠ Lens `{lens}` failed: {error}",
         # usage
         "usage_h": "## Skill Usage (last {days} days)\n",
         "usage_total": "Total invocations: **{inv}** across **{used}** skill(s); catalog {cat}.\n",
@@ -89,6 +90,7 @@ _T: dict[str, dict] = {
         # validate
         "val_h": "## Effectiveness Proxy — validate-pass (internal quality)\n",
         "val_na": "not available on current data",
+        "val_na_reason": "not available on current data (no validate marker, no validate-script runs)",
         "val_pr_none": "n/a (no validate runs in window)",
         "val_cols": ["Metric", "Value"],
         "val_rate": "Validate pass rate",
@@ -112,6 +114,7 @@ _T: dict[str, dict] = {
         "gate": "_Chưa đủ dữ liệu — chỉ số liệu thô, không khuyến nghị._",
         "no_lenses": "_Không có lens nào để hiển thị._",
         "no_chart": "> Chưa có dữ liệu phù hợp để vẽ biểu đồ.",
+        "lens_error": "⚠ Lens `{lens}` lỗi: {error}",
         # usage
         "usage_h": "## Mức dùng kỹ năng ({days} ngày gần đây)\n",
         "usage_total": "Tổng lượt gọi: **{inv}** trên **{used}** kỹ năng; catalog {cat}.\n",
@@ -171,6 +174,7 @@ _T: dict[str, dict] = {
         # validate
         "val_h": "## Proxy hiệu quả — validate-pass (chất lượng nội bộ)\n",
         "val_na": "chưa có dữ liệu",
+        "val_na_reason": "chưa có dữ liệu (không có marker validate, không có lần chạy script validate)",
         "val_pr_none": "không có (không có lần validate nào trong cửa sổ)",
         "val_cols": ["Chỉ số", "Giá trị"],
         "val_rate": "Tỷ lệ validate-pass",
@@ -195,6 +199,18 @@ _T: dict[str, dict] = {
 def _t(lang: str, key: str):
     """Localized label; falls back to English for an unknown lang/key."""
     return (_T.get(lang) or _T["en"]).get(key, _T["en"][key])
+
+
+# Language-neutral reason codes the validate lens emits → localized label key.
+# Keeps the prose out of the gathered dict (one home, no EN-in-VI leak).
+_REASON_KEYS = {"no_data": "val_na_reason"}
+
+
+def _reason_label(a: dict, lang: str) -> str:
+    """Localize a lens 'unavailable' reason from its language-neutral reason_code;
+    fall back to the short val_na label for an unknown/absent code."""
+    key = _REASON_KEYS.get(a.get("reason_code"))
+    return _t(lang, key) if key else _t(lang, "val_na")
 
 
 def _fmt_tokens(n: int) -> str:
@@ -346,7 +362,7 @@ def _md_validate(a, lang):
     def t(k): return _t(lang, k)
     out = [t("val_h")]
     if not a.get("available"):
-        out.append(f"_{a.get('reason') or t('val_na')}_")
+        out.append(f"_{_reason_label(a, lang)}_")
         return "\n".join(out)
     if a.get("gated"):
         out.append(t("gate") + "\n")
@@ -374,7 +390,12 @@ _MD = {
 
 
 def render_md(aggregates: list[dict], top=None, lang: str = "vi") -> str:
-    parts = [_MD[a["lens"]](a, top, lang) for a in aggregates if a.get("lens") in _MD]
+    parts = []
+    for a in aggregates:
+        if a.get("error"):  # isolated-lens failure → visible line, never a silent drop
+            parts.append(_t(lang, "lens_error").format(lens=a.get("lens"), error=a["error"]))
+        elif a.get("lens") in _MD:
+            parts.append(_MD[a["lens"]](a, top, lang))
     return "\n\n".join(parts) if parts else _t(lang, "no_lenses")
 
 
@@ -390,6 +411,9 @@ def render_ascii(aggregates: list[dict], lang: str = "vi") -> str:
     def t(k): return _t(lang, k)
     lines = [t("banner")]
     for a in aggregates:
+        if a.get("error"):  # isolated-lens failure → visible status line, never dropped
+            lines.append("\n[!] " + t("lens_error").format(lens=a.get("lens"), error=a["error"]))
+            continue
         lens = a.get("lens")
         if lens == "usage_tokens":
             ext = a.get("never_used_external_count", 0)
@@ -433,7 +457,7 @@ def render_ascii(aggregates: list[dict], lang: str = "vi") -> str:
                 lines.append("\n" + _light(not a.get("gated")) + " "
                              + t("a_val").format(pr=pr_str, last=a["last_status"]))
             else:
-                lines.append("\n[i] " + t("a_val_na").format(reason=a.get("reason") or _t(lang, "val_na")))
+                lines.append("\n[i] " + t("a_val_na").format(reason=_reason_label(a, lang)))
     return "\n".join(lines)
 
 
@@ -461,6 +485,9 @@ def render_mermaid(aggregates: list[dict], lang: str = "vi") -> str:
     def t(k): return _t(lang, k)
     blocks = []
     for a in aggregates:
+        if a.get("error"):  # never silently drop an errored lens, even on the chart surface
+            blocks.append(t("lens_error").format(lens=a.get("lens"), error=a["error"]))
+            continue
         lens = a.get("lens")
         if lens == "usage_tokens":
             if a.get("gated"):

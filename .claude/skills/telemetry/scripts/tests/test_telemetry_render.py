@@ -110,6 +110,39 @@ class TestMd:
         assert "No lenses" in render_md([], lang="en")
 
 
+class TestValidateI18n:
+    def test_unavailable_reason_localized_no_english_leak_in_vi(self):
+        agg = {"lens": "validate_proxy", "available": False, "reason_code": "no_data"}
+        vi = render_md([agg], lang="vi")
+        en = render_md([agg], lang="en")
+        assert "chưa có dữ liệu" in vi
+        assert "not available on current data" not in vi  # EN must not leak into VI
+        assert "not available on current data" in en
+
+
+class TestLensErrorIsolation:
+    """A lens that raised becomes a visible error entry — render surfaces it,
+    never silently drops it, and the healthy lenses still render."""
+    def test_error_entry_surfaced_in_md(self):
+        aggs = [_usage(False), {"lens": "workflow", "error": "FileNotFoundError: skill-chains.yaml"}]
+        out = render_md(aggs)
+        assert "## Mức dùng kỹ năng" in out                       # healthy lens still renders
+        assert "workflow" in out and "FileNotFoundError" in out   # error not dropped
+
+    def test_error_entry_surfaced_in_ascii(self):
+        aggs = [{"lens": "health", "error": "ValueError: boom"}, _usage(False)]
+        out = render_ascii(aggs)
+        assert "[!]" in out and "ValueError: boom" in out
+        assert "MỨC DÙNG" in out
+
+    def test_error_entry_surfaced_in_mermaid(self):
+        # a chartable lens (health) erroring must still appear as a visible note —
+        # never silently vanish from the chart surface.
+        aggs = [{"lens": "health", "error": "ValueError: boom"}, _usage(False)]
+        out = render_mermaid(aggs)
+        assert "ValueError: boom" in out and "health" in out
+
+
 class TestBilingual:
     def test_data_is_language_neutral(self):
         """vi/en differ only in fixed labels — numbers, skill ids stay identical."""
