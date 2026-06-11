@@ -27,6 +27,11 @@ Contract (Script-vs-LLM split — structural only, no judgment):
   - Analytical script: ALWAYS exits 0 (the CLI contract); --apply is the only
     mutating flag.
 
+This migrator ONLY inserts empty placeholders and NEVER writes an `approved` file. The
+sibling `migrate_metric_to_metrics.py` handles the one rename that moves a real VALUE and
+must run on an approved BRD (legacy singular `metric:` → plural `metrics:`); it is a
+separate, confirmation-gated script precisely so this one's invariants stay intact.
+
 CLI:
     migrate_multidim_fields.py --root <project-dir> [--apply]
         Prints a JSON report to stdout. Always exits 0.

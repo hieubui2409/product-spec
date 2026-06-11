@@ -19,105 +19,35 @@ roll the oldest cycle into `## Archive` when exceeded.
 
 ## Cycle 3 — 2026-06-11 (PO field-audit fixes)
 
-### LIB-5 · CORRECTNESS · HIGH · `telemetry/scripts/lens_workflow_chains.py`
-- The declared-chains source lived in two routing docs a context-flow change deleted; the lens read them
-  by hardcoded path and silently returned `[]` while a test asserted ≥1 chain → a red test on the default
-  branch. Fix: chains moved to an on-demand in-skill `data/skill-chains.yaml` (zero always-on cost),
-  `declared_chains()` fail-loud (`FileNotFoundError` missing / `ValueError` malformed) instead of `[]`.
-  (`test_declared_chains_loaded_from_data_file` + 3 siblings; 202 passed.)
-
-### LIB-6 · CONSISTENCY · HIGH · `.github/workflows/`
-- 26 tracked test files (telemetry/hooks/_shared) had no workflow; `product-spec-ci.yml` omitted
-  `_shared/**` though its eval gate runs `_shared/lib/run_evals.py`. Fix: `internal-test-suite.yml` runs
-  the exact CONTRIBUTING pytest command + a drift-guard test ties workflow ⇄ CONTRIBUTING targets;
-  `_shared/**` added to the path filter. (`test_internal_ci_runs_canonical_suite.py`; 202 passed.)
-
-### LIB-4 · CORRECTNESS · HIGH · `hooks/emit_session_summary.py`
-- `first_timestamp()` read only the literal first transcript line (often a ts-less meta line) →
-  `duration_s:0` and empty `skills[]`. Fix: `scan_head()` scans the bounded head to the first record WITH
-  a `ts` (real duration) + collects early head `Skill` invocations, merged with the tail.
-  (`test_duration_nonzero_when_first_record_has_no_timestamp`, `test_scan_head_returns_first_ts_and_early_skills`.)
-  Subagent-outcome classification deferred to a real-transcript pass.
-
-### LIB-7 · CORRECTNESS · MED · `hooks/hook_runtime.py` (SCRIPT_RE)
-- **Root cause:** the skill-script matcher was a bare substring — `grep/ls/cat` of a script path counted as
-  a "script run", and (via the validate-proxy reading those records) a `grep check_*.py` exit 0 inflated the
-  validate pass-rate.
-- **Before:** `SCRIPT_RE.search("grep -n x .claude/skills/product-spec/scripts/check_consistency.py")` → matched.
-- **Fix:** require execution position — the path must sit at a command boundary or after an interpreter
-  (`python[3]`/`bash`/`sh`, incl. a venv/abs/`$VAR` dir prefix). `(?:\S*/)?` admits absolute and
-  `$CLAUDE_PROJECT_DIR` exec paths without reopening the substring hole (it cannot bridge the space at an
-  argument position, so a grep/ls/cat of the path — even an absolute one — stays rejected).
-- **After:** grep/ls/cat → no match; direct / `python3 <path>` / venv-python / `cd && python3` / env-prefixed /
-  absolute / `$VAR`-prefixed exec → match, group(1) = `<skill>/scripts/<file>`.
-  (`test_reference_only_command_is_not_counted_as_run`, `test_direct_and_compound_execution_are_counted`,
-  `test_absolute_and_var_prefixed_execution_are_counted`)
-- **Note:** the matcher deliberately under-counts the safe direction — an exotic `python3 -W ignore <path>`
-  (a flag that takes a space-separated argument) is missed; no documented invocation uses that form, and the
-  alternative (a wider flag rule) would mis-eat `python3 -u <path>`.
-
-### LIB-8 · CORRECTNESS · MED · `hooks/track_script_execution.py`
-- **Root cause:** the `session` join key was computed but never written to the record, so the workflow and
-  health lenses could not join a script run to the other three sinks (all of which record `session`).
-- **Fix:** add `"session"` to the emitted record dict.
-- **After:** `test_script_record_carries_session_join_key` asserts the record carries the session id.
-
-### carry-in · ROBUSTNESS · MED · `telemetry/scripts/analyze_telemetry.py` (gather_all) + `telemetry_render.py`
-- `gather_all` had no isolation — one lens raising (e.g. the workflow lens fail-loud on a recipient missing
-  `data/skill-chains.yaml`) crashed the entire `--lens all` overview. Fix: wrap each lens → a VISIBLE
-  `{lens, error}` entry (never a silent drop); renderers surface it in md/ascii/mermaid before lens dispatch.
-  (`test_overview_isolates_a_failing_lens`, `test_error_entry_surfaced_in_md`/`_ascii`/`_mermaid`.)
-
-### LIB-10 · CONSISTENCY · MED · `CLAUDE.md` + `product-spec/references/workflow-status.md`
-- **Root cause:** the always-on routing layer said "three PO-facing skills" with a 3-row table → the
-  `telemetry` skill was invisible, so the model never routed to it.
-- **Fix:** "three"→"four" + a telemetry routing row + a voice note (CLAUDE.md is not token-measured by the
-  footprint guard); added a read-only telemetry pointer to the `--status` reference (an on-demand ref; the
-  committed baseline was regenerated for the +107-token ref growth).
-- **After:** the footprint regression guard is green; `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/product-spec -q` green.
-
-### LIB-12 · CLEANUP(i18n) · LOW · `telemetry/scripts/lens_validate_proxy.py` + `telemetry_render.py`
-- **Root cause:** the validate lens baked an English `reason` string into the gathered dict; under
-  `--lang vi` that English prose leaked into Vietnamese output (and into the json path).
-- **Fix:** the lens emits a language-neutral `reason_code`; the renderer localizes it via
-  `_reason_label`/`_REASON_KEYS` (the `val_na_reason` label is defined in both `en` and `vi`).
-- **After:** `test_unavailable_emits_language_neutral_reason_code` (asserts `"reason" not in d`) +
-  `test_unavailable_reason_localized_no_english_leak_in_vi` (English absent from VI render).
-
-### LIB-13/14 · CONSISTENCY+CLEANUP · LOW · audit/readback docs + test fixtures
-- **Fix:** `telemetry-readback.md` gained the crash-audit sink (`.claude/hooks/.logs/hook-crashes.log`) +
-  the per-hook config-gate (`product-spec-hooks.json`) sections, each claim verified against `hook_runtime`;
-  `README.md` (EN+VI) re-attributed the memory-gap hook to `product-spec` (it had been scoped under
-  `product-spec-critique`); test fixtures dropped the stale `claude-pack` id for a neutral `sample-skill`.
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/telemetry .claude/hooks -q` green;
-  doc claims cross-checked against `hook_runtime.py` + the product-spec / critique installers.
-
-### LIB-3 · CORRECTNESS · HIGH · `release/.../install.sh.template` + `hooks/memory_gap_hook.py` + `hooks/hook_runtime.py`
-- **Root cause:** the installer copied `.claude/hooks/*.py` via generic skip-existing, so an upgrade KEPT a
-  pre-config-gate `memory_gap_hook.py` (an old copy that blocks turn-end unconditionally with no
-  `hook_enabled` check); the registrar then wired it → exit-2 blocking switched on for a PO who never opted
-  in. Separately, the hook had only a single blocking mode, so any future auto-enable would impose blocking.
-- **Before:** install over a tree whose `memory_gap_hook.py` lacks a `hook_enabled` call → the old unsafe
-  copy survives (generic `[SKIP]`), and once wired it blocks Stop unconditionally.
-- **Fix (3 parts):**
-  1. **Upgrade safety** — the installer treats the two enforcement hooks as kit code: a copy with no
-     `hook_enabled` call is force-replaced with the gated bundle copy + `.bak.<ts>`; a gate-aware copy the PO
-     edited is KEPT and flagged `[CONFLICT]` (never blind-overwritten; `FORCE_OVERWRITE=1` takes the bundle).
-  2. **Advisory mode** — `memory_gap_mode()` (default `advisory`) gates the block decision: advisory warns on
-     stderr at exit 0; `blocking` (opt-in) keeps the exit-2 contract. The shipped config auto-enables the
-     hook in advisory mode. A missing key is still DISABLED, and a non-`blocking` mode value falls to the safe
-     advisory default — auto-enable can never silently impose blocking.
-  3. **product-memory lens** — read-only `lens_product_memory.gather()` narrates `docs/product/.memory`
-     health (last-validated age, missing state files, critique-cache size) under `--lens product_memory|all`.
-- **After:** `.claude/skills/.venv/bin/python3 -m pytest .claude/skills/release/scripts/tests/test_installer_e2e.py
-  .claude/skills/product-spec/scripts/tests/test_memory_gap_hook.py .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q`
-  → green incl. `test_upgrade_replaces_pre_config_gate_enforcement_hook`,
-  `test_upgrade_preserves_po_edited_gate_aware_hook`, `test_auto_enable_defaults_to_advisory_warn_exit_zero`,
-  `test_opted_in_blocking_is_not_downgraded`, `test_memory_gap_mode_defaults_to_advisory_and_honors_blocking`,
-  `test_absent_store_is_flagged`. The telemetry SKILL.md grew +41 tokens (new lens row) → footprint baseline regenerated.
-- **Note:** advisory is the new shipped default but the runtime "missing enforcement key ⇒ disabled" invariant
-  is unchanged; blocking remains opt-in (`memory_gap_mode: "blocking"`). Recorded in the config `_README` +
-  `telemetry-readback.md` (no kit-level DEC-<n> registry exists; product `decisions.md` is for PO rulings).
+### Cycle 3 · P01–P03 landed (condensed; full before/after rolled off per the size cap)
+- LIB-5 · CORRECTNESS · HIGH · `telemetry/.../lens_workflow_chains.py` — declared-chains read a deleted
+  routing-doc path → silent `[]` vs a ≥1 assertion. Fix: chains → on-demand `data/skill-chains.yaml`,
+  `declared_chains()` fail-loud. (`test_declared_chains_loaded_from_data_file` +3)
+- LIB-6 · CONSISTENCY · HIGH · `.github/workflows/` — 26 tracked tests had no workflow; the eval gate ran
+  `_shared/lib/run_evals.py` off the path filter. Fix: `internal-test-suite.yml` mirrors the CONTRIBUTING
+  command + a drift-guard test ties workflow⇄CONTRIBUTING; `_shared/**` path-filtered. (`test_internal_ci_runs_canonical_suite`)
+- LIB-4 · CORRECTNESS · HIGH · `hooks/emit_session_summary.py` — `first_timestamp()` read a ts-less meta
+  line → `duration_s:0`/empty skills. Fix: `scan_head()` to the first ts'd record + early head Skill calls.
+  (`test_duration_nonzero_when_first_record_has_no_timestamp`; subagent-outcome classify deferred to real-transcript.)
+- LIB-7 · CORRECTNESS · MED · `hooks/hook_runtime.py` (SCRIPT_RE) — a bare-substring matcher counted a
+  grep/ls/cat of a script path as a run + inflated validate pass-rate. Fix: require exec position (command
+  boundary / interpreter prefix, incl. abs & `$VAR`). (`test_reference_only_command_is_not_counted_as_run` +2)
+- LIB-8 · CORRECTNESS · MED · `hooks/track_script_execution.py` — `session` join key computed, never written
+  → script runs un-joinable to the other 3 sinks. Fix: emit `"session"`. (`test_script_record_carries_session_join_key`)
+- carry-in · ROBUSTNESS · MED · `telemetry/.../analyze_telemetry.py` — one lens raising crashed the whole
+  `--lens all` overview. Fix: per-lens isolation → a visible `{lens,error}` entry, surfaced in md/ascii/mermaid.
+- LIB-10 · CONSISTENCY · MED · `CLAUDE.md` + `references/workflow-status.md` — routing said "three skills",
+  hiding `telemetry`. Fix: "four" + a telemetry row + a `--status` pointer (footprint baseline regenerated).
+- LIB-12 · CLEANUP(i18n) · LOW · `telemetry/.../lens_validate_proxy.py` — an English `reason` leaked under
+  `--lang vi`. Fix: a language-neutral `reason_code` localized by the renderer. (`..._no_english_leak_in_vi`)
+- LIB-13/14 · CONSISTENCY+CLEANUP · LOW · audit/readback docs + fixtures — added crash-audit + per-hook
+  config-gate sections (verified vs `hook_runtime`); re-attributed the memory-gap hook to `product-spec`;
+  fixtures dropped the stale `claude-pack` id.
+- LIB-3 · CORRECTNESS · HIGH · `release/.../install.sh.template` + `hooks/memory_gap_hook.py` + `hook_runtime.py`
+  — an upgrade kept a pre-config-gate hook → exit-2 blocking switched on for a non-opted-in PO. Fix: the
+  installer force-replaces an un-gated enforcement hook (`.bak`, `[CONFLICT]` on a PO-edited copy) +
+  `memory_gap_mode()` advisory default (warn exit 0; blocking opt-in; missing key = disabled) + a read-only
+  product_memory lens. (`test_upgrade_replaces_pre_config_gate_enforcement_hook` +5; baseline regenerated.)
 
 ### PS-14 · CORRECTNESS · HIGH · `product-spec/scripts/spec_graph.py` + `parse_critique_report.py`
 - **Root cause:** the critique provenance/freshness fingerprint hashed only body bytes; an AC-only edit (AC
@@ -156,6 +86,62 @@ roll the oldest cycle into `## Archive` when exceeded.
   `test_prose_fallback_recovers_findings_when_cache_absent`,
   `test_prose_fallback_two_markers_on_one_line_keep_distinct_critiques`, `test_doctor_flags_missing_lens_cache_and_report`.
 - **Note:** the persist envelope degrades to a clean `bad_input` record (never a crash; a non-int `level` is caught, not leaked).
+
+### PS-13 · CORRECTNESS · HIGH · `product-spec/scripts/check_consistency_schema.py` + `migrate_metric_to_metrics.py` (new)
+- **Root cause:** a BRD authored by an older skill carries the singular `metric:` goal key; the missing-metric
+  check fired an ERROR per goal → `strict_gate` exit 2 blocked an approved artifact, and no migrator moved the
+  value `metric:`→`metrics:` (an approved file the placeholder-only migrator must never touch).
+- **Before:** `check_consistency.py` on a legacy `metric:` BRD → `goal_without_metric` ERROR ×N, exit 2.
+- **Fix:** a goal with no plural `metrics:` but an intrinsic singular `metric:` key emits `legacy_metric_key`
+  WARN (names the key, never blocks); a SEPARATE GATE-safe `migrate_metric_to_metrics.py` does the rename —
+  dry-run writes 0 bytes, `--apply` demands BOTH `--confirmed-by` AND `--date` (the approved-artifact
+  re-approval), wraps a scalar into a list, stamps `schema_version: 2`, backs up `.bak`. A truly metric-LESS
+  goal still ERRORs (the gate is not loosened).
+- **After:** `.../python3 -m pytest .claude/skills/product-spec -q` → 678 green incl
+  `test_singular_metric_key_warns_not_errors_on_legacy`, `test_draft_missing_metric_still_errors`,
+  `test_migrate_dry_run_writes_zero_bytes`, `test_migrate_apply_requires_confirmed_by_and_date`.
+- **Note:** the migrator rename is scoped per goal entry — an entry already on plural `metrics:` is skipped
+  (no duplicate key) and a trailing inline comment on a scalar `metric:` is preserved (stays valid YAML):
+  `test_migrate_skips_goal_already_on_plural_metrics`, `test_migrate_preserves_inline_comment_on_scalar_metric`.
+
+### PS-17 · CORRECTNESS · MED · `product-spec/scripts/check_consistency_schema.py` + `spec_graph.py`
+- **Root cause:** a goal missing the spec-required `status` was caught by no check, and a goal's `moscow` was
+  silently dropped from the graph node.
+- **Before:** a goal with no `status:` passed `check_consistency.py` clean; `moscow` absent from the node.
+- **Fix:** `goal_without_status` keyed on the BRD `schema_version` marker — WARN when the artifact predates the
+  marker (legacy lenience), ERROR at `schema_version >= 2` (a migrated/fresh spec must comply); `moscow` +
+  `unknown_goal_keys` now ride the goal node (an unknown key → `unknown_goal_key` WARN).
+- **After:** green incl `test_goal_without_status_warns_on_legacy_errors_on_schema_v2`, `test_moscow_preserved_in_graph_node`.
+- **Note:** `moscow` is deliberately NOT folded into the provenance `content_hash` (it would re-churn the prior
+  wave's caches); it rides `CHANGED_FIELDS` instead.
+
+### PS-18 · CONSISTENCY · MED · `product-spec/scripts/check_consistency_schema.py` + `spec_graph.py`
+- **Root cause:** an LLM-authored artifact could carry parent-only fields (a story holding `prd`/`brd_goals`,
+  whose parent is an epic) and a non-semver `version`, and the validator stayed silent.
+- **Before:** a story with `prd:`/`brd_goals:` and `version: "0.3"` validated clean.
+- **Fix:** `misplaced_parent_field` WARN (a story carrying `prd`/non-empty `brd_goals`) + `bad_version_format`
+  WARN (a `version` not matching semver-lite `MAJOR.MINOR.PATCH`); `parse_semver` consolidated to a single
+  home in `spec_graph.py` (consumed by both the parent/child compare and this lint).
+- **After:** green incl `test_misplaced_parent_field_and_bad_version_flagged`.
+- **Note (deferred, by design):** a generic per-type frontmatter whitelist + a derived-`title`-in-frontmatter
+  flag are NOT shipped — both would false-positive on legit `created`/`updated`/`version`; scope is held to the
+  two node-derivable signals. Recorded here (no kit-level DEC registry; `decisions.md` is for PO rulings).
+
+### PS-21 · CONSISTENCY · MED · `product-spec/SKILL.md` + `references/frontmatter-and-id-spec.md`
+- **Root cause:** `migrate_multidim_fields.py` was orphaned from all routing (0 SKILL.md/reference hits) → a v1
+  spec hitting post-upgrade warn-noise had no signposted path to migration.
+- **Fix:** a trimmed "schema migration" callout in SKILL.md routes BOTH migrators (empty-shape vs the
+  value-moving `metric→metrics`); the frontmatter reference gained `schema_version`, the `moscow` goal field,
+  and a version-format warn note. (SKILL.md + ref grew → footprint baseline regenerated in the same change.)
+- **After:** `grep -c migrate_metric_to_metrics product-spec/SKILL.md` ≥ 1; the footprint regression guard is green.
+
+### PS-23 · CORRECTNESS · LOW · `product-spec/scripts/encoding_utils.py` + `check_consistency.py` + `spec_graph.py`
+- **Root cause:** piping a large JSON emitter into `head` closed the pipe early → a `BrokenPipeError` traceback
+  + exit 1, violating the "analytical script always exits 0" contract.
+- **Before:** `check_consistency.py ... | head -c 16` → traceback, returncode 1.
+- **Fix:** a single-home `emit_json()` helper writes/flushes and swallows `BrokenPipeError` (redirecting the fd
+  to devnull), wired into both script mains.
+- **After:** `test_check_consistency_survives_broken_pipe` (400 stories piped to `head -c 16`) → returncode 0, no traceback.
 
 ---
 

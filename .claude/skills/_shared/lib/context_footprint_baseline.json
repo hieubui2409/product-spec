@@ -3,7 +3,7 @@
     "refs": {
       "behavioral-memory.md": 3137,
       "document-model-and-hierarchy.md": 2530,
-      "frontmatter-and-id-spec.md": 3999,
+      "frontmatter-and-id-spec.md": 4184,
       "guardrails-and-boundaries.md": 2603,
       "interview-brd.md": 1451,
       "interview-epic.md": 887,
@@ -28,8 +28,8 @@
       "workflow-update.md": 2372,
       "workflow-validate.md": 6844
     },
-    "skill_md_tokens": 5371,
-    "total_tokens": 62345
+    "skill_md_tokens": 5465,
+    "total_tokens": 62624
   },
   "product-spec-critique": {
     "refs": {

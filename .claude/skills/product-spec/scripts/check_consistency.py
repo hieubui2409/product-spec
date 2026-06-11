@@ -16,20 +16,23 @@ CLI:
 """
 
 import argparse
-import json
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from encoding_utils import configure_utf8_console
+from encoding_utils import configure_utf8_console, emit_json
 from spec_graph import (
     build_graph,
     _now,
     ID_PATTERN_BY_TYPE,
     make_finding as _f,
     resolve_ac as _resolve_ac,
+    parse_semver as _parse_semver,
+)
+from check_consistency_schema import (
+    check_goals as _check_goals,
+    check_frontmatter_schema as _check_frontmatter_schema,
 )
 
 # TIME / RISK / COMPETITION checks live in focused sibling modules.
@@ -96,17 +99,6 @@ LIST_FIELDS = (
 PERSONA_SOFT_CAP = 4
 
 STATUS_ORDER = {"draft": 0, "review": 1, "approved": 2}
-
-_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
-
-
-def _parse_semver(v: Any) -> Optional[tuple]:
-    if not isinstance(v, str):
-        return None
-    m = _SEMVER_RE.match(v.strip())
-    if not m:
-        return None
-    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
 
 def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -187,20 +179,12 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
             elif len(ac) < 2:
                 findings.append(_f("low_ac_count", "warn", n, f"Story has {len(ac)} acceptance criteria; >=2 recommended.", count=len(ac)))
 
-        # A BRD goal must carry at least one success metric (frontmatter-and-id-spec:
-        # `metrics` "required, >=1 metric slug"). Iterate `type:goal` nodes (metrics are
-        # populated onto goal nodes by spec_graph._node_from_goal) — NOT the LIST_FIELDS
-        # type loop, which only checks shape. `error` mirrors missing_ac. A non-empty list
-        # passes; None/[] fails. (An invalid non-list `metrics` is already an invalid_type.)
-        if ntype == "goal":
-            metrics = n.get("metrics")
-            # Fire on a missing key (None) OR an empty list; stay silent on a non-empty list.
-            # (Parenthesized for clarity — a non-list `metrics` is already an invalid_type above.)
-            if metrics is None or (isinstance(metrics, list) and not metrics):
-                findings.append(_f(
-                    "goal_without_metric", "error", n,
-                    f"BRD goal {nid} has no success metric; at least one metric slug is required.",
-                ))
+    # Goal-entry + frontmatter shape rules (metric/status/stray-key, misplaced parent
+    # refs, malformed version) live in the focused schema sibling — see
+    # check_consistency_schema. goal_without_metric/legacy_metric_key are emitted there,
+    # not in the per-node loop above.
+    findings.extend(_check_goals(graph))
+    findings.extend(_check_frontmatter_schema(graph))
 
     findings.extend(_status_inconsistency(graph))
     findings.extend(_version_inconsistency(graph))
@@ -377,7 +361,9 @@ def main() -> int:
         "findings": findings,
         "graph": graph,
     }
-    print(json.dumps(output, indent=2, ensure_ascii=False, default=str))
+    # emit_json (not a bare print) so a closed downstream pipe — `check_consistency … | head`
+    # — ends cleanly (exit 0, no traceback) instead of breaking the always-exit-0 contract.
+    emit_json(output)
     return 0
 
 

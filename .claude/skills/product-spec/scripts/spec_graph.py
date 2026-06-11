@@ -22,7 +22,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from encoding_utils import configure_utf8_console
+from encoding_utils import configure_utf8_console, emit_json
 from frontmatter_parser import parse_file
 
 configure_utf8_console()
@@ -101,10 +101,15 @@ def build_nodes(artifacts: List[Dict[str, Any]], product_dir: Path) -> List[Dict
         node_type = _node_type(art)
         if node_type == "brd":
             goals = fm.get("goals") or []
+            # The schema-era marker lives on the BRD artifact, not the goal entry, so
+            # thread it down: goal-level checks decide WARN (legacy, not-yet-migrated)
+            # vs ERROR (the BRD declares it is on the post-migration schema) off it.
+            brd_schema_version = fm.get("schema_version")
             for g in goals:
                 if not isinstance(g, dict):
                     continue
-                nodes.append(_node_from_goal(g, parent_file=rel))
+                nodes.append(_node_from_goal(g, parent_file=rel,
+                                             schema_version=brd_schema_version))
         else:
             nodes.append(_node_from_artifact(fm, rel, node_type, art.get("body") or ""))
     return nodes
@@ -187,14 +192,34 @@ def _node_from_artifact(fm: Dict[str, Any], file_rel: str, node_type: Optional[s
     }
 
 
-def _node_from_goal(goal: Dict[str, Any], parent_file: str) -> Dict[str, Any]:
+# The keys a BRD goal entry may carry (frontmatter-and-id-spec → BRD `goals`). Anything
+# outside this set is an out-of-spec goal key the consistency check surfaces — notably the
+# legacy singular `metric:` (vs the spec's plural `metrics:`), which drives the migrate hint.
+ALLOWED_GOAL_KEYS = frozenset({"id", "title", "metrics", "status", "owner", "moscow"})
+
+
+def _node_from_goal(goal: Dict[str, Any], parent_file: str,
+                    schema_version: Any = None) -> Dict[str, Any]:
     return {
         "id": _scalar_id(goal.get("id")),
         "type": "goal",
         "title": goal.get("title") or "",
         "status": goal.get("status"),
         "metrics": goal.get("metrics") or [],
+        # moscow on a goal is a real (optional) priority field — preserve it onto the node
+        # instead of dropping it, so the enum check validates it, the roadmap views can read
+        # it, and CHANGED_FIELDS registers a goal-priority edit. Folded into NEITHER hash:
+        # CHANGED_FIELDS already tracks `moscow` directly, and content_hash stays the P04
+        # body+AC fingerprint (goal content_hash keeps its title/status/metrics/owner fold).
+        "moscow": goal.get("moscow"),
         "owner": goal.get("owner"),
+        # The parent BRD's schema-era marker (None on a legacy spec). The goal status/metric
+        # checks WARN on a not-yet-migrated legacy spec and ERROR once it is >= 2.
+        "schema_version": schema_version,
+        # Goal keys outside the spec's allowed set (sorted, str-coerced). The single signal
+        # the schema check reads to (a) name a legacy `metric:` for the migrate hint and
+        # (b) warn on any other stray goal key — without re-walking the raw frontmatter.
+        "unknown_goal_keys": sorted(str(k) for k in goal.keys() if k not in ALLOWED_GOAL_KEYS),
         "file": parent_file,
         # Goals are expanded from brd.md.goals and have no standalone body to
         # fingerprint, so body_hash is None. changed_nodes treats a None/absent
@@ -635,6 +660,20 @@ ID_PATTERN_BY_TYPE = {
 # Competitor ID grammar: `COMP-<SLUG>` (same parent-scoped discipline).
 COMP_ID_PATTERN = re.compile(r"^COMP-[A-Z][A-Z0-9-]{0,15}$")
 
+# semver-lite (major.minor.patch) — the single home for the version-format rule shared by
+# the parent-vs-child version comparison and the malformed-version lint. Returns the parsed
+# (major, minor, patch) tuple, or None when `v` is not a clean 3-part semver string.
+_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+
+
+def parse_semver(v: Any) -> Optional[tuple]:
+    if not isinstance(v, str):
+        return None
+    m = _SEMVER_RE.match(v.strip())
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
 
 def make_finding(check_id: str, severity: str, node: Dict[str, Any], detail: str, **context) -> Dict[str, Any]:
     """The single home for the finding-record constructor shared by
@@ -703,18 +742,18 @@ def main() -> int:
 
     if args.downstream:
         ids = sorted(downstream(graph, args.downstream))
-        print(json.dumps({"node": args.downstream, "downstream": ids}, indent=2, ensure_ascii=False, default=str))
+        emit_json({"node": args.downstream, "downstream": ids})
         return 0
 
     if args.snapshot:
         snap = write_snapshot(graph, root)
         graph["__snapshot_path"] = str(snap.relative_to(root))
 
-    # `default=str` coerces YAML-typed values such as `status: 2026-05-29`
-    # (which PyYAML auto-parses to `datetime.date`) into ISO strings, so
-    # the script keeps its "always exit 0, emit JSON" contract instead
-    # of raising `TypeError: Object of type date is not JSON serializable`.
-    print(json.dumps(graph, indent=2, ensure_ascii=False, default=str))
+    # emit_json keeps the "always exit 0, emit JSON" contract two ways: `default=str`
+    # coerces YAML-typed values such as `status: 2026-05-29` (PyYAML → datetime.date) into
+    # ISO strings instead of raising, and a closed downstream pipe (`spec_graph … | head`)
+    # ends cleanly rather than dumping a BrokenPipeError traceback.
+    emit_json(graph)
     return 0
 
 

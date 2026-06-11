@@ -31,7 +31,8 @@ Parent-scoped — globally unique by construction, lineage readable, no central 
 | `owner` | string | no | free text | who is accountable |
 | `created` | ISO 8601 | yes | e.g. `2026-05-28` | creation date |
 | `updated` | ISO 8601 | yes | e.g. `2026-05-28` | last update date |
-| `version` | semver-lite | yes | e.g. `0.1.0`, `1.0.0` | major.minor.patch (lean) |
+| `version` | semver-lite | yes | e.g. `0.1.0`, `1.0.0` | major.minor.patch (lean); a non-3-part value warns `bad_version_format` |
+| `schema_version` | int | no | `2` | schema-era marker stamped by a migration; gates legacy-vs-migrated shape (a missing goal `status`/`metric` warns on a legacy spec, errors once this is `>= 2`) |
 
 ## Parent-Link Fields
 
@@ -86,14 +87,20 @@ metrics: [conversion-rate, time-to-checkout]
 goals:
   - id: BRD-G1                                  # parent-scoped ID, required
     title: "Onboard 100 boutique brands in 12 months"  # required, prose
-    metrics: [brands-onboarded]                 # required, ≥1 metric slug
+    metrics: [brands-onboarded]                 # required, ≥1 metric slug (plural key)
     status: draft                               # required, closed enum
     owner: Jane Doe                             # optional, accountable person; LLM should ask if missing
+    moscow: must                                # optional, MoSCoW priority (must|should|could|wont)
   - id: BRD-G2
     title: "Achieve 80% 90-day repeat-purchase rate"
     metrics: [repeat-rate-90d]
     status: draft
 ```
+
+The metric key is plural `metrics:` (a list). A legacy spec on the old singular `metric:` is not auto-rewritten: validate
+emits a `legacy_metric_key` **warn** (never an error block) and the GATE-safe `migrate_metric_to_metrics.py` renames it to
+`metrics:` (value preserved) once the PO confirms. A goal key outside `id/title/metrics/status/owner/moscow` warns
+`unknown_goal_key`.
 
 The BRD template (`assets/templates/brd.md`) carries a YAML comment block above `goals:` repeating this shape so a PO opening a freshly generated `brd.md` sees the contract inline.
 

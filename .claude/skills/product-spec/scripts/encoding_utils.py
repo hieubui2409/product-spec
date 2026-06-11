@@ -7,8 +7,34 @@ reconfiguring stdout/stderr to UTF-8 and providing encoding-aware file
 I/O helpers.
 """
 
+import json
+import os
 import sys
 from pathlib import Path
+from typing import Any
+
+
+def emit_json(obj: Any) -> None:
+    """Print `obj` as indented JSON to stdout, surviving a closed downstream pipe.
+
+    The analytical scripts emit large JSON and promise to "always exit 0". When their
+    stdout is piped into a consumer that closes early (`check_consistency.py … | head`),
+    the final write hits a broken pipe and — left unhandled — Python prints a traceback
+    and exits non-zero, breaking that contract and noising the PO's terminal.
+
+    On BrokenPipeError we swallow it and redirect stdout to os.devnull so the interpreter's
+    flush-on-exit cannot re-raise. The single home every big-JSON CLI uses for this.
+    """
+    try:
+        sys.stdout.write(json.dumps(obj, indent=2, ensure_ascii=False, default=str))
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    except BrokenPipeError:
+        try:
+            devnull = os.open(os.devnull, os.O_WRONLY)
+            os.dup2(devnull, sys.stdout.fileno())
+        except OSError:
+            pass
 
 
 def configure_utf8_console():

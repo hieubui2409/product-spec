@@ -177,6 +177,11 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 > `.claude/settings.local.json` (gitignored; `--memory-hook-shared` targets the committed `settings.json`). It is
 > **opt-in only and never auto-registered** — a plain `./install.sh` does not touch hooks. Full posture + per-signal
 > policy: `references/memory-enforcement.md`.
+
+> 🔧 **Schema migration:** when `--validate` flags a legacy shape, route to a dry-run-first migrator that never silently
+> edits `approved`: `migrate_multidim_fields.py` (empty multidim placeholders) or `migrate_metric_to_metrics.py` (BRD
+> goal `metric:`→`metrics:` + `schema_version: 2`; `--apply` demands `--confirmed-by`+`--date` re-approval per
+> GATE-NO-SILENT-REVERSAL).
 - `assets/templates/` — markdown templates with `{{token}}` substitution, the shared `_viewer-head.html` design-system
   partial, and the export/board/explorer HTML shells.
 - `assets/vendor/` — vendored JS for self-contained offline HTML: `mermaid.min.js` (graph views) + `marked.min.js` +

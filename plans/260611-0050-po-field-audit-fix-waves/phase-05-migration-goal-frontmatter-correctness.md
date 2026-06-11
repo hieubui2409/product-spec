@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Migration + goal/frontmatter correctness"
-status: pending
+status: completed
 priority: P1
 effort: "1.5d"
 dependencies: [1, 4]
@@ -57,11 +57,25 @@ Sửa migration + message + thêm các check schema bị nuốt — đi qua GATE
 1. Viết RED tests. 2. Tạo `migrate_metric_to_metrics.py` (2 bước: dry-run-0-byte / apply-bắt-cờ). 3. Message + warn-vs-error theo marker `schema_version`. 4. goal_without_status (marker) + moscow + key-lint (scope BRD goal). 5. PS-18 quyết + DEC. 6. SIGPIPE helper chung. 7. route SKILL.md. 8. GREEN. 9. (Trên data thật khi rollout) re-approve theo GATE owner+date. 10. Tick 5 row + EVIDENCE.
 
 ## Success Criteria
-- [ ] Migrate `metric→metrics`: dry-run ghi 0 byte; apply CHỈ chạy với `--confirmed-by --date`; value giữ nguyên + set `schema_version`.
-- [ ] Legacy `metric:` → WARN; artifact schema_v2 thiếu metric/status → ERROR (draft mới KHÔNG được nới gate).
-- [ ] `moscow` hiện trong graph; field ngoài spec được flag (DEC ghi); version format check.
-- [ ] `check_consistency | head` không traceback, exit 0.
-- [ ] migrate có route SKILL.md.
+- [x] Migrate `metric→metrics`: dry-run ghi 0 byte; apply CHỈ chạy với `--confirmed-by --date`; value giữ nguyên + set `schema_version`.
+- [x] Legacy `metric:` → WARN; artifact schema_v2 thiếu metric/status → ERROR (draft mới KHÔNG được nới gate).
+- [x] `moscow` hiện trong graph; field ngoài spec được flag (DEC ghi dưới); version format check.
+- [x] `check_consistency | head` không traceback, exit 0.
+- [x] migrate có route SKILL.md.
+
+## Decisions (DEC — ghi tại audit-trail theo convention repo)
+> Convention repo (EVIDENCE.md): **không có kit-level DEC-`<n>` registry**; `docs/product/decisions.md` chỉ dành **PO rulings**. Vì vậy DEC thiết kế-skill ghi tại đây + EVIDENCE Note, KHÔNG tạo `decisions.md` mới.
+
+- **DEC-P05-1 — keying severity:** `legacy_metric_key` WARN khoá trên **sự hiện diện key `metric:` số ít** (intrinsic), KHÔNG trên marker `schema_version`. Lý do: fixture hiện hữu (metric-less-goal, valid-spec) KHÔNG cần sửa; goal thật-sự-thiếu-metric vẫn `goal_without_metric` ERROR. `goal_without_status` thì khoá trên marker `schema_version` (WARN nếu <2/absent, ERROR nếu ≥2) vì status không có tín hiệu legacy intrinsic.
+- **DEC-P05-2 — tách migrator:** `metric→metrics` (di chuyển VALUE, phải chạm BRD approved) đặt ở script RIÊNG `migrate_metric_to_metrics.py` với GATE 2 bước, KHÔNG nhồi vào `migrate_multidim_fields.py` (invariant LOCKED: empty-shape-only + never-write-approved). `migrate_multidim_fields.py` giữ nguyên.
+- **DEC-P05-3 — PS-18 thu hẹp scope (deferral):** chỉ ship `misplaced_parent_field` (story mang `prd`/`brd_goals`) + `bad_version_format` (cả hai node-derivable). **Hoãn:** whitelist frontmatter generic per-type + cờ derived-`title`-trong-frontmatter — brittle, sẽ false-positive trên `created`/`updated`/`version` hợp lệ.
+- **DEC-P05-4 — `moscow` ngoài `content_hash`:** `moscow` KHÔNG fold vào provenance `content_hash` của P04 (tránh re-churn cache P04); theo dõi qua `CHANGED_FIELDS` (đã có "moscow").
+
+## Review fold (3-wave + critique-challenge — sửa từ finding code-reviewer)
+- **Migrator entry-scoped rename:** `_transform` rename `metric:`→`metrics:` theo TỪNG goal entry; entry đã có `metrics:` plural → bỏ qua (chống tạo key `metrics:` trùng trên goal half-migrated). Order-independent. Test: `test_migrate_skips_goal_already_on_plural_metrics`.
+- **Comment-safe scalar wrap:** scalar `metric:` có inline comment (`# ...`) được tách comment, bọc value thành list, ghép lại comment SAU `]` → giữ YAML hợp lệ + giữ comment. Test: `test_migrate_preserves_inline_comment_on_scalar_metric`.
+- **BOM no-op:** nhánh không-rename trả về `text` gốc (BOM nguyên), không trả bản đã strip BOM.
+- **Critique-challenge MAJOR (DEC location):** finding "DEC chưa ghi vào `docs/product/decisions.md`" được **sửa hướng**, không bác — DEC ghi tại audit-trail (mục trên + EVIDENCE Note) đúng convention; `decisions.md` chỉ cho PO rulings.
 
 ## Risk Assessment
 - **[red-team D1/D2] phá invariant migrate_multidim hoặc ghi approved trước duyệt.** Mitigate: script RIÊNG; dry-run ghi 0 byte; apply bắt `--confirmed-by --date`; LLM-AskUserQuestion giữa 2 bước.
