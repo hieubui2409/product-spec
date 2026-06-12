@@ -17,6 +17,30 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+Field-audit fix waves (Cleanmatic-ERP usage vs kit HEAD). See each skill's CHANGELOG for detail.
+
+### Added
+- **product-spec** — build-age beacon in `--status` (reads an installer-stamped `.claude/MANIFEST.json`),
+  export nudge after `--approve`, GATE-safe `metric:`→`metrics:` migration, session-staleness +
+  open-questions surfacing.
+- **release** — one-command 1.x → 2.x upgrade (`upgrade.sh`/`.ps1`, dry-run/apply/rollback, atomic
+  legacy-sweep), an optional opt-in spec-validate GitHub Action, and a build-age MANIFEST stamp in the
+  installed tree.
+- **product-spec-critique** — AC/goal-aware provenance, a scoped critique bundle, and script-enforced
+  cache/memory persistence.
+- **telemetry** — session-duration + early-skill reconstruction from the transcript head, declared
+  workflow-chains moved to an on-demand data file, tighter script-run matching.
+
+### Changed
+- **product-spec** — `render_html.py` split into a focused module family with one shared `_escape`
+  chokepoint; memory-gap enforcement hooks made upgrade-safe with an advisory mode.
+- **release** — recipient-variant bundle (README/CLAUDE.md, `rules: []`, brand tokens resolved),
+  bash-3.2-compatible installer, idempotent `.claude/telemetry/` gitignore.
+
+### Fixed
+- **product-spec** — fence-check over-report (`.claude/` excluded, capped, absent-id sentinel closed);
+  goal + frontmatter lints; reproducible CHANGELOG size claims; untracked dogfood state/cache.
+
 ## [2.3.0] — 2026-06-09
 ### Added
 - **product-spec `--learn` (learning loop)** — post-launch outcomes (target vs actual → `OUT-<n>`

@@ -12,6 +12,23 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Added
+- **One-command 1.x → 2.x upgrade** — `upgrade.sh`/`upgrade.ps1` (dry-run by default, `--apply`,
+  `--rollback`) with an embedded planner/apply payload and an explicit legacy-map; the sweep is
+  atomic (all-or-nothing with auto-rollback on a post-sweep failure).
+- **Optional spec-validate GitHub Action** — the bundle ships a recipient-facing CI workflow that
+  runs the product-spec checks over `docs/product/` with a Vietnamese job summary; the installer asks
+  before placing it in `.github/workflows/` (opt-in; `INSTALL_SPEC_VALIDATE=1` / `-InstallSpecValidate`
+  to force), keeps an existing copy unless `FORCE_OVERWRITE`, and advises removing a generic
+  `python-package.yml`.
+- **Build-age stamp** — the installer copies the bundle MANIFEST to `.claude/MANIFEST.json` so the
+  product-spec `--status` beacon can report how old the installed copy is.
+
+### Changed
+- **Recipient-variant bundle** — ships recipient README/CLAUDE.md with `rules: []` and brand tokens
+  resolved; the installer is bash-3.2 compatible and idempotently adds `.claude/telemetry/` to
+  `.gitignore` with a newline guard.
+
 ## [1.1.1] — 2026-06-08
 
 ### Changed

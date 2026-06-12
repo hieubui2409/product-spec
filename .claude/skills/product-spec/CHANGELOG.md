@@ -9,6 +9,33 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Added
+- **Build-age beacon in `--status`** — the installer stamps `.claude/MANIFEST.json` into the
+  installed tree and `--status` reports how many days ago the running bundle was packed, so the PO
+  knows when to ask the publisher for a newer release. Fail-silent, no network.
+- **Export nudge after sign-off** — after `--approve`, the flow suggests `--export` so an approved
+  spec's acceptance criteria become a shareable, read-once document (a suggestion, never automatic).
+- **`migrate_metric_to_metrics.py`** — GATE-safe migration of the legacy singular `metric:` BRD-goal
+  key to `metrics:` (dry-run default; `--apply` requires `--confirmed-by` + `--date`; entry-scoped,
+  comment-safe).
+- **Session-staleness + open-questions surfacing** — `--status`/`--approve` warn when `.session.md`
+  is stale versus the latest artifact edit, and surface unresolved `cần PO xác định`/`TBD`/`Vẫn còn mở`
+  markers riding inside artifacts that look finished.
+
+### Changed
+- **`render_html.py` split** into a focused module family (assets, risk/count grids, competition,
+  tooltip, governance, escape) behind a stable re-export facade; one shared `_escape` chokepoint
+  replaces five drifted copies.
+- **Memory-gap enforcement hooks are upgrade-safe** and gain an advisory (non-blocking) mode.
+
+### Fixed
+- **Fence-check over-report** — `.claude/` excluded from the prose-fence scan, per-finding caps with
+  a total, and the absent-id sentinel no longer leaks into output.
+- **Goal + frontmatter lints** — legacy `metric:` warns; goal `status`/`moscow`/unknown-key,
+  misplaced-parent, and version-format violations are caught.
+- **Reproducible CHANGELOG size claims** — recomputed from git tags; documented previously-undocumented
+  flags; untracked dogfood state/cache files.
+
 ## [2.3.1] — 2026-06-09
 
 ### Changed

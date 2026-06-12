@@ -10,6 +10,17 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **AC/goal-aware provenance** — critique provenance now tracks acceptance-criteria and BRD-goal
+  context so findings tie back to the right artifact.
+- **Scoped critique bundle** — the bundle handed to the lens critics carries only the in-scope
+  artifacts instead of the whole corpus, keeping each lens focused.
+
+### Fixed
+- **Enforced critique cache + memory persistence** — the judgment cache and memory writes are
+  script-enforced (persist / prose-fallback / `--doctor`) so a critique run can no longer silently
+  skip recording.
+
 ## [1.2.1] — 2026-06-09
 
 ### Changed

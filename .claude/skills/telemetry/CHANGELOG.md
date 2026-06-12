@@ -2,6 +2,18 @@
 
 All notable changes to this skill are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/); versioning: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Session duration + early-skill reconstruction** — duration and the first skills of a session are
+  recovered from the transcript head, with a dedicated script-run session key.
+- **Declared workflow-chains moved to an on-demand `data/skill-chains.yaml`** data file (off the
+  always-on path); the internal CI suite is wired in.
+
+### Fixed
+- **Script-run matcher tightened**, overview lenses isolated from one another, and the validate
+  reason localized.
+
 ## [1.0.1] — 2026-06-08
 
 ### Added
