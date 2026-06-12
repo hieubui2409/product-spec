@@ -82,7 +82,7 @@ def test_list_affects_filters_by_artifact(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Test 2: supersede chain resolves transitively in order (oldest→newest)
+# Test 2: supersede chain resolves transitively in order (newest→oldest)
 # ---------------------------------------------------------------------------
 
 def test_supersede_chain_resolves_transitively(tmp_path):
@@ -101,8 +101,8 @@ def test_supersede_chain_resolves_transitively(tmp_path):
     assert "DEC-1" in chain
     assert "DEC-2" in chain
     assert "DEC-3" in chain
-    # DEC-1 appears before DEC-2 appears before DEC-3
-    assert chain.index("DEC-1") < chain.index("DEC-2") < chain.index("DEC-3")
+    # Rendered newest→oldest: DEC-3 appears before DEC-2 appears before DEC-1
+    assert chain.index("DEC-3") < chain.index("DEC-2") < chain.index("DEC-1")
 
 
 # ---------------------------------------------------------------------------

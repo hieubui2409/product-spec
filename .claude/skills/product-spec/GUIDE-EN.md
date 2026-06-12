@@ -527,6 +527,10 @@ skill **never** sets `approved` unless you ask to approve and provide an owner +
 > acceptance criteria you just locked become a portable, shareable surface (see **C3 — Export**). It's only a
 > suggestion; nothing is exported unless you ask.
 
+> 💡 **Next step — refresh the picture.** Right after a sign-off, the skill also reminds you that **`--viz`** can
+> re-render the visuals so the approved state has a fresh, drift-free diagram (the staleness banner clears once the
+> render matches the locked spec). It's only a suggestion; nothing is re-rendered unless you ask.
+
 ---
 
 ### B5 — Learn from real-world results (Learn)

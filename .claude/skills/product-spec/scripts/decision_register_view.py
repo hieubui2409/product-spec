@@ -11,7 +11,7 @@ Public API:
 
     render_supersede_chain(dec_id, records) -> str
         Follow `supersedes` links transitively from dec_id, returning a human-readable
-        chain string (e.g. "DEC-1 → DEC-2 → DEC-3"). Guards against cycles (visited-set)
+        chain string newest→oldest (e.g. "DEC-3 → DEC-2 → DEC-1"). Guards against cycles (visited-set)
         and dangling references (fail-soft: notes the missing target in the chain).
 
     render_dashboard_row(dec_id, record, chain_str) -> Dict
@@ -54,8 +54,9 @@ def render_supersede_chain(
 ) -> str:
     """Follow `supersedes` links transitively from dec_id and render the chain.
 
-    The chain is rendered oldest-to-newest (the starting dec_id is the leftmost
-    node): "DEC-1 → DEC-2 → DEC-3".
+    The chain is rendered newest-to-oldest (the most recent ruling is the leftmost
+    node): "DEC-3 → DEC-2 → DEC-1". The starting dec_id is the oldest node, so it
+    reads rightmost.
 
     Cycle safety: a visited-set guards against DEC-A ↔ DEC-B mutual references;
     when a cycle is detected the traversal terminates and the repeated node is
@@ -108,7 +109,11 @@ def render_supersede_chain(
 
         current_id = next_id
 
-    return " → ".join(chain)
+    # Rendered newest→oldest: the forward walk builds the chain oldest-first, so
+    # reverse it for display (the most recent ruling reads leftmost). A terminal
+    # [cycle]/[missing] marker sits at the newest tip where the walk stopped, so
+    # it leads the reversed string — which is where the stop occurred.
+    return " → ".join(reversed(chain))
 
 
 # ---------------------------------------------------------------------------

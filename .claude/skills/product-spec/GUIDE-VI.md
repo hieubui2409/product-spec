@@ -526,6 +526,10 @@ Trước khi đóng dấu, skill chạy kiểm tra (cảnh báo sẽ nhắc như
 > chấp nhận (acceptance criteria) bạn vừa chốt trở thành một mặt tài liệu mang đi được, dễ chia sẻ (xem **C3 —
 > Export**). Chỉ là gợi ý; không xuất gì cả trừ khi bạn yêu cầu.
 
+> 💡 **Bước tiếp theo — làm mới hình.** Ngay sau khi ký duyệt, skill cũng nhắc bạn rằng **`--viz`** có thể vẽ lại
+> phần hình ảnh để trạng thái đã duyệt có một sơ đồ mới, không lệch (banner "đã cũ" sẽ biến mất khi bản render
+> khớp với spec vừa chốt). Chỉ là gợi ý; không vẽ lại gì cả trừ khi bạn yêu cầu.
+
 ---
 
 ### B5 — Học từ kết quả thực tế (Learn)
