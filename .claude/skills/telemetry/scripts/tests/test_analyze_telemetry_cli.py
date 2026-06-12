@@ -106,3 +106,110 @@ def test_lang_rejects_unknown_value(cli):
     with pytest.raises(SystemExit) as e:  # argparse choices guard exits 2
         cli.main(["--lens", "usage", "--lang", "fr"])
     assert e.value.code == 2
+
+
+# ---------------------------------------------------------------------------
+# Export-summary default path honors CK_TELEMETRY_DIR (canonical home)
+# ---------------------------------------------------------------------------
+
+class TestExportSummaryDefaultPathIsCanonical:
+    """Without an explicit PATH arg, --export-summary writes to
+    <CK_TELEMETRY_DIR>/usage-summary.md (env-aware canonical path)."""
+
+    def test_export_summary_default_path_honors_env(self, tmp_path, monkeypatch):
+        """CK_TELEMETRY_DIR set → default export goes to that dir, not the script-relative wrong path.
+
+        Uses --export-summary with no PATH argument to exercise the default path derivation.
+        The expected file is <CK_TELEMETRY_DIR>/usage-summary.md.
+        """
+        telemetry_dir = tmp_path / "canonical_telemetry"
+        telemetry_dir.mkdir()
+
+        # Seed minimal invocations so the lens returns something
+        import json as _json
+        sink = telemetry_dir / "invocations.jsonl"
+        records = [
+            {"ts": "2026-06-12T10:00:00+00:00", "skill": "cleanmatic:product-spec",
+             "session": "s1", "via": "PreToolUse:Skill"},
+        ]
+        sink.write_text("\n".join(_json.dumps(r) for r in records) + "\n", encoding="utf-8")
+
+        monkeypatch.setenv("CK_TELEMETRY_DIR", str(telemetry_dir))
+        monkeypatch.setenv("CK_SESSIONS_DIR", str(FIX / "sessions"))
+        monkeypatch.setenv("CK_SKILLS_DIR", str(FIX / "skills"))
+        for m in ("telemetry_paths", "catalog", "lens_usage_tokens",
+                  "lens_session_shape", "lens_health", "analyze_telemetry"):
+            sys.modules.pop(m, None)
+        import telemetry_paths
+        importlib.reload(telemetry_paths)
+        import analyze_telemetry
+        importlib.reload(analyze_telemetry)
+
+        # --export-summary without an explicit PATH triggers the default-path logic.
+        # (argparse treats --export-summary with no following token as missing the arg,
+        # so we call _write_export_summary directly with export_summary=None to isolate
+        # the default-path derivation from argparse wiring.)
+        class _Args:
+            export_summary = None  # no explicit path
+            auto_suggest = False
+            days = 36500
+            top = None
+            no_tokens = False
+            session = None
+            all_sessions = False
+            format = "md"
+            lang = "vi"
+            lens = "usage"
+            overview = False
+
+        rendered = analyze_telemetry._render(
+            analyze_telemetry.gather_lens("usage", _Args()), "md", _Args()
+        )
+        # Patch sys.argv[0] to something clearly NOT in the canonical dir, so any
+        # script-relative derivation would produce a wrong path.
+        orig_argv = sys.argv[:]
+        sys.argv = ["/some/wrong/path/script.py"]
+        try:
+            # Call with export_summary=None — should derive canonical path from telemetry_paths.TELEMETRY
+            analyze_telemetry._write_export_summary(rendered, None, _Args())
+        finally:
+            sys.argv = orig_argv
+
+        expected = telemetry_dir / "usage-summary.md"
+        assert expected.exists(), (
+            f"--export-summary default must write to CK_TELEMETRY_DIR/usage-summary.md; "
+            f"got nothing at {expected}. Files in telemetry_dir: {list(telemetry_dir.iterdir())}"
+        )
+
+    def test_explicit_path_arg_overrides_default(self, tmp_path, monkeypatch):
+        """Explicit PATH arg to --export-summary still works as before."""
+        telemetry_dir = tmp_path / "telem"
+        telemetry_dir.mkdir()
+
+        import json as _json
+        sink = telemetry_dir / "invocations.jsonl"
+        sink.write_text(
+            _json.dumps({"ts": "2026-06-12T10:00:00+00:00", "skill": "cleanmatic:product-spec",
+                         "session": "s1", "via": "PreToolUse:Skill"}) + "\n",
+            encoding="utf-8",
+        )
+
+        explicit_out = tmp_path / "custom-out.md"
+
+        monkeypatch.setenv("CK_TELEMETRY_DIR", str(telemetry_dir))
+        monkeypatch.setenv("CK_SESSIONS_DIR", str(FIX / "sessions"))
+        monkeypatch.setenv("CK_SKILLS_DIR", str(FIX / "skills"))
+        for m in ("telemetry_paths", "catalog", "lens_usage_tokens",
+                  "lens_session_shape", "lens_health", "analyze_telemetry"):
+            sys.modules.pop(m, None)
+        import telemetry_paths
+        importlib.reload(telemetry_paths)
+        import analyze_telemetry
+        importlib.reload(analyze_telemetry)
+
+        rc = analyze_telemetry.main([
+            "--lens", "usage", "--days", "36500",
+            "--export-summary", str(explicit_out),
+        ])
+        assert rc == 0
+        assert explicit_out.exists(), "explicit PATH arg must write to that exact path"

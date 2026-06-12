@@ -42,19 +42,29 @@ def _is_spec_artifact(path: str) -> bool:
     """Return True when path is inside the spec artifact tree (docs/product/).
 
     Accepts both relative paths (docs/product/...) and absolute paths by
-    normalizing away the project root prefix when present."""
+    normalizing away the project root prefix when present.
+
+    Segment-boundary rule: only matches when the path segment is exactly
+    'product' — i.e. the path equals 'docs/product' or starts with
+    'docs/product/'.  Sibling dirs such as 'docs/productx/' or
+    'docs/product-archive/' are NOT matched."""
     if not path:
         return False
     # Normalize separators for robustness
     norm = path.replace("\\", "/")
-    # Strip any leading absolute prefix so we match the relative portion
-    for sep in ("docs/product/", "docs/product"):
-        if sep in norm:
-            # Make sure the match is on a path segment boundary
-            idx = norm.find(sep)
-            if idx == 0 or norm[idx - 1] == "/":
-                return True
-    return False
+    # Strip any leading absolute prefix up to the 'docs/product' segment.
+    # Find the position of 'docs/product' in the normalized path.
+    needle = "docs/product"
+    idx = norm.find(needle)
+    if idx == -1:
+        return False
+    # Left boundary: must start at position 0 or immediately after a '/'.
+    if idx != 0 and norm[idx - 1] != "/":
+        return False
+    # Right boundary: the character immediately after 'docs/product' must be
+    # either absent (path equals 'docs/product') or a '/' (subdirectory).
+    after = norm[idx + len(needle):]
+    return after == "" or after.startswith("/")
 
 
 def _build_record(path: str, op: str, session: str) -> dict:

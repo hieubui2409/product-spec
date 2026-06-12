@@ -51,8 +51,6 @@ def filter_by_affects(
 def render_supersede_chain(
     dec_id: str,
     records: List[Dict[str, Any]],
-    *,
-    _visited: Optional[set] = None,
 ) -> str:
     """Follow `supersedes` links transitively from dec_id and render the chain.
 

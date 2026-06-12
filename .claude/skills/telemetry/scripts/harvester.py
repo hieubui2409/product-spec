@@ -81,16 +81,6 @@ def _load_artifact_events(telemetry_path: Path, days: int) -> list[dict]:
     return records
 
 
-def _telemetry_dir() -> Path:
-    """Resolve the telemetry dir (CK_TELEMETRY_DIR override; mirrors telemetry_paths)."""
-    import os
-    raw = os.environ.get("CK_TELEMETRY_DIR")
-    if raw:
-        return Path(raw)
-    # Fallback: project root .claude/telemetry/
-    return Path(__file__).resolve().parent.parent.parent.parent.parent / ".claude" / "telemetry"
-
-
 def harvest_suggestions(
     days: int = 30,
     corrections_path: Path | None = None,
@@ -147,8 +137,8 @@ def harvest_suggestions(
         })
 
     # --- Source 2: repeat artifact edits (from P6 artifact-events sink) ------
-    telemetry = _telemetry_dir()
-    events_path = telemetry / "artifact-events.jsonl"
+    import telemetry_paths  # noqa: E402 — stdlib-only module; imported lazily to stay fail-open
+    events_path = telemetry_paths.TELEMETRY / "artifact-events.jsonl"
     events = _load_artifact_events(events_path, days=days)
 
     # Count edits per artifact

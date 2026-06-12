@@ -228,3 +228,51 @@ class TestHookFailopenOnBadPayload:
         }))
 
         assert _sink_lines(tmp_path) == []
+
+
+# ---------------------------------------------------------------------------
+# Test 5: Sibling-dir paths must NOT be treated as spec artifacts
+# ---------------------------------------------------------------------------
+
+class TestSiblingDirNotTreatedAsSpecArtifact:
+    """docs/productx/ and docs/product-archive/ are NOT spec-artifact dirs.
+    Only docs/product/ (exact segment boundary) qualifies."""
+
+    def test_sibling_dir_not_treated_as_spec_artifact(self, tmp_path, monkeypatch):
+        mod = _reload_hook(tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+
+        sibling_paths = [
+            "docs/productx/a.md",
+            "docs/product-archive/a.md",
+            "docs/productfoo/PRODUCT.md",
+        ]
+
+        for path in sibling_paths:
+            mod.main(json.dumps({
+                "hook_event_name": "PostToolUse",
+                "tool_name": "Edit",
+                "tool_input": {"file_path": path},
+                "session_id": "sess-sibling",
+            }))
+
+        assert _sink_lines(tmp_path) == [], (
+            f"sibling dirs (productx, product-archive, etc.) must not fire events; "
+            f"got: {_sink_lines(tmp_path)}"
+        )
+
+    def test_spec_root_itself_is_still_a_spec_artifact(self, tmp_path, monkeypatch):
+        """Positive: docs/product/PRODUCT.md is in the spec tree."""
+        mod = _reload_hook(tmp_path, monkeypatch)
+        monkeypatch.setattr(sys.stdout, "write", lambda _: None)
+
+        mod.main(json.dumps({
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Edit",
+            "tool_input": {"file_path": "docs/product/PRODUCT.md"},
+            "session_id": "sess-spec",
+        }))
+
+        lines = _sink_lines(tmp_path)
+        assert len(lines) == 1
+        assert lines[0]["artifact_path"] == "docs/product/PRODUCT.md"

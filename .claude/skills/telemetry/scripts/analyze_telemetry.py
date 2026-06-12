@@ -122,20 +122,20 @@ def main(argv: list[str] | None = None) -> int:
 
     # --export-summary: write the aggregate markdown to disk (empty telemetry → valid empty md).
     if args.export_summary is not None or args.auto_suggest:
-        export_path = args.export_summary
-        if export_path is None:
-            # default path when only --auto-suggest was given without --export-summary
-            from pathlib import Path as _Path
-            export_path = str(_Path(sys.argv[0]).resolve().parent.parent.parent / "telemetry" / "usage-summary.md")
-        _write_export_summary(rendered, export_path, args)
+        _write_export_summary(rendered, args.export_summary, args)
 
     return 0
 
 
-def _write_export_summary(rendered: str, path: str, args) -> None:
-    """Write the rendered markdown (+ optional harvester suggestions) to *path*."""
+def _write_export_summary(rendered: str, path: str | None, args) -> None:
+    """Write the rendered markdown (+ optional harvester suggestions) to *path*.
+
+    When *path* is None the canonical path is derived from telemetry_paths.TELEMETRY
+    (env-aware; honors CK_TELEMETRY_DIR) so the file always lands alongside the
+    other telemetry sinks regardless of where this script is installed."""
+    import telemetry_paths  # noqa: E402 — sibling, imported lazily
     from pathlib import Path as _Path
-    out = _Path(path)
+    out = _Path(path) if path is not None else telemetry_paths.TELEMETRY / "usage-summary.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     content = rendered
     if args.auto_suggest:
