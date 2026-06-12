@@ -4,7 +4,7 @@
       "behavioral-memory.md": 3137,
       "document-model-and-hierarchy.md": 2530,
       "frontmatter-and-id-spec.md": 4184,
-      "guardrails-and-boundaries.md": 2603,
+      "guardrails-and-boundaries.md": 2785,
       "interview-brd.md": 1451,
       "interview-epic.md": 887,
       "interview-frameworks.md": 1481,
@@ -12,7 +12,7 @@
       "interview-story.md": 719,
       "interview-vision.md": 939,
       "memory-enforcement.md": 2409,
-      "validation-rules-spec.md": 5261,
+      "validation-rules-spec.md": 5450,
       "visualization-spec.md": 3669,
       "workflow-apply-critique.md": 1131,
       "workflow-auto.md": 910,
@@ -23,13 +23,13 @@
       "workflow-lang.md": 278,
       "workflow-learn.md": 1733,
       "workflow-reflect.md": 2154,
-      "workflow-status.md": 1741,
+      "workflow-status.md": 1885,
       "workflow-summary.md": 389,
       "workflow-update.md": 2372,
-      "workflow-validate.md": 6844
+      "workflow-validate.md": 6981
     },
-    "skill_md_tokens": 5465,
-    "total_tokens": 62624
+    "skill_md_tokens": 5499,
+    "total_tokens": 63310
   },
   "product-spec-critique": {
     "refs": {

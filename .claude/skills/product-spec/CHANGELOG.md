@@ -15,7 +15,7 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 - **SKILL.md flag-table compaction (per-turn context flow).** Compacted the 16 verbose
   product-spec flag rows to one crisp `what · when · GATE · see <ref>` line each, relocating the
   elaboration into the reference that already loads when the flag fires (net info preserved, not
-  deleted). SKILL.md token proxy **6090 → 5371 (−11.8%)** — the only context paid on every skill
+  deleted). SKILL.md token proxy **5758 → 5371 (−6.7%)** — the only context paid on every skill
   activation. Terse flags untouched; the no-flag menu + always-on safety lines unchanged. Routing
   preserved (best-of-3 sub-agent judge: 18/18 routing scenarios HELD).
 

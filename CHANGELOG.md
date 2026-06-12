@@ -27,7 +27,7 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
   hook registrar/installer.
 
 ### Changed
-- **SKILL.md flag-table compaction (per-turn context flow)** — product-spec SKILL.md −11.8%,
+- **SKILL.md flag-table compaction (per-turn context flow)** — product-spec SKILL.md −6.7%,
   product-spec-critique −3.7%; elaboration relocated into the references that load when each flag
   fires (net info preserved; routing held — best-of-3 sub-agent judge 18/18). (product-spec 2.3.1,
   critique 1.2.1)

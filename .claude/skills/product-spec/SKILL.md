@@ -173,10 +173,10 @@ Load only the references relevant to the active flag. Skill resources (`scripts/
 > confirm running the installer (`./install.sh` POSIX / `install.ps1 -ExecutionPolicy Bypass` Windows, both idempotent).
 > Run it only on approval, then retry the script.
 
-> 🪝 **Opt-in memory Stop hook:** `./install.sh --memory-hook` registers the Tier-1 memory-write reminder into
-> `.claude/settings.local.json` (gitignored; `--memory-hook-shared` targets the committed `settings.json`). It is
-> **opt-in only and never auto-registered** — a plain `./install.sh` does not touch hooks. Full posture + per-signal
-> policy: `references/memory-enforcement.md`.
+> 🪝 **Opt-in memory Stop hook:** `./install.sh --memory-hook` enables the Tier-1 memory-write reminder by flipping
+> `memory_gap_hook: true` in the committed `.claude/hooks/product-spec-hooks.json` (`--memory-hook-shared` is a
+> back-compat alias for the same flag — there is no settings.local/shared split). It is **opt-in only and never
+> auto-registered** — a plain `./install.sh` does not touch hooks. Full posture: `references/memory-enforcement.md`.
 
 > 🔧 **Schema migration:** when `--validate` flags a legacy shape, route to a dry-run-first migrator that never silently
 > edits `approved`: `migrate_multidim_fields.py` (empty multidim placeholders) or `migrate_metric_to_metrics.py` (BRD

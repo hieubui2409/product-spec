@@ -61,7 +61,7 @@ trên các phase blast-radius cao (P3/P5/P9) — kết quả ở `## Risk regist
 | 09 | Upgrade-sweep (2 stage: **9a** planner-safe / **9b** atomic-swap) | — (DRY-F02/ARC-F02) | #1 (Q1) | 03, 05, 08 | P1 | 3.5-4d |
 | 10 | PO-facing (2 stage: **10a** ship-critical / **10b** deferred-heavy) | — | #2(Q4),#7,#12 (10a) · #6,#13,#14 (10b) | 01, **07** (10b) | P2 | 4d |
 | 11 | Product-insight + self-learning | — | #8,#11,#15 | 02, 03, **12** | P3 | 2d |
-| 12 | Docs/cleanup remainder | PS-19, PS-20, PS-22, PS-24, PS-25, LIB-11 | — | 01 | P3 | 1d |
+| 12 | Docs/cleanup remainder ✅ | PS-19, PS-20, PS-22, PS-24, PS-25, LIB-11, LIB-15, LIB-16 | — | 01 | P3 | 1d |
 | 13 | Rollout PO Cleanmatic (**decouple**) | — | (Q7 license) | 08, 09, **10a**, 12 | P2 | 0.5d |
 
 Bao phủ: 31/31 ledger row + 15/15 đề xuất. (Mapping chi tiết trong từng phase file.)

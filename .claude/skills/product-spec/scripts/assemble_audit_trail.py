@@ -175,15 +175,66 @@ def _rows(data: Dict[str, Any], lang: str):
     return lab, header, rows
 
 
+_ASCII_MAX_LINE = 120   # total budget per ASCII row
+_ASCII_ELLIPSIS = "…"   # single-char ellipsis appended when a cell is clipped
+
+# Per-column hard caps (chars) — one explicit cap per column, applied per cell.
+# Worst case all columns hit their cap: sum(116) + 5*2 separators = 126 > the
+# 120-char budget, so render time still runs the proportional widest-first shrink
+# below to bring an over-budget line back under _ASCII_MAX_LINE.
+_ASCII_COL_CAPS = [10, 20, 26, 22, 30, 8]  # when, artifact, action, who, drift, dec
+
+
+def _clip(value: str, cap: int) -> str:
+    """Clip `value` to `cap` chars, appending an ellipsis if clipped."""
+    s = str(value)
+    if len(s) <= cap:
+        return s
+    return s[: cap - 1] + _ASCII_ELLIPSIS
+
+
 def render_ascii(data: Dict[str, Any], lang: str = "en") -> str:
     lab, header, rows = _rows(data, lang)
     if not rows:
         return f"{lab['title']}\n{lab['empty']}"
-    cols = list(zip(header, *rows)) if rows else [(h,) for h in header]
+    # Apply per-column caps to every data row (header cells are short identifiers,
+    # never the overflow source, so they are clipped only if truly over-cap).
+    capped_header = [_clip(h, _ASCII_COL_CAPS[i]) for i, h in enumerate(header)]
+    capped_rows = [
+        [_clip(c, _ASCII_COL_CAPS[i]) for i, c in enumerate(r)]
+        for r in rows
+    ]
+    cols = list(zip(capped_header, *capped_rows)) if capped_rows else [(h,) for h in capped_header]
     widths = [max(len(str(c)) for c in col) for col in cols]
-    def fmt(r): return "  ".join(str(c).ljust(widths[i]) for i, c in enumerate(r))
+
+    # Shrink widths proportionally if total line exceeds budget.
+    sep = 2  # two-space column separator
+    total = sum(widths) + sep * (len(widths) - 1)
+    if total > _ASCII_MAX_LINE:
+        # Identify which columns are over their cap and trim them further.
+        # Simple strategy: trim the widest columns first until we fit.
+        excess = total - _ASCII_MAX_LINE
+        # Sort column indices by width descending so the widest absorbs the cut first.
+        order = sorted(range(len(widths)), key=lambda i: -widths[i])
+        for idx in order:
+            trim = min(excess, max(0, widths[idx] - 3))
+            widths[idx] -= trim
+            excess -= trim
+            if excess <= 0:
+                break
+        # Re-clip cell values to the final computed widths.
+        capped_header = [_clip(c, widths[i]) for i, c in enumerate(capped_header)]
+        capped_rows = [
+            [_clip(c, widths[i]) for i, c in enumerate(r)]
+            for r in capped_rows
+        ]
+
+    def fmt(r):
+        return "  ".join(str(c).ljust(widths[i]) for i, c in enumerate(r))
+
     line = "  ".join("-" * w for w in widths)
-    return "\n".join([lab["title"], "", fmt(header), line, *[fmt(r) for r in rows]])
+    return "\n".join([lab["title"], "", fmt(capped_header), line,
+                      *[fmt(r) for r in capped_rows]])
 
 
 def render_markdown(data: Dict[str, Any], lang: str = "en") -> str:

@@ -25,5 +25,8 @@ before fix") writes into. Not CI-driven; cadence = quarterly / post-major-featur
   decided*; EVIDENCE.md = *what changed + proof*.
 - **Size caps:** `EVIDENCE.md` ≤200 lines, `REVIEW.md` ≤300 lines. Over cap → roll the
   oldest cycle into an `## Archive` section (keep the worked discipline, drop the bulk).
+- **Changelog size/percent claims** must be reproducible from two named git tags via
+  `_shared/lib/context_footprint.py` (token proxy = `ceil(chars/4)`). State both the tag
+  names and the before/after token counts, not just the percentage.
 
 See `telemetry-readback.md` for A1 observability-sink `jq` queries.

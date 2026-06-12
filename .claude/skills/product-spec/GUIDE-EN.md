@@ -693,7 +693,15 @@ format (markdown or print-ready HTML).
 /cleanmatic:product-spec --export PRD-CHECKOUT --format html
 /cleanmatic:product-spec --export all                       # export everything
 /cleanmatic:product-spec --export PRD-CHECKOUT --layers prd,epic,story --depth full
+/cleanmatic:product-spec --export PRD-CHECKOUT --compact-mode llm --format md  # LLM-compacted markdown
+/cleanmatic:product-spec --export PRD-CHECKOUT --compact-mode struct            # deterministic (default)
 ```
+
+> 💡 **`--compact-mode`** controls how exported sections are condensed when the export is large.
+> `struct` (the default) is deterministic — it trims by structure alone, never touches wording.
+> `llm` emits `<!-- COMPACT -->` markers so an LLM can summarize each section; it **requires
+> `--format md`** (rejected with `html`). Use `struct` for sharing; use `llm` when you want an
+> AI-readable digest you'll post-process.
 
 ---
 
@@ -923,6 +931,44 @@ This is an install option, not an in-skill flag. Run once in the project:
 
 A plain `./install.sh` never touches your hooks. To turn it off, remove the `memory_gap_hook.py` entries from your
 settings file.
+
+---
+
+### E5 — Record your writing voice so the skill sounds like you (Voice)
+
+**When to use:** The skill's generated prose — story descriptions, vision narrative, `AskUserQuestion` text —
+uses wording that doesn't sound like your product. You want to lock in your own vocabulary and tone so generated
+text is shaped by your voice from the start.
+
+`--voice` stores your preferences into `.memory/po-style.yaml` under your project. It is **lang-keyed**: your
+English voice and your Vietnamese voice are stored separately and never mix. Each observation **union-merges**
+into the existing store (deduped, order-preserving) — you accumulate without churn.
+
+The five sub-flags you can pass together or separately:
+- **`--register`** — the overall tone: e.g. `"warm but concise"` or `"thân thiện nhưng ngắn gọn"`.
+- **`--vocabulary`** — your product's own terms: e.g. `"shopper,store admin"` (comma-separated).
+- **`--recurring-asks`** — standing requests: e.g. `"always include a one-line summary"`.
+- **`--do`** — positive style rules: e.g. `"use 'shopper' not 'customer'"`.
+- **`--dont`** — things to avoid: e.g. `"no jargon like 'churn' or 'funnel'"`.
+
+At least one sub-flag is required; an empty `--voice` is a no-op (it will tell you so, not crash).
+
+#### Conversation
+
+> **You:** Record my voice preference — I always use "shopper" not "customer", and I want a warm but concise
+> tone.
+>
+> **Skill:** Saved to `.memory/po-style.yaml` (English voice): register = "warm but concise";
+> vocabulary = ["shopper"]; do = ["use 'shopper' not 'customer'"]. I'll shape generated prose with this
+> from now on.
+
+#### Equivalent flag
+
+```
+/cleanmatic:product-spec --voice --lang en --register "warm but concise" --vocabulary "shopper,store admin"
+/cleanmatic:product-spec --voice --lang en --do "use 'shopper' not 'customer'" --dont "no jargon like 'churn'"
+/cleanmatic:product-spec --voice --lang vi --register "thân thiện nhưng ngắn gọn"
+```
 
 ---
 

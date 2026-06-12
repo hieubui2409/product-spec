@@ -149,7 +149,7 @@ KHÔNG dùng để: sửa spec, viết code, xóa skill, hay sửa memory — đ
 ### B7. Workflow: chain có khớp doc?
 
 > **Bạn:** "Skill chain thực tế có khớp với routing doc không?"
-> **Trợ lý:** Chạy `--lens workflow` → so sánh actual chain (từ invocation log) vs declared chain (từ `.claude/rules/skill-workflow-routing.md`). Sai lệch được cảnh báo (e.g., "doc nói planner → cook, nhưng bạn đang planner → debug trực tiếp").
+> **Trợ lý:** Chạy `--lens workflow` → so sánh actual chain (từ invocation log) vs declared chain (từ `data/skill-chains.yaml`). Sai lệch được cảnh báo (e.g., "doc nói planner → cook, nhưng bạn đang planner → debug trực tiếp").
 >
 > Cách gõ tương đương: `/cleanmatic:telemetry --lens workflow`.
 
@@ -254,7 +254,7 @@ Script định tính, không phán đoán. **LLM phán đoán** (kể chuyện V
 
 ### Chưa dùng (external vs sở hữu)
 
-Skill ở catalog (từ `.claude/rules/skill-workflow-routing.md`) có 0 invocation trong lookback period là "chưa-dùng".
+Skill ở catalog (từ `data/skill-chains.yaml`) có 0 invocation trong lookback period là "chưa-dùng".
 
 - Nếu là **skill cleanmatic** (`cleanmatic:*`), được cảnh báo để bạn xem xét (có thể không còn cần?).
 - Nếu là **skill external** (`ck:*`, `com:*`, v.v.), **KHÔNG cảnh báo** — PO không sở hữu nên có thể không dùng được. Chỉ count của skill external chưa-dùng được nhắc, không liệt kê.

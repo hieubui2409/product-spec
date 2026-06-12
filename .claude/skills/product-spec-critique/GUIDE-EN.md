@@ -151,6 +151,9 @@ Setting one never affects the other. "Verbose specs + concise critiques" is vali
 ### C1. Change the voice level
 
 > **You:** "Go easy, I just wrote this." → `--level 1` (`--warm`).
+> **You:** "A bit of bite, but stay professional." → `--level 2` (`--gentle`).
+> **You:** "Be direct, no sugarcoating." → `--level 3` (`--blunt`).
+> **You:** "Get sharp, I can handle it." → `--level 4` (`--savage`).
 > **You:** "Don't hold back." → `--level 5` (`--no-mercy`). This is the default baseline: it may go after you personally but runs straight away, no warning or confirm (the gate starts at level 6).
 > **You:** "Roast me to my face, I can take it." → `--level 6` (`--roast`), ⚠️ this **insults the author directly**;
 > the assistant shows a danger warning + asks for explicit confirmation first, and it is **never for shared reports or

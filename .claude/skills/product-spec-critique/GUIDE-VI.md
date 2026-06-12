@@ -168,6 +168,9 @@ Có hai tùy chọn độ chi tiết, **độc lập** với nhau:
 ### C1. Đổi độ gắt của giọng
 
 > **Bạn:** "Nhẹ nhàng thôi, tôi vừa viết xong." Dùng `--level 1` (hay `--warm`).
+> **Bạn:** "Có chút cay thôi, vẫn chuyên nghiệp." Dùng `--level 2` (`--gentle`).
+> **Bạn:** "Thẳng thắn, không cần vòng vo." Dùng `--level 3` (`--blunt`).
+> **Bạn:** "Sắc vào, tôi chịu được." Dùng `--level 4` (`--savage`).
 > **Bạn:** "Đừng nể nang gì cả." Dùng `--level 5` (`--no-mercy`). Đây là mức mặc định: nó có thể đá xéo cả bạn nhưng
 > chạy thẳng, không cảnh báo hay hỏi xác nhận (gate chỉ bắt đầu từ mức 6).
 > **Bạn:** "Chửi thẳng mặt tôi luôn, tôi chịu được." Dùng `--level 6` (`--roast`). Đây là mức sỉ nhục thẳng người viết.

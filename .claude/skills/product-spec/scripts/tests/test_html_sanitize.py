@@ -15,6 +15,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import render_html  # noqa: E402
+import render_html_assets  # noqa: E402 — canonical home of the vendored-lib path constants
 
 
 # ---------- C2: single-pass token substitution ----------
@@ -125,8 +126,11 @@ def test_escape_neutralizes_attribute_payload():
 # ---------- L12: fail closed when libs missing ----------
 
 def test_body_render_values_fail_closed_when_libs_absent(monkeypatch, tmp_path):
-    monkeypatch.setattr(render_html, "VENDOR_MARKED", tmp_path / "nope-marked.js")
-    monkeypatch.setattr(render_html, "VENDOR_PURIFY", tmp_path / "nope-purify.js")
+    # The vendored-lib existence check runs inside render_html_assets, so absence
+    # must be simulated at that module's globals — patching the render_html facade
+    # copy would not reach the real lookup and would silently pass through the lib.
+    monkeypatch.setattr(render_html_assets, "VENDOR_MARKED", tmp_path / "nope-marked.js")
+    monkeypatch.setattr(render_html_assets, "VENDOR_PURIFY", tmp_path / "nope-purify.js")
     vals = render_html.body_render_values({"x": {"body": "hi"}})
     # The 62 KB library payload must be ABSENT (no marked copyright banner)…
     assert "marked v18" not in vals["markdown_libs"], "must NOT inline the library when absent"

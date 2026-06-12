@@ -691,7 +691,14 @@ hoặc HTML in được).
 /cleanmatic:product-spec --export PRD-CHECKOUT --format html
 /cleanmatic:product-spec --export all                       # xuất toàn bộ
 /cleanmatic:product-spec --export PRD-CHECKOUT --layers prd,epic,story --depth full
+/cleanmatic:product-spec --export PRD-CHECKOUT --compact-mode llm --format md  # rút gọn bằng LLM, dạng markdown
+/cleanmatic:product-spec --export PRD-CHECKOUT --compact-mode struct            # rút gọn xác định (mặc định)
 ```
+
+> 💡 **`--compact-mode`** điều chỉnh cách rút gọn các phần nội dung khi tài liệu xuất quá lớn.
+> `struct` (mặc định) hoàn toàn xác định — chỉ cắt gọn theo cấu trúc, không đụng vào cách diễn đạt.
+> `llm` chèn thẻ `<!-- COMPACT -->` để LLM có thể tóm tắt từng phần; **bắt buộc dùng với `--format md`**
+> (sẽ bị từ chối nếu dùng với `html`). Dùng `struct` khi chia sẻ; dùng `llm` khi muốn bản digest để xử lý tiếp.
 
 ---
 
@@ -919,6 +926,44 @@ trông như chưa được ghi; chỉ một lần vượt ranh giới ra ngoài 
 
 Một lệnh `./install.sh` thường sẽ không bao giờ đụng tới hook của bạn. Để tắt, xóa các mục `memory_gap_hook.py` khỏi tệp
 cài đặt của bạn.
+
+---
+
+### E5 — Ghi lại giọng viết của bạn để skill "nghe" như bạn (Voice)
+
+**Khi nào dùng:** Văn bản skill tạo ra — mô tả story, tầm nhìn sản phẩm, nội dung `AskUserQuestion` — dùng
+cách diễn đạt không giống giọng sản phẩm của bạn. Bạn muốn chốt từ vựng và giọng điệu riêng để nội dung sinh
+ra luôn mang phong cách của bạn ngay từ đầu.
+
+`--voice` lưu sở thích vào `.memory/po-style.yaml` trong dự án của bạn. Nó **tách theo ngôn ngữ**: giọng tiếng
+Anh và tiếng Việt lưu riêng, không bao giờ lẫn lộn. Mỗi lần quan sát **gộp thêm** vào kho đã có (loại trùng,
+giữ thứ tự) — tích lũy mà không bị xáo trộn.
+
+Năm cờ con có thể dùng riêng lẻ hoặc kết hợp:
+- **`--register`** — giọng điệu tổng thể: ví dụ `"thân thiện nhưng ngắn gọn"` hay `"warm but concise"`.
+- **`--vocabulary`** — thuật ngữ riêng của sản phẩm: ví dụ `"người mua,quản trị cửa hàng"` (phân cách bằng dấu phẩy).
+- **`--recurring-asks`** — yêu cầu định kỳ: ví dụ `"luôn thêm một dòng tóm tắt"`.
+- **`--do`** — quy tắc phong cách tích cực: ví dụ `"dùng 'người mua' thay vì 'khách hàng'"`.
+- **`--dont`** — những điều cần tránh: ví dụ `"không dùng biệt ngữ như 'churn' hay 'funnel'"`.
+
+Phải có ít nhất một cờ con; `--voice` không có cờ con là thao tác trống (skill sẽ thông báo, không bị lỗi).
+
+#### Kịch bản hội thoại
+
+> **Bạn:** Ghi lại sở thích giọng viết của tôi — tôi luôn dùng "người mua" thay vì "khách hàng", giọng thân
+> thiện nhưng ngắn gọn.
+>
+> **Skill:** Đã lưu vào `.memory/po-style.yaml` (giọng tiếng Việt): register = "thân thiện nhưng ngắn gọn";
+> vocabulary = ["người mua"]; do = ["dùng 'người mua' thay vì 'khách hàng'"]. Từ giờ tôi sẽ dùng phong
+> cách này khi tạo văn bản.
+
+#### Cờ lệnh tương đương
+
+```
+/cleanmatic:product-spec --voice --lang vi --register "thân thiện nhưng ngắn gọn" --vocabulary "người mua,quản trị cửa hàng"
+/cleanmatic:product-spec --voice --lang vi --do "dùng 'người mua' thay vì 'khách hàng'" --dont "không dùng biệt ngữ như 'churn'"
+/cleanmatic:product-spec --voice --lang en --register "warm but concise"
+```
 
 ---
 

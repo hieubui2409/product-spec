@@ -181,6 +181,31 @@ roll the oldest cycle into `## Archive` when exceeded.
   ps1 has no runtime syntax test (no PowerShell in the dev/CI env; DEC-P09-5) — it mirrors the bash:3.2-proven
   logic and shares the same Python planner/apply, so the symlink + atomicity fixes apply to both.
 
+### P12 · DOCS/CLEANUP (PS-19/20/22/24/25 + LIB-11/15/16) · `product-spec/scripts/render_html*.py` + `assemble_audit_trail.py` + `*/GUIDE-*.md` + `*/CHANGELOG.md` + `_shared/lib/context_footprint_baseline.json`
+- **Root cause / fixes:** PS-19 changelog claimed a non-reproducible `6090→5371`; PS-20 GUIDEs omitted real flags;
+  PS-22 per-run state/cache was committed; PS-24 ascii audit overflowed terminals; PS-25 `render_html.py` was
+  ~4× the modularization guideline; LIB-11/15/16 doc-drift.
+- **Fix:** PS-19 → `5758→5371 (−6.7%)` + `3820→3677 (−3.7%)`, **reproducible** from tags v2.2.2→v2.3.0 via
+  `token_proxy = ceil(len/4)` (`test_changelog_token_proxy` pins it + README convention). PS-20 → `--voice`/
+  `--compact-mode` + critique `--gentle/--blunt/--savage` documented; `test_guide_flag_inventory` guards SKILL↔GUIDE
+  (every GUIDE flag verified to exist in the skill — no phantom flags). PS-22 → `git rm --cached` 8 state/cache
+  paths + gitignore (prose artifacts stay tracked; `test_dogfood_state_untracked`). PS-24 → per-column cap +
+  proportional widest-first shrink to ≤120; markdown keeps full text. PS-25 → orchestrator 834→327 lines split
+  into 5 modules (assets/risk_grid/count_grid/competition/tooltip/governance), each ≤214 exec-LOC, public API
+  re-exported, render byte-identical. LIB-11 = DEC (tracked intentionally — schema loaded by validator, agents
+  shipped via manifest). LIB-15 → telemetry GUIDE dead-ref `.claude/rules/skill-workflow-routing.md` → `data/skill-chains.yaml`
+  (×2 lines × 2 langs). LIB-16 → SKILL.md memory-hook desc → `product-spec-hooks.json` flag (verified install.sh).
+- **Review folds:** split mislabelled a **security regression** as "pre-existing" — `fail_closed_when_libs_absent`
+  PASSES at HEAD, FAILS post-split (the lib-existence check moved into `render_html_assets`; the test patched the
+  `render_html.*` facade copy → no-op → the inert-when-absent guarantee silently broke). Fixed by patching the real
+  home + deleting the dead facade re-export (DEC-P12-1). The XSS `_escape` chokepoint, duplicated 5× by the split
+  and **already drifted** into 2 variants, was consolidated into one leaf module `render_html_escape.py` (DEC-P12-2).
+- **After:** product-spec 708/708 · critique 188/188 · telemetry 124/124 · `_shared` footprint 43/43 (run in
+  separate processes), 0 fail. The `_shared` footprint regression-guard was **already RED at HEAD** (refs grown by
+  P03–P07 without a baseline refresh, +668 total; not caused by P12) → baseline regenerated per the gate's own
+  documented protocol; the other 3 skills are Δ0 (DEC-P12-4). Finding-code leak-scan CLEAN.
+- **Note:** DEC-P12-1..4 (phase-12 file).
+
 ---
 
 ## Archive

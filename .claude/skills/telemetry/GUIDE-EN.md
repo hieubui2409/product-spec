@@ -149,7 +149,7 @@ NOT for: editing the spec, writing code, deleting skills, or fixing memory — t
 ### B7. Workflow: do skill chains match the docs?
 
 > **You:** "Are my actual skill invocation chains matching what the routing docs say?"
-> **Assistant:** Runs `--lens workflow` → compares actual chains (from invocation logs) vs. declared chains (from `.claude/rules/skill-workflow-routing.md`). Deviations are flagged (e.g., "we said planner → cook, but you're doing planner → debug directly").
+> **Assistant:** Runs `--lens workflow` → compares actual chains (from invocation logs) vs. declared chains (from `data/skill-chains.yaml`). Deviations are flagged (e.g., "we said planner → cook, but you're doing planner → debug directly").
 >
 > Flag form: `/cleanmatic:telemetry --lens workflow`.
 
@@ -254,7 +254,7 @@ Script is deterministic, never judges. **The LLM judges** (narrates in VI, appli
 
 ### Never-used (external vs. owned)
 
-A skill in the catalog (from `.claude/rules/skill-workflow-routing.md`) that has zero invocations in the lookback period is "never-used".
+A skill in the catalog (from `data/skill-chains.yaml`) that has zero invocations in the lookback period is "never-used".
 
 - If it is a **cleanmatic skill** (`cleanmatic:*`), it is flagged as a candidate to review (maybe it is no longer needed?).
 - If it is an **external skill** (`ck:*`, `com:*`, etc.), it is **not flagged** — the PO doesn't own it and may have no use for it. Only the count of never-used external skills is mentioned, not the list.

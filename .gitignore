@@ -185,3 +185,8 @@ Script.tar.gz
 /.claude/skills/_shared/**/__pycache__/
 /.claude/skills/_shared/**/*.pyc
 /.claude/skills/_shared/**/.pytest_cache/
+
+# docs/product/ per-run state + cache — never committed; only prose artifacts are tracked.
+docs/product/.session.md
+docs/product/.memory/
+docs/product/visuals/.snapshots/
