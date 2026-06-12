@@ -22,6 +22,7 @@ EXPECTED_FILES = frozenset({
     "sample-pack-0.1.0/MANIFEST.json",
     "sample-pack-0.1.0/install.ps1",
     "sample-pack-0.1.0/install.sh",
+    "sample-pack-0.1.0/spec-validate.yml",
     "sample-pack-0.1.0/upgrade.sh",
     "sample-pack-0.1.0/upgrade.ps1",
     "sample-pack-0.1.0/_upgrade/upgrade_planner.py",

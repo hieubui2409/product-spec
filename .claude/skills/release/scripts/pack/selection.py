@@ -176,6 +176,10 @@ def render_embedded(
         (f"{r}/INSTALL.md",                        render_template(t / "INSTALL.md.template", tokens)),
         (f"{r}/install.sh",                        render_template(t / "install.sh.template", tokens)),
         (f"{r}/install.ps1",                       render_template(t / "install.ps1.template", tokens)),
+        # Optional, recipient-facing CI workflow. Lives at the bundle root (NOT under
+        # .claude/) and is excluded from the installer's generic file walk; the
+        # installer copies it to .github/workflows/ only when the PO opts in.
+        (f"{r}/spec-validate.yml",                 render_template(t / "spec-validate.yml.template", tokens)),
         (f"{r}/upgrade.sh",                        render_template(t / "upgrade.sh.template", tokens)),
         (f"{r}/upgrade.ps1",                       render_template(t / "upgrade.ps1.template", tokens)),
         (f"{r}/_upgrade/upgrade_planner.py",       (s / "upgrade_planner.py").read_bytes()),

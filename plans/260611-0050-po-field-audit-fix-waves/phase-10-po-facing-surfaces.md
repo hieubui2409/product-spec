@@ -20,10 +20,12 @@ bản mới, AC khó đọc, DEC không tra được, không snapshot/restore. M
 > **Serialize + scope (red-team):** #7/#14 đụng `status.py` chung P6/P7 → đi SAU (RE-READ trước sửa). Phase nhồi 6 deliverable rời → **khi cook, tách thành 6 sub-task độc lập** (mỗi cái 1 commit + tick riêng), pin file đích cụ thể trước khi code; cái nào phình quá thì tách phase con. KHÔNG gộp commit.
 
 ## Deliverables
-### #2 spec-validate.yml CI (Q4=a) — CVR-F07/POX-F01
-- Template GH Action chạy `check_traceability`/`check_consistency`/`check_fence` trên `docs/product/`; summary tiếng Việt vào job summary; installer hỏi PO bật không; khuyên xoá `python-package.yml` stock.
-- Runner cần PyYAML → `pip install` 1 dòng + smoke job.
-- TDD: lint workflow YAML hợp lệ; smoke job assert summary VI; test "không phụ thuộc file kit".
+### #2 spec-validate.yml CI (Q4=a) — CVR-F07/POX-F01 — ✅ LANDED (P10a)
+- Template `assets/templates/spec-validate.yml.template` (render `{{BUNDLE_NAME}}`, embed qua `render_embedded` ở **bundle-root**, loại khỏi walk cả install.sh+ps1) → chạy `check_traceability`/`check_consistency`/`check_fence` `--root .` trên `docs/product/`; summary tiếng Việt vào `$GITHUB_STEP_SUMMARY`; graceful skip khi thiếu `docs/product`. KHÔNG dùng `${{ }}` (tránh đụng token-subst), dùng `$GITHUB_STEP_SUMMARY`.
+- Installer **hỏi PO** (prompt tôn trọng `NON_INTERACTIVE`, force `INSTALL_SPEC_VALIDATE=1`/`-InstallSpecValidate`; giữ file cũ trừ `FORCE_OVERWRITE`); khuyên xoá `python-package.yml` nếu có. Cài vào `.github/workflows/`. INSTALL.md EN/VI ghi rõ.
+- Runner `pip install pyyaml` 1 dòng — **verify closure import 3 check = yaml+stdlib+sibling only** (KHÔNG kéo google-genai/dep nặng) → đủ.
+- **Critique-challenge:** finding "pip pyyaml đủ?" → audit transitive import 11 module → chỉ `yaml` third-party → RESOLVED. Golden `test_golden_synthetic` cập nhật (thêm `spec-validate.yml` vào EXPECTED_FILES — file embed mới có chủ đích).
+- TDD: 4 test `test_spec_validate_workflow.py` (YAML lint hợp lệ + brand-subst; invoke 3 check + summary VI; no-kit-file-dep; installer opt-in lands / default absent + không rơi root + byte-identical).
 
 ### #6 Visuals latest + staleness + retention — POX-F04/CVR-M3/BUG-F07
 - `*-latest.html` alias ổn định + banner "render lúc X, spec lệch N node"; `--viz --clean`; reuse khi content-hash trùng (không ghi file mới); nudge re-render hậu approve.
@@ -59,7 +61,7 @@ bản mới, AC khó đọc, DEC không tra được, không snapshot/restore. M
 Mỗi deliverable có RED test riêng (liệt kê ở từng mục trên). Viết RED trước, GREEN sau, không gộp.
 
 ## Success Criteria
-- [ ] spec-validate.yml lint xanh + smoke VI + không phụ thuộc file kit.
+- [x] spec-validate.yml lint xanh + smoke VI + không phụ thuộc file kit. (P10a)
 - [ ] Visuals: latest alias + banner lệch + reuse-hash + `--clean`.
 - [x] Age-beacon (build-age) hiện theo tuổi đóng gói; thiếu MANIFEST im lặng. (DEC-P10a-1)
 - [x] AC nudge sau approve + GUIDE mục. (P10a)

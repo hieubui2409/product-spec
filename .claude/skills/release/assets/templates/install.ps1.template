@@ -18,7 +18,11 @@
 param(
     [string]$TargetDir = (Get-Location).Path,
     [switch]$ForceOverwrite,
-    [switch]$RunHooks
+    [switch]$RunHooks,
+    # Opt-in install of the spec-validate GitHub Action without prompting.
+    [switch]$InstallSpecValidate,
+    # Suppress optional prompts (CI / scripted installs).
+    [switch]$NonInteractive
 )
 
 $ErrorActionPreference = "Stop"
@@ -190,7 +194,7 @@ Write-Host ""
 # are excluded — they belong to the bundle, not to the recipient's repo.
 # PARITY: install.sh excludes the same 4 names via grep -vE — keep both lists
 # in sync.
-$ExcludeNames = @("MANIFEST.json", "INSTALL.md", "install.sh", "install.ps1")
+$ExcludeNames = @("MANIFEST.json", "INSTALL.md", "install.sh", "install.ps1", "spec-validate.yml")
 Get-ChildItem -Recurse -File -Path $BundleDir | Sort-Object FullName | ForEach-Object {
     if ($ExcludeNames -contains $_.Name -and $_.Directory.FullName -eq $BundleDir) { return }
     $src = $_.FullName
@@ -343,6 +347,39 @@ if (-not $alreadyIgnored) {
     Log "Added .claude/telemetry/ to .gitignore (prevents accidental commit of telemetry data)"
 } else {
     Log ".claude/telemetry/ already in .gitignore — skipping"
+}
+
+# --- Optional: spec-validate GitHub Action ---
+# Opt-in CI workflow running the product-spec checks on docs/product/ with a
+# Vietnamese job summary. Default "no" when non-interactive; -InstallSpecValidate
+# (or $env:INSTALL_SPEC_VALIDATE=1) forces yes. Existing workflow kept unless
+# -ForceOverwrite. PARITY: install.sh has an equivalent block — keep both in sync.
+$SpecValidateSrc = Join-Path $BundleDir "spec-validate.yml"
+$SpecValidateDst = Join-Path $TargetDir ".github/workflows/spec-validate.yml"
+if (Test-Path $SpecValidateSrc) {
+    Write-Host ""
+    $wantSpecValidate = $false
+    if ($InstallSpecValidate -or $env:INSTALL_SPEC_VALIDATE -eq "1") {
+        $wantSpecValidate = $true
+    } elseif ($NonInteractive -or $env:NON_INTERACTIVE -eq "1") {
+        Log "Skipping spec-validate workflow (non-interactive; -InstallSpecValidate to install)"
+    } else {
+        $reply = Read-Host "[{{BUNDLE_NAME}}] Install spec-validate GitHub Action (CI checks for docs/product/)? [y/N]"
+        if ($reply -match '^[Yy]') { $wantSpecValidate = $true }
+    }
+    if ($wantSpecValidate) {
+        if ((Test-Path $SpecValidateDst) -and (-not $ForceOverwrite)) {
+            Log "spec-validate.yml already present — keeping yours (-ForceOverwrite to replace)"
+        } else {
+            $wfDir = Join-Path $TargetDir ".github/workflows"
+            if (-not (Test-Path $wfDir)) { New-Item -ItemType Directory -Path $wfDir -Force | Out-Null }
+            Copy-Item -Path $SpecValidateSrc -Destination $SpecValidateDst -Force
+            Log "Installed .github/workflows/spec-validate.yml"
+            if (Test-Path (Join-Path $TargetDir ".github/workflows/python-package.yml")) {
+                Log "Note: .github/workflows/python-package.yml exists — review/remove it if it was a generic CI stub; spec-validate.yml now covers the spec checks."
+            }
+        }
+    }
 }
 
 # --- Summary ---

@@ -73,6 +73,22 @@ The installer automatically adds `.claude/telemetry/` to your `.gitignore` (idem
 to run multiple times). The telemetry skill writes local usage data to that directory; it should
 not be committed to source control.
 
+## Spec-validate CI (optional / tuỳ chọn)
+
+The bundle ships an optional GitHub Action, `spec-validate.yml`, that runs the product-spec checks
+(traceability · consistency · fence) over `docs/product/` on every push/PR and writes a Vietnamese
+job summary. The installer **asks** before installing it; answer `y` to drop it into
+`.github/workflows/spec-validate.yml`. To install non-interactively, set `INSTALL_SPEC_VALIDATE=1`
+(bash) or pass `-InstallSpecValidate` (PowerShell). An existing workflow is kept unless
+`FORCE_OVERWRITE=1`. If you already have a generic `.github/workflows/python-package.yml`, you can
+remove it — this workflow supersedes it for spec checks. It depends only on the installed
+product-spec scripts and your `docs/product/`, and installs PyYAML itself.
+
+Bộ kit kèm sẵn một GitHub Action tuỳ chọn (`spec-validate.yml`) chạy các check product-spec trên
+`docs/product/` và ghi tóm tắt tiếng Việt. Installer sẽ **hỏi** trước khi cài; trả lời `y` để đặt vào
+`.github/workflows/`. Cài không-tương-tác: đặt `INSTALL_SPEC_VALIDATE=1` (bash) hoặc `-InstallSpecValidate`
+(PowerShell). File đã có sẽ được giữ trừ khi `FORCE_OVERWRITE=1`.
+
 ## Troubleshooting
 
 If a skill fails to load, verify that Claude Code can find `.claude/skills/<skill-name>/SKILL.md`

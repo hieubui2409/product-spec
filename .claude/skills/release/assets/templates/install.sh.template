@@ -22,6 +22,9 @@ BUNDLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET_DIR="${TARGET_DIR:-$PWD}"
 FORCE_OVERWRITE="${FORCE_OVERWRITE:-0}"
 RUN_HOOKS="${RUN_HOOKS:-0}"
+# Non-interactive installs (CI / scripted) must never block on a prompt. When set,
+# optional prompts take their env-var default instead of reading from the terminal.
+NON_INTERACTIVE="${NON_INTERACTIVE:-0}"
 BACKUP_TS="$(date -u +%Y%m%dT%H%M%SZ)"
 
 MANIFEST_JSON="$BUNDLE_DIR/MANIFEST.json"
@@ -358,9 +361,12 @@ while IFS= read -r REL; do
 # that were packed but have no .claude/ prefix are also installed.
 # Installer metadata files (MANIFEST.json, INSTALL.md, install.sh, install.ps1)
 # are excluded — they belong to the bundle, not to the recipient's repo.
-# PARITY: install.ps1 excludes the same 4 names via $ExcludeNames — keep both
+# spec-validate.yml is ALSO excluded here: it is an opt-in CI workflow installed
+# (only on request) into .github/workflows/ by the dedicated block below, never
+# dropped at the recipient repo root by this walk.
+# PARITY: install.ps1 excludes the same names via $ExcludeNames — keep both
 # lists in sync.
-done < <(LC_ALL=C find . -type f -print | LC_ALL=C sort | grep -vE '^(./MANIFEST\.json|./INSTALL\.md|./install\.sh|./install\.ps1)$')
+done < <(LC_ALL=C find . -type f -print | LC_ALL=C sort | grep -vE '^(./MANIFEST\.json|./INSTALL\.md|./install\.sh|./install\.ps1|./spec-validate\.yml)$')
 
 # --- Install the bundle MANIFEST as a version stamp under .claude/ ---
 # The walk above keeps MANIFEST.json out of the repo ROOT (it is not recipient
@@ -428,6 +434,40 @@ if ! grep -q '\.claude/telemetry/' "$GITIGNORE_FILE" 2>/dev/null; then
     log "Added .claude/telemetry/ to .gitignore (prevents accidental commit of telemetry data)"
 else
     log ".claude/telemetry/ already in .gitignore — skipping"
+fi
+
+# --- Optional: spec-validate GitHub Action ---
+# The bundle ships a ready-to-use workflow that runs the product-spec checks
+# (traceability · consistency · fence) on docs/product/ on every push/PR and writes
+# a Vietnamese job summary. CI is the recipient's choice, so this is OPT-IN: we ask,
+# and default to "no" when non-interactive (set INSTALL_SPEC_VALIDATE=1 to force-yes).
+# An existing workflow is kept unless FORCE_OVERWRITE=1 — never clobber PO edits.
+SPEC_VALIDATE_SRC="$BUNDLE_DIR/spec-validate.yml"
+SPEC_VALIDATE_DST="$TARGET_DIR/.github/workflows/spec-validate.yml"
+if [ -f "$SPEC_VALIDATE_SRC" ]; then
+    echo ""
+    want_spec_validate="n"
+    if [ "${INSTALL_SPEC_VALIDATE:-0}" = "1" ]; then
+        want_spec_validate="y"
+    elif [ "$NON_INTERACTIVE" = "1" ]; then
+        log "Skipping spec-validate workflow (non-interactive; INSTALL_SPEC_VALIDATE=1 to install)"
+    else
+        printf '[{{BUNDLE_NAME}}] Install spec-validate GitHub Action (CI checks for docs/product/)? [y/N] '
+        read -r _reply || _reply=""
+        case "$_reply" in [Yy]*) want_spec_validate="y" ;; esac
+    fi
+    if [ "$want_spec_validate" = "y" ]; then
+        if [ -f "$SPEC_VALIDATE_DST" ] && [ "$FORCE_OVERWRITE" != "1" ]; then
+            log "spec-validate.yml already present — keeping yours (FORCE_OVERWRITE=1 to replace)"
+        else
+            mkdir -p "$TARGET_DIR/.github/workflows"
+            cp -f "$SPEC_VALIDATE_SRC" "$SPEC_VALIDATE_DST"
+            log "Installed .github/workflows/spec-validate.yml"
+            if [ -f "$TARGET_DIR/.github/workflows/python-package.yml" ]; then
+                log "Note: .github/workflows/python-package.yml exists — review/remove it if it was a generic CI stub; spec-validate.yml now covers the spec checks."
+            fi
+        fi
+    fi
 fi
 
 # --- Summary ---

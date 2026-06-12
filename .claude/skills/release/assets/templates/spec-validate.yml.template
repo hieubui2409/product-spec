@@ -1,0 +1,75 @@
+# {{BUNDLE_NAME}} · spec-validate — kiểm tra product-spec tự động trên CI.
+#
+# Cài bởi installer (tuỳ chọn). Chạy các check ĐÃ CÓ SẴN trong cây đã cài
+# (.claude/skills/product-spec/scripts/) trên docs/product/ mỗi khi spec đổi, rồi
+# ghi một bản tóm tắt tiếng Việt vào job summary. KHÔNG phụ thuộc file nào của bộ
+# kit ngoài các script product-spec đã cài + thư mục docs/product/ của bạn.
+name: "{{BUNDLE_NAME}} · spec-validate"
+
+on:
+  push:
+    paths:
+      - "docs/product/**"
+      - ".claude/skills/product-spec/scripts/**"
+  pull_request:
+    paths:
+      - "docs/product/**"
+  workflow_dispatch:
+
+jobs:
+  spec-validate:
+    name: "Kiểm tra spec product"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cài phụ thuộc (PyYAML)
+        run: python -m pip install --quiet pyyaml
+
+      - name: Kiểm tra spec (traceability · consistency · fence)
+        shell: bash
+        run: |
+          set +e
+          S=.claude/skills/product-spec/scripts
+          if [ ! -d docs/product ]; then
+            echo "## {{BUNDLE_NAME}} · spec-validate" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Bỏ qua: chưa có thư mục \`docs/product/\`." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "## {{BUNDLE_NAME}} · spec-validate"
+            echo ""
+            echo "Kết quả kiểm tra \`docs/product/\`:"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+          run_one () {
+            label="$1"; shift
+            out="$(python "$@" 2>&1)"; rc=$?
+            if [ "$rc" -eq 0 ]; then
+              echo "- ✅ ${label}: đạt" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- ❌ ${label}: phát hiện vấn đề (xem log bước này)" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              echo "${out}" >> "$GITHUB_STEP_SUMMARY"
+              echo '```' >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+          }
+          run_one "Truy vết (traceability)" "$S/check_traceability.py" --root .
+          run_one "Nhất quán (consistency)" "$S/check_consistency.py" --root .
+          run_one "Hàng rào ghi (fence)"    "$S/check_fence.py" --root . --lang vi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$fail" -eq 0 ]; then
+            echo "**Tất cả kiểm tra đạt.**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "**Có kiểm tra chưa đạt — xem chi tiết bên trên.**" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit $fail
