@@ -521,6 +521,11 @@ Trước khi đóng dấu, skill chạy kiểm tra (cảnh báo sẽ nhắc như
 /cleanmatic:product-spec --approve
 ```
 
+> 💡 **Bước tiếp theo — chia sẻ.** Ngay sau khi ký duyệt, skill nhắc bạn rằng giờ có thể **`--export`** tài liệu
+> vừa duyệt thành một file độc-lập, đọc-một-lần để gửi cho team kỹ thuật, thiết kế hay lãnh đạo — các tiêu chí
+> chấp nhận (acceptance criteria) bạn vừa chốt trở thành một mặt tài liệu mang đi được, dễ chia sẻ (xem **C3 —
+> Export**). Chỉ là gợi ý; không xuất gì cả trừ khi bạn yêu cầu.
+
 ---
 
 ### B5 — Học từ kết quả thực tế (Learn)

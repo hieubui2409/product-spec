@@ -201,3 +201,12 @@ process), 0 fail. Leak-scan finding-code CLEAN. Render smoke byte-identical. Quy
   (`legacy_map.entries` only, không scan-xoá file lạ) → stamp an toàn, upgrade refresh stamp. KHÔNG đụng approved data.
 Verify: **product-spec 718/718** (+10) · **release 296/296** (19 skip) · **_shared footprint 17/17** (regen baseline
 chỉ product-spec total +336 từ workflow-status.md, 3 skill kia Δ0) — chạy riêng process, 0 fail. Quyết định: DEC-P10a-1 (phase-10). KHÔNG chạm PO data → verify inline (counts ở trên), không bơm EVIDENCE (đang quá cap).
+
+### P10a · #12 AC-nudge sau approve — POX-F05 · 2026-06-12 (build-new, doc-only)
+- Approve là **LLM-prose flow** (SKILL.md:48, không script) → nudge = prose: SKILL `--approve` row + GUIDE B4 (EN/VI)
+  trỏ `--export` (tool sẵn có) → AC vừa duyệt thành mặt chia-sẻ. Framed "suggestion, never automatic" (GATE-NEVER-ASSUME).
+  Chọn option nudge thay vì render-only block (thoả "hoặc" trong plan). DRY: không logic export mới.
+- **Critique-challenge:** (1) approve-row là home behavioral hợp lệ (vd `--learn` row cũng mang instruction). (2) "AC
+  portable" chính xác (render_export gói cả acceptance_criteria). Không finding mới.
+Verify: **product-spec 723/723** (+5) · **_shared footprint 17/17** (regen chỉ product-spec SKILL.md +10, GUIDE
+không đo) — chạy riêng process, 0 fail. Doc-only, KHÔNG chạm PO data → không EVIDENCE.

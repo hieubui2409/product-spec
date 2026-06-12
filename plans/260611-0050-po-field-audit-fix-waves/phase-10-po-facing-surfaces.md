@@ -36,9 +36,9 @@ bản mới, AC khó đọc, DEC không tra được, không snapshot/restore. M
 - Tương tác upgrade (P09): upgrade planner là **allowlist** (chỉ duyệt `legacy_map.entries`), KHÔNG scan-xoá file lạ → stamp không bị sweep; upgrade chạy install.sh mới refresh stamp.
 - TDD: 12 test `test_status_bundle_age.py` (build-age N ngày, baseline-path, future-clamp, absent/malformed/missing-built_at/unparseable/non-string/empty-version/empty-built_at silent, read-only, CLI) + 1 e2e `test_install_drops_manifest_stamp_for_build_age_beacon` (stamp byte-identical, không rơi root, có 2 key beacon).
 
-### #12 AC-readable surface (discoverability) — POX-F05
-- Công cụ ĐÃ CÓ (`workflow-export.md` + `render_export.py`) — thêm nudge sau approve + 1 dòng GUIDE; hoặc khối AC render-only "generated — đừng sửa tay".
-- TDD: sau `--approve` → nudge export hiện; GUIDE có mục.
+### #12 AC-readable surface (discoverability) — POX-F05 — ✅ LANDED (P10a)
+- Công cụ ĐÃ CÓ (`workflow-export.md` + `render_export.py`) — chọn option **nudge sau approve** (không phải render-only block): SKILL.md `--approve` row + GUIDE B4 (EN/VI) trỏ `--export` → AC vừa duyệt thành mặt tài liệu mang-đi/chia-sẻ. Framed "a suggestion, never automatic" (GATE-NEVER-ASSUME). DRY: trỏ tool export sẵn có, không logic mới.
+- TDD: 3 test `test_approve_export_nudge.py` (SKILL approve row có `--export`; GUIDE-EN/VI B4 trỏ export). Footprint SKILL.md +10 → regen baseline (chỉ product-spec, GUIDE không đo).
 
 ### #13 Decision index view — POX-F11
 - `--decision --list PRD-X` từ `decision_register.py` (đã có 1.1.0): lọc theo `affects`/date/status, vẽ chain supersede; dashboard hàng DEC.
@@ -62,7 +62,7 @@ Mỗi deliverable có RED test riêng (liệt kê ở từng mục trên). Viế
 - [ ] spec-validate.yml lint xanh + smoke VI + không phụ thuộc file kit.
 - [ ] Visuals: latest alias + banner lệch + reuse-hash + `--clean`.
 - [x] Age-beacon (build-age) hiện theo tuổi đóng gói; thiếu MANIFEST im lặng. (DEC-P10a-1)
-- [ ] AC nudge sau approve + GUIDE mục.
+- [x] AC nudge sau approve + GUIDE mục. (P10a)
 - [ ] `--decision --list PRD-X` đúng `affects` + chain supersede.
 - [ ] `--snapshot`/`--restore` đúng; VCS warn ngoài git.
 
