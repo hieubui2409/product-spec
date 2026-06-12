@@ -64,6 +64,11 @@ from check_consistency_competition import (
 # Session-staleness lives in its own module (it reconciles `.session.md` against the
 # artifact edit-clock + the Decision Register); this gate only wires its warn findings.
 from session_staleness import staleness_findings as _session_staleness
+# PRODUCT-dimension checks: subsystem-table horizon drift + persona portrait gaps.
+from check_consistency_product import (
+    check_product_subsystems as _check_product_subsystems,
+    check_persona_portraits as _check_persona_portraits,
+)
 
 configure_utf8_console()
 
@@ -212,6 +217,9 @@ def check(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     findings.extend(_time_child_late(graph))
     findings.extend(_dep_order(graph))
     findings.extend(_check_competitors(graph))
+    _root = Path(graph["root_path"]) if graph.get("root_path") else Path(".")
+    findings.extend(_check_product_subsystems(graph, _root))
+    findings.extend(_check_persona_portraits(graph, _root))
     return findings
 
 

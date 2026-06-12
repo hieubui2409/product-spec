@@ -206,6 +206,21 @@ roll the oldest cycle into `## Archive` when exceeded.
   documented protocol; the other 3 skills are Δ0 (DEC-P12-4). Finding-code leak-scan CLEAN.
 - **Note:** DEC-P12-1..4 (phase-12 file).
 
+### P1-9ab · BUILD-NEW · subsystem-horizon drift + persona portrait gap · `check_consistency_product.py` (new)
+- **Root cause:** PRODUCT.md subsystem tables can declare a `horizon` that silently drifts from the matching
+  PRD's frontmatter `horizon`; and a persona listed in VISION/BRD frontmatter may have no body portrait section
+  — both defects were undetected by the validate gate (no rule existed for either).
+- **Before:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_check_consistency_product.py -q`
+  → `ERROR: ModuleNotFoundError: No module named 'check_consistency_product'` (all 6 tests collection-fail).
+- **Fix:** new sibling `check_consistency_product.py` with `check_product_subsystems` (table parser keyed by ID,
+  fail-soft on missing/garbled table) + `check_persona_portraits` (heading scan, conservative — heading-absent
+  only); wired as 2 dispatch lines at the tail of `check_consistency.check()`. Severity WARN (advisory).
+- **After:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_check_consistency_product.py -q`
+  → `6 passed`. Full suite: `python3 -m pytest .claude/skills/product-spec --tb=no -q` → `728 passed, 1 failed`
+  (the 1 failure is `test_dogfood_state_untracked` — pre-existing at HEAD before this phase, confirmed by
+  `git stash` baseline run). CONTRIBUTING.md:69 gate: `python3 -m pytest .claude/skills/telemetry .claude/hooks
+  .claude/skills/_shared -q` → `219 passed`.
+
 ---
 
 ## Archive

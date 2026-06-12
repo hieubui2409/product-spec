@@ -233,3 +233,13 @@ Verify: **release 300/300** (+4, 19 skip) — chạy riêng process, 0 fail. Bui
   tag/push) thuộc **chủ kit** — skill không tự thao tác. Cycle 3 **giữ mở** (P10b/P11/#9 hoãn song song sau rollout)
   → tiêu chí "31/31 đóng cycle" hoãn. BACKLOG cập nhật.
 Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong, execution chủ kit).
+
+### P1 (#9ab) · subsystem-horizon drift + persona portrait gap · 2026-06-12 (build-new)
+
+- [x] subsystem-horizon-drift (warn) — PRODUCT.md subsystem table row horizon disagrees with matching PRD
+  frontmatter `horizon`. New `check_product_subsystems` in `check_consistency_product.py`; wired as 2 dispatch
+  lines in `check_consistency.check()`. 6 tests: mismatch warns, aligned clean, no-portrait warns, portrait clean,
+  garbled table no-crash, no-horizon-column no-crash. Suite 728 passed (1 pre-existing dogfood-state failure
+  unchanged). → EVIDENCE P1-9ab.
+- [x] persona-without-portrait (warn) — persona declared in VISION/BRD frontmatter with no matching `##`/`###`
+  body heading. New `check_persona_portraits` in same sibling. Conservative (heading-absent only). → EVIDENCE P1-9ab.
