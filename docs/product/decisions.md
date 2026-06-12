@@ -57,3 +57,28 @@ Privacy-by-construction for the artifact-edit hook (GATE H3): `_build_record` is
 Sink name `artifact-events.jsonl` (not `artifact_edits.jsonl` or `artifact-edit-events.jsonl`) chosen to be consistent with the existing kebab-case sink names (hook-telemetry.jsonl, subagent-outcomes.jsonl, sessions.jsonl, invocations.jsonl) and to clearly describe the event category rather than the operation name.
 
 Registration appended to the existing `PostToolUse:Edit|Write|MultiEdit` group in REGISTRATIONS (not a new group) so the matcher string is defined exactly once — avoids a second identical-matcher group that the settings reconciler would treat as separate entries.
+
+---
+id: DEC-5
+status: active
+date: 2026-06-12
+affects: harvester.py, analyze_telemetry.py, telemetry_render.py
+---
+
+## DEC-5 — Harvester is read-only by construction; opt-in flag gates the suggestions section
+
+Boundary A9 (non-negotiable): the harvester must never write to any skill/template/SKILL.md and must
+never self-evolve the kit. This is enforced by construction rather than by a runtime check: `harvester.py`
+opens files only via read-mode `open()` calls; it has no `open(..., 'w')`, `Path.write_text()`,
+`Path.write_bytes()`, or any other write-mode path anywhere in the module. The boundary-A9 test
+(`test_harvester_never_writes_anything`) monkeypatches builtin `open` to raise on write-mode AND patches
+`Path.write_text`/`Path.write_bytes` to raise — a stronger guard than mtime-diffing (catches writes to
+any path, including paths outside `.claude/skills/`).
+
+Opt-in gate: `--auto-suggest` is a store_true flag (absent by default). When absent, no suggestions
+section is appended to stdout or to the export file — the output is identical to a normal `--lens` run.
+This prevents surprise suggestions content in automated pipelines. When present, suggestions are appended
+as a markdown section that the PO reads before deciding whether to act. No auto-send path exists.
+
+Default export path (`.claude/telemetry/usage-summary.md`) lands in the gitignored telemetry dir so
+the exported summary is never accidentally committed alongside spec artifacts.

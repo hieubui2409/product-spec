@@ -305,3 +305,18 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
   LENSES dict + OVERVIEW_ORDER; VI/EN labels appended to `telemetry_render.py` `_T` dict.
   Suite 232 passed (telemetry+hooks+_shared); product-spec 754 passed (1 pre-existing dogfood-state
   failure unchanged). DEC-4 recorded. → EVIDENCE P6-8.
+
+### P7 (#11) · usage-summary export + harvester (build-new) · 2026-06-12 (build-new)
+
+- [x] usage-summary export + read-only harvester — closes the feedback loop without kit self-evolution
+  (boundary A9). `analyze_telemetry.py` gains `--export-summary [PATH]` (writes aggregate markdown,
+  empty telemetry → valid empty markdown, exit 0) and `--auto-suggest` (opt-in; absent → no suggestions
+  section). New `harvester.py` sibling: `harvest_suggestions(days, corrections_path)` reads
+  `self-corrections.json` + `artifact-events.jsonl` and returns `{"suggestions":[...]}` — pure READ,
+  never opens any file for writing (boundary A9 by construction). VI/EN labels (`suggest_h/suggest_none`)
+  appended to `telemetry_render.py` `_T` dict. 5 tests: export-summary-writes-markdown,
+  harvester-returns-suggestions-only, harvester-never-writes-anything (boundary A9 — monkeypatched
+  write-mode open + Path.write_text/write_bytes raise; harvester completes without triggering any write),
+  auto-suggest-absent-produces-no-suggestions-section (negative), export-summary-empty-telemetry-writes-valid-markdown
+  (negative). Suite 237 passed (telemetry+hooks+_shared); product-spec 1 pre-existing failure unchanged.
+  DEC-5 recorded. → EVIDENCE P7-11.

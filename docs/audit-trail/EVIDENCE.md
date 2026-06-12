@@ -311,6 +311,33 @@ roll the oldest cycle into `## Archive` when exceeded.
   and `analyze_telemetry.py` edits are append-only (import + LENSES key + OVERVIEW_ORDER entry + _T label keys +
   _md_* fn + _MD entry + ascii elif) — P7 can re-read both files clean.
 
+### P7-11 · BUILD-NEW · usage-summary export + read-only harvester · `harvester.py` (new) + `analyze_telemetry.py` (2 flags) + `telemetry_render.py` (2 label keys)
+- **Root cause:** no mechanism existed to emit an aggregate usage report for PO review, and no read-only
+  feedback-loop surface existed to surface self-correction patterns or churn hot-spots to the dev team.
+  Boundary A9 required the harvester to be provably read-only (never write to any skill/template).
+- **Before:** `python3 -m pytest .claude/skills/telemetry/scripts/tests/test_harvester.py -q`
+  → `4 failed, 1 passed` (missing `--export-summary` flag; `ModuleNotFoundError: No module named 'harvester'`).
+  `analyze_telemetry.py --export-summary /tmp/out.md` → `argparse error: unrecognized arguments`.
+- **Fix:** new `harvester.py` sibling — `harvest_suggestions(days, corrections_path)` reads
+  `docs/product/.memory/self-corrections.json` (category/artifact tallies) and `artifact-events.jsonl`
+  (repeat-edit heat, threshold=3); returns `{"suggestions":[{category,artifact,count,why},...]}`.
+  Opens files only in read mode by construction — no write-mode open call anywhere in the module.
+  `analyze_telemetry.py` gains `--export-summary PATH` (default `.claude/telemetry/usage-summary.md`,
+  writes rendered markdown; empty telemetry → valid markdown + exit 0) and `--auto-suggest` (store_true,
+  opt-in; absent flag → no suggestions section at all). `_write_export_summary` + `_harvester_section`
+  helpers added (append-only to the existing `main()`). VI/EN labels `suggest_h`/`suggest_none` appended
+  to `telemetry_render.py` `_T` dict (P6's `heat_h/heat_none/a_heat` lines byte-identical).
+- **After:** `python3 -m pytest .claude/skills/telemetry/scripts/tests/test_harvester.py -q`
+  → `5 passed`. CONTRIBUTING.md:69 gate: `python3 -m pytest .claude/skills/telemetry .claude/hooks
+  .claude/skills/_shared -q` → `237 passed`. Product-spec regression: `python3 -m pytest
+  .claude/skills/product-spec --tb=no` → `1 failed` (pre-existing `test_dogfood_state_untracked`, unchanged).
+- **Note:** DEC-5 (decisions.md). Boundary A9 test (`test_harvester_never_writes_anything`) monkeypatches
+  builtin `open` to raise on any write-mode (`w`,`a`,`x`,`w+`,`wb`,`ab`,`xb`) AND `Path.write_text` /
+  `Path.write_bytes` to raise — harvester completes and returns suggestions without triggering any write.
+  Opt-in gate (`test_auto_suggest_absent_produces_no_suggestions_section`): without `--auto-suggest`,
+  stdout contains neither "## Suggestions" nor "## Gợi ý". PO reviews the exported summary before sending —
+  no auto-send, no skill self-edit.
+
 ---
 
 ## Archive

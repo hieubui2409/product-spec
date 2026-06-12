@@ -103,6 +103,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--format", choices=["md", "json", "ascii", "mermaid"], default="md")
     ap.add_argument("--lang", choices=["vi", "en"], default="vi",
                     help="language for fixed scaffolding labels (vi default; LLM narrates prose in this language)")
+    ap.add_argument("--export-summary", metavar="PATH", default=None,
+                    help="write the markdown aggregate to PATH (default: .claude/telemetry/usage-summary.md)")
+    ap.add_argument("--auto-suggest", action="store_true",
+                    help="(opt-in) append harvester suggestions after the normal render")
     args = ap.parse_args(argv)
 
     if args.overview or args.lens == "all":
@@ -113,8 +117,55 @@ def main(argv: list[str] | None = None) -> int:
         print(f"unknown lens: {args.lens!r}; known: {', '.join(LENSES)} | all", file=sys.stderr)
         return 2
 
-    print(_render(data, args.format, args))
+    rendered = _render(data, args.format, args)
+    print(rendered)
+
+    # --export-summary: write the aggregate markdown to disk (empty telemetry → valid empty md).
+    if args.export_summary is not None or args.auto_suggest:
+        export_path = args.export_summary
+        if export_path is None:
+            # default path when only --auto-suggest was given without --export-summary
+            from pathlib import Path as _Path
+            export_path = str(_Path(sys.argv[0]).resolve().parent.parent.parent / "telemetry" / "usage-summary.md")
+        _write_export_summary(rendered, export_path, args)
+
     return 0
+
+
+def _write_export_summary(rendered: str, path: str, args) -> None:
+    """Write the rendered markdown (+ optional harvester suggestions) to *path*."""
+    from pathlib import Path as _Path
+    out = _Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    content = rendered
+    if args.auto_suggest:
+        content = content + "\n\n" + _harvester_section(args)
+    out.write_text(content, encoding="utf-8")
+
+
+def _harvester_section(args) -> str:
+    """Invoke harvester and render its suggestions as a markdown section."""
+    try:
+        import harvester  # noqa: E402 — sibling module, imported lazily
+        result = harvester.harvest_suggestions(days=getattr(args, "days", 30))
+        suggestions = result.get("suggestions", [])
+    except Exception as exc:  # noqa: BLE001 — harvester must never crash the CLI
+        return f"## Suggestions\n\n_Harvester error: {exc}_\n"
+
+    lang = getattr(args, "lang", "vi")
+    import telemetry_render  # noqa: E402
+    heading = telemetry_render._t(lang, "suggest_h")
+    if not suggestions:
+        none_label = telemetry_render._t(lang, "suggest_none")
+        return f"{heading}\n\n{none_label}\n"
+
+    lines = [heading, ""]
+    for s in suggestions:
+        lines.append(
+            f"- **{s.get('artifact', '?')}** ({s.get('category', '?')}, "
+            f"count={s.get('count', 0)}): {s.get('why', '')}"
+        )
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

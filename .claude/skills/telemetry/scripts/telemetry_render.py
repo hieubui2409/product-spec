@@ -123,6 +123,9 @@ _T: dict[str, dict] = {
         "heat_cols": ["Artifact", "Edits", "Last edit"],
         "heat_none": "_No artifact edits recorded yet._",
         "a_heat": "ARTIFACT HEAT — {total} edits across {n} artifact(s)",
+        # harvester suggestions (P7)
+        "suggest_h": "## Suggestions",
+        "suggest_none": "_No suggestions — keep going!_",
     },
     "vi": {
         "banner": "== TELEMETRY: MỨC DÙNG & SỨC KHỎE ==",
@@ -222,6 +225,9 @@ _T: dict[str, dict] = {
         "heat_cols": ["Artifact", "Số lần sửa", "Lần sửa gần nhất"],
         "heat_none": "_Chưa ghi nhận lần sửa artifact nào._",
         "a_heat": "ARTIFACT HEAT — {total} lần sửa trên {n} artifact",
+        # harvester suggestions (P7)
+        "suggest_h": "## Gợi ý",
+        "suggest_none": "_Không có gợi ý — tiếp tục tốt!_",
     },
 }
 
