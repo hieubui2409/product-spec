@@ -223,3 +223,13 @@ không đo) — chạy riêng process, 0 fail. Doc-only, KHÔNG chạm PO data �
 Verify: **release 300/300** (+4, 19 skip) — chạy riêng process, 0 fail. Build-new, KHÔNG chạm PO data → không EVIDENCE.
 
 **P10a SHIP-CRITICAL hoàn tất (#7+#12+#2)** → mở khoá rollout P13 (cùng P8+P9+P12 đã land).
+
+### P13 · Rollout PO Cleanmatic (Q7=a) · 2026-06-12 (TÀI LIỆU-only, draft bàn giao)
+- Phase tài liệu/giao tiếp, KHÔNG code. Soạn 4 hiện vật `docs/rollout/`: README index · `rollout-checklist.md`
+  (gate dry-run-sandbox + backup + upgrade + migrate GATE + bật telemetry/spec-validate + xác nhận) ·
+  `po-invitation-2.3.0.md` (6 nhóm mở khoá, plain-VI no-finding-code) · `license-notice-agpl-draft.md`
+  (**DRAFT — chủ kit rà pháp lý**, Q7=a hiệu lực <2.2.1, release-notes để dán `[Unreleased]` lúc `release.py`).
+- **Ruling PO (phiên này):** soạn-draft-ngay + AGPL-draft-cần-rà-pháp-lý. Outward-facing (gửi PO, PO chạy upgrade,
+  tag/push) thuộc **chủ kit** — skill không tự thao tác. Cycle 3 **giữ mở** (P10b/P11/#9 hoãn song song sau rollout)
+  → tiêu chí "31/31 đóng cycle" hoãn. BACKLOG cập nhật.
+Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong, execution chủ kit).

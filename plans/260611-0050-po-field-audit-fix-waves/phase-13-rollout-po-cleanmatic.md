@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "Rollout PO Cleanmatic (mời lên 2.3.0 + notice license)"
-status: pending
+status: in-progress
 priority: P2
 effort: "0.5d"
 dependencies: [8, 9, 10, 12]
@@ -45,10 +45,14 @@ Phase tài liệu — không code. Thay TDD bằng **kiểm tra điều kiện t
 1. Verify tiền đề (P8/P9/P12 done). 2. Soạn checklist rollout. 3. Soạn notice license + release-notes. 4. Soạn thông điệp mời PO (drift → mở khoá). 5. Cập nhật BACKLOG + đóng Cycle 3 REVIEW (roll Archive). 6. Bàn giao chủ kit gửi.
 
 ## Success Criteria
-- [ ] Checklist rollout đầy đủ, an toàn (backup + dry-run + GATE migrate).
-- [ ] Notice license AGPL + release-notes hồi tố soạn xong.
-- [ ] Thông điệp mời PO nêu rõ mở khoá gì.
-- [ ] 31/31 row Cycle 3 `[x]`; cycle đóng vào Archive; BACKLOG cập nhật.
+- [x] Checklist rollout đầy đủ, an toàn (backup + dry-run + GATE migrate). → `docs/rollout/rollout-checklist.md`
+- [x] Notice license AGPL + release-notes hồi tố soạn xong (DRAFT, đánh dấu cần chủ kit rà pháp lý). → `docs/rollout/license-notice-agpl-draft.md`
+- [x] Thông điệp mời PO nêu rõ mở khoá gì (6 nhóm). → `docs/rollout/po-invitation-2.3.0.md`
+- [ ] ~~31/31 row Cycle 3 `[x]`; cycle đóng vào Archive~~ — **HOÃN** theo quyết định PO (P10a→rollout→deferred song song): P10b/P11/#9 còn mở → Cycle 3 **giữ mở**, không đóng phiên này. BACKLOG cập nhật mục "Thông báo PO".
+
+> **Trạng thái P13:** hiện vật draft SOẠN XONG (bàn giao `docs/rollout/`). Phần outward-facing
+> (chủ kit chạy gate dry-run sandbox, gửi PO, PO chạy `upgrade.sh`, tag/push 2.3.0) **chưa làm —
+> thuộc chủ kit**. Skill không tự gửi/tag/push.
 
 ## Risk Assessment
 - Rollout trước khi upgrade-path thật-sự-an-toàn. Mitigate: gate tiên quyết P9 dry-run sạch + leg bash3; KHÔNG mời PO nếu P9 chưa xanh.
