@@ -79,6 +79,7 @@ from spec_graph import build_graph, changed_nodes, diff_graphs, _now
 from check_consistency import _parse_iso_date
 from time_advisory import check_overdue
 from judgment_cache import _last_validated_path
+import status_vcs
 
 configure_utf8_console()
 
@@ -256,6 +257,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
             "open_questions": _open_questions(root),
             "reflect_suggestion": _reflect_suggestion([]),
             "bundle_age": _bundle_age(root, eval_today),
+            "vcs_warnings": status_vcs.vcs_warnings(root / "docs" / "product"),
         }
 
     diff = diff_graphs(graph, baseline_snapshot)
@@ -289,6 +291,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
         "open_questions": _open_questions(root),
         "reflect_suggestion": _reflect_suggestion(unvalidated),
         "bundle_age": _bundle_age(root, eval_today),
+        "vcs_warnings": status_vcs.vcs_warnings(root / "docs" / "product"),
     }
 
 
@@ -303,7 +306,41 @@ def main() -> int:
     # --lang accepted for CLI-contract uniformity; this is a lang-agnostic JSON
     # feeder (English keys), so it is ignored (the LLM localizes the nudge prose).
     ap.add_argument("--lang", default="en", choices=["en", "vi"])
+    # Opt-in snapshot/restore (logic lives in snapshot.py; these are dispatch wires only).
+    ap.add_argument("--snapshot", action="store_true",
+                    help="Capture the current spec artifact tree into a timestamped snapshot.")
+    ap.add_argument("--restore", metavar="TS",
+                    help="Restore a snapshot by timestamp over the live spec tree.")
+    ap.add_argument("--confirm", action="store_true",
+                    help="Allow --restore over uncommitted changes.")
+    ap.add_argument("--list-snapshots", action="store_true",
+                    help="List available snapshot timestamps.")
     args = ap.parse_args()
+
+    root = Path(args.root).resolve()
+
+    # Snapshot dispatch — OPT-IN ONLY via explicit flags; no auto-hook.
+    if args.snapshot or args.restore or args.list_snapshots:
+        import snapshot as _snap
+        spec_root = root / "docs" / "product"
+        snaps_home = root / ".product-spec-snapshots"
+        if args.snapshot:
+            dest = _snap.make_snapshot(spec_root, snaps_home)
+            print(f"Snapshot captured: {dest}", file=sys.stderr)
+            return 0
+        if args.restore:
+            try:
+                _snap.restore_snapshot(spec_root, snaps_home, args.restore,
+                                       confirm=args.confirm)
+                print(f"Restored '{args.restore}' to {spec_root}", file=sys.stderr)
+            except (_snap.RestoreDirtyError, _snap.SnapshotNotFoundError) as exc:
+                print(f"ERROR: {exc}", file=sys.stderr)
+                return 2
+            return 0
+        if args.list_snapshots:
+            for ts in _snap.list_snapshots(snaps_home):
+                print(ts)
+            return 0
 
     try:
         report = build_status(args.root, today=args.today)

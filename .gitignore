@@ -190,3 +190,7 @@ Script.tar.gz
 docs/product/.session.md
 docs/product/.memory/
 docs/product/visuals/.snapshots/
+
+# Opt-in spec-artifact snapshots (snapshot.py --snapshot); excluded to prevent
+# the 88-file-backup-leak anti-pattern that motivated this feature.
+.product-spec-snapshots/

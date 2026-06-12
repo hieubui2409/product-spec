@@ -262,6 +262,30 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **Note:** DEC-2 (this file's decisions.md). Alias is copy-based (not symlink) for filesystem portability;
   missing sidecar → treated as changed (safe: forces re-render, never silently reuses stale output).
 
+### P5-14 · snapshot/restore engine + VCS-warn · `snapshot.py` (new) + `status_vcs.py` (new) + `status.py` (wiring only)
+- **Root cause:** PO used manual `cp` backups that leaked 88 tracked `*.bak-*` files to GitHub (PS-22 context);
+  no structured snapshot/restore mechanism existed; `--status` had no VCS-state visibility (untracked spec tree,
+  large uncommitted diff) to help the PO understand backup/commit posture.
+- **Before:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_snapshot.py -q`
+  → `FAILED ×7: ModuleNotFoundError: No module named 'snapshot'` /  `...No module named 'status_vcs'`.
+  Full suite: `754 passed, 1 failed` (pre-existing dogfood-state, UNCHANGED; this is taken AFTER P1–P4 landed).
+- **Fix:** new `snapshot.py` sibling — `make_snapshot(spec_root, snapshots_home, ts)` (injectable ts for
+  deterministic tests; copies spec tree + writes a README; dirs_exist_ok for re-runs), `restore_snapshot`
+  (staging-dir + atomic rename swap; refuses `RestoreDirtyError` when git tree is dirty and `confirm=False`),
+  `list_snapshots`/`latest_snapshot` (fail-soft empty). New `status_vcs.py` sibling — `vcs_warnings(spec_root)`
+  with two checks: `spec_tree_untracked` (outside git, via `git rev-parse --is-inside-work-tree`) and
+  `large_uncommitted_diff` (≥ `LARGE_DIFF_FILE_COUNT=5` uncommitted files via `git status --porcelain`;
+  threshold is a hard integer constant). `status.py` gains 1 import + 1 `"vcs_warnings"` key in both return
+  branches + opt-in CLI dispatch for `--snapshot`/`--restore`/`--list-snapshots` (no auto-hook in any migrator —
+  GATE H2 held). `.product-spec-snapshots/` added to `.gitignore`.
+- **After:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_snapshot.py -q` → `7 passed`.
+  Full suite: `python3 -m pytest .claude/skills/product-spec --tb=no` → `754 passed, 1 failed`
+  (1 failure = pre-existing `test_dogfood_state_untracked`, unchanged). CONTRIBUTING.md:69 gate:
+  `python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q` → `219 passed`.
+- **Note:** DEC-3 (decisions.md). Snapshot is OPT-IN ONLY — no migrator auto-hook (deferred per plan H2).
+  Restore staging → atomic rename so the live tree is never left partially restored. VCS thresholds are concrete
+  integers (LARGE_DIFF_FILE_COUNT=5) in the sibling module — single authoritative source.
+
 ---
 
 ## Archive

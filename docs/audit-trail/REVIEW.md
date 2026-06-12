@@ -263,6 +263,21 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
   lines total). 6 tests: latest-alias v1→v2, banner-on-drift (count assert), no-banner-when-in-sync, hash-reuse-skips-rerender,
   clean-keeps-3-of-6, clean-on-empty-no-crash. DEC-2 recorded. → EVIDENCE P4-6.
 
+### P5 (#14) · snapshot/restore engine + VCS-warn · 2026-06-12 (build-new)
+
+- [x] POX-F10 · snapshot-restore engine + VCS-warn — hand `cp` backups leaked 88 tracked `*.bak-*`
+  files to GitHub. New `snapshot.py` sibling: `make_snapshot` (timestamped copy of spec tree + README,
+  injectable ts for deterministic tests), `restore_snapshot` (staging-dir + atomic rename swap, refuses
+  dirty target without `confirm=True`), `list_snapshots`/`latest_snapshot`. New `status_vcs.py` sibling:
+  `vcs_warnings` with two checks — `spec_tree_untracked` (outside git) and `large_uncommitted_diff`
+  (≥5 uncommitted files, hard integer threshold). `status.py` grows 1 import + 1 key (`vcs_warnings`)
+  in both return branches + dispatch wiring for `--snapshot`/`--restore`/`--list-snapshots`. Snapshot
+  OPT-IN ONLY: no auto-hook in any migrator (GATE H2 held). `.product-spec-snapshots/` gitignored.
+  7 tests: snapshot-captures-tree, snapshot-timestamped-distinct, restore-roundtrip,
+  restore-refuses-dirty-without-confirm (negative), vcs-warn-untracked, vcs-warn-large-diff (both
+  directions), list-empty-no-crash. Suite 754 passed (1 pre-existing dogfood-state failure). DEC-3
+  recorded. → EVIDENCE P5-14.
+
 ### P2 (#9c) · id-backfill migrator (build+test only) · 2026-06-12 (build-new)
 
 - [x] id-backfill migrator — new `migrate_backfill_ids.py` that inserts missing `id:` into artifact frontmatter.
