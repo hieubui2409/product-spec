@@ -53,12 +53,22 @@ def resolve_max_size(args: Any, manifest: dict) -> int:
 def prepare_build(manifest: dict, root: Path, epoch: int, bundle_root: str,
                   selection: list[tuple[Path, str]]
                   ) -> tuple[bytes, list[tuple[str, bytes]], list[tuple[Path, str]]]:
-    """Compute MANIFEST.json, render embedded files, and version-prefix the selection."""
+    """Compute MANIFEST.json, render embedded files, and version-prefix the selection.
+
+    Two-phase MANIFEST build:
+      Phase 1: build a preliminary manifest_json from selection only (needed as
+               input to render_embedded so install.sh/upgrade.sh get tokens).
+      Phase 2: render all embedded files (install.sh, upgrade.sh, _upgrade/*.py …),
+               then rebuild manifest_json INCLUDING those rendered files as
+               extra_embedded so their sha256/size appear in MANIFEST.json's files[].
+               The MANIFEST.json entry in embedded is replaced with the final version.
+    """
     file_count, total_bytes = filter_findings(selection)
-    manifest_json = build_manifest_json(
+    # Phase 1: preliminary manifest for token generation
+    manifest_json_prelim = build_manifest_json(
         selection, manifest, source_date_epoch=epoch, repo_root=root,
     )
-    parsed = json.loads(manifest_json)
+    parsed = json.loads(manifest_json_prelim)
     tokens = {
         "BUNDLE_NAME": manifest["bundle_name"],
         "VERSION": manifest["version"],
@@ -70,11 +80,32 @@ def prepare_build(manifest: dict, root: Path, epoch: int, bundle_root: str,
     versioned = [(src, f"{bundle_root}/{arc}") for src, arc in selection]
     versioned.sort(key=lambda x: x[1].encode("utf-8"))
     skill_root = Path(__file__).resolve().parent.parent.parent
-    embedded = render_embedded(
+
+    # Phase 1 embedded (MANIFEST.json is the preliminary version here)
+    embedded_prelim = render_embedded(
         skill_root, bundle_root_dir=bundle_root,
-        manifest_json=manifest_json, tokens=tokens,
+        manifest_json=manifest_json_prelim, tokens=tokens,
     )
-    return manifest_json, embedded, versioned
+
+    # Phase 2: rebuild manifest_json with embedded non-MANIFEST files listed
+    # (so recipients can verify integrity of install.sh, upgrade.sh, etc.)
+    non_manifest_embedded = [
+        (arc, content) for arc, content in embedded_prelim
+        if not arc.endswith("/MANIFEST.json")
+    ]
+    manifest_json_final = build_manifest_json(
+        selection, manifest, source_date_epoch=epoch, repo_root=root,
+        extra_embedded=non_manifest_embedded,
+    )
+
+    # Replace the MANIFEST.json payload with the final version
+    embedded = [
+        (arc, manifest_json_final if arc.endswith("/MANIFEST.json") else content)
+        for arc, content in embedded_prelim
+    ]
+    embedded.sort(key=lambda x: x[0].encode("utf-8"))
+
+    return manifest_json_final, embedded, versioned
 
 
 def write_tarball(args: argparse.Namespace, manifest: dict, out_dir: Path,

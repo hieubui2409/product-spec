@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# upgrade.sh — one-command 1.x -> 2.x upgrade for {{BUNDLE_NAME}} v{{VERSION}}.
+#
+# Sweeps legacy 1.x artifacts (spec-critique/, claude-pack/, old dev rules),
+# force-installs the new bundle over the target, and runs migrate dry-run.
+#
+# Usage:
+#   bash upgrade.sh                    # dry-run: print plan, write nothing
+#   TARGET_DIR=/path/to/repo bash upgrade.sh
+#   bash upgrade.sh --apply            # backup + sweep + force-install + migrate dry-run
+#   bash upgrade.sh --rollback         # restore most recent backup (one command)
+#
+# Safety contract (enforced by Python planner/apply, not this shell wrapper):
+#   - Every removal is backed up to upgrade-backup-<timestamp>/ BEFORE deletion.
+#   - A file whose content differs from its pristine hash is KEPT (prompted), never blind-removed.
+#   - Symlinks are unlinked only — never followed to external targets.
+#   - Rule removals only activate when a 1.x legacy signature is present in the target.
+#   - migrate_metric_to_metrics is run DRY-RUN ONLY here. PO approval is a separate step.
+#   - If any deletion step fails, the Python layer self-rolls-back (atomic).
+#   - If Step 2 (install) or Step 3 (migrate) fails, the shell auto-rolls-back the sweep.
+#
+# Requires: python3 (for the planner). bash 3.2+.
+
+set -euo pipefail
+
+BUNDLE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TARGET_DIR="${TARGET_DIR:-$PWD}"
+
+PLANNER="$BUNDLE_DIR/_upgrade/upgrade_planner.py"
+APPLY_PY="$BUNDLE_DIR/_upgrade/upgrade_apply.py"
+LEGACY_MAP="$BUNDLE_DIR/_upgrade/legacy-map.json"
+
+ROLLBACK_ON_ERR=""
+on_err() {
+    echo "[upgrade] FAILED — see message above." >&2
+    if [ -n "$ROLLBACK_ON_ERR" ] && [ -d "$ROLLBACK_ON_ERR" ]; then
+        echo "[upgrade] Auto-rolling back the legacy sweep from: $ROLLBACK_ON_ERR" >&2
+        python3 "$APPLY_PY" --rollback "$ROLLBACK_ON_ERR" >&2 \
+            || echo "[upgrade] Auto-rollback FAILED. Restore manually: bash upgrade.sh --rollback" >&2
+        echo "[upgrade] Legacy artifacts restored. Re-running 'bash upgrade.sh --apply' is safe (idempotent)." >&2
+    fi
+}
+trap on_err ERR
+
+APPLY=0
+ROLLBACK=0
+
+for arg in "$@"; do
+    case "$arg" in
+        --apply)    APPLY=1 ;;
+        --rollback) ROLLBACK=1 ;;
+        *) echo "[upgrade] Unknown argument: $arg" >&2; exit 1 ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# Require python3 — this is a destructive operation; do not silently skip.
+# ---------------------------------------------------------------------------
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[upgrade] ERROR: python3 not found." >&2
+    echo "[upgrade] python3 is required to run the upgrade planner." >&2
+    echo "[upgrade] Install python3 and re-run." >&2
+    exit 1
+fi
+
+[ -f "$PLANNER" ]    || { echo "[upgrade] ERROR: $PLANNER not found — corrupt bundle?" >&2; exit 1; }
+[ -f "$LEGACY_MAP" ] || { echo "[upgrade] ERROR: $LEGACY_MAP not found — corrupt bundle?" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+# --rollback: find most recent backup dir and restore it
+# ---------------------------------------------------------------------------
+if [ "$ROLLBACK" = "1" ]; then
+    echo "[upgrade] Looking for most recent upgrade-backup-* in $TARGET_DIR ..."
+    # LC_ALL=C sort gives deterministic lexicographic order; last entry = newest timestamp
+    LATEST_BACKUP="$(LC_ALL=C find "$TARGET_DIR" -maxdepth 1 -name "upgrade-backup-*" -type d | LC_ALL=C sort | tail -n1)"
+    if [ -z "$LATEST_BACKUP" ]; then
+        echo "[upgrade] ERROR: No upgrade-backup-* directory found in $TARGET_DIR" >&2
+        exit 1
+    fi
+    echo "[upgrade] Rolling back from: $LATEST_BACKUP"
+    python3 "$APPLY_PY" --rollback "$LATEST_BACKUP"
+    echo "[upgrade] Rollback complete."
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Dry-run (default): print plan, write nothing
+# ---------------------------------------------------------------------------
+if [ "$APPLY" = "0" ]; then
+    echo "[upgrade] DRY-RUN for {{BUNDLE_NAME}} v{{VERSION}}"
+    echo "[upgrade] Target: $TARGET_DIR"
+    echo ""
+    python3 "$PLANNER" \
+        --target "$TARGET_DIR" \
+        --legacy-map "$LEGACY_MAP" \
+        --dry-run
+    echo ""
+    echo "[upgrade] No files changed. Re-run with --apply to execute the upgrade."
+    echo "[upgrade]   bash upgrade.sh --apply"
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# --apply: sweep legacy artifacts + force-install new bundle + migrate dry-run
+# ---------------------------------------------------------------------------
+echo "[upgrade] APPLY for {{BUNDLE_NAME}} v{{VERSION}}"
+echo "[upgrade] Target:     $TARGET_DIR"
+echo "[upgrade] Bundle dir: $BUNDLE_DIR"
+echo ""
+
+# Step 1: Run the Python planner+apply (atomic: self-rolls-back on failure)
+echo "[upgrade] Step 1/3: Sweeping legacy 1.x artifacts ..."
+python3 "$PLANNER" \
+    --target "$TARGET_DIR" \
+    --legacy-map "$LEGACY_MAP" \
+    --apply
+echo ""
+
+# Capture the backup dir the sweep just created so a later-step failure auto-rolls-back.
+ROLLBACK_ON_ERR="$(LC_ALL=C find "$TARGET_DIR" -maxdepth 1 -name 'upgrade-backup-*' -type d | LC_ALL=C sort | tail -n1)"
+
+# Gitignore the backup artifacts so the upgrade doesn't pollute the PO's git status.
+GITIGNORE_FILE="$TARGET_DIR/.gitignore"
+if ! grep -qxF 'upgrade-backup-*/' "$GITIGNORE_FILE" 2>/dev/null; then
+    if [ -s "$GITIGNORE_FILE" ] && [ -n "$(tail -c1 "$GITIGNORE_FILE")" ]; then printf '\n' >> "$GITIGNORE_FILE"; fi
+    printf '%s\n' 'upgrade-backup-*/' >> "$GITIGNORE_FILE"
+fi
+
+# Step 2: Force-install the new bundle over the target
+echo "[upgrade] Step 2/3: Installing {{BUNDLE_NAME}} v{{VERSION}} (force-overwrite) ..."
+FORCE_OVERWRITE=1 TARGET_DIR="$TARGET_DIR" bash "$BUNDLE_DIR/install.sh"
+echo ""
+
+# Step 3: Run migrate dry-run only (NEVER --apply here — PO approval is a separate step)
+echo "[upgrade] Step 3/3: Checking for legacy metric: fields (dry-run only) ..."
+MIGRATE_SCRIPT="$TARGET_DIR/.claude/skills/product-spec/scripts/migrate_metric_to_metrics.py"
+if [ -f "$MIGRATE_SCRIPT" ]; then
+    python3 "$MIGRATE_SCRIPT" --root "$TARGET_DIR" || true
+    echo ""
+    echo "[upgrade] NOTE: migrate_metric_to_metrics ran DRY-RUN ONLY above."
+    echo "[upgrade]   If confirm_required is true, run the migration separately"
+    echo "[upgrade]   with explicit PO approval (--confirmed-by and --date flags)."
+    echo "[upgrade]   The upgrade script never applies migrate automatically."
+else
+    echo "[upgrade] migrate_metric_to_metrics.py not found at expected path — skipping."
+fi
+echo ""
+
+echo "[upgrade] Upgrade complete."
+echo "[upgrade] To roll back: bash upgrade.sh --rollback"

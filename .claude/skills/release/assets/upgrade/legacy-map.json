@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "description": "Artifacts shipped by product-spec 1.x (the claude-pack / spec-critique era) that a 2.x recipient bundle no longer ships. The upgrade legacy-sweep removes these so a 1.x -> 2.x upgrade does not leave a Frankenstein install (a doubled critique skill, an orphan packer skill, dead dev-kit rules). Safety contract enforced by upgrade_planner/upgrade_apply, NOT by this data: every removal is backed up to a timestamped backup dir BEFORE deletion (recoverable); a file whose content differs from a known-pristine hash is PROMPTed (Keep/Change), never blind-removed; a symlink at a legacy path is unlinked only, never followed; and rule removals (whose basenames collide with this dev repo's own rules) only activate when a legacy signature is present in the target tree.",
+  "legacy_signature_paths": [
+    ".claude/skills/spec-critique",
+    ".claude/skills/claude-pack"
+  ],
+  "entries": [
+    {
+      "path": ".claude/skills/spec-critique",
+      "kind": "dir",
+      "action": "remove",
+      "superseded_by": ".claude/skills/product-spec-critique",
+      "requires_signature": false,
+      "reason": "renamed in 2.0.0 (spec-critique -> product-spec-critique); leaving it doubles the critique skill"
+    },
+    {
+      "path": ".claude/skills/claude-pack",
+      "kind": "dir",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": false,
+      "reason": "renamed to 'release' in 2.0.0 and NOT shipped to recipients (dev-only toolchain); leaving it is an orphan packer skill"
+    },
+    {
+      "path": ".claude/rules/primary-workflow.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x shipped dev workflow rules to recipients; the 2.x recipient bundle ships no rules (rules: [])"
+    },
+    {
+      "path": ".claude/rules/development-rules.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule; not shipped to 2.x recipients"
+    },
+    {
+      "path": ".claude/rules/orchestration-protocol.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule; not shipped to 2.x recipients"
+    },
+    {
+      "path": ".claude/rules/documentation-management.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule; not shipped to 2.x recipients"
+    },
+    {
+      "path": ".claude/rules/review-audit-self-decision.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule; not shipped to 2.x recipients"
+    },
+    {
+      "path": ".claude/rules/team-coordination-rules.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule, dropped before 2.x; not shipped to recipients"
+    },
+    {
+      "path": ".claude/rules/skill-domain-routing.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule, dropped before 2.x; not shipped to recipients"
+    },
+    {
+      "path": ".claude/rules/skill-workflow-routing.md",
+      "kind": "file",
+      "action": "remove",
+      "superseded_by": null,
+      "requires_signature": true,
+      "reason": "1.x dev rule, dropped before 2.x; not shipped to recipients"
+    }
+  ]
+}

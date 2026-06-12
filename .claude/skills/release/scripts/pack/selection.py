@@ -162,16 +162,25 @@ def render_embedded(
     manifest_json: bytes,
     tokens: dict[str, str],
 ) -> list[tuple[str, bytes]]:
-    """Render INSTALL.md/install.sh/install.ps1 templates -> embedded payloads."""
-    tmpl_dir = skill_root / "assets" / "templates"
-    install_md = render_template(tmpl_dir / "INSTALL.md.template", tokens)
-    install_sh = render_template(tmpl_dir / "install.sh.template", tokens)
-    install_ps1 = render_template(tmpl_dir / "install.ps1.template", tokens)
+    """Render installer/upgrade templates and embed verbatim upgrade payload.
+
+    Returns sorted (arcname, bytes) list. _upgrade/ files are verbatim copies
+    (no token substitution) so shipped Python modules are byte-identical to tested source.
+    """
+    t = skill_root / "assets" / "templates"
+    u = skill_root / "assets" / "upgrade"
+    s = skill_root / "scripts"
+    r = bundle_root_dir
     embedded = [
-        (f"{bundle_root_dir}/MANIFEST.json", manifest_json),
-        (f"{bundle_root_dir}/INSTALL.md", install_md),
-        (f"{bundle_root_dir}/install.sh", install_sh),
-        (f"{bundle_root_dir}/install.ps1", install_ps1),
+        (f"{r}/MANIFEST.json",                    manifest_json),
+        (f"{r}/INSTALL.md",                        render_template(t / "INSTALL.md.template", tokens)),
+        (f"{r}/install.sh",                        render_template(t / "install.sh.template", tokens)),
+        (f"{r}/install.ps1",                       render_template(t / "install.ps1.template", tokens)),
+        (f"{r}/upgrade.sh",                        render_template(t / "upgrade.sh.template", tokens)),
+        (f"{r}/upgrade.ps1",                       render_template(t / "upgrade.ps1.template", tokens)),
+        (f"{r}/_upgrade/upgrade_planner.py",       (s / "upgrade_planner.py").read_bytes()),
+        (f"{r}/_upgrade/upgrade_apply.py",         (s / "upgrade_apply.py").read_bytes()),
+        (f"{r}/_upgrade/legacy-map.json",          (u / "legacy-map.json").read_bytes()),
     ]
     embedded.sort(key=lambda x: x[0].encode("utf-8"))
     return embedded

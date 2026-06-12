@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Upgrade-một-lệnh + legacy-sweep"
-status: pending
+status: completed
 priority: P1
 effort: "3.5-4d"
 dependencies: [3, 5, 8]
@@ -57,11 +57,11 @@ Build `upgrade.sh` + legacy-sweep an toàn để PO 1.x lên 2.3.0 không vỡ.
 1. Viết RED tests + sandbox fixture 1.1.0 (synthesize: spec-critique/ untracked, claude-pack/, hook cũ, CLAUDE.md cũ). 2. legacy-map + dry-run planner (0 ghi). 3. backup-ts + staging build + swap atomic + `trap ERR`→rollback. 4. symlink-guard + hash-diff cả file in-map. 5. migrate `--dry-run` only + DỪNG. 6. verify-post-upgrade + `--rollback`. 7. INSTALL "Nâng cấp" song ngữ. 8. GREEN + idempotent. 9. Ghi DEC + EVIDENCE.
 
 ## Success Criteria
-- [ ] `--dry-run` in kế hoạch, **0 ghi đĩa** (settings.json/`.bak` không sinh).
-- [ ] Sau `--apply`: 0 skill/agent/packer đôi; CLAUDE.md mới; hooks an toàn; backup-ts tồn tại.
-- [ ] File PO-sửa-tay (kể cả in-map) → hỏi, không xoá im lặng; symlink không bị follow.
-- [ ] Lỗi giữa chừng → rollback về trạng thái trước-upgrade (atomic); `--rollback` 1 lệnh hoạt động.
-- [ ] Rerun idempotent, backup gốc lần đầu còn nguyên; migrate trong upgrade chỉ dry-run.
+- [x] `--dry-run` in kế hoạch, **0 ghi đĩa** (settings.json/`.bak` không sinh).
+- [x] Sau `--apply`: 0 skill/agent/packer đôi; CLAUDE.md mới; hooks an toàn; backup-ts tồn tại.
+- [x] File PO-sửa-tay (kể cả in-map) → hỏi, không xoá im lặng; symlink không bị follow.
+- [x] Lỗi giữa chừng → rollback (atomic): sweep self-rollback all-or-nothing + `trap ERR`/try-catch auto-rollback sweep khi install/migrate sau-sweep lỗi; `--rollback` 1 lệnh hoạt động (e2e shell). *(Full staging-swap descope — DEC-P09-2.)*
+- [x] Rerun idempotent, backup gốc lần đầu còn nguyên (ts µs riêng); migrate trong upgrade chỉ dry-run.
 
 ## Risk Assessment
 - **[red-team A1 CRIT] hỏng giữa chừng = Frankenstein, không rollback.** Mitigate: staging + swap atomic + `trap ERR`→`--rollback` 1 lệnh.
@@ -70,3 +70,21 @@ Build `upgrade.sh` + legacy-sweep an toàn để PO 1.x lên 2.3.0 không vỡ.
 - **[red-team A4 HIGH] file PO-sửa trùng tên legacy → xoá mù.** Mitigate: hash-diff áp cả file in-map → hỏi.
 - **[red-team D8 HIGH] upgrade.sh không AskUserQuestion được cho GATE migrate.** Mitigate: migrate chỉ dry-run trong upgrade, approve tách bước (P5).
 - **[T1] Thiếu test thật macOS bash3.** Mitigate: loại bỏ `declare -A` (P8) + sandbox linux; ghi giới hạn rõ.
+
+## Review + Fold (2026-06-12)
+3-wave code-review (cleanup/correctness/coverage/DRY/consistency) + báo cáo phase trước làm context →
+critique-challenge mọi finding → fold **14** survivor (276 passed / 19 skipped, +38 vs 238; `docker bash:3.2 -n` OK).
+HIGH đã đóng: (1) symlink-rollback báo-thành-công-giả — `_copy_to_backup` trả path không-suffix nên restore skip im lặng;
+sửa = sidecar + `symlink_target` trong manifest + `os.symlink` recreate, 2 regression test (rollback + atomic-mid-apply).
+(2) atomicity chỉ phủ sweep-loop, `trap` chỉ in → install/migrate sau-sweep lỗi = Frankenstein; sửa = `trap ERR`/try-catch
+auto-rollback sweep (capture backup sau Step 1), e2e Step-2-fail + e2e shell `--rollback`. Polish: embed-integrity test
+(byte-identity + MANIFEST sha256), drop planner `--rollback` trùng, `--dry-run`/`--apply` mutually-exclusive,
+assert→ValueError, bỏ mkdir thừa + process-substitution, gitignore `upgrade-backup-*/`, lazy-backup-dir, µs timestamp.
+
+## Decisions (DEC-P09)
+- **DEC-P09-1 — Upgrade payload NHÚNG vào bundle `_upgrade/`, không ship qua skill `release`.** Recipient bundle bỏ skill `release` (P08) nên `upgrade_planner.py`/`upgrade_apply.py`/`legacy-map.json` được copy verbatim vào `_upgrade/` ở gốc bundle; "hai nhà": module nguồn (test ở dev-repo) + bản nhúng byte-identical (test `test_bundle_embeds_upgrade_payload` assert byte-identity + MANIFEST sha256). Two-phase MANIFEST build giải vòng phụ-thuộc token↔sha256. Owner: hieubt · 2026-06-12.
+- **DEC-P09-2 — Atomicity có-giới-hạn (sweep atomic + auto-rollback), KHÔNG build full staging+swap.** Sweep huỷ-diệt là all-or-nothing (self-rollback trong loop) + `trap ERR`/try-catch tự `--rollback` sweep khi install/migrate sau-sweep lỗi. Full staging-dir+atomic-swap của bước install CỐ Ý không làm: plan tự gắn cờ "code dễ vỡ nhất"; install.sh là force-overwrite/idempotent nên chạy lại `--apply` là phục hồi sạch; mọi xoá đều có backup → **0 mất dữ liệu**. Dư địa: install lỗi có thể để lại file-mới-một-phần cạnh legacy đã khôi phục; recovery là chạy lại `--apply` (đã ghi trong thông báo trap). Owner: hieubt · 2026-06-12.
+- **DEC-P09-3 — migrate trong upgrade = DRY-RUN-ONLY.** bash/pwsh không gọi được AskUserQuestion cho GATE approve; upgrade KHÔNG bao giờ truyền `--apply`/`--confirmed-by` cho migrate (static + e2e canh giữ); approve là bước PO riêng (P5). Owner: hieubt · 2026-06-12.
+- **DEC-P09-4 — Symlink round-trip trung thực.** Symlink legacy: sweep chỉ UNLINK_ONLY (không follow ra đích ngoài cây); rollback tái-tạo bằng `os.symlink` từ `symlink_target` trong manifest (không phải copy nội-dung-đích thành file thường). 2 test canh giữ. Owner: hieubt · 2026-06-12.
+- **DEC-P09-5 — ps1 không có runtime syntax-test.** Môi trường dev/CI không có PowerShell → ps1 chỉ verify qua đối-chiếu cấu trúc với bản bash (đã chứng minh runtime qua `docker bash:3.2`); ps1 dùng chung planner/apply Python nên fix symlink + atomicity áp cho cả hai. Owner: hieubt · 2026-06-12.
+- **DEC-P09-6 — Backup nằm trong-cây + gitignore, không tạo dir rỗng.** `backup_root = target` để `--rollback` 1-lệnh `find -maxdepth 1` tìm được; upgrade append `upgrade-backup-*/` vào `.gitignore` target (idempotent, newline-safe) để không bẩn `git status`; backup dir tạo lười (chỉ khi có ≥1 mục thực-backup) nên run all-noop không sinh dir rỗng. ts giây→µs để hai `--apply` cùng-giây không trùng dir. Owner: hieubt · 2026-06-12.

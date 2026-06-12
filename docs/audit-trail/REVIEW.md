@@ -152,6 +152,18 @@ Nguồn: repo PO Cleanmatic/Cleanmatic-ERP chạy bundle claude-pack v1.1.0 (347
 - [ ] LIB-16 · CONSISTENCY · LOW · `product-spec/SKILL.md:176-177` — mô tả `--memory-hook` ghi vào `.claude/settings.local.json` + `--memory-hook-shared` trỏ `settings.json`; thực tế (install.sh:21-23,60,124) cả hai **flip cờ** `memory_gap_hook` trong `.claude/hooks/product-spec-hooks.json` (không còn settings.local/shared split) → sửa mô tả (phát hiện khi review P02; gộp nhóm Phase 12 docs-cleanup, file đo footprint → regen baseline khi sửa).
 
 - Field-observations (không lên row): PO đứng sau HEAD 9 release (lỗi thời ngay ngày cài); tự chế GH Actions fail vĩnh viễn vì thèm validate-on-push; `.session.md` đóng băng 06-02 chứa 4 fact bị supersede — đúng nguồn GATE-NEVER-ASSUME cho phép assume; visuals đóng băng 06-03 (56/102 story) + 88 file backup tracked; critique marathon 13 report/ngày trên bản không fingerprint.
-- Khoảng trống kiến trúc không-phải-defect: upgrade-path 1.x→2.x (cài đặt Frankenstein), version-beacon, artifact-events, self-learning/feedback-loop về dev, memory-lens hợp nhất, rotation change-log, snapshot/restore — 15 đề xuất xếp hạng trong report.
+- Khoảng trống kiến trúc không-phải-defect: ~~upgrade-path 1.x→2.x (cài đặt Frankenstein)~~ **→ ĐÃ LÀM (P09)**, version-beacon, artifact-events, self-learning/feedback-loop về dev, memory-lens hợp nhất, rotation change-log, snapshot/restore — 15 đề xuất xếp hạng trong report.
 - Phản biện: 0/58 finding lens bị REFUTED toàn phần; 13 ADJUSTED (2 đổi severity: ARC-F02 Critical→High, POX-F07 Medium→High); 13 finding do critic bổ sung được nhận vào.
 - Chi tiết: plans/260611-0050-po-field-audit-fix-waves/ (plan + reports đầy đủ các wave)
+
+### P09 (build-new #1) — Upgrade-một-lệnh + legacy-sweep · 2026-06-12
+
+Build kiến-trúc (không phải defect-row Cycle 3): `upgrade.sh`/`.ps1` một-lệnh + planner/apply Python nhúng
+bundle `_upgrade/` + legacy-map tường minh. 3-wave review (cleanup/correctness/coverage/DRY/consistency) +
+critique-challenge → fold **14 finding**: 2 HIGH correctness (symlink-rollback báo-thành-công-giả; atomicity
+chỉ phủ sweep-loop, trap chỉ in → wire `trap ERR`/try-catch auto-rollback sweep), embed-integrity test
+(byte-identity + MANIFEST sha256), drop planner `--rollback` trùng, `--dry-run`/`--apply` mutually-exclusive,
+assert→ValueError, bỏ mkdir thừa + process-substitution, gitignore backup, lazy-backup-dir, µs timestamp.
+**Descope có chủ đích:** full staging-dir+atomic-swap (plan tự gắn cờ "code dễ vỡ nhất"; sweep đã atomic +
+auto-recover + install idempotent → recoverable, 0 mất dữ liệu — DEC-P09-2). Suite **276 passed / 19 skipped**
+(+38 vs 238 baseline) + `docker bash:3.2 -n` OK. Quyết định: DEC-P09-1..6 (phase-09). → EVIDENCE P09.

@@ -80,6 +80,70 @@ in your repo root. Re-run `bash install.sh` (or `install.ps1`) to repair missing
 set `FORCE_OVERWRITE=1` to replace them. For skill-specific setup (e.g. Python venv), re-run
 with `RUN_HOOKS=1`.
 
+## Upgrading from 1.x / Nâng cấp từ bản 1.x
+
+### English
+
+If you have a 1.x install (skills `spec-critique/`, the legacy packer skill, or old dev-kit rules under `.claude/rules/`), use the one-command upgrade instead of plain `install.sh`.
+
+**Dry-run first (default — writes nothing):**
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && bash upgrade.sh
+```
+Prints the full sweep plan (what will be removed, kept, or prompted). No files are changed.
+
+**Apply the upgrade:**
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && bash upgrade.sh --apply
+```
+What happens:
+1. Legacy 1.x artifacts are backed up to `upgrade-backup-<timestamp>/` in your repo root, then removed.
+2. The new bundle is force-installed over the target (`FORCE_OVERWRITE=1`).
+3. `migrate_metric_to_metrics` is run **dry-run only** — any `metric:` → `metrics:` rename needs explicit PO approval in a separate step.
+
+**Safety guarantees:**
+- Every removal is backed up with a timestamp before deletion — always recoverable.
+- A file you have edited (whose content differs from the pristine 1.x hash) is **kept and flagged**, never blind-removed.
+- Symlinks are unlinked only — the external target is never touched.
+- Dev-kit rule removal only activates when a 1.x legacy signature is detected in your tree.
+- If any step fails, the Python layer self-rolls-back atomically.
+
+**One-command rollback:**
+```bash
+bash upgrade.sh --rollback
+```
+
+### Tiếng Việt
+
+Nếu bạn đang dùng bản 1.x (có skill `spec-critique/`, skill packer cũ, hoặc rule dev-kit cũ trong `.claude/rules/`), hãy dùng `upgrade.sh` thay vì chạy thẳng `install.sh`.
+
+**Xem kế hoạch trước (mặc định — không ghi gì):**
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && bash upgrade.sh
+```
+In ra toàn bộ kế hoạch dọn dẹp (sẽ xoá gì, giữ gì, hỏi gì). Không thay đổi bất kỳ file nào.
+
+**Thực thi nâng cấp:**
+```bash
+cd {{BUNDLE_NAME}}-{{VERSION}}/ && bash upgrade.sh --apply
+```
+Các bước:
+1. Artifact 1.x cũ được backup vào `upgrade-backup-<timestamp>/` rồi xoá.
+2. Bundle mới được cài đè bắt buộc (`FORCE_OVERWRITE=1`).
+3. `migrate_metric_to_metrics` chạy **dry-run only** — việc đổi tên `metric:` → `metrics:` cần PO approve riêng.
+
+**Đảm bảo an toàn:**
+- Mọi file bị xoá đều được backup có timestamp trước — luôn khôi phục được.
+- File bạn đã chỉnh tay (nội dung khác hash gốc 1.x) sẽ được **giữ lại và thông báo**, không bao giờ xoá ngầm.
+- Symlink chỉ bị gỡ link — file đích bên ngoài không bị đụng tới.
+- Xoá rule dev-kit chỉ kích hoạt khi phát hiện chữ ký legacy 1.x trong cây thư mục.
+- Nếu bất kỳ bước nào thất bại, Python tự rollback toàn bộ (atomic).
+
+**Rollback một lệnh:**
+```bash
+bash upgrade.sh --rollback
+```
+
 ## Uninstall
 
 ```bash

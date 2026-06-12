@@ -21,6 +21,10 @@ class CollisionError(Exception):
     """Raised when output path exists and ``--force`` not set."""
 
 
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def _sha256_file(path: Path, chunk: int = 65536) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -42,49 +46,55 @@ def _git_command(args: list[str], cwd: Path) -> str:
         return ""
 
 
+def _collect_file_entries(
+    selection: list[tuple[Path, str]],
+    extra_embedded: list[tuple[str, bytes]] | None,
+) -> tuple[list[dict], int]:
+    """Build sorted files[] entries + total_bytes from selection + extra_embedded."""
+    files: list[dict] = []
+    total = 0
+    for src, arc in selection:
+        if src.is_symlink() or not src.is_file():
+            continue
+        size = src.stat().st_size
+        total += size
+        files.append({"path": arc, "size": size, "sha256": _sha256_file(src)})
+    # Rendered/generated embedded files (upgrade.sh, _upgrade/*.py …).
+    # MANIFEST.json itself is excluded (self-referential; hash unknowable at build time).
+    for arc, content in (extra_embedded or []):
+        if arc.endswith("/MANIFEST.json"):
+            continue
+        size = len(content)
+        total += size
+        files.append({"path": arc, "size": size, "sha256": _sha256_bytes(content)})
+    files.sort(key=lambda f: f["path"])
+    return files, total
+
+
 def build_manifest_json(
     selection: list[tuple[Path, str]],
     bundle: dict,
     *,
     source_date_epoch: int,
     repo_root: Path,
+    extra_embedded: list[tuple[str, bytes]] | None = None,
 ) -> bytes:
-    """Build the embedded ``MANIFEST.json`` payload (sorted by arcname)."""
-    files = []
-    total_bytes = 0
-    for src, arcname in selection:
-        # Skip symlinks and non-regular files so MANIFEST.json file list and
-        # counts match the tarball, which already drops symlinks in tarball.py.
-        if src.is_symlink() or not src.is_file():
-            continue
-        size = src.stat().st_size
-        total_bytes += size
-        files.append({
-            "path": arcname,
-            "size": size,
-            "sha256": _sha256_file(src),
-        })
+    """Build the embedded ``MANIFEST.json`` payload (sorted by arcname).
 
-    # built_at follows source_date_epoch so the bundle is byte-identical by
-    # default. Unset (<=0) pins it to the epoch (1970-01-01T00:00:00+00:00);
-    # callers wanting a real provenance date pass --source-date-epoch env with
-    # SOURCE_DATE_EPOCH set to e.g. the git commit time (the release pipeline does).
+    ``extra_embedded``: optional (arcname, bytes) pairs for files rendered at
+    build time (install.sh, upgrade.sh, _upgrade/*.py). Included in files[]
+    for integrity. MANIFEST.json itself is excluded (self-referential).
+    """
+    files, total_bytes = _collect_file_entries(selection, extra_embedded)
+    # source_date_epoch <=0 → epoch (1970-01-01T00:00:00+00:00) for reproducibility.
     epoch = source_date_epoch if source_date_epoch and source_date_epoch > 0 else 0
     built_at = datetime.fromtimestamp(epoch, timezone.utc).isoformat(timespec="seconds")
-
     source_commit = _git_command(["rev-parse", "HEAD"], repo_root) or "unknown"
     _raw_repo = _git_command(["remote", "get-url", "origin"], repo_root)
-    # Strip userinfo (user:token@) from the URL before embedding in the shipped
-    # MANIFEST.json — a credential-bearing origin like https://user:token@host/repo
-    # would otherwise leak the token to every bundle recipient.
-    # The pattern `[^/]*@` consumes up to the LAST '@' before the first '/' in the
-    # authority, so a password containing a literal '@' (e.g. user:p@ss@host) is
-    # fully stripped rather than leaking "ss@host".
-    # scp-style origins (git@host:org/repo) carry no secret in the username — the
-    # user@host form is the standard SSH alias for that remote; it is intentionally
-    # retained as stripping it would make the source_repo field unresolvable.
+    # Strip user:token@ from HTTPS origins before embedding — never leak credentials.
+    # scp-style git@host:org/repo is NOT stripped (the username is the SSH alias,
+    # not a secret; stripping makes source_repo unresolvable).
     source_repo = re.sub(r"(://)[^/]*@", r"\1", _raw_repo)
-
     payload = {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "bundle_name": bundle.get("bundle_name", "product-spec"),

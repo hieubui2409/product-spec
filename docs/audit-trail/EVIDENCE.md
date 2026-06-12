@@ -151,6 +151,36 @@ roll the oldest cycle into `## Archive` when exceeded.
   ruling) — CONTRIBUTING.md dropped from the bundle (dev-kit content; only LICENSE travels per AGPL);
   `test_contributing_md_not_in_bundle` guards it.
 
+### P09 · UPGRADE-PATH (build-new #1; DRY-F02/ARC-F02/CVR-F11/POX-F09) · `release/scripts/upgrade_{planner,apply}.py` + `assets/templates/upgrade.{sh,ps1}.template` + `assets/upgrade/legacy-map.json` + `pack/{selection,pipeline,manifest_io}.py`
+- **Root cause:** no 1.x→2.x upgrade path — the installer only ADD/OVERWRITEs and SKIPs existing, so a PO on
+  claude-pack 1.x who re-installs gets a Frankenstein tree (two critique skills, two packers, doubled agents,
+  a stale CLAUDE.md routing the old skill). Skills/agents/hooks were renamed; nothing sweeps the legacy.
+- **Before:** a recipient had no one-command way to migrate; the only options were a manual `rm -rf` (data-loss
+  risk, symlink-follow risk) or living with the doubled install.
+- **Fix:** `upgrade.sh`/`upgrade.ps1` (dry-run default · `--apply` · `--rollback`) drive a pure deterministic
+  `upgrade_planner.plan()` (no disk writes; signature-gated rule removal so a dev repo's own rules are never
+  swept; hash-diff against pristine keeps PO-edited files as PROMPT, never blind-delete; symlinks → UNLINK_ONLY,
+  never followed) + `upgrade_apply.apply()` (the only mutator: timestamped backup BEFORE every delete,
+  all-or-nothing self-rollback on any mid-loop failure, faithful symlink round-trip — sidecar + `symlink_target`
+  in the manifest + `os.symlink` recreate on rollback). The Python is EMBEDDED verbatim into the bundle under
+  `_upgrade/` (recipient bundle drops the `release` skill per P08); a two-phase MANIFEST build renders the
+  embedded files then rebuilds the manifest with their sha256 so install.sh/upgrade.sh/`_upgrade/*` carry
+  integrity entries. `trap ERR`/try-catch auto-rolls-back the sweep if a post-sweep install/migrate step fails;
+  the upgrade runs `migrate_metric_to_metrics` DRY-RUN ONLY (bash/pwsh cannot drive the approval GATE).
+- **After:** `.../python3 -m pytest .claude/skills/release/scripts/tests -q` → 276 passed / 19 skipped (+38 over
+  the 238 baseline) incl `test_rollback_recreates_symlink_faithfully`, `test_failure_after_unlink_restores_symlink`,
+  `test_shell_rollback_restores_legacy_artifact`, `test_step2_failure_auto_rolls_back_sweep`, and a strengthened
+  `test_bundle_embeds_upgrade_payload` (byte-identity of embedded `_upgrade/*` + MANIFEST sha256, MANIFEST not
+  self-listed); `docker run bash:3.2 bash -n` on the rendered `upgrade.sh` OK. 3-wave review + critique-challenge
+  folded 14 findings (symlink-rollback false-success [HIGH], end-to-end auto-rollback [HIGH], embed-integrity
+  test, dropped duplicate planner `--rollback`, mutually-exclusive `--dry-run`/`--apply`, assert→ValueError,
+  redundant mkdir, process-substitution removed from `--rollback`, gitignore backups, lazy backup dir, µs ts).
+- **Note:** DEC-P09-1..6 (phase-09 file). Bounded atomicity (DEC-P09-2): the destructive sweep is atomic +
+  auto-recovered; a full staging-dir+atomic-swap of the install was deliberately NOT built (the plan's own
+  highest-risk item; install.sh is force-overwrite/idempotent so re-running `--apply` recovers — no data loss).
+  ps1 has no runtime syntax test (no PowerShell in the dev/CI env; DEC-P09-5) — it mirrors the bash:3.2-proven
+  logic and shares the same Python planner/apply, so the symlink + atomicity fixes apply to both.
+
 ---
 
 ## Archive
