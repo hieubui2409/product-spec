@@ -16,8 +16,8 @@ Emits:
 Both are advisory WARN (not error) — they surface real PO defects without
 hard-blocking the validate gate.
 
-Pure functions that accept (graph, root); the caller (check_consistency)
-folds findings into its list.
+Pure functions that accept (graph); root is derived from graph["root_path"].
+The caller (check_consistency) folds findings into its list.
 """
 
 import re
@@ -102,7 +102,7 @@ def _parse_subsystem_table(body: str) -> Optional[List[Dict[str, str]]]:
 # check_product_subsystems
 # ---------------------------------------------------------------------------
 
-def check_product_subsystems(graph: Dict[str, Any], root: Path) -> List[Dict[str, Any]]:
+def check_product_subsystems(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Compare PRODUCT.md subsystem table horizon values against PRD frontmatter.
 
     For each row in the subsystem table that has a non-empty horizon, look up
@@ -194,13 +194,36 @@ def _body_headings(body: str) -> List[str]:
     return [m.group(1).strip().lower() for m in _HEADING_RE.finditer(body)]
 
 
-def check_persona_portraits(graph: Dict[str, Any], root: Path) -> List[Dict[str, Any]]:
+def _persona_has_portrait(persona_lower: str, headings: List[str]) -> bool:
+    """Return True when any heading in `headings` is a portrait for the given persona.
+
+    A heading qualifies when it equals the persona name OR begins with the persona name
+    followed by a separator character (space, dash, em-dash, colon).  Matching is
+    case-insensitive.  This avoids false positives on descriptive headings like
+    ``## Alice — the busy admin`` while still warning when the persona name appears
+    nowhere as a heading lead token.
+    """
+    import re as _re
+    # Separator pattern after the persona name: whitespace, dash, en/em-dash, colon.
+    _SEP_RE = _re.compile(r"^(.+?)(\s|[-–—:])", _re.UNICODE)
+    for heading in headings:
+        heading_lower = heading.lower()
+        if heading_lower == persona_lower:
+            return True
+        # Check if the heading starts with persona_lower followed by a separator.
+        if heading_lower.startswith(persona_lower):
+            rest = heading_lower[len(persona_lower):]
+            if rest and rest[0] in (" ", "-", "–", "—", ":"):
+                return True
+    return False
+
+
+def check_persona_portraits(graph: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Warn when a persona named in VISION/BRD frontmatter has no body portrait.
 
     Conservative: only warns when a persona appears in `personas:` AND has NO
-    matching `## <persona>` / `### <persona>` heading anywhere in that artifact's
-    body (case-insensitive).  A persona mentioned obliquely in prose (not a
-    dedicated heading) is NOT flagged — the rule is heading-based only.
+    matching body heading that leads with the persona name (exact match or name
+    followed by a separator, e.g. ``## Alice — the busy admin``).  Case-insensitive.
 
     Fail-soft: missing files, parse errors → skip silently.
     """
@@ -249,7 +272,7 @@ def check_persona_portraits(graph: Dict[str, Any], root: Path) -> List[Dict[str,
             if not isinstance(persona, str) or not persona.strip():
                 continue
             persona_lower = persona.strip().lower()
-            if persona_lower not in headings:
+            if not _persona_has_portrait(persona_lower, headings):
                 findings.append(_f(
                     "persona_without_portrait",
                     "warn",

@@ -11,9 +11,11 @@ GATE contract (mirrors migrate_metric_to_metrics.py exactly):
   - Per-artifact scoped; idempotent — if `id:` is already present the artifact is skipped
     and a re-run is a no-op.
   - `.bak` created once (`name + ".bak"`, never overwrite existing .bak).
-  - `schema_version` stamp inserted only when a write actually occurs.
   - Approved artifact (`status: approved`) → added to `confirm_required`; never
-    silently rewritten even with `--apply` flags present.
+    silently rewritten by a blanket `--apply`. Only written when its id/path appears
+    in the `--confirm-approved` allowlist AND both --confirmed-by and --date are given.
+  - This migrator inserts ONE thing: the missing `id:`. It does NOT write or modify
+    `schema_version` — that is orthogonal to id-backfill.
 
 ID derivation (matches spec_graph.py ID_PATTERN_BY_TYPE):
   - PRODUCT.md        → id: PRODUCT
@@ -26,7 +28,8 @@ ID derivation (matches spec_graph.py ID_PATTERN_BY_TYPE):
 
 CLI:
     migrate_backfill_ids.py --root <project-dir>
-        [--apply --confirmed-by <PO> --date <YYYY-MM-DD>]
+        [--apply --confirmed-by <PO> --date <YYYY-MM-DD>
+         [--confirm-approved <ID-or-path>] ...]
 """
 
 import argparse
@@ -90,8 +93,7 @@ def _derive_id(path: Path, product_dir: Path) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 def _transform(text: str, artifact_id: str) -> Tuple[Optional[str], bool]:
-    """Insert `id: <artifact_id>` as the first key inside the frontmatter fence and
-    add `schema_version: 1` if not already present.
+    """Insert `id: <artifact_id>` as the first key inside the frontmatter fence.
 
     Returns (new_text, changed).
     - new_text is None when no parseable frontmatter fence is found.
@@ -99,6 +101,10 @@ def _transform(text: str, artifact_id: str) -> Tuple[Optional[str], bool]:
 
     BOM and inline comments are preserved — the insertion operates at the line level,
     not via YAML round-trip, so all existing content is carried verbatim.
+
+    This migrator changes exactly ONE thing: inserting the missing `id:`.  It does NOT
+    touch `schema_version` — stamping or removing schema_version is orthogonal to id
+    backfill and must not downgrade era-2 files.
     """
     had_bom = text.startswith("﻿")
     src = text[1:] if had_bom else text
@@ -124,22 +130,9 @@ def _transform(text: str, artifact_id: str) -> Tuple[Optional[str], bool]:
             # top-level `id:` key already present — nothing to do
             return text, False
 
-    # Check for existing schema_version
-    had_marker = any(
-        lines[i].lstrip().startswith("schema_version:")
-        and not lines[i][0:1].isspace()
-        for i in range(open_idx + 1, close_idx)
-    )
-
     # Insert `id:` as the first key after the opening fence
     insert_pos = open_idx + 1
     lines.insert(insert_pos, f"id: {artifact_id}{newline}")
-    # Adjust close_idx after insertion
-    close_idx += 1
-
-    # Insert schema_version before closing fence if absent
-    if not had_marker:
-        lines.insert(close_idx, f"schema_version: 1{newline}")
 
     result = "".join(lines)
     return ("﻿" + result) if had_bom else result, True
@@ -176,9 +169,13 @@ def _scan_artifacts(product_dir: Path) -> List[Dict[str, Any]]:
     return items
 
 
-def _scan_unrecognised(product_dir: Path, known_paths: set) -> List[str]:
-    """Return paths of md files in docs/product/ that are outside ARTIFACT_GLOBS
-    and thus cannot have an id derived. Fail-soft reporting only."""
+def _scan_unrecognised(product_dir: Path, known_paths: set, repo_root: Path) -> List[str]:
+    """Return repo-relative paths of md files in docs/product/ that are outside ARTIFACT_GLOBS
+    and thus cannot have an id derived. Fail-soft reporting only.
+
+    All returned paths are relative to `repo_root` so the skipped list is uniform (no mixing
+    of absolute and relative strings).
+    """
     unrecognised = []
     for path in sorted(product_dir.rglob("*.md")):
         if str(path) in known_paths:
@@ -186,7 +183,11 @@ def _scan_unrecognised(product_dir: Path, known_paths: set) -> List[str]:
         # Check if we could derive an id — if not, report as unrecognised
         derived = _derive_id(path, product_dir)
         if derived is None:
-            unrecognised.append(str(path))
+            try:
+                rel = str(path.relative_to(repo_root))
+            except ValueError:
+                rel = str(path)
+            unrecognised.append(rel)
     return unrecognised
 
 
@@ -199,11 +200,22 @@ def migrate(
     apply: bool,
     confirmed_by: Optional[str],
     date: Optional[str],
+    confirm_approved: Optional[List[str]] = None,
 ) -> Tuple[Dict[str, Any], int]:
     """Run the migration. Returns (report_dict, exit_code).
 
     exit_code is non-zero only when --apply is refused (missing confirmation flags).
+
+    `confirm_approved` is an explicit per-artifact allowlist (ids or repo-relative paths)
+    that permits rewriting an approved artifact.  Without an entry in this list an approved
+    artifact is always placed in `confirm_required` and skipped from writes — even when
+    --apply is given.  This enforces GATE-NO-SILENT-REVERSAL.
     """
+    if confirm_approved is None:
+        confirm_approved = []
+    # Normalise allowlist entries to lower-case strings for case-insensitive matching.
+    approved_allowset: set = {str(a).lower() for a in confirm_approved}
+
     report: Dict[str, Any] = {
         "schema_version": "1.0",
         "root": str(root),
@@ -221,16 +233,16 @@ def migrate(
 
     items = _scan_artifacts(product_dir)
 
-    # Collect unrecognised (underivable) paths for fail-soft reporting
+    # Collect unrecognised (underivable) paths — all repo-relative for uniformity (FIX 3).
     known_paths = {item["path"] for item in items}
-    unrecognised = _scan_unrecognised(product_dir, known_paths)
+    unrecognised = _scan_unrecognised(product_dir, known_paths, root)
     report["skipped"] = unrecognised
 
     # Separate underivable items from the actionable set
     underivable = [it for it in items if it["derived_id"] is None]
     actionable = [it for it in items if it["derived_id"] is not None]
 
-    # Add underivable to skipped as well
+    # Add underivable to skipped as well (already repo-relative from _scan_artifacts)
     report["skipped"].extend(it["file"] for it in underivable)
 
     report["would_insert"] = [
@@ -255,6 +267,16 @@ def migrate(
 
     migrated = []
     for item in actionable:
+        # GATE-NO-SILENT-REVERSAL: approved artifacts require explicit per-artifact
+        # opt-in via --confirm-approved <ID-or-path>.  Without it, skip and leave file
+        # byte-identical — they are already in confirm_required for the LLM to surface.
+        if item["approved"]:
+            artifact_id_lower = (item["derived_id"] or "").lower()
+            file_lower = item["file"].lower()
+            if artifact_id_lower not in approved_allowset and file_lower not in approved_allowset:
+                # Not in allowlist → skip write; already reported in confirm_required.
+                continue
+
         path = Path(item["path"])
         artifact_id = item["derived_id"]
 
@@ -306,6 +328,19 @@ def main() -> int:
         default=None,
         help="ISO date of the authorisation (YYYY-MM-DD).",
     )
+    ap.add_argument(
+        "--confirm-approved",
+        dest="confirm_approved",
+        action="append",
+        default=[],
+        metavar="ID_OR_PATH",
+        help=(
+            "Explicitly allow an approved artifact to be rewritten.  Repeatable.  "
+            "The value is matched against the artifact's derived ID (e.g. BRD) or its "
+            "repo-relative path (case-insensitive).  Without this flag, approved artifacts "
+            "are listed in confirm_required and skipped from writes."
+        ),
+    )
     args = ap.parse_args()
 
     root = Path(args.root).resolve()
@@ -314,6 +349,7 @@ def main() -> int:
         apply=args.apply,
         confirmed_by=args.confirmed_by,
         date=args.date,
+        confirm_approved=args.confirm_approved,
     )
     print(json.dumps(report, indent=2, ensure_ascii=False, default=str))
     return exit_code

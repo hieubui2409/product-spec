@@ -117,7 +117,7 @@ horizon: now
 """, encoding="utf-8")
 
     graph = build_graph(proj)
-    findings = check_product_subsystems(graph, proj)
+    findings = check_product_subsystems(graph)
 
     assert len(findings) == 1, f"Expected 1 finding, got {len(findings)}: {findings}"
     f = findings[0]
@@ -153,7 +153,7 @@ horizon: now
 """, encoding="utf-8")
 
     graph = build_graph(proj)
-    findings = check_product_subsystems(graph, proj)
+    findings = check_product_subsystems(graph)
 
     assert findings == [], f"Expected 0 findings, got {findings}"
 
@@ -171,7 +171,7 @@ def test_malformed_subsystem_table_no_crash(tmp_path):
 
     graph = build_graph(proj)
     # Must not raise, must return empty
-    findings = check_product_subsystems(graph, proj)
+    findings = check_product_subsystems(graph)
     assert findings == [], f"Expected [] for malformed table, got {findings}"
 
 
@@ -192,7 +192,7 @@ def test_subsystem_no_horizon_column_no_crash(tmp_path):
     )
 
     graph = build_graph(proj)
-    findings = check_product_subsystems(graph, proj)
+    findings = check_product_subsystems(graph)
     assert findings == [], f"Expected [] when no Horizon column, got {findings}"
 
 
@@ -217,7 +217,7 @@ def test_persona_in_frontmatter_without_body_warns(tmp_path):
     (prod / "vision.md").write_text(vision, encoding="utf-8")
 
     graph = build_graph(proj)
-    findings = check_persona_portraits(graph, proj)
+    findings = check_persona_portraits(graph)
 
     assert len(findings) >= 1, f"Expected ≥1 WARN, got {findings}"
     assert all(f["severity"] == "warn" for f in findings)
@@ -243,6 +243,115 @@ def test_persona_with_body_portrait_clean(tmp_path):
     (prod / "vision.md").write_text(vision, encoding="utf-8")
 
     graph = build_graph(proj)
-    findings = check_persona_portraits(graph, proj)
+    findings = check_persona_portraits(graph)
 
     assert findings == [], f"Expected 0 findings when portrait present, got {findings}"
+
+
+# ---------------------------------------------------------------------------
+# FIX 4 — descriptive headings (Alice — the busy admin) must not be false positives
+# ---------------------------------------------------------------------------
+
+def test_persona_portrait_descriptive_heading_no_false_positive(tmp_path):
+    """Heading '## Alice — the busy admin' must NOT warn for persona 'Alice' (negative)."""
+    proj = _scaffold(tmp_path)
+    prod = proj / "docs" / "product"
+
+    (prod / "PRODUCT.md").write_text(
+        _PRODUCT_MD_TMPL.format(body=""), encoding="utf-8"
+    )
+
+    vision = _VISION_MD_TMPL.format(
+        personas="[Alice]",
+        body="## Alice — the busy admin\n\nAlice manages the backoffice.",
+    )
+    (prod / "vision.md").write_text(vision, encoding="utf-8")
+
+    graph = build_graph(proj)
+    findings = check_persona_portraits(graph)
+
+    assert findings == [], \
+        f"Descriptive heading 'Alice — the busy admin' must not warn for persona 'Alice'; got {findings}"
+
+
+def test_persona_portrait_no_heading_still_warns(tmp_path):
+    """Persona 'Bob' with no heading mentioning Bob → WARN still fires."""
+    proj = _scaffold(tmp_path)
+    prod = proj / "docs" / "product"
+
+    (prod / "PRODUCT.md").write_text(
+        _PRODUCT_MD_TMPL.format(body=""), encoding="utf-8"
+    )
+
+    vision = _VISION_MD_TMPL.format(
+        personas="[Bob]",
+        body="## Alice — the busy admin\n\nAlice's world.\n\n## Background\n\nSome context.",
+    )
+    (prod / "vision.md").write_text(vision, encoding="utf-8")
+
+    graph = build_graph(proj)
+    findings = check_persona_portraits(graph)
+
+    assert len(findings) >= 1, f"Expected warn for persona Bob with no portrait; got {findings}"
+    details = " ".join(f["detail"] for f in findings)
+    assert "Bob" in details, f"Warning must mention Bob; got: {details}"
+
+
+# ---------------------------------------------------------------------------
+# FIX 5 — check_product_subsystems and check_persona_portraits accept (graph) only
+# ---------------------------------------------------------------------------
+
+def test_check_product_subsystems_accepts_graph_only(tmp_path):
+    """check_product_subsystems(graph) — no root arg — must work and return a list."""
+    proj = _scaffold(tmp_path)
+    prod = proj / "docs" / "product"
+
+    body = """\
+## Subsystems
+
+| ID | Name | Horizon |
+|----|------|---------|
+| PAYMENT | Payment Gateway | now |
+"""
+    (prod / "PRODUCT.md").write_text(
+        _PRODUCT_MD_TMPL.format(body=body), encoding="utf-8"
+    )
+
+    (prod / "prds" / "payment.md").write_text("""\
+---
+id: PRD-PAYMENT
+type: prd
+brd_goals: [BRD-G1]
+status: draft
+lang: en
+horizon: now
+---
+""", encoding="utf-8")
+
+    graph = build_graph(proj)
+    # Must accept single argument (graph only)
+    findings = check_product_subsystems(graph)
+    assert isinstance(findings, list), "must return a list"
+    assert findings == [], f"aligned horizons must produce 0 findings; got {findings}"
+
+
+def test_check_persona_portraits_accepts_graph_only(tmp_path):
+    """check_persona_portraits(graph) — no root arg — must work and return a list."""
+    proj = _scaffold(tmp_path)
+    prod = proj / "docs" / "product"
+
+    (prod / "PRODUCT.md").write_text(
+        _PRODUCT_MD_TMPL.format(body=""), encoding="utf-8"
+    )
+
+    vision = _VISION_MD_TMPL.format(
+        personas="[Manager]",
+        body="## Manager\n\nThis persona manages the platform.",
+    )
+    (prod / "vision.md").write_text(vision, encoding="utf-8")
+
+    graph = build_graph(proj)
+    # Must accept single argument (graph only)
+    findings = check_persona_portraits(graph)
+    assert isinstance(findings, list), "must return a list"
+    assert findings == [], f"portrait present must produce 0 findings; got {findings}"

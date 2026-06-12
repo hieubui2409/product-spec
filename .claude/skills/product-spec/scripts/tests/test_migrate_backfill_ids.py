@@ -205,7 +205,9 @@ def test_apply_backfills_missing_id(tmp_path):
     assert parsed["ok"], f"migrated file must parse cleanly: {parsed.get('error')}"
     fm = parsed["frontmatter"]
     assert fm.get("id") == "PRODUCT", "frontmatter id must be PRODUCT"
-    assert fm.get("schema_version") is not None, "schema_version must be stamped after migration"
+    # FIX 2: id-backfill must NOT inject schema_version (orthogonal concern)
+    assert "schema_version" not in fm, \
+        "id-backfill must not inject schema_version into a file that had none"
 
     bak = product_file.with_name(product_file.name + ".bak")
     assert bak.exists(), ".bak file must be created"
@@ -339,3 +341,188 @@ def test_generated_product_md_frontmatter_has_id_product(tmp_path):
     assert parsed["ok"], f"generated PRODUCT.md must parse cleanly: {parsed.get('error')}"
     assert parsed["frontmatter"].get("id") == "PRODUCT", \
         "parsed frontmatter id must be PRODUCT"
+
+
+# ---------------------------------------------------------------------------
+# FIX 1 — approved artifact blocked from blanket --apply (GATE-NO-SILENT-REVERSAL)
+# ---------------------------------------------------------------------------
+
+def test_apply_skips_approved_without_allowlist(tmp_path):
+    """Blanket --apply must NOT rewrite approved artifacts: file byte-unchanged, no .bak,
+    artifact appears in confirm_required report."""
+    proj = _setup_proj(tmp_path)
+    brd_file = proj / "docs" / "product" / "brd.md"
+    brd_file.write_text(_BRD_MISSING_ID_APPROVED, encoding="utf-8")
+
+    before = brd_file.read_bytes()
+
+    rc, report, err = _run(
+        proj, "--apply", "--confirmed-by", "PO", "--date", "2026-01-01"
+    )
+    assert rc == 0, f"apply must exit 0 even when approved artifact is skipped; got {rc}\n{err}"
+
+    # The approved file must be completely untouched
+    assert brd_file.read_bytes() == before, \
+        "approved artifact must be byte-unchanged when no --confirm-approved allowlist given"
+    bak = brd_file.with_name(brd_file.name + ".bak")
+    assert not bak.exists(), "no .bak must be created for a skipped approved artifact"
+
+    # It must appear in confirm_required
+    assert report is not None
+    confirm = report.get("confirm_required", [])
+    assert confirm, "skipped approved artifact must appear in confirm_required"
+    assert any("brd" in str(c).lower() for c in confirm), \
+        "confirm_required must reference brd.md"
+
+
+def test_apply_writes_approved_only_with_allowlist(tmp_path):
+    """--confirm-approved <ID> allowlist unlocks write of an approved artifact."""
+    proj = _setup_proj(tmp_path)
+    brd_file = proj / "docs" / "product" / "brd.md"
+    brd_file.write_text(_BRD_MISSING_ID_APPROVED, encoding="utf-8")
+
+    before = brd_file.read_bytes()
+
+    rc, report, err = _run(
+        proj,
+        "--apply", "--confirmed-by", "PO", "--date", "2026-01-01",
+        "--confirm-approved", "BRD",
+    )
+    assert rc == 0, f"apply with allowlist must exit 0; got {rc}\n{err}"
+
+    after_text = brd_file.read_text(encoding="utf-8")
+    assert "id: BRD" in after_text, "id: BRD must be inserted when --confirm-approved BRD given"
+
+    bak = brd_file.with_name(brd_file.name + ".bak")
+    assert bak.exists(), ".bak must be created for explicitly approved artifact"
+    assert bak.read_bytes() == before, ".bak must contain original bytes"
+
+
+def test_apply_non_approved_still_backfills_under_blanket_flag(tmp_path):
+    """Non-approved (draft) artifacts continue to backfill with the plain blanket flag."""
+    proj = _setup_proj(tmp_path)
+    # Draft BRD (non-approved) — should be written with blanket --apply
+    brd_file = proj / "docs" / "product" / "brd.md"
+    brd_file.write_text(_BRD_MISSING_ID_DRAFT, encoding="utf-8")
+
+    rc, report, err = _run(
+        proj, "--apply", "--confirmed-by", "PO", "--date", "2026-01-01"
+    )
+    assert rc == 0, f"blanket apply on draft must succeed; got {rc}\n{err}"
+
+    after_text = brd_file.read_text(encoding="utf-8")
+    assert "id: BRD" in after_text, "draft artifact must receive id under blanket --apply"
+
+    bak = brd_file.with_name(brd_file.name + ".bak")
+    assert bak.exists(), ".bak must be created for written artifact"
+
+
+# ---------------------------------------------------------------------------
+# FIX 2 — id-backfill must not stamp or downgrade schema_version
+# ---------------------------------------------------------------------------
+
+_BRD_SCHEMA_V2_MISSING_ID = """\
+---
+type: brd
+status: draft
+schema_version: 2
+lang: en
+owner: Jane
+version: 1.0.0
+created: 2026-06-01
+updated: 2026-06-01
+goals:
+  - id: BRD-G1
+    title: "A goal"
+    metrics: [north-star]
+    status: draft
+---
+
+# BRD
+"""
+
+
+def test_apply_preserves_existing_schema_version(tmp_path):
+    """Applying to a file with schema_version: 2 must leave schema_version exactly 2 — no stamp."""
+    proj = _setup_proj(tmp_path)
+    brd_file = proj / "docs" / "product" / "brd.md"
+    brd_file.write_text(_BRD_SCHEMA_V2_MISSING_ID, encoding="utf-8")
+
+    rc, report, err = _run(
+        proj, "--apply", "--confirmed-by", "PO", "--date", "2026-01-01"
+    )
+    assert rc == 0, f"apply must succeed; got {rc}\n{err}"
+
+    parsed = parse_file(brd_file)
+    assert parsed["ok"], f"migrated file must parse cleanly: {parsed.get('error')}"
+    fm = parsed["frontmatter"]
+    assert fm.get("id") == "BRD", "id must be inserted"
+    assert fm.get("schema_version") == 2, \
+        f"schema_version must remain 2 (not overwritten); got {fm.get('schema_version')!r}"
+
+
+def test_apply_does_not_inject_schema_version_when_absent(tmp_path):
+    """Applying to a file without any schema_version must NOT add schema_version."""
+    proj = _setup_proj(tmp_path)
+    product_file = proj / "docs" / "product" / "PRODUCT.md"
+    product_file.write_text(_PRODUCT_MISSING_ID, encoding="utf-8")
+
+    rc, report, err = _run(
+        proj, "--apply", "--confirmed-by", "PO", "--date", "2026-01-01"
+    )
+    assert rc == 0
+
+    parsed = parse_file(product_file)
+    assert parsed["ok"]
+    fm = parsed["frontmatter"]
+    assert fm.get("id") == "PRODUCT", "id must be inserted"
+    assert "schema_version" not in fm, \
+        f"schema_version must NOT be injected by id-backfill migrator; got {fm.get('schema_version')!r}"
+
+
+# ---------------------------------------------------------------------------
+# FIX 3 — skipped list must contain only repo-relative paths
+# ---------------------------------------------------------------------------
+
+def test_skipped_paths_are_relative(tmp_path):
+    """report['skipped'] must contain only repo-relative strings, never absolute paths."""
+    proj = _setup_proj(tmp_path)
+    # Place an artifact in a non-standard sub-dir so it ends up in skipped
+    strange_dir = proj / "docs" / "product" / "custom_artifacts"
+    strange_dir.mkdir()
+    (strange_dir / "exotic_thing.md").write_text(_UNKNOWN_ARTIFACT, encoding="utf-8")
+
+    rc, report, err = _run(proj)
+    assert rc == 0
+
+    skipped = report.get("skipped", []) if report else []
+    for entry in skipped:
+        assert not str(entry).startswith("/"), \
+            f"skipped entry must be repo-relative, got absolute path: {entry!r}"
+
+
+# ---------------------------------------------------------------------------
+# FIX 6 — BOM + leading comment preserved after --apply
+# ---------------------------------------------------------------------------
+
+def test_bom_and_comment_preserved(tmp_path):
+    """UTF-8 BOM + leading YAML comment are preserved byte-for-byte; only id: is inserted."""
+    proj = _setup_proj(tmp_path)
+    product_file = proj / "docs" / "product" / "PRODUCT.md"
+    product_file.write_bytes(_PRODUCT_BOM_COMMENT.encode("utf-8"))
+
+    before = product_file.read_bytes()
+
+    rc, report, err = _run(
+        proj, "--apply", "--confirmed-by", "PO", "--date", "2026-01-01"
+    )
+    assert rc == 0, f"apply must succeed; got {rc}\n{err}"
+
+    after_bytes = product_file.read_bytes()
+    # BOM must still be first byte
+    assert after_bytes[:3] == b"\xef\xbb\xbf", "UTF-8 BOM must be preserved"
+    after_text = after_bytes.decode("utf-8")
+    # Leading comment must survive
+    assert "# kit-version: 1.0" in after_text, "leading YAML comment must be preserved"
+    # id must be inserted
+    assert "id: PRODUCT" in after_text, "id: PRODUCT must be inserted"
