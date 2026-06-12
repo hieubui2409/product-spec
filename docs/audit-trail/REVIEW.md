@@ -232,6 +232,9 @@ Verify: **release 300/300** (+4, 19 skip) — chạy riêng process, 0 fail. Bui
 - **Ruling PO (phiên này):** soạn-draft-ngay + AGPL-draft-cần-rà-pháp-lý. Outward-facing (gửi PO, PO chạy upgrade,
   tag/push) thuộc **chủ kit** — skill không tự thao tác. Cycle 3 **giữ mở** (P10b/P11/#9 hoãn song song sau rollout)
   → tiêu chí "31/31 đóng cycle" hoãn. BACKLOG cập nhật.
+  **[Cập nhật 2026-06-13] P10b/P11/#9 đã SHIP trong release 2.4.0** (plan `260612-2142`, tag `product-spec-v2.4.0`
+  pushed + GitHub release live). Cycle 3 còn mở đúng **2 row real-transcript** (LIB-9 + phần outcome LIB-4) + execution
+  rollout (chủ kit gửi PO + PO chạy `upgrade.sh`). Mọi việc *buildable* đã đóng.
 Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong, execution chủ kit).
 
 ### P1 (#9ab) · subsystem-horizon drift + persona portrait gap · 2026-06-12 (build-new)

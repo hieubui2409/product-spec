@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Release 2.4.0 push + github release"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [1, 2, 3, 4, 5, 6, 7, 8]

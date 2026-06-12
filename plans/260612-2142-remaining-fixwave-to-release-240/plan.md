@@ -3,7 +3,7 @@ title: Remaining field-audit work (P10b+P11+#9) to release 2.4.0
 description: >-
   Build 8 deferred units (P10b #6/#13/#14 + P11 #8/#11/#15 + #9 validation pack)
   TDD, then cut release 2.4.0 + push + GitHub release.
-status: pending
+status: completed
 priority: P2
 branch: master
 tags:
@@ -54,7 +54,7 @@ stop only at 3 gates (validate Qs · post-review interview · release-notes sign
 | 6 | [#8 artifact-events sink + heat lens](./phase-06-8-artifact-events-sink-heat-lens.md) | Completed |
 | 7 | [#11 usage-summary export + harvester](./phase-07-11-usage-summary-export-harvester.md) | Completed |
 | 8 | [#15 change-log rotation + path check](./phase-08-15-change-log-rotation-path-check.md) | Completed |
-| 9 | [Release 2.4.0 push + github release](./phase-09-release-2-4-0-push-github-release.md) | Pending |
+| 9 | [Release 2.4.0 push + github release](./phase-09-release-2-4-0-push-github-release.md) | Completed |
 
 ## Architecture decision — modularization via sibling modules (NOT rule-engine refactor)
 
@@ -128,13 +128,13 @@ Parallel-safe set for cook: {P1, P2, P3, P4, P5, P6, P8}. P7 waits for P6.
 
 ## Acceptance criteria (whole plan)
 
-- [ ] 8/8 units RED→GREEN on synthetic fixtures; each has ≥1 negative test; hard thresholds only.
-- [ ] `CONTRIBUTING.md:69` suite + each touched skill suite green; `verify_skill_versions.py` green.
-- [ ] POX-F02/F06/F04/F10/F11 ledger rows ticked in REVIEW.md; build-new DECs + EVIDENCE recorded.
-- [ ] Boundary A9 held (harvester suggests, never writes skill/template — test-asserted); #8 path-only (test-asserted).
-- [ ] No GATE violation: id-backfill migrator confirm-gated; **no real artifact mutated during cook** (P2 build+test-only).
-- [ ] Pre-push gates green (clean tree · on master · P1-P8 committed · `--extract 2.4.0` non-empty · `test_version_sync` green · suite green on release commit).
-- [ ] Release 2.4.0: 4 skills version==changelog-top; root `[2.4.0]`==manifest; tag pushed; GitHub release live with tarball+sha256.
+- [x] 8/8 units RED→GREEN on synthetic fixtures; each has ≥1 negative test; hard thresholds only.
+- [x] `CONTRIBUTING.md:69` suite + each touched skill suite green; `verify_skill_versions.py` green.
+- [x] POX-F11/F04/F10 ledger rows ticked in REVIEW.md (F02/F06 were placeholder IDs — not real rows); build-new DECs + EVIDENCE recorded (P6/P7/P8 entries).
+- [x] Boundary A9 held (harvester suggests, never writes skill/template — test-asserted); #8 path-only (test-asserted).
+- [x] No GATE violation: id-backfill migrator confirm-gated; **no real artifact mutated during cook** (P2 build+test-only).
+- [x] Pre-push gates green (clean tree · on master · P1-P8 committed · `--extract 2.4.0` non-empty · `test_version_sync` green · suite green on release commit).
+- [x] Release 2.4.0: 4 skills version==changelog-top; root `[2.4.0]`==manifest; tag `product-spec-v2.4.0` pushed; GitHub release live (`product-spec-2.4.0.tar.gz`+sha256, published 2026-06-12).
 
 ## Risk register (incl. red-team resolutions)
 
