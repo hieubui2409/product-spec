@@ -18,35 +18,94 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 ## [Unreleased]
 
 ## [2.4.0] — 2026-06-13
-Field-audit fix waves (Cleanmatic-ERP usage vs kit HEAD). See each skill's CHANGELOG for detail.
+This release rolls several rounds of field-audit work (real Cleanmatic-ERP usage compared against the kit)
+into one bundle. Per-skill versions: **product-spec 2.4.0**, **product-spec-critique 1.3.0**, **release
+1.2.0**, **telemetry 1.1.0**.
 
-### Added
-- **product-spec** — subsystem-horizon + persona-portrait consistency rules; a GATE-safe `id:` backfill
-  migrator (approved artifacts require an explicit per-id `--confirm-approved` — no silent reversal); a
-  decision-register view (`--list --affects`, supersede chains); visuals retention (`*-latest` alias,
-  staleness banner, content-hash reuse, `--clean`); an opt-in snapshot/restore engine with `--status`
-  VCS-state warnings; monthly change-log rotation with cross-file audit-trail read; a `--viz` re-render
-  nudge after sign-off. (Earlier in the cycle: build-age beacon in `--status`, export nudge after
-  `--approve`, GATE-safe `metric:`→`metrics:` migration, session-staleness + open-questions surfacing.)
-- **telemetry** — a path-only artifact-edit sink (record is exactly `{ts, artifact_path, op, session}`)
-  plus an `artifact_heat` lens; usage-summary export and a read-only suggestion harvester that never
-  writes a skill or template (boundary A9, opt-in). (Earlier: session-duration + early-skill
-  reconstruction, on-demand workflow-chains data file, tighter script-run matching.)
-- **release** — one-command 1.x → 2.x upgrade (`upgrade.sh`/`.ps1`, dry-run/apply/rollback, atomic
-  legacy-sweep), an optional opt-in spec-validate GitHub Action, and a build-age MANIFEST stamp in the
-  installed tree.
-- **product-spec-critique** — AC/goal-aware provenance, a scoped critique bundle, and script-enforced
-  cache/memory persistence.
+### product-spec
 
-### Changed
-- **product-spec** — `render_html.py` split into a focused module family with one shared `_escape`
-  chokepoint; memory-gap enforcement hooks made upgrade-safe with an advisory mode.
-- **release** — recipient-variant bundle (README/CLAUDE.md, `rules: []`, brand tokens resolved),
-  bash-3.2-compatible installer, idempotent `.claude/telemetry/` gitignore.
+**New**
+- **Two new consistency checks.** `--validate` now warns when a subsystem's planned timing in `PRODUCT.md`
+  disagrees with its matching PRD, and when a persona is named in a document's header but never described in
+  the body. Both are advisory — they warn, they never block.
+- **Safe ID-backfill tool** (`migrate_backfill_ids.py`) fills in a missing `id:` on spec files. It runs as a
+  dry-run by default; writing real changes requires `--confirmed-by` and `--date`. Approved documents are
+  never changed by a bulk run — each must be named explicitly with `--confirm-approved`, so a sign-off can
+  never be silently overwritten.
+- **Decision lookup.** `--decision --list --affects PRD-X` lists every decision that affects a given
+  document and follows "this decision replaced that one" chains (shown newest → oldest), with a status
+  summary.
+- **Smarter visuals.** A stable `*-latest.html` link that always points at the newest diagram; a
+  "this diagram is stale — N items changed since it was drawn" banner; re-rendering is skipped when nothing
+  changed; and `--viz --clean` keeps only the 5 most recent renders. After an approval, the flow now also
+  suggests `--viz` so the diagram matches what was just signed off.
+- **Opt-in snapshot / restore.** `--snapshot` and `--restore <timestamp>` save and roll back the whole spec
+  folder. A restore refuses to overwrite uncommitted work without confirmation, and puts the original back if
+  it fails midway. `--status` now also warns when the spec folder isn't tracked by Git or has a large pile of
+  uncommitted changes.
+- **Monthly change-log.** Entries now roll into `change-log/<YYYY-MM>.md` (with duplicates removed); the audit
+  trail reads the old single file and the new monthly files together; and any entry pointing at a deleted
+  file is flagged.
+- **Build-age beacon.** `--status` reports how many days ago the installed bundle was built, so you know when
+  to ask for a newer release.
+- **Export nudge after sign-off.** After `--approve`, the flow suggests `--export` to produce one shareable,
+  read-once copy of the approved spec.
+- **Safe `metric:` → `metrics:` migration** moves legacy single-metric BRD goals to the multi-metric format
+  (dry-run by default; real changes require `--confirmed-by` + `--date`).
+- **Staleness & open-question surfacing.** `--status` / `--approve` warn when the session notes are out of
+  date versus the latest edit, and surface unresolved "needs PO decision / TBD" markers hiding inside
+  documents that look finished.
 
-### Fixed
-- **product-spec** — fence-check over-report (`.claude/` excluded, capped, absent-id sentinel closed);
-  goal + frontmatter lints; reproducible CHANGELOG size claims; untracked dogfood state/cache.
+**Improved**
+- `render_html.py` was split into smaller, focused modules behind a stable facade, with a single shared
+  text-escaping path replacing five drifted copies.
+- The "you forgot to record a decision" reminder hooks are now upgrade-safe and have a non-blocking advisory
+  mode.
+
+**Fixed**
+- The prose fence-check no longer over-reports (`.claude/` excluded, per-finding caps, no stray sentinel).
+- Stricter goal and document-header checks; reproducible CHANGELOG size figures; per-run state/cache files
+  are no longer tracked by Git.
+
+### telemetry
+
+**New**
+- **Artifact-edit heat.** A privacy-safe recorder logs *which* spec file was edited and when — exactly
+  `{timestamp, file path, operation, session}`, never the content or the diff — and a new heat view shows
+  which documents change most often.
+- **Usage-summary export + read-only suggestions.** `--export-summary` writes a markdown usage report you can
+  review and forward; the opt-in `--auto-suggest` adds tips from a harvester that only reads and never writes
+  any skill or template.
+
+**Improved**
+- Session duration and the first skills of a session are reconstructed from the transcript; the declared
+  workflow-chains moved to an on-demand data file.
+
+**Fixed**
+- Tighter script-run matching, isolated overview views, and a localized validate reason.
+
+### release
+
+**New**
+- **One-command 1.x → 2.x upgrade** via `upgrade.sh` / `upgrade.ps1` (dry-run by default, with apply,
+  rollback, and an atomic sweep of legacy files).
+- **Optional spec-validate GitHub Action.** The bundle can ship a recipient-facing CI workflow that validates
+  specs; it is opt-in.
+- **Build-age stamp.** The installer records the bundle's build info so product-spec's build-age beacon can
+  read it.
+
+**Improved**
+- A recipient-variant bundle (recipient README/CLAUDE.md, brand tokens resolved), a bash-3.2-compatible
+  installer, and an idempotent telemetry `.gitignore` entry.
+
+### product-spec-critique
+
+**Improved**
+- Critique provenance now tracks the acceptance criteria and BRD goals behind each finding, and the material
+  handed to each lens is scoped to just what is in review.
+
+**Fixed**
+- The judgment cache and memory writes are now enforced so they are not lost between runs.
 
 ## [2.3.0] — 2026-06-09
 ### Added
