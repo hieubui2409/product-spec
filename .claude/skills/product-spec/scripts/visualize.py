@@ -39,6 +39,7 @@ import render_mermaid
 import render_html
 import render_board
 import render_explorer
+import visuals_retention
 
 configure_utf8_console()
 
@@ -252,7 +253,22 @@ def main() -> int:
              "tree/roadmap/time/persona/board/explorer. Default keeps them visible "
              "(a `*` marker on graph views; a card on board/explorer).",
     )
+    ap.add_argument(
+        "--clean", action="store_true",
+        help="prune old timestamped renders for --view, keeping the most recent "
+             f"{visuals_retention.RETENTION_KEEP} plus the -latest alias.",
+    )
     args = ap.parse_args()
+
+    # --clean: prune old timestamped renders for the requested view; -latest survives.
+    if args.clean:
+        root = Path(args.root).resolve()
+        deleted = visuals_retention.clean_old_renders(root, args.view)
+        if deleted:
+            print(json.dumps({"cleaned": [str(p) for p in deleted]}, indent=2))
+        else:
+            print(json.dumps({"cleaned": []}, indent=2))
+        return 0
 
     # Audit governance view: self-contained ASCII+md assembler (no graph dispatch,
     # no HTML emitter — keeps the view registry off the XSS watch this phase).

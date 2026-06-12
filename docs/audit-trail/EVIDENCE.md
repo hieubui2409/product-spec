@@ -241,6 +241,27 @@ roll the oldest cycle into `## Archive` when exceeded.
 - **Note:** DEC-P2-1 (phase-02 file). Build+test only — no real artifact `--apply`'d in cook.
   Real backfill is a deferred PO-side step (dry-run → human re-approve).
 
+### P4-6 · visuals latest-alias + staleness banner + content-hash reuse + --clean retention
+- **Root cause:** every viz render wrote a new timestamped file; no stable `-latest` pointer for external
+  links; no way to detect content-identical re-renders; no pruning → unbounded HTML accumulation.
+- **Before:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_visuals_retention.py -q`
+  → `ERROR: ModuleNotFoundError: No module named 'visuals_retention'` (6 tests collection-fail).
+  Full suite: 741 passed, 1 failed (pre-existing dogfood-state).
+- **Fix:** new `visuals_retention.py` sibling (≤130 exec-LOC, stays under 250-LOC module budget): `latest_alias`
+  (copy-based alias, symlink-unsupported-FS portable), `staleness_banner` (symmetric diff of sorted node-id lists
+  stored in `.signatures/<view>.json` sidecar), `content_hash` + `reuse_if_unchanged` (sha256 hex, sidecar in
+  `.hashes/<view>.json`), `clean_old_renders` (keep=5 hard integer, `-latest` files never deleted).
+  Wired into `render_html.write` (~8 lines): reuse check → skip write if identical; after fresh write → alias
+  refresh + hash record + signature record. `visualize.py` gains `--clean` flag (~8 lines): dispatches to
+  `clean_old_renders`, prints JSON list of deleted paths, exits 0. keep=5 is the single authoritative constant
+  (`RETENTION_KEEP` in the sibling — DEC-2 records the choice).
+- **After:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_visuals_retention.py -q`
+  → `6 passed`. Full suite: `python3 -m pytest .claude/skills/product-spec --tb=no` → `747 passed, 1 failed`
+  (1 failure = pre-existing `test_dogfood_state_untracked`, unchanged). CONTRIBUTING.md:69 gate:
+  `python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q` → `219 passed`.
+- **Note:** DEC-2 (this file's decisions.md). Alias is copy-based (not symlink) for filesystem portability;
+  missing sidecar → treated as changed (safe: forces re-render, never silently reuses stale output).
+
 ---
 
 ## Archive

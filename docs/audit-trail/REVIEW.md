@@ -253,6 +253,16 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
   cycle-terminates, dangling-ref-no-crash. Suite 741 passed (1 pre-existing dogfood-state failure). DEC-1 recorded.
   → EVIDENCE P3-13.
 
+### P4 (#6) · visuals latest-alias + staleness banner + content-hash reuse + clean retention · 2026-06-12 (build-new)
+
+- [x] POX-F04 · visuals-retention — stale ever-accumulating HTML renders with no stable external link.
+  New `visuals_retention.py` sibling: `latest_alias` (copy-based, fs-portable), `staleness_banner` (node-id
+  symmetric-diff against saved signature), `content_hash` + `reuse_if_unchanged` (sha256 sidecar, skip write on
+  byte-identical content), `clean_old_renders` (keep=5 hard integer, -latest never deleted). Wired into
+  `render_html.write` (reuse + alias + hash + signature recording) and `visualize.py` (`--clean` dispatch, 8 new
+  lines total). 6 tests: latest-alias v1→v2, banner-on-drift (count assert), no-banner-when-in-sync, hash-reuse-skips-rerender,
+  clean-keeps-3-of-6, clean-on-empty-no-crash. DEC-2 recorded. → EVIDENCE P4-6.
+
 ### P2 (#9c) · id-backfill migrator (build+test only) · 2026-06-12 (build-new)
 
 - [x] id-backfill migrator — new `migrate_backfill_ids.py` that inserts missing `id:` into artifact frontmatter.
