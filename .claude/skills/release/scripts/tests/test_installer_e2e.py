@@ -9,6 +9,7 @@ works on a recipient tree. This does: `python -m pack` → real tar.gz → extra
 from __future__ import annotations
 
 import glob
+import json
 import shutil
 import subprocess
 import sys
@@ -90,6 +91,39 @@ def test_bundle_carries_installer_and_manifest(tmp_path):
     assert any(n.endswith("/MANIFEST.json") for n in names)
     # The whole-tarball SHA sidecar rides next to the artifact.
     assert (bundle.parent / (bundle.name + ".sha256")).is_file()
+
+
+def test_install_drops_manifest_stamp_for_build_age_beacon(tmp_path):
+    """The installer copies the bundle MANIFEST to <target>/.claude/MANIFEST.json so
+    the product-spec --status build-age beacon has a version + built_at to read. It
+    is the bundle MANIFEST verbatim (byte-identical) and must NOT also land at the
+    repo root (the generic walk still excludes it there)."""
+    bundle = _build_bundle(tmp_path / "dist")
+    extract = tmp_path / "extract"
+    extract.mkdir()
+    with tarfile.open(bundle, "r:gz") as tar:
+        tar.extractall(extract)
+    target = tmp_path / "recipient"
+    target.mkdir()
+
+    r = _run_install(extract, target)
+    assert r.returncode == 0, f"install failed: {r.stderr or r.stdout}"
+
+    stamp = target / ".claude" / "MANIFEST.json"
+    assert stamp.is_file(), f"build-age stamp not installed:\n{r.stdout}\n{r.stderr}"
+    # MANIFEST.json must NOT be dropped at the recipient repo root.
+    assert not (target / "MANIFEST.json").exists(), \
+        "MANIFEST.json must not land at the recipient repo root"
+
+    bundle_root = next(extract.rglob("install.sh")).parent
+    src_manifest = bundle_root / "MANIFEST.json"
+    assert stamp.read_bytes() == src_manifest.read_bytes(), \
+        "installed stamp must be the bundle MANIFEST verbatim"
+
+    # The beacon reads exactly these two keys — guarantee they survive the copy.
+    data = json.loads(stamp.read_text(encoding="utf-8"))
+    assert isinstance(data.get("bundle_version"), str) and data["bundle_version"]
+    assert isinstance(data.get("built_at"), str) and data["built_at"]
 
 
 def _extract_and_install(tmp_path) -> tuple[Path, Path]:

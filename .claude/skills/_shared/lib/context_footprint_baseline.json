@@ -23,13 +23,13 @@
       "workflow-lang.md": 278,
       "workflow-learn.md": 1733,
       "workflow-reflect.md": 2154,
-      "workflow-status.md": 1885,
+      "workflow-status.md": 2221,
       "workflow-summary.md": 389,
       "workflow-update.md": 2372,
       "workflow-validate.md": 6981
     },
     "skill_md_tokens": 5499,
-    "total_tokens": 63310
+    "total_tokens": 63646
   },
   "product-spec-critique": {
     "refs": {

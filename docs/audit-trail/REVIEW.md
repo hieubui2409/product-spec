@@ -188,3 +188,16 @@ agent gán nhầm "pre-existing", fold 1 DRY, fix 1 nit, mở rộng 3 việc ph
   footprint regression-guard ĐỎ sẵn** (growth ref P03-P07 chưa regen) → regen baseline (DEC-P12-4).
 Verify: **product-spec 708/708 · critique 188/188 · telemetry 124/124 · _shared footprint 43/43** (chạy riêng
 process), 0 fail. Leak-scan finding-code CLEAN. Render smoke byte-identical. Quyết định: DEC-P12-1..4 (phase-12). → EVIDENCE P12.
+
+### P10a · #7 age-beacon (build-age) — ARC-F03/CVR-F02 · 2026-06-12 (build-new, ghi DEC)
+- **Premise gãy → PO ruling (DEC-P10a-1):** scout: installer loại `MANIFEST.json` khỏi cây cài + không ghi stamp
+  → không có nguồn dữ liệu cho beacon. STOP-ASK 4 phương án (build-age MANIFEST / install-stamp / CHANGELOG /
+  hoãn) → PO chốt **build-age qua MANIFEST stamp**. Installer (sh+ps1) copy `MANIFEST.json` → `.claude/MANIFEST.json`;
+  `status.py._bundle_age` đọc `<root>/.claude/MANIFEST.json` → `bundle_age{bundle_version,built_at,age_days}`,
+  age=ngày-kể-từ-đóng-gói (clamp future→0), LLM render dòng VI "đóng gói N ngày trước". DRY split: script emit facts,
+  `references/workflow-status.md` giữ prose. Fail-silent (thiếu/hỏng/empty → null, không gate).
+- **Critique-challenge (2 finding, đào sâu):** (1) empty-string version lọt `isinstance(str)` → render "bản  " nửa
+  vời → thêm guard `not version`/`not built_at` + 2 test. (2) tương tác upgrade P09 → verify planner là **allowlist**
+  (`legacy_map.entries` only, không scan-xoá file lạ) → stamp an toàn, upgrade refresh stamp. KHÔNG đụng approved data.
+Verify: **product-spec 718/718** (+10) · **release 296/296** (19 skip) · **_shared footprint 17/17** (regen baseline
+chỉ product-spec total +336 từ workflow-status.md, 3 skill kia Δ0) — chạy riêng process, 0 fail. Quyết định: DEC-P10a-1 (phase-10). KHÔNG chạm PO data → verify inline (counts ở trên), không bơm EVIDENCE (đang quá cap).

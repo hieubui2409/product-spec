@@ -29,9 +29,12 @@ bản mới, AC khó đọc, DEC không tra được, không snapshot/restore. M
 - `*-latest.html` alias ổn định + banner "render lúc X, spec lệch N node"; `--viz --clean`; reuse khi content-hash trùng (không ghi file mới); nudge re-render hậu approve.
 - TDD: render 2 lần content trùng → KHÔNG file mới; spec đổi sau render → banner báo lệch N; `--clean` xoá cũ giữ latest.
 
-### #7 Version age-beacon trong `--status` — ARC-F03/CVR-F02
-- `status.py` đọc MANIFEST.json (`built_at`/`bundle_version`) → 1 dòng VI "bản X, cài N ngày — hỏi người phát hành bản mới". KHÔNG network.
-- TDD: MANIFEST cũ N ngày → dòng beacon hiện; thiếu MANIFEST → im lặng (không lỗi).
+### #7 Version age-beacon trong `--status` — ARC-F03/CVR-F02 — ✅ LANDED (P10a)
+- **DEC-P10a-1 (premise gãy → PO ruling):** scout phát hiện installer CỐ TÌNH loại `MANIFEST.json` khỏi cây cài (`install.sh:359-363` grep loại; install.ps1 `$ExcludeNames`) và KHÔNG ghi stamp/receipt nào → không có nguồn dữ liệu trong cây PO. PO chốt **build-age qua MANIFEST stamp** (không phải install-age): installer (sh+ps1) copy `MANIFEST.json` → `<target>/.claude/MANIFEST.json`; `status.py` đọc `<root>/.claude/MANIFEST.json`.
+- `status.py._bundle_age` đọc `bundle_version`+`built_at` → key JSON `bundle_age {bundle_version, built_at, age_days}` (age = ngày kể từ **đóng gói**, clamp tương lai→0); LLM render 1 dòng VI "bản X, **đóng gói** N ngày trước — hỏi người phát hành bản mới hơn" theo `references/workflow-status.md`. KHÔNG network. Build-age = tín hiệu cũ-kỹ trung thực hơn install-age (bắt được case cài bản đã cũ).
+- Fail-silent: thiếu/hỏng/non-string/empty MANIFEST → `bundle_age: null` (key luôn có, không raise, không gate).
+- Tương tác upgrade (P09): upgrade planner là **allowlist** (chỉ duyệt `legacy_map.entries`), KHÔNG scan-xoá file lạ → stamp không bị sweep; upgrade chạy install.sh mới refresh stamp.
+- TDD: 12 test `test_status_bundle_age.py` (build-age N ngày, baseline-path, future-clamp, absent/malformed/missing-built_at/unparseable/non-string/empty-version/empty-built_at silent, read-only, CLI) + 1 e2e `test_install_drops_manifest_stamp_for_build_age_beacon` (stamp byte-identical, không rơi root, có 2 key beacon).
 
 ### #12 AC-readable surface (discoverability) — POX-F05
 - Công cụ ĐÃ CÓ (`workflow-export.md` + `render_export.py`) — thêm nudge sau approve + 1 dòng GUIDE; hoặc khối AC render-only "generated — đừng sửa tay".
@@ -58,7 +61,7 @@ Mỗi deliverable có RED test riêng (liệt kê ở từng mục trên). Viế
 ## Success Criteria
 - [ ] spec-validate.yml lint xanh + smoke VI + không phụ thuộc file kit.
 - [ ] Visuals: latest alias + banner lệch + reuse-hash + `--clean`.
-- [ ] Age-beacon hiện theo tuổi cài; thiếu MANIFEST im lặng.
+- [x] Age-beacon (build-age) hiện theo tuổi đóng gói; thiếu MANIFEST im lặng. (DEC-P10a-1)
 - [ ] AC nudge sau approve + GUIDE mục.
 - [ ] `--decision --list PRD-X` đúng `affects` + chain supersede.
 - [ ] `--snapshot`/`--restore` đúng; VCS warn ngoài git.

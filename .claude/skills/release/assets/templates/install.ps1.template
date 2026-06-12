@@ -261,6 +261,17 @@ Get-ChildItem -Recurse -File -Path $BundleDir | Sort-Object FullName | ForEach-O
     }
 }
 
+# --- Install the bundle MANIFEST as a version stamp under .claude/ ---
+# The walk above keeps MANIFEST.json out of the repo ROOT (it is not recipient
+# content), but the product-spec --status build-age beacon reads .claude/MANIFEST.json
+# to tell the PO how old their installed copy is. Regenerated installer metadata that
+# reflects the version just installed, so always refresh on (re)install — no backup.
+# PARITY: install.sh performs the same copy — keep both in sync.
+$ClaudeDir = Join-Path $TargetDir ".claude"
+if (-not (Test-Path $ClaudeDir)) { New-Item -ItemType Directory -Path $ClaudeDir -Force | Out-Null }
+Copy-Item -Path $ManifestJson -Destination (Join-Path $ClaudeDir "MANIFEST.json") -Force
+Note "[stamp] .claude/MANIFEST.json (build-age beacon)"
+
 # --- Per-skill install hooks (opt-in) ---
 # These hooks execute arbitrary code on the recipient's machine.
 # Default: skip. Pass -RunHooks after reviewing the scripts.

@@ -31,9 +31,12 @@ The feeder JSON shape:
   "stale_approvals": ["PRD-AUTH"],
   "overdue": [ { "check": "overdue", "artifact_id": "...", "..." } ],
   "unrecorded_signals": [ { "type": "validate_no_marker", "severity": "info", "subject": null, "evidence": "...", "suggested_writer": "..." } ],
-  "reflect_suggestion": "..."
+  "reflect_suggestion": "...",
+  "bundle_age": { "bundle_version": "2.3.1", "built_at": "<ISO>", "age_days": 30 }
 }
 ```
+
+`bundle_age` is `null` whenever there is no readable `.claude/MANIFEST.json` (a dev tree, a hand-copied spec, or a corrupt/old-format MANIFEST) — the key is always present so the contract is stable.
 
 | Field | Meaning | How it is computed |
 |-------|---------|--------------------|
@@ -46,6 +49,7 @@ The feeder JSON shape:
 | `unrecorded_signals` | What looks unrecorded in the memory layer (fence breach / drift-since-validate / approved-changed-no-DEC / judged-not-stored). | **reuses** `memory_gap.collect` (the SINGLE detection home — `references/memory-enforcement.md` § signal catalogue; status never re-detects). |
 | `open_questions` | PO-facing hanging parameters (`cần PO xác định` / `TBD` / `Vẫn còn mở`) riding inside artifacts that look done. | **reuses** `open_questions.scan` (the SINGLE marker home; the `--approve` gate consults the same module per-file). |
 | `reflect_suggestion` | A soft one-line `--reflect` hint, present only when drift-since-last-validate is high. | derived advisory string — points at a retroactive `--reflect` harvest of rulings/observations never recorded. |
+| `bundle_age` | How old the **installed bundle** is — `bundle_version` + `built_at` + `age_days` (days since it was packed), or `null`. | reads `<root>/.claude/MANIFEST.json` (the installer's version stamp). **Build-age**, not install-age: it catches a freshly-installed but already-old release. No network — fail-silent on any absent/unreadable MANIFEST. |
 
 ## How the LLM composes the nudge
 
@@ -69,6 +73,12 @@ The feeder JSON shape:
      skill runs, which scripts error or run slow, whether validate has been passing as a trend — point them at the
      `telemetry` skill (`/cleanmatic:telemetry --lens all`). `--status` reports THIS spec's drift; `telemetry` reads
      usage & health across all skills. A pointer only; `--status` never runs it.
+   - **Build-age beacon** (`bundle_age`): when present, add ONE soft line so the PO knows how stale their installed
+     copy is and that a newer release may exist — e.g. *"Bạn đang dùng bản **{bundle_version}**, đóng gói **{age_days}**
+     ngày trước — hỏi người phát hành xem có bản mới hơn không."* (EN: *"You're on **{bundle_version}**, packed
+     **{age_days}** days ago — ask the publisher whether a newer release exists."*). It is **build-age**, not the date
+     the PO installed; phrase it as "đóng gói/packed", not "cài/installed". A heads-up only — never a gate, and absent
+     (`null`) in a dev tree, so simply omit the line then. `--status` does NOT check the network for newer versions.
 3. Always close with the **soft-fence reminder** (below) when anything is unvalidated.
 
 ## Honesty caveat — this is a NUDGE, not a guard

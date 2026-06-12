@@ -362,6 +362,17 @@ while IFS= read -r REL; do
 # lists in sync.
 done < <(LC_ALL=C find . -type f -print | LC_ALL=C sort | grep -vE '^(./MANIFEST\.json|./INSTALL\.md|./install\.sh|./install\.ps1)$')
 
+# --- Install the bundle MANIFEST as a version stamp under .claude/ ---
+# The walk above keeps MANIFEST.json out of the repo ROOT (it is not recipient
+# content), but the product-spec `--status` build-age beacon reads
+# .claude/MANIFEST.json to tell the PO how old their installed copy is. This is
+# regenerated installer metadata that simply reflects the version just installed,
+# so always refresh it on (re)install — no skip, no timestamped backup.
+# PARITY: install.ps1 performs the same copy — keep both in sync.
+mkdir -p "$TARGET_DIR/.claude"
+cp -f "$MANIFEST_JSON" "$TARGET_DIR/.claude/MANIFEST.json"
+note "[stamp] .claude/MANIFEST.json (build-age beacon)"
+
 # --- Run per-skill install hooks (opt-in) ---
 # These hooks execute arbitrary code on the recipient's machine.
 # Default: skip. Pass RUN_HOOKS=1 to enable after reviewing the scripts.

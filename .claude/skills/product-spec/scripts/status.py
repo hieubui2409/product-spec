@@ -42,6 +42,14 @@ What it reports (all deterministic — Script-vs-LLM split):
                      present ONLY when drift-since-last-validate is high (the
                      existing `unvalidated` metric crosses `HIGH_DRIFT_THRESHOLD`);
                      `None` otherwise. Derived advisory text, never a gate.
+  - `bundle_age`   — build-age facts read from the installed bundle MANIFEST
+                     (`<root>/.claude/MANIFEST.json`): `{bundle_version, built_at,
+                     age_days}`, or `None` when the MANIFEST is absent/unreadable.
+                     `age_days` = days since the running copy was PACKED (not since
+                     install) — the honest "is my copy stale?" signal, since a
+                     freshly-installed but already-old release still reads as old.
+                     The LLM turns this into an "ask the publisher for a newer
+                     release" nudge. Fail-silent + no network: it is a soft hint.
 
 The snapshot delta degrades safely: a missing/corrupt marker, or a referenced
 snapshot file that no longer exists, yields `baseline: false` with empty deltas —
@@ -53,8 +61,8 @@ CLI:
     status.py --root <project-dir> [--today YYYY-MM-DD]
         Prints {schema_version, root, baseline, checked_at, today, unvalidated,
         added, removed, drafts, stale_approvals, overdue, unrecorded_signals,
-        open_questions, reflect_suggestion} to stdout. Exits 0, EXCEPT on a
-        malformed --today (the
+        open_questions, reflect_suggestion, bundle_age} to stdout. Exits 0, EXCEPT
+        on a malformed --today (the
         one input error, mirroring time_advisory) → exit 1. The nudge itself never
         gates.
 """
@@ -150,6 +158,44 @@ def _open_questions(root: Path) -> List[Dict[str, Any]]:
     return open_questions.scan(root)
 
 
+def _bundle_age(root: Path, eval_today: dt.date) -> Optional[Dict[str, Any]]:
+    """Build-age beacon facts from the installed bundle MANIFEST, or None.
+
+    The installer drops `<root>/.claude/MANIFEST.json` (bundle_version + built_at)
+    into the PO's tree. Here we surface the *build age* — days since the running copy
+    was packed — so the LLM can nudge "ask the publisher for a newer release" per
+    `references/workflow-status.md`. Build-age (not install-age) is the honest
+    staleness signal: it catches a freshly-installed but already-old release.
+
+    Fail-silent by design: a missing MANIFEST (the dev tree, or a hand-copied spec),
+    malformed JSON, a missing/non-string `built_at`, or an unparseable `built_at` all
+    yield None — the beacon is a soft hint and must NEVER gate, raise, or touch the
+    network. A `built_at` after `eval_today` (clock skew) clamps to 0 rather than
+    reporting a negative age."""
+    path = root / ".claude" / "MANIFEST.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    version = data.get("bundle_version")
+    built_at = data.get("built_at")
+    # Empty strings count as absent: a corrupt MANIFEST that carried a blank
+    # version would otherwise render a half-formed "version  " nudge — the
+    # fail-silent contract says degrade to None instead.
+    if not isinstance(version, str) or not version:
+        return None
+    if not isinstance(built_at, str) or not built_at:
+        return None
+    try:
+        built_date = dt.datetime.fromisoformat(built_at).date()
+    except (ValueError, TypeError):
+        return None
+    age_days = max(0, (eval_today - built_date).days)
+    return {"bundle_version": version, "built_at": built_at, "age_days": age_days}
+
+
 def _reflect_suggestion(unvalidated: List[str]) -> Optional[str]:
     """A soft one-line `--reflect` hint when drift-since-last-validate is high.
 
@@ -209,6 +255,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
             "unrecorded_signals": _unrecorded_signals(root),
             "open_questions": _open_questions(root),
             "reflect_suggestion": _reflect_suggestion([]),
+            "bundle_age": _bundle_age(root, eval_today),
         }
 
     diff = diff_graphs(graph, baseline_snapshot)
@@ -241,6 +288,7 @@ def build_status(root, today: Optional[str] = None) -> Dict[str, Any]:
         "unrecorded_signals": _unrecorded_signals(root),
         "open_questions": _open_questions(root),
         "reflect_suggestion": _reflect_suggestion(unvalidated),
+        "bundle_age": _bundle_age(root, eval_today),
     }
 
 
