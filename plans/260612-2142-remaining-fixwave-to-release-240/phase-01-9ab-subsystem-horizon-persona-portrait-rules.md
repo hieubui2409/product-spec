@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: '#9ab subsystem-horizon + persona-portrait rules'
-status: done
+status: completed
 priority: P2
 effort: 0.75d
 dependencies: []
