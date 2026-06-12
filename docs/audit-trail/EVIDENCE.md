@@ -221,6 +221,26 @@ roll the oldest cycle into `## Archive` when exceeded.
   `git stash` baseline run). CONTRIBUTING.md:69 gate: `python3 -m pytest .claude/skills/telemetry .claude/hooks
   .claude/skills/_shared -q` → `219 passed`.
 
+### P2-9c · BUILD-NEW · id-backfill migrator + PRODUCT template id stamp · `migrate_backfill_ids.py` (new)
+- **Root cause:** spec artifacts generated or hand-authored before the `id:` requirement was added could
+  reach production without a frontmatter `id:` key; `spec_graph` then assigned them the `<missing-id>`
+  sentinel, which leaked into PO-facing findings and critique bundles. No migration tool existed to
+  repair existing artifacts in a GATE-safe way.
+- **Before:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_migrate_backfill_ids.py -q`
+  → `ERROR: ModuleNotFoundError: No module named 'migrate_backfill_ids'` (5 tests collection-fail, 2 pass
+  vacuously). Full suite: 728 passed, 1 failed (pre-existing dogfood-state).
+- **Fix:** new `migrate_backfill_ids.py` mirroring `migrate_metric_to_metrics.py` GATE contract exactly:
+  dry-run default (0 bytes written), `--apply` gated on BOTH `--confirmed-by` + `--date` (non-zero exit
+  if either absent), per-artifact idempotent (.bak-once, schema_version stamp, approved→confirm_required,
+  underivable paths skipped + reported). ID derived from filename/subdir per `spec_graph.ID_PATTERN_BY_TYPE`.
+  All 7 tests (synthetic fixtures, no real PO data; no `--apply` against any real artifact in cook).
+- **After:** `python3 -m pytest .claude/skills/product-spec/scripts/tests/test_migrate_backfill_ids.py -q`
+  → `7 passed`. Full suite: `python3 -m pytest .claude/skills/product-spec --tb=no` → `735 passed, 1 failed`
+  (1 failure = pre-existing `test_dogfood_state_untracked`, unchanged). CONTRIBUTING.md:69 gate:
+  `python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q` → `219 passed`.
+- **Note:** DEC-P2-1 (phase-02 file). Build+test only — no real artifact `--apply`'d in cook.
+  Real backfill is a deferred PO-side step (dry-run → human re-approve).
+
 ---
 
 ## Archive

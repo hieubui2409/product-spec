@@ -243,3 +243,15 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
   unchanged). → EVIDENCE P1-9ab.
 - [x] persona-without-portrait (warn) — persona declared in VISION/BRD frontmatter with no matching `##`/`###`
   body heading. New `check_persona_portraits` in same sibling. Conservative (heading-absent only). → EVIDENCE P1-9ab.
+
+### P2 (#9c) · id-backfill migrator (build+test only) · 2026-06-12 (build-new)
+
+- [x] id-backfill migrator — new `migrate_backfill_ids.py` that inserts missing `id:` into artifact frontmatter.
+  GATE contract mirrors `migrate_metric_to_metrics.py`: dry-run default (0 bytes written), `--apply` requires
+  BOTH `--confirmed-by` AND `--date` (non-zero exit if either absent), per-artifact idempotent, `.bak`-once,
+  `schema_version` stamp on write, approved artifact → `confirm_required` (never silent). ID derivation from
+  filename/subdir per `spec_graph.ID_PATTERN_BY_TYPE`; undeducible paths skipped + reported (fail-soft).
+  7 tests: dry-run-zero-bytes, apply-requires-both-flags (negative), apply-backfills-id + bak + stamp,
+  idempotent-rerun-noop, approved-requires-confirmation (negative), underivable-skipped-no-crash,
+  generated-PRODUCT-md-has-id-PRODUCT. Suite 735 passed (1 pre-existing dogfood-state failure).
+  Build+test only — no real artifact was `--apply`'d during cook (synthetic fixtures only). → EVIDENCE P2-9c.
