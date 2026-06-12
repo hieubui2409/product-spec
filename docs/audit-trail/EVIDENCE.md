@@ -282,3 +282,10 @@ roll the oldest cycle into `## Archive` when exceeded.
   field is an ISO date. Fix: validate via `date.fromisoformat`.
 - PS-11 · CLEANUP(test-gap) · LOW · learning views — added a direct `render_learning.learning_map_ascii` test
   + a dispatcher test driving all 5 `--learn` views through `visualize.py`.
+
+### P3-13 · BUILD-NEW · decision-register view · `decision_register_view.py`
+- **Root cause:** `decision_register.py` at 401 LOC (over 250-LOC budget); no presentation layer existed for filtering DECs by affected artifact or resolving supersede chains.
+- **Before:** `python3 decision_register.py --root . --list --affects PRD-AUTH` → unrecognized argument / no filter; supersede chains not navigable.
+- **Fix:** new `decision_register_view.py` sibling (`filter_by_affects`, `render_supersede_chain` with visited-set cycle guard + dangling-ref fail-soft, `render_dashboard_row`, `render_dashboard_summary`); `--list --affects` dispatch wired in 6 LOC into `decision_register.py`; single DEC loader `parse_decisions()` reused (DRY).
+- **After:** `python3 decision_register.py --root . --list --affects PRD-AUTH` → `{"affects": "PRD-AUTH", "rows": [...]}` with chain; cyclic / dangling supersede refs render with `[cycle]`/`[missing]` markers, no crash.
+- **Note:** DEC-1 recorded. 6 new tests (6/6 pass). Suite 741 passed / 1 pre-existing dogfood-state failure.

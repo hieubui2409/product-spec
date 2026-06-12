@@ -358,7 +358,12 @@ def main() -> int:
             print(json.dumps({"id": alloc_id(root)}, ensure_ascii=False))
             return 0
         if args.list:
-            print(json.dumps({"active": list_active(root)}, indent=2, ensure_ascii=False))
+            if args.affects:
+                from decision_register_view import list_by_affects
+                rows = list_by_affects(parse_decisions(root), args.affects)
+                print(json.dumps({"affects": args.affects, "rows": rows}, indent=2, ensure_ascii=False))
+            else:
+                print(json.dumps({"active": list_active(root)}, indent=2, ensure_ascii=False))
             return 0
         if args.append_alloc:
             result = append_alloc(

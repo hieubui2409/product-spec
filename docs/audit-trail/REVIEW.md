@@ -244,6 +244,15 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
 - [x] persona-without-portrait (warn) — persona declared in VISION/BRD frontmatter with no matching `##`/`###`
   body heading. New `check_persona_portraits` in same sibling. Conservative (heading-absent only). → EVIDENCE P1-9ab.
 
+### P3 (#13) · decision-register view (build-new) · 2026-06-12 (build-new)
+
+- [x] POX-F11 · decision-index view — `--list --affects PRD-X` filters DEC records by `affects` field, resolves
+  transitive supersede chain (cycle-safe visited-set, dangling-ref fail-soft [missing] marker), renders dashboard
+  rows. New `decision_register_view.py` sibling (keeps `decision_register.py` flat at ~407 LOC); `--list --affects`
+  dispatch adds 6 LOC to main file. 6 tests: affects-filter, transitive-chain, dashboard-counts, empty-match,
+  cycle-terminates, dangling-ref-no-crash. Suite 741 passed (1 pre-existing dogfood-state failure). DEC-1 recorded.
+  → EVIDENCE P3-13.
+
 ### P2 (#9c) · id-backfill migrator (build+test only) · 2026-06-12 (build-new)
 
 - [x] id-backfill migrator — new `migrate_backfill_ids.py` that inserts missing `id:` into artifact frontmatter.
