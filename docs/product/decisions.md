@@ -101,3 +101,18 @@ Dedup key is (date, first-artifact-id, action). This triple is stable across re-
 Orphan-path check uses `Optional[set]` sentinel: `None` = graph build failed (skip check, fail-soft); empty `set()` = graph built cleanly but no artifacts yet (check active — every artifact id in the change-log is an orphan). This distinguishes "unavailable" from "legitimately empty". The check is folded into the existing `reconciled` + `unreconciled_count` mechanism — no new schema keys, no new event fields.
 
 Back-compat requirement: legacy `docs/product/change-log.md` is always read first (when present) so existing PO projects with a single monolithic file continue to produce a full audit trail without any migration step.
+
+---
+id: DEC-7
+status: active
+date: 2026-06-13
+affects: migrate_backfill_ids.py
+---
+
+## DEC-7 — id-backfill apply gates approved artifacts behind per-id `--confirm-approved`; never stamps schema_version
+
+Post-review ruling (GATE-NO-SILENT-REVERSAL applied). The adversarial code-review pass found the `--apply` write loop rewrote `approved` artifacts under the blanket `--confirmed-by`/`--date` flags — `confirm_required` was computed for the report but never enforced before writing, and the "approved requires confirmation" test only exercised the dry-run path (a phantom). That is exactly the silent flip of approved content the safety floor forbids.
+
+Ruling: a blanket `--apply --confirmed-by --date` backfills ONLY non-approved actionable artifacts. An `approved` artifact missing an `id` is reported as needing confirmation and is skipped from writes unless its id/path is passed in the new repeatable `--confirm-approved <ID>` allowlist (still in addition to `--confirmed-by`+`--date`). This keeps the migrator the only approved-touching unit while making any touch of an approved artifact an explicit, per-artifact, owner-named act — never a side effect of a bulk run. A real apply-path test now asserts an approved artifact is byte-unchanged without the allowlist and is written only with it.
+
+Separately: the id-backfill no longer writes `schema_version`. That field tracks the goal-schema era and is orthogonal to id presence; stamping `1` risked downgrading an era-2 file and silently relaxing the goal-status gate in `check_consistency_schema`. The migrator now changes exactly one thing — inserting the missing `id` — and leaves any existing `schema_version` byte-identical.
