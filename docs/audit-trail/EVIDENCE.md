@@ -286,6 +286,31 @@ roll the oldest cycle into `## Archive` when exceeded.
   Restore staging → atomic rename so the live tree is never left partially restored. VCS thresholds are concrete
   integers (LARGE_DIFF_FILE_COUNT=5) in the sibling module — single authoritative source.
 
+### P6-8 · BUILD-NEW · artifact-events sink + heat lens · `track_artifact_edits.py` (new) + `lens_artifact_heat.py` (new)
+- **Root cause:** no telemetry existed for which spec artifacts were being edited most frequently; PO had
+  no visibility into artifact churn ("which PRD is edited most?"). The PostToolUse hook slot was available
+  but unused for Edit/Write/MultiEdit on spec paths.
+- **Before:** `python3 -m pytest .claude/hooks/__tests__/test_track_artifact_edits.py .claude/skills/telemetry/scripts/tests/test_lens_artifact_heat.py -q`
+  → `13 failed, 0 passed` (ModuleNotFoundError for both modules).
+- **Fix:** new `track_artifact_edits.py` hook — `_build_record` WHITELISTS exactly `{ts, artifact_path, op, session}`
+  (never reads new_string/old_string/tool_response); `_is_spec_artifact` filters to `docs/product/` prefix;
+  registered in `register_telemetry_hooks.py` on `PostToolUse:Edit|Write|MultiEdit` (appended to existing group's
+  commands, no clobber). New `lens_artifact_heat.py` — `gather(days)` tallies edits per path, returns rows sorted
+  by edit count descending with `last_edit` timestamp; registered in `analyze_telemetry.py` LENSES dict +
+  OVERVIEW_ORDER (append-only). VI/EN labels (`heat_h/total/cols/none/a_heat`) appended to `telemetry_render.py`
+  `_T` dict; `_md_artifact_heat` renderer added to `_MD` dispatch; ascii status line added. Fail-open via
+  `hook_runtime.run_telemetry_hook`; disabled under pytest (PYTEST_CURRENT_TEST + CK_TELEMETRY_DISABLED).
+- **After:** `python3 -m pytest .claude/hooks/__tests__/test_track_artifact_edits.py .claude/skills/telemetry/scripts/tests/test_lens_artifact_heat.py -q`
+  → `13 passed`. CONTRIBUTING.md:69 gate: `python3 -m pytest .claude/skills/telemetry .claude/hooks .claude/skills/_shared -q`
+  → `232 passed`. Product-spec regression: `python3 -m pytest .claude/skills/product-spec --tb=no` → `754 passed, 1 failed`
+  (1 failure = pre-existing `test_dogfood_state_untracked`, unchanged).
+- **Note:** DEC-4 (decisions.md). Privacy by construction (GATE H3): `_build_record` is a pure-function whitelist —
+  it builds the record dict from exactly the 4 allowed values; it never receives content fields. The H3 test feeds a
+  payload containing `new_string`, `old_string`, `tool_response.content` and asserts `set(record.keys()) == {ts,
+  artifact_path, op, session}` AND that all content strings are absent from the serialized record. `telemetry_render.py`
+  and `analyze_telemetry.py` edits are append-only (import + LENSES key + OVERVIEW_ORDER entry + _T label keys +
+  _md_* fn + _MD entry + ascii elif) — P7 can re-read both files clean.
+
 ---
 
 ## Archive

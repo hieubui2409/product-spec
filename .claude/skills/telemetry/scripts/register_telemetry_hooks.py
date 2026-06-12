@@ -65,6 +65,7 @@ TRACK_SCRIPT = _hook_cmd("track_script_execution.py")
 EMIT_SESSION = _hook_cmd("emit_session_summary.py")
 MARK_BASH_START = _hook_cmd("mark_bash_start.py")
 TRACK_SUBAGENT = _hook_cmd("track_subagent_outcome.py")
+TRACK_ARTIFACT = _hook_cmd("track_artifact_edits.py")
 
 # Enforcement hooks (wired-always, config-gated). memory_gap needs BOTH its Stop
 # policy and its PostToolUse touched-flag writer (--post-tool-use); without the
@@ -74,7 +75,7 @@ MEMORY_GAP_POST = _hook_cmd("memory_gap_hook.py") + " --post-tool-use"
 CRITIQUE_STOP = _hook_cmd("product_spec_critique_nudge.py")
 
 # All current telemetry command strings (the read-only usage/health hooks).
-TELEMETRY_CMDS: set[str] = {TRACK_SKILL, TRACK_SCRIPT, EMIT_SESSION, MARK_BASH_START, TRACK_SUBAGENT}
+TELEMETRY_CMDS: set[str] = {TRACK_SKILL, TRACK_SCRIPT, EMIT_SESSION, MARK_BASH_START, TRACK_SUBAGENT, TRACK_ARTIFACT}
 # Every canonical command we own (telemetry + enforcement) — used by the reconcile
 # pass so an enforcement entry is NOT mistaken for a stale telemetry form.
 ALL_CMDS: set[str] = TELEMETRY_CMDS | {MEMORY_GAP_STOP, MEMORY_GAP_POST, CRITIQUE_STOP}
@@ -93,7 +94,7 @@ _LEGACY_PATTERNS = [
 # (venv → system python3) reconciles the entry instead of duplicating it.
 _HOOK_BASENAMES = (
     "track_skill_invocation.py", "track_script_execution.py", "emit_session_summary.py",
-    "mark_bash_start.py", "track_subagent_outcome.py",
+    "mark_bash_start.py", "track_subagent_outcome.py", "track_artifact_edits.py",
     "memory_gap_hook.py", "product_spec_critique_nudge.py",
 )
 
@@ -112,7 +113,8 @@ REGISTRATIONS = [
     {"event": "SubagentStop",        "matcher": None,    "commands": [TRACK_SUBAGENT]},
     # Enforcement hooks (wired-always; config default-false makes them no-op).
     # memory_gap's touched-flag writer rides PostToolUse:Edit|Write|MultiEdit.
-    {"event": "PostToolUse",         "matcher": "Edit|Write|MultiEdit", "commands": [MEMORY_GAP_POST]},
+    # track_artifact_edits records path-only events for spec artifacts (telemetry; fail-open).
+    {"event": "PostToolUse",         "matcher": "Edit|Write|MultiEdit", "commands": [MEMORY_GAP_POST, TRACK_ARTIFACT]},
     {"event": "Stop",                "matcher": None,    "commands": [MEMORY_GAP_STOP, CRITIQUE_STOP]},
 ]
 

@@ -117,6 +117,12 @@ _T: dict[str, dict] = {
         "mm_health_title": "Script error-rate (%)",
         "mm_rel_title": "Subagent success-rate (%)",
         "mm_rel_gate": "> Subagent reliability: insufficient data for a chart (not enough data).",
+        # artifact_heat
+        "heat_h": "## Artifact Edit Frequency (last {days} days)\n",
+        "heat_total": "Total edits: **{total}** across **{n}** artifact(s).\n",
+        "heat_cols": ["Artifact", "Edits", "Last edit"],
+        "heat_none": "_No artifact edits recorded yet._",
+        "a_heat": "ARTIFACT HEAT — {total} edits across {n} artifact(s)",
     },
     "vi": {
         "banner": "== TELEMETRY: MỨC DÙNG & SỨC KHỎE ==",
@@ -210,6 +216,12 @@ _T: dict[str, dict] = {
         "mm_health_title": "Tỷ lệ lỗi script (%)",
         "mm_rel_title": "Tỷ lệ thành công subagent (%)",
         "mm_rel_gate": "> Độ tin cậy subagent: chưa đủ dữ liệu để vẽ biểu đồ.",
+        # artifact_heat
+        "heat_h": "## Tần suất sửa artifact ({days} ngày gần đây)\n",
+        "heat_total": "Tổng lần sửa: **{total}** trên **{n}** artifact.\n",
+        "heat_cols": ["Artifact", "Số lần sửa", "Lần sửa gần nhất"],
+        "heat_none": "_Chưa ghi nhận lần sửa artifact nào._",
+        "a_heat": "ARTIFACT HEAT — {total} lần sửa trên {n} artifact",
     },
 }
 
@@ -411,6 +423,20 @@ def _md_validate(a, lang):
     return "\n".join(out)
 
 
+def _md_artifact_heat(a, lang):
+    def t(k): return _t(lang, k)
+    out = [t("heat_h").format(days=a["days"])]
+    rows = a.get("rows", [])
+    if not rows:
+        out.append(t("heat_none"))
+        return "\n".join(out)
+    out.append(t("heat_total").format(total=a["total_edits"], n=len(rows)))
+    out.append(markdown_table(t("heat_cols"),
+                              [[r["artifact"], str(r["edits"]), r.get("last_edit", "")[:10]]
+                               for r in rows]))
+    return "\n".join(out)
+
+
 _MD = {
     "usage_tokens": lambda a, top, lang: _md_usage(a, top, lang),
     "session_shape": lambda a, top, lang: _md_session(a, lang),
@@ -421,6 +447,7 @@ _MD = {
     "product_memory": lambda a, top, lang: _md_product_memory(a, lang),
     "forensics": lambda a, top, lang: _md_forensics(a, lang),
     "validate_proxy": lambda a, top, lang: _md_validate(a, lang),
+    "artifact_heat": lambda a, top, lang: _md_artifact_heat(a, lang),
 }
 
 
@@ -499,6 +526,9 @@ def render_ascii(aggregates: list[dict], lang: str = "vi") -> str:
                              + t("a_val").format(pr=pr_str, last=a["last_status"]))
             else:
                 lines.append("\n[i] " + t("a_val_na").format(reason=_reason_label(a, lang)))
+        elif lens == "artifact_heat":
+            lines.append("\n[i] " + t("a_heat").format(
+                total=a.get("total_edits", 0), n=len(a.get("rows", []))))
     return "\n".join(lines)
 
 

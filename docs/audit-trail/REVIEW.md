@@ -289,3 +289,19 @@ Verify: doc-only, KHÔNG code/test/PO-data. status P13 = in-progress (draft xong
   idempotent-rerun-noop, approved-requires-confirmation (negative), underivable-skipped-no-crash,
   generated-PRODUCT-md-has-id-PRODUCT. Suite 735 passed (1 pre-existing dogfood-state failure).
   Build+test only — no real artifact was `--apply`'d during cook (synthetic fixtures only). → EVIDENCE P2-9c.
+
+### P6 (#8) · artifact-events sink + heat lens (build-new) · 2026-06-12 (build-new)
+
+- [x] artifact-events sink — path-only PostToolUse hook records `{ts, artifact_path, op, session}` to
+  `artifact-events.jsonl` for edits under `docs/product/`. New `track_artifact_edits.py` hook; registered
+  in `register_telemetry_hooks.py` on `PostToolUse:Edit|Write|MultiEdit`. Privacy by construction:
+  `_build_record` is a WHITELIST — builds the dict from exactly 4 keys; no content field is ever read.
+  Fail-open via `hook_runtime.run_telemetry_hook`. Disabled under pytest (PYTEST_CURRENT_TEST +
+  CK_TELEMETRY_DISABLED). 13 tests across 2 files: exact-keyset-strips-content (H3), outside-spec-no-record
+  (negative), op-reflects-tool, malformed-stdin-exits-zero (negative), empty-stdin-exits-zero (negative),
+  no-file-path-no-record (negative), per-path heat ranking, last-edit timestamp, days-window exclusion,
+  empty-sink-no-crash (negative), empty-file-no-crash (negative), malformed-jsonl-skipped (negative),
+  within-spec-produces-record. New `lens_artifact_heat.py` lens registered in `analyze_telemetry.py`
+  LENSES dict + OVERVIEW_ORDER; VI/EN labels appended to `telemetry_render.py` `_T` dict.
+  Suite 232 passed (telemetry+hooks+_shared); product-spec 754 passed (1 pre-existing dogfood-state
+  failure unchanged). DEC-4 recorded. → EVIDENCE P6-8.
