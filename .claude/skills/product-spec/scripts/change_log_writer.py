@@ -67,23 +67,33 @@ def _dedup_key(entry_md: str, date: str) -> tuple[str, str, str]:
     return (date, artifact, action)
 
 
+def _parse_existing_triples(existing_text: str) -> set[tuple[str, str, str]]:
+    """Parse the existing month-file text into a set of (date, artifact, action) triples.
+
+    Uses the same heading, artifact, and action regexes as _dedup_key so the
+    comparison is always tuple-vs-tuple — never three independent substring checks.
+    """
+    triples: set[tuple[str, str, str]] = set()
+    heading_re = re.compile(r"^##\s+(?P<date>\d{4}-\d{2}-\d{2})\s+—", re.MULTILINE)
+    matches = list(heading_re.finditer(existing_text))
+    for i, m in enumerate(matches):
+        date = m.group("date")
+        block = existing_text[m.end(): matches[i + 1].start() if i + 1 < len(matches) else len(existing_text)]
+        art_m = _ARTIFACT_RE.search(block)
+        artifact = art_m.group("ids").strip() if art_m else ""
+        action_m = _ACTION_RE.search(block)
+        action = action_m.group("action").strip() if action_m else ""
+        triples.add((date, artifact, action))
+    return triples
+
+
 def _already_present(existing_text: str, dedup_key: tuple[str, str, str]) -> bool:
-    """Return True when a matching (date, artifact, action) triple exists in the file."""
-    date, artifact, action = dedup_key
-    # The heading must carry the date
-    if date not in existing_text:
-        return False
-    # The artifact id must appear
-    if artifact and artifact not in existing_text:
-        return False
-    # The action must appear — check the action line specifically
-    if action:
-        action_pattern = re.compile(
-            r"\*\*Action[^:]*:\*\*\s*" + re.escape(action), re.MULTILINE
-        )
-        if not action_pattern.search(existing_text):
-            return False
-    return True
+    """Return True when a matching (date, artifact, action) triple exists in the file.
+
+    Parses the file into per-entry triples and compares as a unit so two entries
+    whose fields partially overlap do not falsely suppress a genuinely distinct triple.
+    """
+    return dedup_key in _parse_existing_triples(existing_text)
 
 
 def write_change_log_entry(root, entry_md: str, *, when: Optional[str] = None) -> Path:

@@ -216,6 +216,74 @@ def test_existing_path_not_flagged(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# (D+) Dedup triple correctness — must not suppress genuinely distinct entries
+# ---------------------------------------------------------------------------
+
+_ENTRY_PRD_AUTH_UPDATED = """\
+## 2026-01-05 — updated | cập nhật
+
+- **Artifact | Tài liệu:** PRD-AUTH (prd)
+- **Action | Hành động:** updated
+- **Reason | Lý do:** scope change
+- **Affected downstream | Ảnh hưởng phía dưới:** []
+- **Dimensions touched | Chiều bị ảnh hưởng:** scope
+- **Author | Tác giả:** hieu
+"""
+
+_ENTRY_PRD_PAY_APPROVED = """\
+## 2026-01-05 — approved | duyệt
+
+- **Artifact | Tài liệu:** PRD-PAY (prd)
+- **Action | Hành động:** approved
+- **Reason | Lý do:** PO sign-off
+- **Affected downstream | Ảnh hưởng phía dưới:** []
+- **Dimensions touched | Chiều bị ảnh hưởng:** scope
+- **Author | Tác giả:** hieu
+"""
+
+_ENTRY_PRD_AUTH_APPROVED = """\
+## 2026-01-05 — approved | duyệt
+
+- **Artifact | Tài liệu:** PRD-AUTH (prd)
+- **Action | Hành động:** approved
+- **Reason | Lý do:** PO sign-off v2
+- **Affected downstream | Ảnh hưởng phía dưới:** []
+- **Dimensions touched | Chiều bị ảnh hưởng:** scope
+- **Author | Tác giả:** hieu
+"""
+
+
+def test_distinct_triple_not_suppressed_by_field_contamination(tmp_path):
+    """The dedup check must compare the (date, artifact, action) triple as a
+    unit — not three independent substring checks.
+
+    Scenario: the month file already contains:
+      (2026-01-05, PRD-AUTH, updated)   ← same date + artifact, different action
+      (2026-01-05, PRD-PAY,  approved)  ← same date + action, different artifact
+
+    Writing (2026-01-05, PRD-AUTH, approved) is a NEW distinct triple.
+    It must NOT be suppressed — the heading count for that month file must increase.
+    """
+    root = _spec_root(tmp_path)
+
+    # Pre-populate with two entries whose fields "contaminate" the triple space
+    clw.write_change_log_entry(root, _ENTRY_PRD_AUTH_UPDATED, when="2026-01-05")
+    clw.write_change_log_entry(root, _ENTRY_PRD_PAY_APPROVED, when="2026-01-05")
+
+    month_file = root / "docs" / "product" / "change-log" / "2026-01.md"
+    heading_count_before = month_file.read_text(encoding="utf-8").count("## 2026-01-05")
+
+    # Write the new distinct triple
+    clw.write_change_log_entry(root, _ENTRY_PRD_AUTH_APPROVED, when="2026-01-05")
+
+    heading_count_after = month_file.read_text(encoding="utf-8").count("## 2026-01-05")
+    assert heading_count_after > heading_count_before, (
+        f"Distinct triple (PRD-AUTH, approved) was wrongly suppressed by dedup. "
+        f"Heading count before={heading_count_before}, after={heading_count_after}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # (B) Ref-doc tests
 # ---------------------------------------------------------------------------
 

@@ -1,6 +1,10 @@
 """Tests for visuals_retention.py — latest-alias, staleness banner,
 content-hash reuse, and --clean retention.
 
+Also covers the render_html.write() staleness-banner injection (FIX 1):
+the banner must appear in the WRITTEN FILE when drift > 0, and must be
+absent when the graph is in sync.
+
 Synthetic fixtures only; no real PO numbers embedded.
 All render output goes to tmp_path dirs.
 """
@@ -16,6 +20,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import visuals_retention  # noqa: E402  (module under test)
+import render_html  # noqa: E402
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -185,3 +190,68 @@ def test_clean_on_empty_dir_no_crash(tmp_path):
 
     deleted = visuals_retention.clean_old_renders(root, view, keep=5)
     assert deleted == [], f"expected empty deleted list on empty dir, got {deleted}"
+
+
+# ── 7. render_html.write injects banner into HTML file when drift > 0 ────────
+
+def _minimal_graph_for_render(node_ids: list) -> dict:
+    """Graph with the minimum fields render_html.assemble needs."""
+    return {
+        "product": {"name": "SyntheticSpec"},
+        "nodes": [{"id": nid, "type": "story", "title": f"T-{nid}",
+                   "status": "draft", "scope": "core-value"} for nid in node_ids],
+        "edges": [],
+    }
+
+
+def test_rendered_html_contains_staleness_banner_on_drift(tmp_path):
+    """render_html.write() must embed the staleness banner in the written HTML
+    file when the graph drifted since the baseline signature.
+
+    Step 1: render with a 3-node graph → saves baseline signature.
+    Step 2: render again with 5 nodes (drift = 2) → the WRITTEN FILE must
+            contain the exact banner text ("stale — 2 nodes drifted since render").
+    Asserts on the file bytes, not on the function return value.
+    """
+    root = tmp_path
+    view = "tree"
+
+    # First render: 3 nodes; establishes baseline signature
+    graph_baseline = _minimal_graph_for_render(["S1", "S2", "S3"])
+    render_html.write(root, view, "pre", "baseline content", graph_baseline)
+
+    # Second render: 5 nodes → drift = 2 added nodes
+    graph_drifted = _minimal_graph_for_render(["S1", "S2", "S3", "S4", "S5"])
+    out_path = render_html.write(root, view, "pre", "drifted content", graph_drifted)
+
+    file_bytes = out_path.read_text(encoding="utf-8")
+    # "stale — N nodes drifted since render" is the exact staleness_banner() format
+    assert "stale —" in file_bytes, (
+        f"Written HTML must contain 'stale —' banner text when drift>0; "
+        f"first 300 chars of body: {file_bytes[:300]!r}"
+    )
+    # The hard drift count must appear adjacent to the banner
+    assert "2 nodes drifted" in file_bytes, (
+        "Written HTML must contain the hard drift count phrase '2 nodes drifted'"
+    )
+
+
+def test_rendered_html_no_banner_when_in_sync(tmp_path):
+    """render_html.write() must NOT embed any staleness banner in the written
+    HTML file when the graph has not changed since the baseline signature.
+    """
+    root = tmp_path
+    view = "scope"
+
+    # First render to establish the baseline
+    graph = _minimal_graph_for_render(["S1", "S2"])
+    render_html.write(root, view, "pre", "first render", graph)
+
+    # Second render with identical graph (different view_text → forces new file)
+    out_path = render_html.write(root, view, "pre", "second render identical graph", graph)
+
+    file_bytes = out_path.read_text(encoding="utf-8")
+    # "stale —" is the exact banner prefix; must be absent when in sync
+    assert "stale —" not in file_bytes, (
+        "Written HTML must NOT contain staleness banner when graph in sync"
+    )

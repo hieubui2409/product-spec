@@ -314,20 +314,31 @@ def write(
 
     Retention hooks (via visuals_retention sibling — imported lazily to avoid a
     hard circular dependency at module load time):
-      1. Content-hash reuse: if HTML is byte-identical to the last render, return
+      1. Staleness banner: if the current graph has drifted from the saved
+         render signature, a visible banner is injected at the top of the page body.
+      2. Content-hash reuse: if HTML is byte-identical to the last render, return
          the existing file without writing a new one.
-      2. After a fresh write: update the <view>-latest.html alias and record the
+      3. After a fresh write: update the <view>-latest.html alias and record the
          content hash + node-id signature for future staleness checks.
     """
     import visuals_retention as _vr
     html = assemble(view, view_format, view_text, graph, lang)
-    # 1. Reuse if the content is identical (no new file written)
+    # 1. Inject staleness banner when the graph drifted since the last render
+    banner = _vr.staleness_banner(root, view, graph)
+    if banner:
+        banner_html = (
+            f'<div style="background:#fff3cd;color:#856404;border:1px solid #ffc107;'
+            f'padding:0.5em 1em;margin:0;font-weight:bold;text-align:center">'
+            f'{banner}</div>'
+        )
+        html = html.replace("<body>", f"<body>\n{banner_html}", 1)
+    # 2. Reuse if the content is identical (no new file written)
     existing = _vr.reuse_if_unchanged(root, view, html)
     if existing is not None:
         return existing
-    # 2. Write new timestamped file
+    # 3. Write new timestamped file
     target = _write_visual(root, f"{view}-{file_timestamp()}.html", html)
-    # 3. Retention wiring: alias + hash + node-signature
+    # 4. Retention wiring: alias + hash + node-signature
     _vr.latest_alias(target)
     _vr.record_content_hash(root, view, target, html)
     _vr.save_render_signature(root, view, target, graph)

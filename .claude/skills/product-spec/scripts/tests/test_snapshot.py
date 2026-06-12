@@ -23,6 +23,8 @@ import sys
 from pathlib import Path
 from typing import List
 
+import pytest
+
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -181,6 +183,88 @@ def test_snapshot_list_empty_no_crash(tmp_path):
 # =============================================================================
 # status_vcs.py tests
 # =============================================================================
+
+# =============================================================================
+# snapshot.py hardened-restore tests (FIX 2)
+# =============================================================================
+
+def test_restore_into_deleted_tree_succeeds(tmp_path):
+    """Restoring a snapshot when spec_root does not exist (deleted tree) must
+    succeed — no exception, tree is placed at spec_root location."""
+    import snapshot as snap
+
+    proj = _make_non_git_proj(tmp_path)
+    home = _snapshots_home(proj)
+    spec_root = proj / "docs" / "product"
+
+    snap.make_snapshot(spec_root, home, ts="20260612T000099")
+
+    # Delete the entire spec tree — this is the primary 'recover a deleted tree' flow
+    shutil.rmtree(spec_root)
+    assert not spec_root.exists(), "pre-condition: spec_root must be gone"
+
+    # Must NOT raise; must restore the tree
+    snap.restore_snapshot(spec_root, home, "20260612T000099", confirm=True)
+
+    assert spec_root.is_dir(), "spec_root must be restored"
+    assert (spec_root / "PRODUCT.md").is_file(), "PRODUCT.md must be present after restore"
+
+
+def test_restore_rolls_back_on_swap_failure(tmp_path, monkeypatch):
+    """If the staging→spec_root rename fails after the spec_root→backup rename
+    has already run, the original spec_root tree must be left intact (not missing).
+    """
+    import snapshot as snap
+
+    proj = _make_non_git_proj(tmp_path)
+    home = _snapshots_home(proj)
+    spec_root = proj / "docs" / "product"
+
+    snap.make_snapshot(spec_root, home, ts="20260612T000088")
+
+    # Record original content for byte-identity check
+    original_content = (spec_root / "PRODUCT.md").read_text(encoding="utf-8")
+
+    # Monkeypatch Path.rename to raise on the SECOND call (staging → spec_root)
+    real_rename = Path.rename
+    call_count = {"n": 0}
+
+    def _failing_rename(self, target):
+        call_count["n"] += 1
+        if call_count["n"] == 2:
+            raise OSError("injected rename failure")
+        return real_rename(self, target)
+
+    monkeypatch.setattr(Path, "rename", _failing_rename)
+
+    with pytest.raises((OSError, Exception)):
+        snap.restore_snapshot(spec_root, home, "20260612T000088", confirm=True)
+
+    # spec_root must still exist and be byte-identical to before the attempt
+    assert spec_root.is_dir(), "spec_root must exist after rollback"
+    assert (spec_root / "PRODUCT.md").read_text(encoding="utf-8") == original_content, (
+        "spec_root content must be byte-identical after failed restore (rollback applied)"
+    )
+
+
+def test_restore_unknown_ts_errors_tree_intact(tmp_path):
+    """restore(nonexistent ts) → raises SnapshotNotFoundError; live tree unchanged."""
+    import snapshot as snap
+
+    proj = _make_non_git_proj(tmp_path)
+    home = _snapshots_home(proj)
+    spec_root = proj / "docs" / "product"
+    original_content = (spec_root / "PRODUCT.md").read_text(encoding="utf-8")
+
+    with pytest.raises(snap.SnapshotNotFoundError):
+        snap.restore_snapshot(spec_root, home, "NONEXISTENT-TS", confirm=True)
+
+    # Live tree must be untouched
+    assert spec_root.is_dir(), "spec_root must still exist"
+    assert (spec_root / "PRODUCT.md").read_text(encoding="utf-8") == original_content, (
+        "spec_root content must be unchanged after SnapshotNotFoundError"
+    )
+
 
 def test_vcs_warn_when_spec_tree_untracked(tmp_path):
     """spec tree not in git (no .git repo) → at least one 'spec_tree_untracked' warning."""

@@ -218,6 +218,8 @@ def restore_snapshot(
 
     # Staging dir: sibling of spec_root to stay on the same filesystem
     staging = spec_root.parent / f"_restore_staging_{ts}"
+    backup = spec_root.parent / f"_restore_backup_{ts}"
+    spec_root_existed = spec_root.exists()
     try:
         # Copy snapshot into staging (README excluded from the live tree)
         shutil.copytree(str(snap_dir), str(staging), dirs_exist_ok=False)
@@ -227,17 +229,33 @@ def restore_snapshot(
         if readme_in_staging.is_file():
             readme_in_staging.unlink()
 
-        # Atomic swap: rename live tree to a backup, staging to live
-        backup = spec_root.parent / f"_restore_backup_{ts}"
+        # Atomic swap: if spec_root exists, rename it to backup first; then
+        # rename staging to spec_root.  On any failure AFTER the first rename,
+        # the finally block restores the backup so the original tree is never lost.
         if backup.exists():
             shutil.rmtree(backup)
-        spec_root.rename(backup)
+
+        if spec_root_existed:
+            spec_root.rename(backup)
+
         staging.rename(spec_root)
-        # Remove the backup now that the swap succeeded
-        shutil.rmtree(backup)
+
+        # Swap succeeded — remove the backup
+        if backup.exists():
+            shutil.rmtree(backup)
+
+    except Exception:
+        # Rollback: if spec_root is missing (rename to backup already ran) and
+        # backup exists, move it back so the original tree is left intact.
+        if not spec_root.exists() and backup.exists():
+            try:
+                backup.rename(spec_root)
+            except Exception:
+                pass  # best-effort; the original error is re-raised below
+        raise
 
     finally:
-        # Clean up staging if it still exists (swap did not complete)
+        # Clean up staging if it still exists (swap did not complete or failed)
         if staging.exists():
             shutil.rmtree(staging)
 
