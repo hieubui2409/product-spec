@@ -4,6 +4,17 @@ All notable changes to this skill are documented here. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-06-13
+
+### Added
+- **Artifact-edit heat** — a path-only PostToolUse sink (`track_artifact_edits.py`) records which spec
+  artifacts are edited (record is exactly `{ts, artifact_path, op, session}` by whitelist — never diff or
+  file content), and a new `artifact_heat` lens tallies which artifacts churn most. Fail-open; auto-registered.
+- **Usage-summary export + read-only harvester** — `analyze_telemetry.py --export-summary [PATH]` writes a
+  markdown aggregate the PO can review and forward; `--auto-suggest` (opt-in) appends suggestions from a
+  read-only `harvester.py` that reads self-corrections + repeat-edits and never writes any skill or template
+  (boundary A9). Export defaults to the canonical `.claude/telemetry/` dir and honors `CK_TELEMETRY_DIR`.
+
 ### Changed
 - **Session duration + early-skill reconstruction** — duration and the first skills of a session are
   recovered from the transcript head, with a dedicated script-run session key.

@@ -8,7 +8,7 @@ keywords: [ product-owner, prd, brd, epic, story, requirements, traceability, vi
 argument-hint: "[--flag] [target]"
 metadata:
   author: cleanmatic
-  version: "2.3.1"
+  version: "2.4.0"
 ---
 
 # cleanmatic:product-spec

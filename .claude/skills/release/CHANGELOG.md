@@ -12,6 +12,8 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-06-13
+
 ### Added
 - **One-command 1.x → 2.x upgrade** — `upgrade.sh`/`upgrade.ps1` (dry-run by default, `--apply`,
   `--rollback`) with an embedded planner/apply payload and an explicit legacy-map; the sweep is

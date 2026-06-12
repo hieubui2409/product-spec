@@ -9,7 +9,29 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-06-13
+
 ### Added
+- **Subsystem-horizon + persona-portrait consistency rules** (`check_consistency_product.py`) — `--validate`
+  warns when a PRODUCT.md subsystem's horizon disagrees with the matching PRD's frontmatter, and when a persona
+  named in VISION/BRD frontmatter has no body portrait. Advisory (warn-not-block); fail-soft on malformed tables.
+- **`migrate_backfill_ids.py`** — GATE-safe backfill of a missing `id:` into spec-artifact frontmatter (dry-run
+  default; `--apply` requires `--confirmed-by` + `--date`; idempotent; stamps nothing but the `id`). Approved
+  artifacts are never rewritten by the blanket flag — each requires an explicit per-id `--confirm-approved` so a
+  sign-off is never silently reversed.
+- **Decision-register view** (`decision_register_view.py`) — `--decision --list --affects PRD-X` filters rulings
+  by affected artifact and resolves supersede chains (rendered newest→oldest) with a status dashboard summary;
+  cycle- and dangling-reference safe.
+- **Visuals retention** (`visuals_retention.py`) — a stable `*-latest.html` alias, a staleness banner showing how
+  many nodes drifted since the render, content-hash render reuse, and `--viz --clean` retention (keeps the 5 most
+  recent). After `--approve`, the flow also nudges `--viz` to refresh the diagram.
+- **Opt-in snapshot/restore engine** (`snapshot.py`) — `--snapshot` / `--restore <ts>` capture and restore the
+  spec tree (timestamped, README in the snapshot dir, refuses to clobber a dirty target without confirm, rolls the
+  original back on a failed swap), plus VCS-state warnings in `--status` (spec tree untracked / large uncommitted
+  diff) and a commit nudge. Strictly opt-in — no migrator auto-hook.
+- **Monthly change-log rotation** (`change_log_writer.py`) — entries append into `change-log/<YYYY-MM>.md`
+  (deduplicated by date+artifact+action); `assemble_audit_trail.py` reads the legacy single file and the rolled
+  month files merged, and flags orphaned (deleted-artifact) entries. Legacy single-file projects still read fully.
 - **Build-age beacon in `--status`** — the installer stamps `.claude/MANIFEST.json` into the
   installed tree and `--status` reports how many days ago the running bundle was packed, so the PO
   knows when to ask the publisher for a newer release. Fail-silent, no network.

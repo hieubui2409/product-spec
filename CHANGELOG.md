@@ -17,19 +17,26 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-06-13
 Field-audit fix waves (Cleanmatic-ERP usage vs kit HEAD). See each skill's CHANGELOG for detail.
 
 ### Added
-- **product-spec** — build-age beacon in `--status` (reads an installer-stamped `.claude/MANIFEST.json`),
-  export nudge after `--approve`, GATE-safe `metric:`→`metrics:` migration, session-staleness +
-  open-questions surfacing.
+- **product-spec** — subsystem-horizon + persona-portrait consistency rules; a GATE-safe `id:` backfill
+  migrator (approved artifacts require an explicit per-id `--confirm-approved` — no silent reversal); a
+  decision-register view (`--list --affects`, supersede chains); visuals retention (`*-latest` alias,
+  staleness banner, content-hash reuse, `--clean`); an opt-in snapshot/restore engine with `--status`
+  VCS-state warnings; monthly change-log rotation with cross-file audit-trail read; a `--viz` re-render
+  nudge after sign-off. (Earlier in the cycle: build-age beacon in `--status`, export nudge after
+  `--approve`, GATE-safe `metric:`→`metrics:` migration, session-staleness + open-questions surfacing.)
+- **telemetry** — a path-only artifact-edit sink (record is exactly `{ts, artifact_path, op, session}`)
+  plus an `artifact_heat` lens; usage-summary export and a read-only suggestion harvester that never
+  writes a skill or template (boundary A9, opt-in). (Earlier: session-duration + early-skill
+  reconstruction, on-demand workflow-chains data file, tighter script-run matching.)
 - **release** — one-command 1.x → 2.x upgrade (`upgrade.sh`/`.ps1`, dry-run/apply/rollback, atomic
   legacy-sweep), an optional opt-in spec-validate GitHub Action, and a build-age MANIFEST stamp in the
   installed tree.
 - **product-spec-critique** — AC/goal-aware provenance, a scoped critique bundle, and script-enforced
   cache/memory persistence.
-- **telemetry** — session-duration + early-skill reconstruction from the transcript head, declared
-  workflow-chains moved to an on-demand data file, tighter script-run matching.
 
 ### Changed
 - **product-spec** — `render_html.py` split into a focused module family with one shared `_escape`

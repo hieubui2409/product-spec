@@ -10,6 +10,8 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-06-13
+
 ### Changed
 - **AC/goal-aware provenance** — critique provenance now tracks acceptance-criteria and BRD-goal
   context so findings tie back to the right artifact.

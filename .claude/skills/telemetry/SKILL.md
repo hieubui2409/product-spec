@@ -8,7 +8,7 @@ keywords: [telemetry, usage, health, skills, tokens, sessions, reliability, suba
 argument-hint: "[--lens usage|session|health|reliability|workflow|validate|memory|product_memory|forensics|all] [--format ascii|md|mermaid|json] [--days N] [--top N] [--lang vi|en]"
 metadata:
   author: cleanmatic
-  version: "1.0.1"
+  version: "1.1.0"
 ---
 
 # cleanmatic:telemetry — Usage & Health (Mức dùng & Sức khỏe)
