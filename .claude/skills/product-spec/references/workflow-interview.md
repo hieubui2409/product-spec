@@ -15,7 +15,7 @@ End-to-end workflow the LLM follows for the **product / brd / prd / epic / story
 3. After V1–V7, write:
    - `PRODUCT.md` via `generate_templates.py --type product` with the labels from the answers.
    - `vision.md` via `generate_templates.py --type vision` with the narrative.
-4. Append a change-log entry via `generate_templates.py --type change_log_entry --keep-optional detail`.
+4. Render the change-log entry via `generate_templates.py --type change_log_entry --keep-optional detail`, then persist it by calling `write_change_log_entry(root, rendered_entry_md)` from `change_log_writer.py`.
 5. Offer next step: "Create the BRD now, or stop here?"
 
 ## Detail-level preference (seed once, then consume every prose turn)
@@ -298,7 +298,7 @@ For each flag:
 3. Once enough fields are filled, call:
    - `generate_templates.py --root <root> --type <type> --parent <parent_id> --slug <SLUG> --values <json> --keep-optional <list> --lang <lang> --write`
 4. Inspect the script's response (`id`, `path`, `written`). Confirm to PO that the file was created.
-5. Append a change-log entry (`change_log_entry`, action = `created` / `refined`).
+5. Render the change-log entry via `generate_templates.py --type change_log_entry --values <json>` (action = `created` / `refined`), then persist it by calling `write_change_log_entry(root, rendered_entry_md)` from `change_log_writer.py`.
 6. Update `.session.md` (mark phase complete or proceed to the next artifact).
 
 ## Multi-PRD Targeting (`--prd <feature>`)

@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""change_log_writer — append-only monthly rotation writer for change-log entries.
+
+Provides `write_change_log_entry(root, entry_md, *, when=None)`:
+  - Resolves the month from the entry's heading date or from `when` (YYYY-MM-DD).
+  - Writes to `docs/product/change-log/<YYYY-MM>.md` (creates dir/file as needed).
+  - Dedup guard: an entry with the same (date, artifact, action) triple is NOT
+    appended again (idempotent re-write).
+  - `when` is injectable so tests are deterministic; CLI callers pass `when=None`
+    to use the entry's own parsed date.
+
+Back-compat: the legacy `docs/product/change-log.md` is untouched by the writer.
+`assemble_audit_trail._change_log_paths` reads both the legacy file and the rolled
+month files for the full history.
+
+Usage from generate_templates.py --write for change_log_entry:
+    from change_log_writer import write_change_log_entry
+    write_change_log_entry(root, rendered_entry_md)
+"""
+from __future__ import annotations
+
+import re
+from pathlib import Path
+from typing import Optional
+
+# Matches the heading line "## YYYY-MM-DD — ..." that starts every change-log entry.
+_HEADING_DATE_RE = re.compile(r"^##\s+(?P<date>\d{4}-\d{2}-\d{2})\s+—", re.MULTILINE)
+
+# These three fields form the dedup key; we extract them from the entry text.
+_ARTIFACT_RE = re.compile(r"\*\*Artifact[^:]*:\*\*\s*(?P<ids>.+?)(?:\s*\(|\s*$)", re.MULTILINE)
+_ACTION_RE = re.compile(r"\*\*Action[^:]*:\*\*\s*(?P<action>[^|\n]+?)(?:\s*\||\s*$)", re.MULTILINE)
+
+
+def _parse_date(entry_md: str, when: Optional[str]) -> str:
+    """Return a YYYY-MM-DD date string for the entry.
+
+    Priority: `when` param (deterministic injection) > heading date in entry text.
+    Raises ValueError if neither is available.
+    """
+    if when:
+        # Validate format loosely — must be YYYY-MM-DD
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", when):
+            raise ValueError(
+                f"write_change_log_entry: `when` must be YYYY-MM-DD, got {when!r}"
+            )
+        return when
+    m = _HEADING_DATE_RE.search(entry_md)
+    if m:
+        return m.group("date")
+    raise ValueError(
+        "write_change_log_entry: cannot determine entry date — "
+        "no `when` provided and no '## YYYY-MM-DD —' heading found in entry_md"
+    )
+
+
+def _month_key(date: str) -> str:
+    """Return 'YYYY-MM' from a 'YYYY-MM-DD' date string."""
+    return date[:7]
+
+
+def _dedup_key(entry_md: str, date: str) -> tuple[str, str, str]:
+    """Return (date, artifact_id, action) as the dedup triple."""
+    art_m = _ARTIFACT_RE.search(entry_md)
+    artifact = art_m.group("ids").strip() if art_m else ""
+    action_m = _ACTION_RE.search(entry_md)
+    action = action_m.group("action").strip() if action_m else ""
+    return (date, artifact, action)
+
+
+def _already_present(existing_text: str, dedup_key: tuple[str, str, str]) -> bool:
+    """Return True when a matching (date, artifact, action) triple exists in the file."""
+    date, artifact, action = dedup_key
+    # The heading must carry the date
+    if date not in existing_text:
+        return False
+    # The artifact id must appear
+    if artifact and artifact not in existing_text:
+        return False
+    # The action must appear — check the action line specifically
+    if action:
+        action_pattern = re.compile(
+            r"\*\*Action[^:]*:\*\*\s*" + re.escape(action), re.MULTILINE
+        )
+        if not action_pattern.search(existing_text):
+            return False
+    return True
+
+
+def write_change_log_entry(root, entry_md: str, *, when: Optional[str] = None) -> Path:
+    """Append `entry_md` to `docs/product/change-log/<YYYY-MM>.md`.
+
+    Args:
+        root:     Project root (Path or str).
+        entry_md: Rendered change-log entry markdown text.
+        when:     Optional YYYY-MM-DD override for the month routing (injectable for
+                  deterministic tests). Defaults to the date parsed from entry_md's
+                  heading.
+
+    Returns:
+        Path to the month file that was written (or already contained the entry).
+
+    Raises:
+        ValueError: if the date cannot be determined.
+    """
+    root = Path(root).resolve()
+    date = _parse_date(entry_md, when)
+    month = _month_key(date)
+
+    cl_dir = root / "docs" / "product" / "change-log"
+    cl_dir.mkdir(parents=True, exist_ok=True)
+    month_file = cl_dir / f"{month}.md"
+
+    # Read existing content for dedup check
+    existing = ""
+    if month_file.exists():
+        try:
+            existing = month_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            existing = ""
+
+    key = _dedup_key(entry_md, date)
+    if _already_present(existing, key):
+        return month_file  # idempotent — nothing written
+
+    # Ensure the entry ends with a newline before appending
+    body = entry_md if entry_md.endswith("\n") else entry_md + "\n"
+
+    # Append (or create) — newline separator between entries when file non-empty
+    separator = "\n" if existing and not existing.endswith("\n\n") else ""
+    with open(month_file, "a", encoding="utf-8", newline="") as fh:
+        fh.write(separator + body)
+
+    return month_file

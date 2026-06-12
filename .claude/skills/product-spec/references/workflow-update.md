@@ -60,7 +60,7 @@ Two artifacts close every `--update`:
    - One **Affected downstream** table row per node from Step 3 (`Node | Dim touched | Interpretation | Suggested action`).
    - The **Contradictions** section ONLY when Step 5 surfaced one (otherwise drop the optional block).
    - This is a body document the LLM composes directly (like the human validation report) — it does NOT go through `generate_templates.render` (that path is for single-line frontmatter scalars).
-2. **Change-log entry** (one per invocation) via `generate_templates.py --type change_log_entry`, carrying:
+2. **Change-log entry** (one per invocation) — render via `generate_templates.py --type change_log_entry --values <json>`, then persist by calling `write_change_log_entry(root, rendered_entry_md)` from `change_log_writer.py`, carrying:
    - `affected_set:` the downstream IDs (already a template field — do NOT re-add),
    - `dims:` the same dimension union written to the report (the field this phase added),
    - `po_decision:` the PO's per-item decisions.

@@ -82,3 +82,22 @@ as a markdown section that the PO reads before deciding whether to act. No auto-
 
 Default export path (`.claude/telemetry/usage-summary.md`) lands in the gitignored telemetry dir so
 the exported summary is never accidentally committed alongside spec artifacts.
+
+---
+id: DEC-6
+status: active
+date: 2026-06-13
+affects: change_log_writer.py, assemble_audit_trail.py, generate_templates.py
+---
+
+## DEC-6 — Monthly change-log rotation via a new sibling writer; orphan check uses Optional[set] sentinel
+
+New `change_log_writer.py` sibling chosen over modifying `generate_templates.py` inline: the file is already at 392 LOC (over the 250-LOC budget), the writer is a distinct concern (rotation + dedup + month routing), and the sibling pattern matches the existing convention (check_consistency_product, visuals_retention, snapshot, etc.).
+
+Rotation unit is calendar month (YYYY-MM). Monthly granularity is a reasonable boundary: change-log entries cluster by month naturally, keeps file sizes manageable, and YYYY-MM lexicographic ordering equals chronological ordering with no extra sort metadata.
+
+Dedup key is (date, first-artifact-id, action). This triple is stable across re-renders of the same conceptual event (same date/artifact/action → same key regardless of minor prose differences in other fields). A stricter full-text comparison would reject legitimate wording corrections; a looser key (date only) would allow distinct events on the same date to collide.
+
+Orphan-path check uses `Optional[set]` sentinel: `None` = graph build failed (skip check, fail-soft); empty `set()` = graph built cleanly but no artifacts yet (check active — every artifact id in the change-log is an orphan). This distinguishes "unavailable" from "legitimately empty". The check is folded into the existing `reconciled` + `unreconciled_count` mechanism — no new schema keys, no new event fields.
+
+Back-compat requirement: legacy `docs/product/change-log.md` is always read first (when present) so existing PO projects with a single monolithic file continue to produce a full audit trail without any migration step.

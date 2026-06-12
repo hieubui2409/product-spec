@@ -320,7 +320,9 @@ def _run(args: argparse.Namespace) -> int:
         artifact_id = allocate_id(graph, args.type, args.slug, args.parent, session_used=[])
 
     # For types with no OUTPUT_PATH mapping (sign_off, change_log_entry), the
-    # artifact is content-only — no file path is assigned and --write is a no-op.
+    # artifact is content-only in the standard layout. change_log_entry is a
+    # special case: --write is wired to the monthly rotation writer so the entry
+    # lands in docs/product/change-log/<YYYY-MM>.md rather than being a no-op.
     has_path_mapping = args.type in OUTPUT_PATH_FOR_TYPE
 
     # Derive slug from --id for type=prd when --slug is omitted, so the output path
@@ -381,6 +383,13 @@ def _run(args: argparse.Namespace) -> int:
         # normalized — matches migrate_multidim_fields' write discipline.
         with open(out_path, "w", encoding="utf-8", newline="") as fh:
             fh.write(rendered)
+        response["written"] = True
+    elif args.write and args.type == "change_log_entry":
+        # change_log_entry has no static output path — it is appended to the
+        # monthly rotation file via the dedicated writer (not overwritten).
+        from change_log_writer import write_change_log_entry
+        month_file = write_change_log_entry(root, rendered)
+        response["path"] = str(month_file.relative_to(root) if month_file.is_relative_to(root) else month_file)
         response["written"] = True
 
     print(json.dumps(response, indent=2, ensure_ascii=False))

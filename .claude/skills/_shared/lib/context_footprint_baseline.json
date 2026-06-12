@@ -19,17 +19,17 @@
       "workflow-decision.md": 391,
       "workflow-discover.md": 682,
       "workflow-export.md": 1666,
-      "workflow-interview.md": 5812,
+      "workflow-interview.md": 5878,
       "workflow-lang.md": 278,
       "workflow-learn.md": 1733,
       "workflow-reflect.md": 2154,
       "workflow-status.md": 2221,
       "workflow-summary.md": 389,
-      "workflow-update.md": 2372,
-      "workflow-validate.md": 6981
+      "workflow-update.md": 2404,
+      "workflow-validate.md": 7063
     },
     "skill_md_tokens": 5509,
-    "total_tokens": 63656
+    "total_tokens": 63836
   },
   "product-spec-critique": {
     "refs": {

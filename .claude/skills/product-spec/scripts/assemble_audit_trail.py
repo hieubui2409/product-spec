@@ -50,12 +50,25 @@ _CL_DIMS_RE = re.compile(r"\*\*Dimensions[^:]*:\*\*\s*(?P<dims>.+)$", re.MULTILI
 _ID_RE = re.compile(r"\b([A-Z][A-Z0-9-]*(?:-E\d+)?(?:-S\d+)?|VISION|PRODUCT|BRD(?:-G\d+)?)\b")
 
 
-def _parse_change_log(root: Path) -> List[Dict[str, Any]]:
-    path = root / "docs" / "product" / "change-log.md"
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (FileNotFoundError, OSError, UnicodeDecodeError):
-        return []
+def _change_log_paths(root: Path) -> List[Path]:
+    """Return the ordered list of change-log files to read.
+
+    Priority: legacy `docs/product/change-log.md` first (oldest entries),
+    then `docs/product/change-log/*.md` sorted lexicographically (YYYY-MM order).
+    Either or both may be absent — callers tolerate missing files via OSError handling.
+    """
+    paths: List[Path] = []
+    legacy = root / "docs" / "product" / "change-log.md"
+    if legacy.exists():
+        paths.append(legacy)
+    cl_dir = root / "docs" / "product" / "change-log"
+    if cl_dir.is_dir():
+        paths.extend(sorted(cl_dir.glob("*.md")))
+    return paths
+
+
+def _parse_one_change_log_file(text: str) -> List[Dict[str, Any]]:
+    """Parse change-log entries from a single file's text."""
     entries: List[Dict[str, Any]] = []
     matches = list(_CL_HEADING_RE.finditer(text))
     for i, m in enumerate(matches):
@@ -67,11 +80,40 @@ def _parse_change_log(root: Path) -> List[Dict[str, Any]]:
         entries.append({
             "date": m.group("date"),
             "type": m.group("type").split("|")[0].strip(),
-            "artifacts": [i for i in ids if i],
+            "artifacts": [a for a in ids if a],
             "action": action_m.group("action").split("|")[0].strip() if action_m else "",
             "dims": dims_m.group("dims").split("|")[0].strip() if dims_m else "",
         })
     return entries
+
+
+def _parse_change_log(root: Path) -> List[Dict[str, Any]]:
+    """Merge change-log entries from the legacy file + all rolled month files.
+
+    Reads `docs/product/change-log.md` (legacy, back-compat) and
+    `docs/product/change-log/*.md` (monthly rotation files) in chronological
+    order. Deduplicates on (date, artifact, action) so an entry that appears
+    in both the legacy file and a rolled file is counted only once.
+    Final list is sorted by (date, artifact).
+    """
+    seen: set = set()
+    merged: List[Dict[str, Any]] = []
+
+    for path in _change_log_paths(root):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (FileNotFoundError, OSError, UnicodeDecodeError):
+            continue
+        for entry in _parse_one_change_log_file(text):
+            # Dedup key: one entry per (date, first-artifact, action) triple
+            first_art = entry["artifacts"][0] if entry["artifacts"] else ""
+            key = (entry["date"], first_art, entry["action"])
+            if key not in seen:
+                seen.add(key)
+                merged.append(entry)
+
+    merged.sort(key=lambda e: (e["date"], e["artifacts"][0] if e["artifacts"] else ""))
+    return merged
 
 
 def _approvals(root: Path) -> List[Dict[str, Any]]:
@@ -89,6 +131,25 @@ def _approvals(root: Path) -> List[Dict[str, Any]]:
     return out
 
 
+def _live_artifact_ids(root: Path) -> Optional[set]:
+    """Return the set of artifact IDs that currently exist in docs/product/.
+
+    Used by the orphan-path check: a change-log entry whose artifact ID is
+    absent from this set (i.e. the file was deleted) is flagged unreconciled.
+
+    Returns None on graph build failure (fail-soft: skip the orphan check).
+    Returns an empty set when the graph built but no artifacts were found
+    (orphan check active — every artifact ID in the change-log is an orphan).
+    """
+    try:
+        from spec_graph import build_graph_with_artifacts, index_artifacts
+        _graph, artifacts = build_graph_with_artifacts(root)
+        indexed = index_artifacts(artifacts)
+        return set(indexed.keys())
+    except Exception:  # noqa: BLE001 — graceful degradation, audit trail must not crash
+        return None
+
+
 def assemble(root, today: Optional[str] = None) -> Dict[str, Any]:
     root = Path(root).resolve()
     change_log = _parse_change_log(root)
@@ -96,6 +157,11 @@ def assemble(root, today: Optional[str] = None) -> Dict[str, Any]:
     decisions = parse_decisions(root)
     status = build_status(root, today=today)
     stale = set(status.get("stale_approvals", []))
+
+    # Live artifact IDs for the orphan-path check (build once, reuse per event).
+    # None means "graph unavailable" → skip the check (fail-soft).
+    # An empty set means the graph built cleanly but no artifacts exist yet.
+    live_ids = _live_artifact_ids(root)
 
     # Artifacts mentioned by a change-log entry or a DEC `affects` → "corroborated".
     corroborated = set()
@@ -112,10 +178,16 @@ def assemble(root, today: Optional[str] = None) -> Dict[str, Any]:
 
     for e in change_log:
         for aid in (e["artifacts"] or [""]):
+            # Orphan-path check: a non-empty artifact ID not present in the live
+            # graph means the artifact file was deleted. Flag as unreconciled so
+            # the audit trail surfaces the dangling reference rather than hiding it.
+            # When live_ids is None (graph build failed), skip the check (fail-soft).
+            is_orphan = bool(aid and live_ids is not None and aid not in live_ids)
             events.append({
                 "date": e["date"], "artifact": aid, "action": e["action"] or e["type"],
                 "who_approved": "", "what_drifted": e["dims"],
-                "dec_ref": ",".join(dec_by_artifact.get(aid, [])), "reconciled": True,
+                "dec_ref": ",".join(dec_by_artifact.get(aid, [])),
+                "reconciled": not is_orphan,
             })
 
     for a in approvals:

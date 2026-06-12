@@ -263,7 +263,7 @@ When generating reports or summaries:
 6. Update the artifact:
    - Frontmatter: set `status: approved`, add `approval: {approved_by, approved_at, approved_version}`, bump `version` minor.
    - Body: append the `sign-off.md` fragment with the answers.
-7. Append a change-log entry (action = `approved`).
+7. Render the change-log entry via `generate_templates.py --type change_log_entry --values <json>` (action = `approved`), then persist it by calling `write_change_log_entry(root, rendered_entry_md)` from `change_log_writer.py`.
 
 ## `--summary` Flow
 
@@ -317,4 +317,4 @@ Same Script-vs-LLM split as the contradiction wiring: the script owns the `^DEC-
 
 - The LLM **must run scripts first**; it must not infer the graph by reading files directly.
 - All script invocations use the repo venv: `./.claude/skills/.venv/bin/python3`.
-- Every flag closes by appending a change-log entry (action = `validated` / `approved` / `summarized`). When the `--validate` impact-pass (Step 2.5) found a non-empty change-set, that entry also carries `affected_set` + `dims` (mirroring the impact report), alongside the `docs/product/impact/<ts>.md` file.
+- Every flag closes by writing a change-log entry via `write_change_log_entry(root, rendered_entry_md)` (from `change_log_writer.py`) after rendering with `generate_templates.py --type change_log_entry` (action = `validated` / `approved` / `summarized`). When the `--validate` impact-pass (Step 2.5) found a non-empty change-set, that entry also carries `affected_set` + `dims` (mirroring the impact report), alongside the `docs/product/impact/<ts>.md` file.
