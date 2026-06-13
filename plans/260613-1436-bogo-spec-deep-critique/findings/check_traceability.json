@@ -1,0 +1,4909 @@
+{
+  "schema_version": "1.0",
+  "root": "/home/hieubt15/Documents/vsf/bogo-product-spec",
+  "checked_at": "2026-06-13T07:51:19Z",
+  "findings": [],
+  "graph": {
+    "version": "1.0",
+    "generated_at": "2026-06-13T07:51:19Z",
+    "product": {
+      "name": null,
+      "core_value": null,
+      "personas": [
+        "ORG_ADMIN",
+        "EXEC",
+        "DEPT_MGR",
+        "STAFF",
+        "PLATFORM_ADMIN"
+      ]
+    },
+    "nodes": [
+      {
+        "id": "PRODUCT",
+        "type": "product",
+        "body_hash": "e52b3ad5",
+        "content_hash": "c3aee636",
+        "title": "BoGo — Bối cảnh sản phẩm",
+        "status": null,
+        "scope": null,
+        "moscow": null,
+        "horizon": null,
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "EXEC",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": null,
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "PRODUCT.md",
+        "brd_goals": [],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "VISION",
+        "type": "vision",
+        "body_hash": "753991a6",
+        "content_hash": "c1a8c8b3",
+        "title": "Tầm nhìn sản phẩm — BoGo",
+        "status": "approved",
+        "scope": null,
+        "moscow": null,
+        "horizon": null,
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "EXEC",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "vision.md",
+        "brd_goals": [],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "BRD-G1",
+        "type": "goal",
+        "title": "Tăng trưởng số tổ chức khách hàng hoạt động tích cực",
+        "status": "approved",
+        "metrics": [
+          "weekly-active-orgs"
+        ],
+        "moscow": null,
+        "owner": "Nhóm sản phẩm BoGo",
+        "schema_version": null,
+        "unknown_goal_keys": [],
+        "file": "brd.md",
+        "body_hash": null,
+        "content_hash": "4981ea61"
+      },
+      {
+        "id": "BRD-G2",
+        "type": "goal",
+        "title": "Nâng cao hiệu quả quản trị cho tổ chức khách hàng",
+        "status": "approved",
+        "metrics": [
+          "admin-time-reduction",
+          "core-ops-on-bogo"
+        ],
+        "moscow": null,
+        "owner": "Nhóm sản phẩm BoGo",
+        "schema_version": null,
+        "unknown_goal_keys": [],
+        "file": "brd.md",
+        "body_hash": null,
+        "content_hash": "2468b55a"
+      },
+      {
+        "id": "BRD-G3",
+        "type": "goal",
+        "title": "Kích hoạt thành công và giữ chân tổ chức khách hàng",
+        "status": "approved",
+        "metrics": [
+          "org-activation-rate",
+          "monthly-org-churn"
+        ],
+        "moscow": null,
+        "owner": "Nhóm sản phẩm BoGo",
+        "schema_version": null,
+        "unknown_goal_keys": [],
+        "file": "brd.md",
+        "body_hash": null,
+        "content_hash": "47c1bc44"
+      },
+      {
+        "id": "PRD-AI",
+        "type": "prd",
+        "body_hash": "08917980",
+        "content_hash": "55d83d9b",
+        "title": "Trợ lý ảo AI",
+        "status": "approved",
+        "scope": "core-value",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [
+          "Tỉ lệ câu hỏi nội bộ được trợ lý trả lời trọn không cần hỏi thêm người khác (%)",
+          "Tỉ lệ câu trả lời dữ kiện có dẫn nguồn / truy từ dữ liệu thật (%)",
+          "Số sự cố lộ dữ liệu chéo quyền hoặc chéo tổ chức (mục tiêu = 0)"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "prds/ai.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL",
+        "type": "prd",
+        "body_hash": "92b8f379",
+        "content_hash": "9da6fe6f",
+        "title": "Quản lý phê duyệt",
+        "status": "approved",
+        "scope": "in",
+        "moscow": null,
+        "horizon": "next",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "EXEC",
+          "ORG_ADMIN"
+        ],
+        "metrics": [
+          "Thời gian trung bình từ trình đến quyết (giờ làm việc)",
+          "Thời gian trung bình EXEC quyết một tờ trình trên mobile (phút — DEC-61)",
+          "Tỉ lệ tờ trình được xử lý trong hạn (%)",
+          "Tỉ lệ phê duyệt có ký xác nhận gắn trách nhiệm (mục tiêu 100%)"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "prds/approval.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM",
+        "type": "prd",
+        "body_hash": "e92b6010",
+        "content_hash": "bc0687aa",
+        "title": "Giao tiếp nội bộ",
+        "status": "approved",
+        "scope": "core-value",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [
+          "Tỉ lệ tin nhắn/thông báo nội bộ được đọc trong 1 giờ (%)",
+          "Số lượng nhóm Zalo nội bộ thay thế được (giảm phân mảnh)",
+          "Số cuộc gọi/tin Zalo ngoài app giảm (% so baseline trước pilot, theo tổ chức)",
+          "Thời gian phối hợp vận hành giảm (phút/ngày/tổ chức)"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.13",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "prds/comm.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR",
+          "PRD-TASK"
+        ],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR",
+        "type": "prd",
+        "body_hash": "a2f8c8ab",
+        "content_hash": "ce567bfd",
+        "title": "Quản lý nhân sự & lương",
+        "status": "approved",
+        "scope": "core-value",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [
+          "Tỉ lệ chấm công tự động (không cần thủ công bổ sung) (%)",
+          "Thời gian tính lương cuối tháng (giờ)",
+          "Số yêu cầu nhân sự được giải quyết trong ngày (%)"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "prds/hr.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM",
+        "type": "prd",
+        "body_hash": "4d3a391c",
+        "content_hash": "1f1e03c7",
+        "title": "Nền tảng SaaS — Gói, Thanh toán & Khởi tạo tổ chức",
+        "status": "approved",
+        "scope": "core-value",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [
+          "Tỉ lệ đăng ký → kích hoạt trial thành công (%)",
+          "Tỉ lệ trial → trả phí (%)",
+          "Tỉ lệ giao dịch được gạch nợ tự động không cần người (%)"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "prds/platform.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT",
+        "type": "prd",
+        "body_hash": "bf3d93ca",
+        "content_hash": "e42d23fd",
+        "title": "Báo cáo & Phân tích",
+        "status": "approved",
+        "scope": "out",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [
+          "Thời gian từ khi có dữ liệu đến khi quản lý nhìn thấy trên dashboard (phút)",
+          "Tỉ lệ báo cáo được truy cập hàng tuần bởi ZONE_MGR (%)"
+        ],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "prds/report.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G2",
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR"
+        ],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE",
+        "type": "prd",
+        "body_hash": "4eeb06a7",
+        "content_hash": "930d83c0",
+        "title": "Tài nguyên tổ chức — Hồ sơ & tài liệu",
+        "status": "approved",
+        "scope": "in",
+        "moscow": null,
+        "horizon": "next",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [
+          "Tỉ lệ tài liệu lưu trong BoGo thay vì máy cá nhân/chat (% — khảo sát pilot)",
+          "Thời gian tìm thấy một tài liệu cần dùng (giây)",
+          "Số tài liệu được dùng làm nguồn tri thức cho trợ lý AI"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "prds/resource.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-SUPPORT",
+        "type": "prd",
+        "body_hash": "13973aba",
+        "content_hash": "77b626d2",
+        "title": "Hỗ trợ khách hàng",
+        "status": "approved",
+        "scope": "in",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [
+          "Tỉ lệ câu hỏi hỗ trợ được AI giải quyết trọn không cần người (%)",
+          "Thời gian phản hồi đầu tiên của người hỗ trợ (phút, giờ hành chính)",
+          "Điểm hài lòng (CSAT) sau phiên hỗ trợ"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "prds/support.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK",
+        "type": "prd",
+        "body_hash": "3e2918e2",
+        "content_hash": "a5d01443",
+        "title": "Quản lý công việc",
+        "status": "approved",
+        "scope": "core-value",
+        "moscow": null,
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [
+          "Tỉ lệ công việc hoàn thành đúng hạn (%)",
+          "Thời gian trung bình từ giao việc đến bắt đầu thực hiện (giờ)",
+          "Điểm KPI trung bình nhân viên"
+        ],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.7",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "prds/task.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": null,
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1",
+        "type": "epic",
+        "body_hash": "9a0af663",
+        "content_hash": "5cc87e93",
+        "title": "Chatbot tự phục vụ khách (MVP)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "epics/PRD-AI-E1.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": [
+          {
+            "description": "LLM bịa thông tin (hallucination) → trả lời sai về đơn/giá/chính sách, gây mất niềm tin hoặc cam kết sai với khách.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Grounding bắt buộc: mọi dữ kiện truy từ SALES/FAQ thật, không tự sinh số liệu (S1 AC6, S4 AC2); ngưỡng tự tin + hỏi lại/bàn giao (S1 AC5, S7 AC4)."
+          },
+          {
+            "description": "Đặt đơn mới qua chat phức tạp (danh mục/giá theo hub/hẹn giờ/phân tuyến) → tạo đơn sai dịch vụ hoặc sai giá.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Tái dùng tạo-đơn của SALES + tóm tắt đơn & giá xác nhận trước khi chốt (S5 AC2/AC4); để moscow=should để hoãn được nếu sprint căng."
+          },
+          {
+            "description": "Chatbot xử lý khiếu nại sai hoặc bỏ rơi hội thoại → khách bức xúc, vấn đề không ai nhận.",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Human-in-the-loop cứng: không tự giải quyết khiếu nại, chỉ tiếp nhận + tự chuyển CSKH kèm ngữ cảnh, luôn có lối gặp người (S6)."
+          },
+          {
+            "description": "Phụ thuộc PRD-CARE-E3 (kênh/inbox) + PRD-SALES (đơn/danh mục) chưa sẵn → epic không chạy được.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "Xếp sprint E1 sau khi CARE-E3 + SALES ổn định; nếu phụ thuộc chưa sẵn thì hoãn epic, không build chatbot trên nền thiếu dữ liệu."
+          },
+          {
+            "description": "Chi phí LLM tăng theo lưu lượng + lệ thuộc nhà cung cấp mô hình khi quy mô lớn.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Giới hạn ý định tự xử cấu hình được + ngưỡng tự tin + kill switch (S7); spec mô tả năng lực, không khoá nhà cung cấp để đổi được."
+          },
+          {
+            "description": "Thao túng chatbot (prompt-injection/jailbreak): khách chèn lệnh để ghi đè quy tắc hoặc đọc dữ liệu khách khác.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Mọi truy xuất dữ liệu qua backend kiểm quyền theo định danh; LLM không tự quyết lộ dữ liệu nào, chỉ diễn đạt dữ liệu backend trả về (S7 AC chống thao túng); grounding (S1)."
+          },
+          {
+            "description": "PII khách (tên/SĐT/đơn) gửi qua API LLM bên thứ ba → rủi ro tuân thủ NĐ 13/2023 (dữ liệu cá nhân ra ngoài, chưa che/chưa DPA).",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "accepted",
+            "mitigation": "PO chấp nhận rủi ro tạm để ra mắt MVP nhanh (DEC-20). BẮT BUỘC rà soát luật sư + cân nhắc che PII / self-host / ký DPA trước khi mở rộng quy mô hoặc khi khối lượng PII lớn."
+          },
+          {
+            "description": "Định danh nhẹ (mã đơn, không OTP): ai biết mã đơn + SĐT có thể xem trạng thái + số dư/công nợ (thông tin tài chính) của khách.",
+            "impact": "med",
+            "likelihood": "low",
+            "status": "accepted",
+            "mitigation": "PO chấp nhận tạm (DEC-21): chỉ lộ thông tin khi có ĐÚNG mã đơn; không enumerate đơn từ SĐT (S2). Nâng cấp OTP cho thông tin tài chính khi cần."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2",
+        "type": "epic",
+        "body_hash": "ce85748a",
+        "content_hash": "304f25f0",
+        "title": "Trợ lý AI nội bộ (MVP)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-AI-E2.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR",
+          "PRD-TASK"
+        ],
+        "risks": [
+          {
+            "description": "LLM bịa thông tin (hallucination) khi trả lời về quy chế/phép/lương → nhân viên hành động theo thông tin sai.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Grounding bắt buộc: mọi câu trả lời dữ kiện truy từ tài liệu tổ chức/dữ liệu HR-TASK thật + trích dẫn nguồn (S1, S2, S3); dưới ngưỡng tự tin → nói 'chưa chắc' và dừng (S6)."
+          },
+          {
+            "description": "Lộ dữ liệu chéo tổ chức hoặc chéo quyền (nhân viên xem được dữ liệu người khác / tổ chức khác) qua trợ lý.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Mọi truy xuất qua backend kiểm quyền theo người hỏi + tổ chức; LLM không tự quyết lộ dữ liệu nào (S2, S6); kiểm thử chống thao túng prompt-injection trước go-live."
+          },
+          {
+            "description": "Dữ liệu nhân sự (phép, công, lương) gửi qua API LLM bên thứ ba → rủi ro tuân thủ NĐ 13/2023.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "accepted",
+            "mitigation": "PO chấp nhận tạm để ra mắt MVP (DEC-47, kế thừa tinh thần DEC-20). BẮT BUỘC rà soát luật sư + cân nhắc che PII / DPA / self-host trước khi mở rộng quy mô."
+          },
+          {
+            "description": "Chi phí LLM tăng theo lưu lượng khi nhiều tổ chức dùng đồng thời.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Giới hạn khả năng bật theo gói; ngưỡng tự tin + cache câu hỏi quy chế lặp lại; theo dõi chi phí per-tổ-chức (S6 dashboard)."
+          },
+          {
+            "description": "Nhân viên không hình thành thói quen hỏi trợ lý → tính năng khác biệt nhưng không ai dùng.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "Đo tỉ lệ dùng hằng tuần ở pilot; gắn trợ lý vào luồng có sẵn (onboarding, thông báo việc) thay vì chờ người dùng tự tìm."
+          },
+          {
+            "description": "Nguồn tri thức lỗi thời (quy chế cũ chưa gỡ) → trợ lý trả lời đúng nguồn nhưng nguồn đã hết hiệu lực.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "ORG_ADMIN quản vòng đời tài liệu (S6); câu trả lời luôn kèm tên + ngày tài liệu nguồn để người đọc tự thẩm định."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1",
+        "type": "epic",
+        "body_hash": "37351d0e",
+        "content_hash": "46b2a513",
+        "title": "Trình & phê duyệt đa cấp có ký xác nhận",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "EXEC",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-APPROVAL-E1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR"
+        ],
+        "risks": [
+          {
+            "description": "Xác thực nội bộ (thiết bị/PIN/OTP) bị coi là chưa đủ giá trị pháp lý cho một số loại chứng từ → tranh chấp trách nhiệm vẫn xảy ra; riêng PIN có thể bị chia sẻ.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Bản ghi ký + hash đủ cho quy trách nhiệm NỘI BỘ; bậc CAO (OTP/khuôn mặt) bắt buộc cho chứng từ tiền chặn rủi ro PIN chia sẻ; loại văn bản cần giá trị pháp lý cao đánh dấu 'cần ký số' và nâng cấp qua VNPT (đã có quan hệ DEC-54); rà pháp lý trước khi build."
+          },
+          {
+            "description": "Luồng duyệt cấu hình quá linh hoạt → tổ chức tự tạo luồng vòng vèo, tờ trình kẹt không ai biết ở đâu.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "v2 chỉ hỗ trợ 2 mẫu luồng chuẩn (NV→TP, phòng→lãnh đạo) + tối đa 3 cấp; nhắc hạn + leo thang khi quá hạn (S4); luồng tuỳ biến sâu để v3."
+          },
+          {
+            "description": "Trùng vai với luồng duyệt sẵn có của HR/TASK gây bối rối ('xin nghỉ thì vào đâu?').",
+            "impact": "low",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Ranh giới ghi rõ trong PRD (out): nghiệp vụ có luồng riêng giữ nguyên ở phân hệ gốc; APPROVAL chỉ dành cho đề nghị/văn bản/chứng từ chung."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1",
+        "type": "epic",
+        "body_hash": "26a82603",
+        "content_hash": "1354e6d6",
+        "title": "Nhắn tin 1-1 & nhóm",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.7",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-COMM-E1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR-E1",
+          "PRD-TASK-E1"
+        ],
+        "risks": [
+          {
+            "description": "Tạo việc từ tin nhắn (S4) cần luồng tạo/giao việc của TASK-E1 sẵn sàng — trượt thứ tự go-live thì điểm vào trên tin nhắn thành stub không nghiệm thu được.",
+            "impact": "med",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Thứ tự go-live DEC-33 đã bắt TASK-E1 + HR-E1 chạy trước COMM; depends_on khai báo PRD-TASK-E1; hợp đồng link việc→tin nhắn chốt với đội build trước sprint."
+          },
+          {
+            "description": "Poll 'ẩn danh' bị hiểu nhầm là nặc danh tuyệt đối trong khi hệ thống vẫn lưu liên kết người–phiếu để chặn bầu trùng — nếu nhân viên phát hiện sẽ khủng hoảng niềm tin kênh nội bộ.",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Nhãn công khai/ẩn danh hiện rõ trên từng poll; ghi minh bạch trong điều khoản dữ liệu nội bộ rằng ẩn danh = ẩn với mọi người dùng, không phải với hệ thống (AC + ghi chú S5); không dùng chữ 'nặc danh' trong giao diện."
+          },
+          {
+            "description": "Mạng di động VN chập chờn — tin nhắn/phiếu bầu gửi lúc mất sóng bị rơi sẽ phá niềm tin vào kênh chính thức ngay tuần đầu pilot.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "AC tái kết nối ≤ 30 giây + không rơi tin (S1) là điều kiện nghiệm thu; phiếu bầu poll dùng cùng cơ chế đẩy lại khi nối lại mạng."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E2",
+        "type": "epic",
+        "body_hash": "a0bee0c3",
+        "content_hash": "e0124006",
+        "title": "Thông báo broadcast & Ghim",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-COMM-E2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E3",
+        "type": "epic",
+        "body_hash": "dc08ea57",
+        "content_hash": "24b373ed",
+        "title": "Quản lý hội thoại & Tìm kiếm",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-COMM-E3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1",
+        "type": "epic",
+        "body_hash": "0d82c5ca",
+        "content_hash": "fd0ae2af",
+        "title": "Chấm công & Ca làm việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-HR-E1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": [
+          {
+            "description": "Nhận diện khuôn mặt kém chính xác khi ánh sáng yếu, đeo khẩu trang, hoặc camera điện thoại đời thấp → chấm công thất bại hàng loạt.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Phương thức dự phòng PIN/mã NV (E1-S1 AC4) + ngưỡng confidence cấu hình được; thử lại 3 lần trước khi dự phòng."
+          },
+          {
+            "description": "GPS drift trong nhà/khu vực sóng yếu từ chối chấm công hợp lệ, gây kẹt nhân viên.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Bán kính cấu hình theo điểm (mặc định 100m, nâng được); dự phòng khi GPS không khả dụng (E1-S2 AC6)."
+          },
+          {
+            "description": "Pháp lý dữ liệu sinh trắc học (Nghị định 13/2023) nếu lưu/ xử lý sai cách.",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Chỉ lưu vector đặc trưng (không lưu ảnh) + bắt buộc consent điện tử + quyền xóa khi nghỉ (E1-S1 AC8/AC9)."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E2",
+        "type": "epic",
+        "body_hash": "c04679aa",
+        "content_hash": "298bde34",
+        "title": "Tính lương",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-HR-E2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E3",
+        "type": "epic",
+        "body_hash": "b85a28d5",
+        "content_hash": "5ba76d5e",
+        "title": "Quản lý phép & Yêu cầu nhân sự",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-HR-E3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E1",
+        "type": "epic",
+        "body_hash": "38b823c5",
+        "content_hash": "3093c1d9",
+        "title": "Tự đăng ký & vòng đời tổ chức",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-PLATFORM-E1.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": [
+          {
+            "description": "Đăng ký rác/abuse (tạo trial hàng loạt) làm bẩn dữ liệu và tốn tài nguyên hạ tầng + chi phí AI.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Xác minh email/OTP SĐT, captcha, giới hạn 1 email/SĐT một tổ chức trial; PLATFORM_ADMIN xem và đóng tổ chức rác."
+          },
+          {
+            "description": "Provisioning workspace lỗi giữa chừng → tổ chức nửa vời, dữ liệu mồ côi hoặc lẫn tenant.",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Khởi tạo nguyên tử: thành công trọn vẹn hoặc rollback sạch; test cross-tenant trong DoD."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E2",
+        "type": "epic",
+        "body_hash": "1c875e94",
+        "content_hash": "22b884cb",
+        "title": "Gói, gia hạn & thanh toán (gạch nợ tự động)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-PLATFORM-E2.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [
+          "PRD-PLATFORM-E1"
+        ],
+        "risks": [
+          {
+            "description": "Gạch nợ sai (khớp nhầm giao dịch) → khoá nhầm tổ chức đang trả tiền hoặc mở nhầm cho tổ chức chưa trả — mất niềm tin nghiêm trọng.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Chỉ tự gạch khi khớp ĐỦ mã đơn + số tiền; mọi trường hợp lệch vào hàng đợi đối soát tay; idempotent theo mã giao dịch; log audit đầy đủ."
+          },
+          {
+            "description": "Webhook biến động số dư trễ/miss → khách đã chuyển tiền nhưng gói chưa mở, gọi hotline bức xúc.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "SLA gạch nợ ≤ 5 phút từ khi nhận biến động; nút 'tôi đã chuyển tiền' đẩy ưu tiên đối soát; đối soát định kỳ quét lại giao dịch chưa khớp."
+          },
+          {
+            "description": "Dunning quá tay (khoá sớm, nhắn dồn dập) → churn chính những khách chỉ quên gia hạn.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "Lịch nhắc thưa dần + ân hạn 7 ngày chỉ cảnh báo; đo tỉ lệ khách quay lại sau khoá ở pilot để hiệu chỉnh."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E3",
+        "type": "epic",
+        "body_hash": "13083d54",
+        "content_hash": "c760d380",
+        "title": "Hoá đơn điện tử & hợp đồng điện tử",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-PLATFORM-E3.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": null,
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [
+          "PRD-PLATFORM-E2"
+        ],
+        "risks": [
+          {
+            "description": "API MISA meInvoice gián đoạn hoặc đổi hợp đồng API → hoá đơn không phát hành được đúng kỳ (nghĩa vụ thuế).",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Hàng đợi retry + cảnh báo PLATFORM_ADMIN; phát hành HĐĐT KHÔNG chặn kích hoạt gói; hợp đồng API + mapping trường chốt bằng văn bản với đội build trước sprint."
+          },
+          {
+            "description": "Sai thông tin hoá đơn (MST, tên, địa chỉ) — hoá đơn điện tử đã phát hành khó huỷ/điều chỉnh, đụng quy định thuế.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "ORG_ADMIN bắt buộc khai + xác nhận thông tin xuất hoá đơn trước lần thanh toán trả phí đầu; màn hình xem trước; quy trình điều chỉnh/huỷ thủ công có log ở v1."
+          },
+          {
+            "description": "Luồng ký VNPT eContract phụ thuộc bên thứ ba (OTP/ký số phía khách) → kẹt hợp đồng làm chậm chuyển đổi trả phí.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Ký hợp đồng chạy SONG SONG, không chặn kích hoạt gói khi tiền đã gạch; cờ 'hợp đồng chưa hoàn tất' cho PLATFORM_ADMIN đốc thúc; gửi lại tay được."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E1",
+        "type": "epic",
+        "body_hash": "341bf2a9",
+        "content_hash": "00cc4e9b",
+        "title": "Dashboard vùng gộp chéo",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-REPORT-E1.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E2",
+        "type": "epic",
+        "body_hash": "c6143ba2",
+        "content_hash": "c30a3c5a",
+        "title": "Trung tâm báo cáo một cửa & Xuất",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-REPORT-E2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E3",
+        "type": "epic",
+        "body_hash": "f7d2587c",
+        "content_hash": "02baee26",
+        "title": "Lập lịch gửi báo cáo tự động",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-REPORT-E3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE-E1",
+        "type": "epic",
+        "body_hash": "1a18a441",
+        "content_hash": "cefe2d80",
+        "title": "Kho hồ sơ & tài liệu tổ chức (cây thư mục, kanban, tag, theme)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-RESOURCE-E1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-RESOURCE",
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR"
+        ],
+        "risks": [
+          {
+            "description": "Kho tài liệu chứa hồ sơ nhạy cảm — phân quyền sai một thư mục là lộ cho cả phòng/tổ chức; phía nhà cung cấp, mô hình khoá-riêng-tenant vẫn KHÔNG phải E2EE tuyệt đối (kỹ thuật thuần tuý vẫn đọc được nếu phá quy trình).",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Quyền theo thư mục kế thừa + chặn từng mục; mặc định thư mục mới CHỈ phòng tạo thấy; test phân quyền + cross-tenant là DoD. Phía nhà cung cấp: khoá riêng tenant + zero standing access + log bất biến + thông báo ORG_ADMIN khi truy cập khẩn cấp (DEC-58 — PO chọn sau khi cân nhắc E2EE thật vì giữ liên thông AI); nhu cầu E2EE thư mục tuyệt mật ghi nhận cho v3."
+          },
+          {
+            "description": "Dung lượng lưu trữ tăng theo tổ chức → chi phí hạ tầng không kiểm soát (ảnh hưởng unit economics BRD).",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Hạn mức dung lượng theo gói (PLATFORM-E2-S1 cấu hình); cảnh báo 80%/100%; số liệu dùng hiện cho ORG_ADMIN."
+          },
+          {
+            "description": "Nhân viên vẫn lưu file ở máy/chat vì thói quen → kho rỗng, tính năng không ai dùng.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "Cơ chế kéo: tài liệu làm nguồn AI + đính kèm tờ trình PHẢI từ kho; đo tỉ lệ tài liệu vào kho ở pilot."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-SUPPORT-E1",
+        "type": "epic",
+        "body_hash": "a7fbca47",
+        "content_hash": "aa54ce23",
+        "title": "Trung tâm hỗ trợ trong app (AI + chat + hotline)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "epics/PRD-SUPPORT-E1.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": null,
+        "prd": "PRD-SUPPORT",
+        "target_date": null,
+        "depends_on": [
+          "PRD-AI-E2"
+        ],
+        "risks": [
+          {
+            "description": "AI hỗ trợ trả lời sai cách dùng (vd hướng dẫn xoá nhầm dữ liệu) → khách làm theo và gặp sự cố nặng hơn.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Grounding trên kho hướng dẫn chính thức + dẫn nguồn từng câu; thao tác phá huỷ (xoá/đóng) chỉ hướng dẫn kèm cảnh báo và link bài gốc; kill switch chung."
+          },
+          {
+            "description": "Phiên chat hỗ trợ vô tình thành kênh rò dữ liệu nội bộ tổ chức sang đội nền tảng (vượt ranh giới multi-tenant).",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Đội hỗ trợ chỉ thấy nội dung người dùng tự gõ + metadata phiên (tổ chức, gói, màn hình); không có quyền đọc dữ liệu nội bộ qua phiên chat; quy ước nêu rõ trong UI."
+          },
+          {
+            "description": "Đội hỗ trợ nhỏ không giữ nổi SLA khi số tổ chức tăng → chat treo, CSAT tụt, churn.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "AI tuyến đầu gánh câu hỏi lặp; đo tỉ lệ AI tự giải quyết + thời gian phản hồi theo tuần ở pilot để định biên chế trước khi mở rộng."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E1",
+        "type": "epic",
+        "body_hash": "3b8f7adc",
+        "content_hash": "11492e31",
+        "title": "Tạo & Giao việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-TASK-E1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E2",
+        "type": "epic",
+        "body_hash": "88784385",
+        "content_hash": "784c3d91",
+        "title": "Theo dõi & Cộng tác",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-TASK-E2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E3",
+        "type": "epic",
+        "body_hash": "4b919559",
+        "content_hash": "4a2b6ffc",
+        "title": "Tìm kiếm & KPI",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-TASK-E3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4",
+        "type": "epic",
+        "body_hash": "8f564b13",
+        "content_hash": "74d8c1ef",
+        "title": "Tổng quan điều hành tổ chức",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": null,
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "epics/PRD-TASK-E4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": null,
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [
+          "PRD-HR"
+        ],
+        "risks": [
+          {
+            "description": "Số liệu dashboard lệch với báo cáo phân hệ nguồn → lãnh đạo mất niềm tin vào toàn bộ số liệu.",
+            "impact": "high",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Mọi chỉ số ĐỌC từ phân hệ nguồn, không tính lại (kế thừa nguyên tắc DEC-41); hiện mốc 'cập nhật lúc HH:MM' thật thay vì giả vờ real-time."
+          },
+          {
+            "description": "Lộ dữ liệu chéo phòng ban hoặc chéo tổ chức qua màn hình tổng hợp.",
+            "impact": "high",
+            "likelihood": "low",
+            "status": "mitigated",
+            "mitigation": "Quyền enforce ở phân hệ nguồn — dashboard truyền ngữ cảnh người dùng + tổ chức, không tự lọc; kiểm thử phân quyền trước go-live."
+          },
+          {
+            "description": "Xuất báo cáo là điểm lộ dữ liệu cá nhân (bảng công, lương) ra ngoài hệ thống.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "mitigated",
+            "mitigation": "Chỉ xuất trong quyền; ghi log audit mọi lần xuất (ai/gì/phạm vi/khi nào); liên kết tải có thời hạn."
+          },
+          {
+            "description": "EXEC không hình thành thói quen mở dashboard mỗi sáng → tính năng đầu bảng nhưng không ai dùng.",
+            "impact": "med",
+            "likelihood": "med",
+            "status": "open",
+            "mitigation": "Đo tỉ lệ EXEC/DEPT_MGR mở dashboard hằng tuần tại pilot; kết hợp lịch gửi báo cáo định kỳ (S5) làm điểm chạm chủ động."
+          }
+        ],
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S1",
+        "type": "story",
+        "body_hash": "99be6ba0",
+        "content_hash": "a9b29468",
+        "title": "Nhận diện ý định và định tuyến hội thoại",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S1.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S2",
+        "type": "story",
+        "body_hash": "c286a7cd",
+        "content_hash": "cb2f4525",
+        "title": "Định danh khách qua hội thoại",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S2.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S3",
+        "type": "story",
+        "body_hash": "f54cb651",
+        "content_hash": "3850be94",
+        "title": "Tra cứu và trả lời trạng thái đơn trong hội thoại",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S3.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S4",
+        "type": "story",
+        "body_hash": "89e0bc5b",
+        "content_hash": "27114203",
+        "title": "Trả lời FAQ tự động (có kiểm chứng nguồn)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.1",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S4.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S5",
+        "type": "story",
+        "body_hash": "93ff1ad9",
+        "content_hash": "19fdc9a7",
+        "title": "Đặt đơn mới qua hội thoại",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S5.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S6",
+        "type": "story",
+        "body_hash": "50a2596b",
+        "content_hash": "20763f62",
+        "title": "Tiếp nhận khiếu nại/sự cố và bàn giao nhân viên",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S6.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E1-S7",
+        "type": "story",
+        "body_hash": "bdc36b57",
+        "content_hash": "a9dc587d",
+        "title": "Cấu hình và kiểm soát an toàn chatbot",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-09",
+        "file": "stories/PRD-AI-E1-S7.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E1",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S1",
+        "type": "story",
+        "body_hash": "bd798241",
+        "content_hash": "0dee6688",
+        "title": "Hỏi đáp quy chế và quy trình tổ chức (có dẫn nguồn)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-AI-E2-S1.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S2",
+        "type": "story",
+        "body_hash": "2cece4cd",
+        "content_hash": "a8bea53f",
+        "title": "Tra cứu cá nhân hoá dữ liệu nhân sự",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-AI-E2-S2.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S3",
+        "type": "story",
+        "body_hash": "ac224eaa",
+        "content_hash": "3eeac9f3",
+        "title": "Trợ lý công việc và tóm tắt tiến độ",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-AI-E2-S3.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S4",
+        "type": "story",
+        "body_hash": "02d250cb",
+        "content_hash": "d07dc72b",
+        "title": "Đào tạo nội bộ và bài kiểm tra",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-AI-E2-S4.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S5",
+        "type": "story",
+        "body_hash": "4475d208",
+        "content_hash": "630903da",
+        "title": "Trợ lý onboarding tổ chức mới",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-AI-E2-S5.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-AI-E2-S6",
+        "type": "story",
+        "body_hash": "f72ce1e1",
+        "content_hash": "136c5f9d",
+        "title": "Cấu hình và kiểm soát an toàn trợ lý nội bộ",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-AI-E2-S6.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-AI-E2",
+        "prd": "PRD-AI",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1-S1",
+        "type": "story",
+        "body_hash": "4882439b",
+        "content_hash": "c5629162",
+        "title": "Tạo tờ trình và đồng trình (cá nhân + liên phòng ban)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-APPROVAL-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-APPROVAL-E1",
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1-S2",
+        "type": "story",
+        "body_hash": "7c0472d8",
+        "content_hash": "409d6eaf",
+        "title": "Luồng phê duyệt đa cấp và uỷ quyền",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": "L",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "EXEC",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-APPROVAL-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-APPROVAL-E1",
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1-S3",
+        "type": "story",
+        "body_hash": "09ced1be",
+        "content_hash": "e81634ac",
+        "title": "Ký xác nhận gắn trách nhiệm (đa phương thức theo bậc)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "EXEC",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-APPROVAL-E1-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-APPROVAL-E1",
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1-S4",
+        "type": "story",
+        "body_hash": "ff403089",
+        "content_hash": "d436bdf0",
+        "title": "Theo dõi, nhắc hạn và leo thang tờ trình",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "next",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "EXEC"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-APPROVAL-E1-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-APPROVAL-E1",
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-APPROVAL-E1-S5",
+        "type": "story",
+        "body_hash": "ad10a332",
+        "content_hash": "baa87aea",
+        "title": "Tổng hợp, lọc, tìm kiếm và kanban hồ sơ phê duyệt",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "EXEC",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-APPROVAL-E1-S5.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-APPROVAL-E1",
+        "prd": "PRD-APPROVAL",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S1",
+        "type": "story",
+        "body_hash": "71805760",
+        "content_hash": "c1ca7503",
+        "title": "Nhắn tin 1-1 giữa nhân viên",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S2",
+        "type": "story",
+        "body_hash": "ce1eb167",
+        "content_hash": "48a25aab",
+        "title": "Nhóm chat theo phòng ban / vai trò",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S3",
+        "type": "story",
+        "body_hash": "83c369d0",
+        "content_hash": "2350ca66",
+        "title": "Nhắc tên @mention và thả cảm xúc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E1-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S4",
+        "type": "story",
+        "body_hash": "d14aecf7",
+        "content_hash": "0a34ac64",
+        "title": "Tạo việc từ tin nhắn",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S5",
+        "type": "story",
+        "body_hash": "a7863353",
+        "content_hash": "32ee9d37",
+        "title": "Xin ý kiến (poll) trong nhóm chat và thông báo broadcast",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S5.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S6",
+        "type": "story",
+        "body_hash": "33a55d58",
+        "content_hash": "8a6b1508",
+        "title": "Chuyển tiếp và sao chép tin nhắn",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S6.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S7",
+        "type": "story",
+        "body_hash": "b6fe8b2e",
+        "content_hash": "60c8d10f",
+        "title": "Gán màu và gắn tag công việc cho tin nhắn",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S7.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S8",
+        "type": "story",
+        "body_hash": "226adb3f",
+        "content_hash": "7052532b",
+        "title": "Nhắc hẹn trong nhóm chat",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S8.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E1-S9",
+        "type": "story",
+        "body_hash": "9a7fe8e4",
+        "content_hash": "5c5bbc71",
+        "title": "Tín hiệu đang soạn tin và bộ emoji mở rộng",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-COMM-E1-S9.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E1",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E2-S1",
+        "type": "story",
+        "body_hash": "c3b181b3",
+        "content_hash": "a8f085e8",
+        "title": "Gửi thông báo broadcast (announcement) có phân quyền",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "EXEC"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E2-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E2",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E2-S2",
+        "type": "story",
+        "body_hash": "a5c56442",
+        "content_hash": "679e744c",
+        "title": "Ghim tin nhắn quan trọng",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "could",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E2-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E2",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E3-S1",
+        "type": "story",
+        "body_hash": "a66d9120",
+        "content_hash": "5f540eeb",
+        "title": "Tìm kiếm tin nhắn cơ bản",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E3-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E3",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E3-S2",
+        "type": "story",
+        "body_hash": "dcd06b18",
+        "content_hash": "b4161a57",
+        "title": "Thêm/bớt thành viên và sửa nhóm tuỳ chỉnh",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E3-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E3",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-COMM-E3-S3",
+        "type": "story",
+        "body_hash": "9787ba99",
+        "content_hash": "ae5abcfc",
+        "title": "Lưu trữ và ẩn hội thoại",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-COMM-E3-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-COMM-E3",
+        "prd": "PRD-COMM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S1",
+        "type": "story",
+        "body_hash": "81100c12",
+        "content_hash": "bb03ffe1",
+        "title": "Nhân viên chấm công vào/ra bằng nhận diện khuôn mặt",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "STAFF",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S2",
+        "type": "story",
+        "body_hash": "21720912",
+        "content_hash": "651a20e6",
+        "title": "Xác minh toạ độ GPS khi chấm công (geofencing)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S3",
+        "type": "story",
+        "body_hash": "b031b8da",
+        "content_hash": "4cf25e4b",
+        "title": "Tạo và phân công ca làm việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S4",
+        "type": "story",
+        "body_hash": "e688deba",
+        "content_hash": "604ec4a5",
+        "title": "Xem lịch sử chấm công cá nhân và toàn đội",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S5",
+        "type": "story",
+        "body_hash": "95da626a",
+        "content_hash": "ca1cb26b",
+        "title": "Lịch (Calendar) nhân viên — ca, chấm công và công việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S5.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E1-S6",
+        "type": "story",
+        "body_hash": "d440ebef",
+        "content_hash": "83a20910",
+        "title": "Quản lý hồ sơ nhân viên",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E1-S6.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E1",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E2-S1",
+        "type": "story",
+        "body_hash": "5e72d97b",
+        "content_hash": "32419c31",
+        "title": "Cấu hình quy tắc tính lương cho từng loại nhân viên",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E2-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E2",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E2-S2",
+        "type": "story",
+        "body_hash": "cb97270b",
+        "content_hash": "229b4f89",
+        "title": "Tự động tạo bảng lương nháp cuối kỳ",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E2-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E2",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E2-S3",
+        "type": "story",
+        "body_hash": "36849144",
+        "content_hash": "fe95f9f1",
+        "title": "Nhân viên xem chi tiết bảng lương của mình",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E2-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E2",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E2-S4",
+        "type": "story",
+        "body_hash": "f844bf24",
+        "content_hash": "cd4266f6",
+        "title": "Cấu hình và tính thưởng KPI liên kết hiệu suất",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E2-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E2",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E3-S1",
+        "type": "story",
+        "body_hash": "0fc955a9",
+        "content_hash": "e2b5cbf8",
+        "title": "Nhân viên gửi yêu cầu nghỉ phép",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E3-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E3",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E3-S2",
+        "type": "story",
+        "body_hash": "7a205786",
+        "content_hash": "cff0c722",
+        "title": "Nhân viên xin phép đến muộn hoặc về sớm",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E3-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E3",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E3-S3",
+        "type": "story",
+        "body_hash": "7052469b",
+        "content_hash": "16eb140f",
+        "title": "Nhân viên đề xuất đổi ca với đồng nghiệp",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E3-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E3",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-HR-E3-S4",
+        "type": "story",
+        "body_hash": "1e6eb2b1",
+        "content_hash": "1dfbeb2d",
+        "title": "Quản lý xem và phê duyệt các yêu cầu nhân sự",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-HR-E3-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-HR-E3",
+        "prd": "PRD-HR",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E1-S1",
+        "type": "story",
+        "body_hash": "4eac4ec7",
+        "content_hash": "c51aa606",
+        "title": "Tổ chức tự đăng ký và kích hoạt dùng thử 14 ngày",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E1-S1.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G3"
+        ],
+        "epic": "PRD-PLATFORM-E1",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E1-S2",
+        "type": "story",
+        "body_hash": "5746b0c4",
+        "content_hash": "f22a6b90",
+        "title": "PLATFORM_ADMIN quản vòng đời và mức dùng tổ chức",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E1-S2.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E1",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E2-S1",
+        "type": "story",
+        "body_hash": "1d3b6c4d",
+        "content_hash": "3ac76958",
+        "title": "Danh mục gói và đăng ký, nâng, hạ gói",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E2-S1.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E2",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E2-S2",
+        "type": "story",
+        "body_hash": "c56d3d28",
+        "content_hash": "c1a31b13",
+        "title": "Gia hạn, nhắc hạn và xử lý quá hạn (dunning)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E2-S2.md",
+        "brd_goals": [
+          "BRD-G1",
+          "BRD-G3"
+        ],
+        "epic": "PRD-PLATFORM-E2",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E2-S3",
+        "type": "story",
+        "body_hash": "b79dc7a6",
+        "content_hash": "4e495c5b",
+        "title": "Thanh toán VietQR/cổng và gạch nợ (xác nhận thu tiền) tự động",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "L",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E2-S3.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E2",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E2-S4",
+        "type": "story",
+        "body_hash": "9590fefc",
+        "content_hash": "64d559e7",
+        "title": "Hạn mức tài nguyên lưu trữ theo gói",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "next",
+        "size": "S",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E2-S4.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E2",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E3-S1",
+        "type": "story",
+        "body_hash": "72ebc71c",
+        "content_hash": "a88613e8",
+        "title": "Tự động phát hành hoá đơn điện tử (tích hợp MISA meInvoice)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E3-S1.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E3",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-PLATFORM-E3-S2",
+        "type": "story",
+        "body_hash": "1b5a1f78",
+        "content_hash": "e48a2528",
+        "title": "Ký hợp đồng điện tử qua VNPT eContract",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-PLATFORM-E3-S2.md",
+        "brd_goals": [
+          "BRD-G1"
+        ],
+        "epic": "PRD-PLATFORM-E3",
+        "prd": "PRD-PLATFORM",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E1-S1",
+        "type": "story",
+        "body_hash": "cab7aa05",
+        "content_hash": "e777d658",
+        "title": "Dashboard tổng quan vùng/hub (gộp chéo)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-REPORT-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-REPORT-E1",
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E1-S2",
+        "type": "story",
+        "body_hash": "c79db3e8",
+        "content_hash": "1bbd6619",
+        "title": "Điểm cần chú ý gộp chéo (điều hướng tới báo cáo phân hệ)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-REPORT-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-REPORT-E1",
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E2-S1",
+        "type": "story",
+        "body_hash": "60d65b0b",
+        "content_hash": "4762773a",
+        "title": "Danh mục báo cáo một cửa (theo quyền)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-REPORT-E2-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-REPORT-E2",
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E2-S2",
+        "type": "story",
+        "body_hash": "7d225fae",
+        "content_hash": "55006f64",
+        "title": "Xuất báo cáo ra Excel/CSV (dùng chung)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-REPORT-E2-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-REPORT-E2",
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-REPORT-E3-S1",
+        "type": "story",
+        "body_hash": "62bb6ec0",
+        "content_hash": "f2e2dc77",
+        "title": "Hẹn lịch gửi báo cáo định kỳ (email + in-app)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "wont",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm Cleanmatic",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-REPORT-E3-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-REPORT-E3",
+        "prd": "PRD-REPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE-E1-S1",
+        "type": "story",
+        "body_hash": "7167e8a2",
+        "content_hash": "d05261c8",
+        "title": "Cây thư mục và phân quyền hồ sơ tài liệu",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.4.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-RESOURCE-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-RESOURCE-E1",
+        "prd": "PRD-RESOURCE",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE-E1-S2",
+        "type": "story",
+        "body_hash": "e39bdd7e",
+        "content_hash": "90925a50",
+        "title": "Xem kanban, gắn tag và theme thư mục",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-RESOURCE-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-RESOURCE-E1",
+        "prd": "PRD-RESOURCE",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE-E1-S3",
+        "type": "story",
+        "body_hash": "44dabaa6",
+        "content_hash": "d2d0bf42",
+        "title": "Tìm kiếm và liên thông hệ sinh thái",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-RESOURCE-E1-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-RESOURCE-E1",
+        "prd": "PRD-RESOURCE",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-RESOURCE-E1-S4",
+        "type": "story",
+        "body_hash": "13253011",
+        "content_hash": "090c1607",
+        "title": "Bình luận và nhắc đồng nghiệp trên tài liệu, thư mục",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "next",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.1.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-RESOURCE-E1-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-RESOURCE-E1",
+        "prd": "PRD-RESOURCE",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-SUPPORT-E1-S1",
+        "type": "story",
+        "body_hash": "798b38ac",
+        "content_hash": "f6e97f2e",
+        "title": "AI hỗ trợ tuyến đầu (kho hướng dẫn BoGo, có dẫn nguồn)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-SUPPORT-E1-S1.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-SUPPORT-E1",
+        "prd": "PRD-SUPPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-SUPPORT-E1-S2",
+        "type": "story",
+        "body_hash": "ae8ec150",
+        "content_hash": "4864892f",
+        "title": "Chat hỗ trợ trong app với đội BoGo (SLA + CSAT)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-SUPPORT-E1-S2.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-SUPPORT-E1",
+        "prd": "PRD-SUPPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-SUPPORT-E1-S3",
+        "type": "story",
+        "body_hash": "1105f8cf",
+        "content_hash": "af87a886",
+        "title": "Hotline click-to-call và trạng thái hệ thống",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "ORG_ADMIN",
+          "DEPT_MGR",
+          "STAFF",
+          "PLATFORM_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-11",
+        "file": "stories/PRD-SUPPORT-E1-S3.md",
+        "brd_goals": [
+          "BRD-G3"
+        ],
+        "epic": "PRD-SUPPORT-E1",
+        "prd": "PRD-SUPPORT",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E1-S1",
+        "type": "story",
+        "body_hash": "5886d58c",
+        "content_hash": "6f7903f0",
+        "title": "Tạo công việc với chi tiết và multi-tag",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E1-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E1",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E1-S2",
+        "type": "story",
+        "body_hash": "bc825a12",
+        "content_hash": "2f9eaccb",
+        "title": "Giao việc cho nhân viên và thông báo",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E1-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E1",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E1-S3",
+        "type": "story",
+        "body_hash": "d0a9075b",
+        "content_hash": "6b8670c9",
+        "title": "Công việc định kỳ (lặp lại theo lịch)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E1-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E1",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E2-S1",
+        "type": "story",
+        "body_hash": "3a6e4bab",
+        "content_hash": "b8a3721c",
+        "title": "Bảng Kanban theo trạng thái công việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E2-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E2",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E2-S2",
+        "type": "story",
+        "body_hash": "c1261210",
+        "content_hash": "02bf20f8",
+        "title": "Checklist (subtask) trong công việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E2-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E2",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E2-S3",
+        "type": "story",
+        "body_hash": "ad4813e6",
+        "content_hash": "13443da9",
+        "title": "Bình luận và đính kèm file trong công việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.6",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E2-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E2",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E2-S4",
+        "type": "story",
+        "body_hash": "3203a0b4",
+        "content_hash": "d62deffb",
+        "title": "Nhân viên xem và cập nhật công việc được giao",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E2-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E2",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E3-S1",
+        "type": "story",
+        "body_hash": "364a466b",
+        "content_hash": "88e0c02b",
+        "title": "Tìm kiếm và lọc công việc",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "STAFF",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.3",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E3-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E3",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E3-S2",
+        "type": "story",
+        "body_hash": "4a667ff1",
+        "content_hash": "dfcc273a",
+        "title": "KPI tiến độ công việc và báo cáo",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.5",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E3-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E3",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4-S1",
+        "type": "story",
+        "body_hash": "3a851524",
+        "content_hash": "730a6b3c",
+        "title": "Dashboard tổng quan tổ chức (nhân sự + công việc theo phòng ban)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "must",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E4-S1.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E4",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4-S2",
+        "type": "story",
+        "body_hash": "1aefd9a3",
+        "content_hash": "e034553f",
+        "title": "Điểm cần chú ý (tổng hợp + điều hướng)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E4-S2.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E4",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4-S3",
+        "type": "story",
+        "body_hash": "b7f4a89d",
+        "content_hash": "9abe6d53",
+        "title": "Danh mục báo cáo theo quyền (HR + TASK, yêu thích)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "S",
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E4-S3.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E4",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4-S4",
+        "type": "story",
+        "body_hash": "2354c6cc",
+        "content_hash": "fc77a930",
+        "title": "Xuất báo cáo ra Excel/CSV (dùng chung)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E4-S4.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E4",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      },
+      {
+        "id": "PRD-TASK-E4-S5",
+        "type": "story",
+        "body_hash": "5c15ef7d",
+        "content_hash": "8dd08909",
+        "title": "Hẹn lịch gửi báo cáo định kỳ (email + in-app)",
+        "status": "approved",
+        "scope": "in",
+        "moscow": "should",
+        "horizon": "now",
+        "size": "M",
+        "personas": [
+          "EXEC",
+          "DEPT_MGR",
+          "ORG_ADMIN"
+        ],
+        "metrics": [],
+        "owner": "Nhóm sản phẩm BoGo",
+        "version": "0.2.0",
+        "lang": "vi",
+        "updated": "2026-06-10",
+        "file": "stories/PRD-TASK-E4-S5.md",
+        "brd_goals": [
+          "BRD-G2"
+        ],
+        "epic": "PRD-TASK-E4",
+        "prd": "PRD-TASK",
+        "target_date": null,
+        "depends_on": [],
+        "risks": null,
+        "competitive_parity": null
+      }
+    ],
+    "edges": [
+      {
+        "from": "PRD-AI",
+        "to": "BRD-G3",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-APPROVAL",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-COMM",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-HR",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-PLATFORM",
+        "to": "BRD-G1",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-PLATFORM",
+        "to": "BRD-G3",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-REPORT",
+        "to": "BRD-G1",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-REPORT",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-REPORT",
+        "to": "BRD-G3",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-RESOURCE",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-SUPPORT",
+        "to": "BRD-G3",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-TASK",
+        "to": "BRD-G2",
+        "kind": "brd_goal"
+      },
+      {
+        "from": "PRD-AI-E1",
+        "to": "PRD-AI",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-AI-E2",
+        "to": "PRD-AI",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-APPROVAL-E1",
+        "to": "PRD-APPROVAL",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-COMM-E1",
+        "to": "PRD-COMM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-COMM-E2",
+        "to": "PRD-COMM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-COMM-E3",
+        "to": "PRD-COMM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-HR-E1",
+        "to": "PRD-HR",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-HR-E2",
+        "to": "PRD-HR",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-HR-E3",
+        "to": "PRD-HR",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-PLATFORM-E1",
+        "to": "PRD-PLATFORM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-PLATFORM-E2",
+        "to": "PRD-PLATFORM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-PLATFORM-E3",
+        "to": "PRD-PLATFORM",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-REPORT-E1",
+        "to": "PRD-REPORT",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-REPORT-E2",
+        "to": "PRD-REPORT",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-REPORT-E3",
+        "to": "PRD-REPORT",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-RESOURCE-E1",
+        "to": "PRD-RESOURCE",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-SUPPORT-E1",
+        "to": "PRD-SUPPORT",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-TASK-E1",
+        "to": "PRD-TASK",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-TASK-E2",
+        "to": "PRD-TASK",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-TASK-E3",
+        "to": "PRD-TASK",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-TASK-E4",
+        "to": "PRD-TASK",
+        "kind": "prd"
+      },
+      {
+        "from": "PRD-AI-E1-S1",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S2",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S3",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S4",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S5",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S6",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E1-S7",
+        "to": "PRD-AI-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S1",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S2",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S3",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S4",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S5",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-AI-E2-S6",
+        "to": "PRD-AI-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-APPROVAL-E1-S1",
+        "to": "PRD-APPROVAL-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-APPROVAL-E1-S2",
+        "to": "PRD-APPROVAL-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-APPROVAL-E1-S3",
+        "to": "PRD-APPROVAL-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-APPROVAL-E1-S4",
+        "to": "PRD-APPROVAL-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-APPROVAL-E1-S5",
+        "to": "PRD-APPROVAL-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S1",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S2",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S3",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S4",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S5",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S6",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S7",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S8",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E1-S9",
+        "to": "PRD-COMM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E2-S1",
+        "to": "PRD-COMM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E2-S2",
+        "to": "PRD-COMM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E3-S1",
+        "to": "PRD-COMM-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E3-S2",
+        "to": "PRD-COMM-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-COMM-E3-S3",
+        "to": "PRD-COMM-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S1",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S2",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S3",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S4",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S5",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E1-S6",
+        "to": "PRD-HR-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E2-S1",
+        "to": "PRD-HR-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E2-S2",
+        "to": "PRD-HR-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E2-S3",
+        "to": "PRD-HR-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E2-S4",
+        "to": "PRD-HR-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E3-S1",
+        "to": "PRD-HR-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E3-S2",
+        "to": "PRD-HR-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E3-S3",
+        "to": "PRD-HR-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-HR-E3-S4",
+        "to": "PRD-HR-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E1-S1",
+        "to": "PRD-PLATFORM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E1-S2",
+        "to": "PRD-PLATFORM-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E2-S1",
+        "to": "PRD-PLATFORM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E2-S2",
+        "to": "PRD-PLATFORM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E2-S3",
+        "to": "PRD-PLATFORM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E2-S4",
+        "to": "PRD-PLATFORM-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E3-S1",
+        "to": "PRD-PLATFORM-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-PLATFORM-E3-S2",
+        "to": "PRD-PLATFORM-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-REPORT-E1-S1",
+        "to": "PRD-REPORT-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-REPORT-E1-S2",
+        "to": "PRD-REPORT-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-REPORT-E2-S1",
+        "to": "PRD-REPORT-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-REPORT-E2-S2",
+        "to": "PRD-REPORT-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-REPORT-E3-S1",
+        "to": "PRD-REPORT-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-RESOURCE-E1-S1",
+        "to": "PRD-RESOURCE-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-RESOURCE-E1-S2",
+        "to": "PRD-RESOURCE-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-RESOURCE-E1-S3",
+        "to": "PRD-RESOURCE-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-RESOURCE-E1-S4",
+        "to": "PRD-RESOURCE-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-SUPPORT-E1-S1",
+        "to": "PRD-SUPPORT-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-SUPPORT-E1-S2",
+        "to": "PRD-SUPPORT-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-SUPPORT-E1-S3",
+        "to": "PRD-SUPPORT-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E1-S1",
+        "to": "PRD-TASK-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E1-S2",
+        "to": "PRD-TASK-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E1-S3",
+        "to": "PRD-TASK-E1",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E2-S1",
+        "to": "PRD-TASK-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E2-S2",
+        "to": "PRD-TASK-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E2-S3",
+        "to": "PRD-TASK-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E2-S4",
+        "to": "PRD-TASK-E2",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E3-S1",
+        "to": "PRD-TASK-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E3-S2",
+        "to": "PRD-TASK-E3",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E4-S1",
+        "to": "PRD-TASK-E4",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E4-S2",
+        "to": "PRD-TASK-E4",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E4-S3",
+        "to": "PRD-TASK-E4",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E4-S4",
+        "to": "PRD-TASK-E4",
+        "kind": "epic"
+      },
+      {
+        "from": "PRD-TASK-E4-S5",
+        "to": "PRD-TASK-E4",
+        "kind": "epic"
+      }
+    ],
+    "risks": [
+      {
+        "node": "PRD-AI-E1",
+        "description": "LLM bịa thông tin (hallucination) → trả lời sai về đơn/giá/chính sách, gây mất niềm tin hoặc cam kết sai với khách.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Grounding bắt buộc: mọi dữ kiện truy từ SALES/FAQ thật, không tự sinh số liệu (S1 AC6, S4 AC2); ngưỡng tự tin + hỏi lại/bàn giao (S1 AC5, S7 AC4)."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Đặt đơn mới qua chat phức tạp (danh mục/giá theo hub/hẹn giờ/phân tuyến) → tạo đơn sai dịch vụ hoặc sai giá.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Tái dùng tạo-đơn của SALES + tóm tắt đơn & giá xác nhận trước khi chốt (S5 AC2/AC4); để moscow=should để hoãn được nếu sprint căng."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Chatbot xử lý khiếu nại sai hoặc bỏ rơi hội thoại → khách bức xúc, vấn đề không ai nhận.",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Human-in-the-loop cứng: không tự giải quyết khiếu nại, chỉ tiếp nhận + tự chuyển CSKH kèm ngữ cảnh, luôn có lối gặp người (S6)."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Phụ thuộc PRD-CARE-E3 (kênh/inbox) + PRD-SALES (đơn/danh mục) chưa sẵn → epic không chạy được.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "Xếp sprint E1 sau khi CARE-E3 + SALES ổn định; nếu phụ thuộc chưa sẵn thì hoãn epic, không build chatbot trên nền thiếu dữ liệu."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Chi phí LLM tăng theo lưu lượng + lệ thuộc nhà cung cấp mô hình khi quy mô lớn.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Giới hạn ý định tự xử cấu hình được + ngưỡng tự tin + kill switch (S7); spec mô tả năng lực, không khoá nhà cung cấp để đổi được."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Thao túng chatbot (prompt-injection/jailbreak): khách chèn lệnh để ghi đè quy tắc hoặc đọc dữ liệu khách khác.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Mọi truy xuất dữ liệu qua backend kiểm quyền theo định danh; LLM không tự quyết lộ dữ liệu nào, chỉ diễn đạt dữ liệu backend trả về (S7 AC chống thao túng); grounding (S1)."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "PII khách (tên/SĐT/đơn) gửi qua API LLM bên thứ ba → rủi ro tuân thủ NĐ 13/2023 (dữ liệu cá nhân ra ngoài, chưa che/chưa DPA).",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "accepted",
+        "mitigation": "PO chấp nhận rủi ro tạm để ra mắt MVP nhanh (DEC-20). BẮT BUỘC rà soát luật sư + cân nhắc che PII / self-host / ký DPA trước khi mở rộng quy mô hoặc khi khối lượng PII lớn."
+      },
+      {
+        "node": "PRD-AI-E1",
+        "description": "Định danh nhẹ (mã đơn, không OTP): ai biết mã đơn + SĐT có thể xem trạng thái + số dư/công nợ (thông tin tài chính) của khách.",
+        "impact": "med",
+        "likelihood": "low",
+        "status": "accepted",
+        "mitigation": "PO chấp nhận tạm (DEC-21): chỉ lộ thông tin khi có ĐÚNG mã đơn; không enumerate đơn từ SĐT (S2). Nâng cấp OTP cho thông tin tài chính khi cần."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "LLM bịa thông tin (hallucination) khi trả lời về quy chế/phép/lương → nhân viên hành động theo thông tin sai.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Grounding bắt buộc: mọi câu trả lời dữ kiện truy từ tài liệu tổ chức/dữ liệu HR-TASK thật + trích dẫn nguồn (S1, S2, S3); dưới ngưỡng tự tin → nói 'chưa chắc' và dừng (S6)."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "Lộ dữ liệu chéo tổ chức hoặc chéo quyền (nhân viên xem được dữ liệu người khác / tổ chức khác) qua trợ lý.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Mọi truy xuất qua backend kiểm quyền theo người hỏi + tổ chức; LLM không tự quyết lộ dữ liệu nào (S2, S6); kiểm thử chống thao túng prompt-injection trước go-live."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "Dữ liệu nhân sự (phép, công, lương) gửi qua API LLM bên thứ ba → rủi ro tuân thủ NĐ 13/2023.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "accepted",
+        "mitigation": "PO chấp nhận tạm để ra mắt MVP (DEC-47, kế thừa tinh thần DEC-20). BẮT BUỘC rà soát luật sư + cân nhắc che PII / DPA / self-host trước khi mở rộng quy mô."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "Chi phí LLM tăng theo lưu lượng khi nhiều tổ chức dùng đồng thời.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Giới hạn khả năng bật theo gói; ngưỡng tự tin + cache câu hỏi quy chế lặp lại; theo dõi chi phí per-tổ-chức (S6 dashboard)."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "Nhân viên không hình thành thói quen hỏi trợ lý → tính năng khác biệt nhưng không ai dùng.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "Đo tỉ lệ dùng hằng tuần ở pilot; gắn trợ lý vào luồng có sẵn (onboarding, thông báo việc) thay vì chờ người dùng tự tìm."
+      },
+      {
+        "node": "PRD-AI-E2",
+        "description": "Nguồn tri thức lỗi thời (quy chế cũ chưa gỡ) → trợ lý trả lời đúng nguồn nhưng nguồn đã hết hiệu lực.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "ORG_ADMIN quản vòng đời tài liệu (S6); câu trả lời luôn kèm tên + ngày tài liệu nguồn để người đọc tự thẩm định."
+      },
+      {
+        "node": "PRD-APPROVAL-E1",
+        "description": "Xác thực nội bộ (thiết bị/PIN/OTP) bị coi là chưa đủ giá trị pháp lý cho một số loại chứng từ → tranh chấp trách nhiệm vẫn xảy ra; riêng PIN có thể bị chia sẻ.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Bản ghi ký + hash đủ cho quy trách nhiệm NỘI BỘ; bậc CAO (OTP/khuôn mặt) bắt buộc cho chứng từ tiền chặn rủi ro PIN chia sẻ; loại văn bản cần giá trị pháp lý cao đánh dấu 'cần ký số' và nâng cấp qua VNPT (đã có quan hệ DEC-54); rà pháp lý trước khi build."
+      },
+      {
+        "node": "PRD-APPROVAL-E1",
+        "description": "Luồng duyệt cấu hình quá linh hoạt → tổ chức tự tạo luồng vòng vèo, tờ trình kẹt không ai biết ở đâu.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "v2 chỉ hỗ trợ 2 mẫu luồng chuẩn (NV→TP, phòng→lãnh đạo) + tối đa 3 cấp; nhắc hạn + leo thang khi quá hạn (S4); luồng tuỳ biến sâu để v3."
+      },
+      {
+        "node": "PRD-APPROVAL-E1",
+        "description": "Trùng vai với luồng duyệt sẵn có của HR/TASK gây bối rối ('xin nghỉ thì vào đâu?').",
+        "impact": "low",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Ranh giới ghi rõ trong PRD (out): nghiệp vụ có luồng riêng giữ nguyên ở phân hệ gốc; APPROVAL chỉ dành cho đề nghị/văn bản/chứng từ chung."
+      },
+      {
+        "node": "PRD-COMM-E1",
+        "description": "Tạo việc từ tin nhắn (S4) cần luồng tạo/giao việc của TASK-E1 sẵn sàng — trượt thứ tự go-live thì điểm vào trên tin nhắn thành stub không nghiệm thu được.",
+        "impact": "med",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Thứ tự go-live DEC-33 đã bắt TASK-E1 + HR-E1 chạy trước COMM; depends_on khai báo PRD-TASK-E1; hợp đồng link việc→tin nhắn chốt với đội build trước sprint."
+      },
+      {
+        "node": "PRD-COMM-E1",
+        "description": "Poll 'ẩn danh' bị hiểu nhầm là nặc danh tuyệt đối trong khi hệ thống vẫn lưu liên kết người–phiếu để chặn bầu trùng — nếu nhân viên phát hiện sẽ khủng hoảng niềm tin kênh nội bộ.",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Nhãn công khai/ẩn danh hiện rõ trên từng poll; ghi minh bạch trong điều khoản dữ liệu nội bộ rằng ẩn danh = ẩn với mọi người dùng, không phải với hệ thống (AC + ghi chú S5); không dùng chữ 'nặc danh' trong giao diện."
+      },
+      {
+        "node": "PRD-COMM-E1",
+        "description": "Mạng di động VN chập chờn — tin nhắn/phiếu bầu gửi lúc mất sóng bị rơi sẽ phá niềm tin vào kênh chính thức ngay tuần đầu pilot.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "AC tái kết nối ≤ 30 giây + không rơi tin (S1) là điều kiện nghiệm thu; phiếu bầu poll dùng cùng cơ chế đẩy lại khi nối lại mạng."
+      },
+      {
+        "node": "PRD-HR-E1",
+        "description": "Nhận diện khuôn mặt kém chính xác khi ánh sáng yếu, đeo khẩu trang, hoặc camera điện thoại đời thấp → chấm công thất bại hàng loạt.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Phương thức dự phòng PIN/mã NV (E1-S1 AC4) + ngưỡng confidence cấu hình được; thử lại 3 lần trước khi dự phòng."
+      },
+      {
+        "node": "PRD-HR-E1",
+        "description": "GPS drift trong nhà/khu vực sóng yếu từ chối chấm công hợp lệ, gây kẹt nhân viên.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Bán kính cấu hình theo điểm (mặc định 100m, nâng được); dự phòng khi GPS không khả dụng (E1-S2 AC6)."
+      },
+      {
+        "node": "PRD-HR-E1",
+        "description": "Pháp lý dữ liệu sinh trắc học (Nghị định 13/2023) nếu lưu/ xử lý sai cách.",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Chỉ lưu vector đặc trưng (không lưu ảnh) + bắt buộc consent điện tử + quyền xóa khi nghỉ (E1-S1 AC8/AC9)."
+      },
+      {
+        "node": "PRD-PLATFORM-E1",
+        "description": "Đăng ký rác/abuse (tạo trial hàng loạt) làm bẩn dữ liệu và tốn tài nguyên hạ tầng + chi phí AI.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Xác minh email/OTP SĐT, captcha, giới hạn 1 email/SĐT một tổ chức trial; PLATFORM_ADMIN xem và đóng tổ chức rác."
+      },
+      {
+        "node": "PRD-PLATFORM-E1",
+        "description": "Provisioning workspace lỗi giữa chừng → tổ chức nửa vời, dữ liệu mồ côi hoặc lẫn tenant.",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Khởi tạo nguyên tử: thành công trọn vẹn hoặc rollback sạch; test cross-tenant trong DoD."
+      },
+      {
+        "node": "PRD-PLATFORM-E2",
+        "description": "Gạch nợ sai (khớp nhầm giao dịch) → khoá nhầm tổ chức đang trả tiền hoặc mở nhầm cho tổ chức chưa trả — mất niềm tin nghiêm trọng.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Chỉ tự gạch khi khớp ĐỦ mã đơn + số tiền; mọi trường hợp lệch vào hàng đợi đối soát tay; idempotent theo mã giao dịch; log audit đầy đủ."
+      },
+      {
+        "node": "PRD-PLATFORM-E2",
+        "description": "Webhook biến động số dư trễ/miss → khách đã chuyển tiền nhưng gói chưa mở, gọi hotline bức xúc.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "SLA gạch nợ ≤ 5 phút từ khi nhận biến động; nút 'tôi đã chuyển tiền' đẩy ưu tiên đối soát; đối soát định kỳ quét lại giao dịch chưa khớp."
+      },
+      {
+        "node": "PRD-PLATFORM-E2",
+        "description": "Dunning quá tay (khoá sớm, nhắn dồn dập) → churn chính những khách chỉ quên gia hạn.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "Lịch nhắc thưa dần + ân hạn 7 ngày chỉ cảnh báo; đo tỉ lệ khách quay lại sau khoá ở pilot để hiệu chỉnh."
+      },
+      {
+        "node": "PRD-PLATFORM-E3",
+        "description": "API MISA meInvoice gián đoạn hoặc đổi hợp đồng API → hoá đơn không phát hành được đúng kỳ (nghĩa vụ thuế).",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Hàng đợi retry + cảnh báo PLATFORM_ADMIN; phát hành HĐĐT KHÔNG chặn kích hoạt gói; hợp đồng API + mapping trường chốt bằng văn bản với đội build trước sprint."
+      },
+      {
+        "node": "PRD-PLATFORM-E3",
+        "description": "Sai thông tin hoá đơn (MST, tên, địa chỉ) — hoá đơn điện tử đã phát hành khó huỷ/điều chỉnh, đụng quy định thuế.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "ORG_ADMIN bắt buộc khai + xác nhận thông tin xuất hoá đơn trước lần thanh toán trả phí đầu; màn hình xem trước; quy trình điều chỉnh/huỷ thủ công có log ở v1."
+      },
+      {
+        "node": "PRD-PLATFORM-E3",
+        "description": "Luồng ký VNPT eContract phụ thuộc bên thứ ba (OTP/ký số phía khách) → kẹt hợp đồng làm chậm chuyển đổi trả phí.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Ký hợp đồng chạy SONG SONG, không chặn kích hoạt gói khi tiền đã gạch; cờ 'hợp đồng chưa hoàn tất' cho PLATFORM_ADMIN đốc thúc; gửi lại tay được."
+      },
+      {
+        "node": "PRD-RESOURCE-E1",
+        "description": "Kho tài liệu chứa hồ sơ nhạy cảm — phân quyền sai một thư mục là lộ cho cả phòng/tổ chức; phía nhà cung cấp, mô hình khoá-riêng-tenant vẫn KHÔNG phải E2EE tuyệt đối (kỹ thuật thuần tuý vẫn đọc được nếu phá quy trình).",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Quyền theo thư mục kế thừa + chặn từng mục; mặc định thư mục mới CHỈ phòng tạo thấy; test phân quyền + cross-tenant là DoD. Phía nhà cung cấp: khoá riêng tenant + zero standing access + log bất biến + thông báo ORG_ADMIN khi truy cập khẩn cấp (DEC-58 — PO chọn sau khi cân nhắc E2EE thật vì giữ liên thông AI); nhu cầu E2EE thư mục tuyệt mật ghi nhận cho v3."
+      },
+      {
+        "node": "PRD-RESOURCE-E1",
+        "description": "Dung lượng lưu trữ tăng theo tổ chức → chi phí hạ tầng không kiểm soát (ảnh hưởng unit economics BRD).",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Hạn mức dung lượng theo gói (PLATFORM-E2-S1 cấu hình); cảnh báo 80%/100%; số liệu dùng hiện cho ORG_ADMIN."
+      },
+      {
+        "node": "PRD-RESOURCE-E1",
+        "description": "Nhân viên vẫn lưu file ở máy/chat vì thói quen → kho rỗng, tính năng không ai dùng.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "Cơ chế kéo: tài liệu làm nguồn AI + đính kèm tờ trình PHẢI từ kho; đo tỉ lệ tài liệu vào kho ở pilot."
+      },
+      {
+        "node": "PRD-SUPPORT-E1",
+        "description": "AI hỗ trợ trả lời sai cách dùng (vd hướng dẫn xoá nhầm dữ liệu) → khách làm theo và gặp sự cố nặng hơn.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Grounding trên kho hướng dẫn chính thức + dẫn nguồn từng câu; thao tác phá huỷ (xoá/đóng) chỉ hướng dẫn kèm cảnh báo và link bài gốc; kill switch chung."
+      },
+      {
+        "node": "PRD-SUPPORT-E1",
+        "description": "Phiên chat hỗ trợ vô tình thành kênh rò dữ liệu nội bộ tổ chức sang đội nền tảng (vượt ranh giới multi-tenant).",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Đội hỗ trợ chỉ thấy nội dung người dùng tự gõ + metadata phiên (tổ chức, gói, màn hình); không có quyền đọc dữ liệu nội bộ qua phiên chat; quy ước nêu rõ trong UI."
+      },
+      {
+        "node": "PRD-SUPPORT-E1",
+        "description": "Đội hỗ trợ nhỏ không giữ nổi SLA khi số tổ chức tăng → chat treo, CSAT tụt, churn.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "AI tuyến đầu gánh câu hỏi lặp; đo tỉ lệ AI tự giải quyết + thời gian phản hồi theo tuần ở pilot để định biên chế trước khi mở rộng."
+      },
+      {
+        "node": "PRD-TASK-E4",
+        "description": "Số liệu dashboard lệch với báo cáo phân hệ nguồn → lãnh đạo mất niềm tin vào toàn bộ số liệu.",
+        "impact": "high",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Mọi chỉ số ĐỌC từ phân hệ nguồn, không tính lại (kế thừa nguyên tắc DEC-41); hiện mốc 'cập nhật lúc HH:MM' thật thay vì giả vờ real-time."
+      },
+      {
+        "node": "PRD-TASK-E4",
+        "description": "Lộ dữ liệu chéo phòng ban hoặc chéo tổ chức qua màn hình tổng hợp.",
+        "impact": "high",
+        "likelihood": "low",
+        "status": "mitigated",
+        "mitigation": "Quyền enforce ở phân hệ nguồn — dashboard truyền ngữ cảnh người dùng + tổ chức, không tự lọc; kiểm thử phân quyền trước go-live."
+      },
+      {
+        "node": "PRD-TASK-E4",
+        "description": "Xuất báo cáo là điểm lộ dữ liệu cá nhân (bảng công, lương) ra ngoài hệ thống.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "mitigated",
+        "mitigation": "Chỉ xuất trong quyền; ghi log audit mọi lần xuất (ai/gì/phạm vi/khi nào); liên kết tải có thời hạn."
+      },
+      {
+        "node": "PRD-TASK-E4",
+        "description": "EXEC không hình thành thói quen mở dashboard mỗi sáng → tính năng đầu bảng nhưng không ai dùng.",
+        "impact": "med",
+        "likelihood": "med",
+        "status": "open",
+        "mitigation": "Đo tỉ lệ EXEC/DEPT_MGR mở dashboard hằng tuần tại pilot; kết hợp lịch gửi báo cáo định kỳ (S5) làm điểm chạm chủ động."
+      }
+    ],
+    "competitors": [
+      {
+        "id": "COMP-BASE",
+        "name": "Base.vn",
+        "url": "https://base.vn",
+        "threat": "high"
+      },
+      {
+        "id": "COMP-ONEOFFICE",
+        "name": "1Office",
+        "url": "https://1office.vn",
+        "threat": "high"
+      },
+      {
+        "id": "COMP-MISA-AMIS",
+        "name": "MISA AMIS",
+        "url": "https://amis.misa.vn",
+        "threat": "med"
+      },
+      {
+        "id": "COMP-LARK",
+        "name": "Lark Suite",
+        "url": "https://www.larksuite.com",
+        "threat": "med"
+      },
+      {
+        "id": "COMP-FIINE",
+        "name": "Fiine.vn",
+        "url": "https://fiine.vn",
+        "threat": "med"
+      },
+      {
+        "id": "COMP-FASTDOO",
+        "name": "Fastdo",
+        "url": "https://fastdo.vn",
+        "threat": "high"
+      },
+      {
+        "id": "COMP-TANCA",
+        "name": "Tanca",
+        "url": "https://tanca.io",
+        "threat": "high"
+      },
+      {
+        "id": "COMP-SLACK",
+        "name": "Slack",
+        "url": "https://slack.com",
+        "threat": "low"
+      }
+    ],
+    "parse_errors": [],
+    "root_path": "/home/hieubt15/Documents/vsf/bogo-product-spec"
+  }
+}

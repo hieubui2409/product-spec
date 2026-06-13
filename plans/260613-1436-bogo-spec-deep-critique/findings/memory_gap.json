@@ -1,0 +1,81 @@
+{
+  "signals": [
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-AI-E2-S6",
+      "evidence": "approved artifact PRD-AI-E2-S6 body changed since the last validate (b8101dd9 → f72ce1e1) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-APPROVAL",
+      "evidence": "approved artifact PRD-APPROVAL body changed since the last validate (3b1593fb → 92b8f379) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-APPROVAL-E1-S3",
+      "evidence": "approved artifact PRD-APPROVAL-E1-S3 body changed since the last validate (a4ea38c5 → 09ced1be) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-COMM-E1",
+      "evidence": "approved artifact PRD-COMM-E1 body changed since the last validate (ec8a8581 → 26a82603) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-COMM-E1-S1",
+      "evidence": "approved artifact PRD-COMM-E1-S1 body changed since the last validate (fec97ed9 → 71805760) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-PLATFORM-E2",
+      "evidence": "approved artifact PRD-PLATFORM-E2 body changed since the last validate (c2656c8a → 1c875e94) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-RESOURCE",
+      "evidence": "approved artifact PRD-RESOURCE body changed since the last validate (401e8a55 → 4eeb06a7) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-RESOURCE-E1-S1",
+      "evidence": "approved artifact PRD-RESOURCE-E1-S1 body changed since the last validate (66ba4b55 → 7167e8a2) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "approved_changed_no_dec",
+      "severity": "warn",
+      "subject": "PRD-RESOURCE-E1-S3",
+      "evidence": "approved artifact PRD-RESOURCE-E1-S3 body changed since the last validate (db21109e → 44dabaa6) but no active DEC records the ruling. False-positive-prone: a legitimate re-approval also fires — surfaced, never blocked. --ack-no-dec to silence it for this wording.",
+      "suggested_writer": "record the ruling with --decision (decision_register), or --ack-no-dec"
+    },
+    {
+      "type": "judged_not_stored",
+      "severity": "info",
+      "subject": null,
+      "evidence": "the graph drifted (PRD-AI-E2-S6, PRD-APPROVAL, PRD-APPROVAL-E1, PRD-APPROVAL-E1-S1, PRD-APPROVAL-E1-S2, PRD-APPROVAL-E1-S3, PRD-APPROVAL-E1-S4, PRD-APPROVAL-E1-S5, PRD-COMM, PRD-COMM-E1, PRD-COMM-E1-S1, PRD-COMM-E1-S4, PRD-COMM-E1-S5, PRD-COMM-E1-S6, PRD-COMM-E1-S7, PRD-COMM-E1-S8, PRD-COMM-E1-S9, PRD-PLATFORM-E2, PRD-PLATFORM-E2-S4, PRD-RESOURCE, PRD-RESOURCE-E1, PRD-RESOURCE-E1-S1, PRD-RESOURCE-E1-S2, PRD-RESOURCE-E1-S3, PRD-RESOURCE-E1-S4) but the verdict cache did not grow past the last batch-store count (167) — judgments may have been made in chat without being persisted.",
+      "suggested_writer": "batch-store the verdicts (judgment_cache --store-batch)"
+    },
+    {
+      "type": "validate_no_marker",
+      "severity": "info",
+      "subject": null,
+      "evidence": "the live graph drifted from the last-validated snapshot (PRD-AI-E2-S6, PRD-APPROVAL, PRD-APPROVAL-E1, PRD-APPROVAL-E1-S1, PRD-APPROVAL-E1-S2, PRD-APPROVAL-E1-S3, PRD-APPROVAL-E1-S4, PRD-APPROVAL-E1-S5, PRD-COMM, PRD-COMM-E1, PRD-COMM-E1-S1, PRD-COMM-E1-S4, PRD-COMM-E1-S5, PRD-COMM-E1-S6, PRD-COMM-E1-S7, PRD-COMM-E1-S8, PRD-COMM-E1-S9, PRD-PLATFORM-E2, PRD-PLATFORM-E2-S4, PRD-RESOURCE, PRD-RESOURCE-E1, PRD-RESOURCE-E1-S1, PRD-RESOURCE-E1-S2, PRD-RESOURCE-E1-S3, PRD-RESOURCE-E1-S4) — these changes were never validated.",
+      "suggested_writer": "run --validate to re-baseline (judgment_cache.write_last_validated)"
+    }
+  ]
+}

@@ -1,0 +1,855 @@
+[
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD",
+   "PRD-A",
+   "VISION"
+  ],
+  "issue": "VISION hứa \"tổ chức mới tự đăng ký, tự cấu hình\" nhưng không có epic hay story nào dựng luồng đó; story onboarding PRD-AI-E2-S5:24 đã coi \"kích hoạt không gian "
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD",
+   "VISION"
+  ],
+  "issue": "Cả BRD lẫn VISION không có một mức giá, một gói, một dòng doanh thu nào. PLATFORM_ADMIN được giao quản lý \"gói dịch vụ\" nhưng không artifact nào nói gói đó là g"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD",
+   "PRD-HR-E1-S1"
+  ],
+  "issue": "BRD ràng buộc \"chấm công hoạt động khi mất mạng tạm thời\", nhưng cả 9 AC của PRD-HR-E1-S1 không có lấy một AC mô tả hành vi offline: không bộ đệm, không hàng đợ"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "VISION"
+  ],
+  "issue": "PLATFORM_ADMIN được VISION mô tả một công việc đầy đủ (tạo/kích hoạt/tạm ngưng tổ chức, quản lý gói, theo dõi mức dùng để bán hàng, hỗ trợ sự cố) nhưng trong to"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2"
+  ],
+  "issue": "Epic must và là khác biệt hoá chính cho G3, nhưng sổ rủi ro của chính nó chứa một rủi ro NĐ13 ở trạng thái \"accepted\" (dữ liệu nhân sự gửi qua API LLM bên thứ b"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-TASK-E4"
+  ],
+  "issue": "Epic must, hiện thân kịch bản thành công của persona EXEC, nhưng sổ rủi ro của chính nó ghi \"EXEC không hình thành thói quen mở dashboard mỗi sáng, tính năng đầ"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Giả định nền tảng của BRD nhồi hai niềm tin chưa kiểm vào một dòng: SME sẵn sàng trả phí định kỳ, và nhân viên sẽ rời Zalo khi tổ chức yêu cầu. Đây là riskiest "
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-HR-E1-S1"
+  ],
+  "issue": "Story chấm công đầu tiên (must, size L) bắt buộc nhận diện khuôn mặt confidence >= 95% và GPS làm phương thức chính, PIN chỉ là dự phòng sau 3 lần thất bại. Đây"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-AI-E2",
+   "PRD-AI-E2-S1"
+  ],
+  "issue": "Cả 4 story PRD-AI-E2 (S1, S2, S3, S6) đều không có AC nào cho tình huống API LLM bên thứ ba chết (timeout, 5xx, outage). S1 hứa SLA \"95% câu hỏi <= 10 giây\" như"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2-S4"
+  ],
+  "issue": "Story size L này gói ít nhất 3 hệ thống độc lập vào 4 AC: sinh trắc nghiệm bằng AI, luồng duyệt human-in-the-loop, giao bài cộng tự chấm, dashboard kết quả theo"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2"
+  ],
+  "issue": "Mitigation rủi ro chi phí LLM ghi \"theo dõi chi phí per-tổ-chức (S6 dashboard)\" nhưng S6 không có AC nào về giám sát chi phí, quota, cảnh báo ngưỡng, hay hành đ"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2-S2"
+  ],
+  "issue": "S2/S3 chỉ cover happy path \"trả về đúng số liệu hiện tại\", không có AC khi backend HR/TASK không phản hồi. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM-E1-S1"
+  ],
+  "issue": "SLA realtime chat \"<=5 giây kể từ khi máy chủ nhận\" không kèm điều kiện tải: không số người đồng thời, không kích thước tổ chức, không băng thông chuẩn, trong k"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-HR-E2-S2"
+  ],
+  "issue": "AC tạo bảng lương \"<=5 phút\" không ràng buộc số nhân viên, mà SLA batch thì phụ thuộc thẳng vào khối lượng dữ liệu. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM-E1-S2"
+  ],
+  "issue": "Ghi chú thiết kế của chính story tự nhận \"nếu HR thực tế chạy theo lô thì SLA real-time không đạt\", mà hợp đồng event HR->COMM (format, transport, SLA) thì chưa"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-AI-E2-S1"
+  ],
+  "issue": "SLA \"95% câu hỏi <=10 giây\" không định nghĩa điều kiện đo: kích thước kho tài liệu, số người hỏi đồng thời, độ dài câu hỏi, đều là biến quyết định latency của p"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Ràng buộc multi-tenant \"phân tách hoàn toàn\" không có story/AC nào nói cách kiểm thử: không negative test cross-tenant, không NFR story về tenant isolation audi"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "fastdoo.com, khai là đối thủ threat med trong BRD, hiện là domain đang rao bán trên GoDaddy. Không phải sản phẩm còn sống. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI"
+  ],
+  "issue": "PRD-AI tuyên bố khác biệt vì \"Base/1Office chưa có trợ lý AI tiếng Việt gắn dữ liệu vận hành\". Thực tế: MISA AMIS đã ra AI Agent hỏi đáp quy chế C&B/lương thưởn"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2"
+  ],
+  "issue": "Chi phí LLM per-tổ-chức được nhận diện là rủi ro nhưng không có con số ước tính ở bất cứ đâu: số query/nhân viên/tháng, chi phí token/tổ chức, AI nằm ở gói nào."
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "BRD ghi giả định \"nhân viên chuyển từ Zalo sang BoGo khi tổ chức yêu cầu\" nhưng không có JTBD về lý do một SME chủ động quyết định sa thải Zalo cộng Excel để th"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-TASK"
+  ],
+  "issue": "PRD-TASK tự nhận Kanban/checklist là parity với Base/Lark/ClickUp, moat là liên kết công việc với ca làm, nhưng đây là lock-in cần 6-12 tháng dữ liệu tích luỹ m"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Định vị \"một ứng dụng hợp nhất thay vì bộ nhiều app rời\", nhưng 1Office đã là platform tích hợp khoảng 100k VND/user/tháng, Lark all-in-one miễn phí dưới 50 ngư"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-HR-E1-S1"
+  ],
+  "issue": "AC dùng tính từ \"rõ ràng\" cho thông báo lỗi mà không định nghĩa tiêu chí: nội dung, độ dài, hay tên lỗi? **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-HR-E2-S1"
+  ],
+  "issue": "AC hệ số OT khi trùng lễ cộng cuối tuần ghép 3 mệnh đề độc lập (thứ tự ưu tiên, không cộng dồn, tình huống trùng) vào một câu dài. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Đoạn \"Tính độc lập, tự chủ\" khẳng định không phụ thuộc chat bên thứ ba, rồi câu cuối đột ngột thòng thêm \"có thể dùng FCM/APNs\", một khái niệm mới nhồi giữa lập"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM-E1-S1"
+  ],
+  "issue": "AC file đính kèm nói \"liên kết truy cập tự làm mới khi mở hội thoại, người dùng không gặp liên kết hết hạn\", mà \"tự làm mới\" với \"không hết hạn\" thì đá nhau: kh"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "BRD",
+   "PRD-COMM"
+  ],
+  "issue": "Đoạn đo metric BRD-G2 của COMM ghép 5 khái niệm (phân định TASK/COMM, metric, baseline, ngưỡng, cách đo) vào một khối văn liền không xuống dòng. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-HR"
+  ],
+  "issue": "PRD-HR nói \"nhân viên hiện trường\" nhưng không định nghĩa: ngoài văn phòng? chi nhánh? công trường? **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-TASK"
+  ],
+  "issue": "Dòng lock-in dùng \"moat\", \"khó copy\", \"hai chiều\" mà không giải thích cho người đọc kinh doanh; trừu tượng với một PO không rành kỹ thuật. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-COMM-E2-S1"
+  ],
+  "issue": "AC \"hiện lỗi rõ ràng\", lại tính từ không đo được giống HR-E1-S1; không rõ lỗi dạng gì: popup, toast, code? **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "VISION"
+  ],
+  "issue": "Câu \"BoGo gom ba dòng chảy đó về một nền tảng\" không liệt kê ba dòng là gì, mà thực tế sản phẩm có bốn trụ (cộng trợ lý AI). **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-HR-E2-S1"
+  ],
+  "issue": "AC đầu gộp 4 thông số lương (lương cơ bản cộng 3 hệ số OT) trong một AC dài dạng danh sách cấu hình. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRODUCT"
+  ],
+  "issue": "Frontmatter liệt kê 5 mã persona nhưng định nghĩa nằm ở bảng phía dưới, người đọc nhanh chỉ thấy mã. **"
+ },
+ {
+  "report": "20260610T145854Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-HR-E1-S1"
+  ],
+  "issue": "AC \"Khi bấm chấm công, camera trước mở\" dùng mũi tên tường thuật thay vì hành vi kiểm được; không rõ camera mở tự động hay cần thao tác. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD",
+   "PRD-HR",
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "Trial 14 ngày full tính năng làm cơ chế kích hoạt → trả phí, nhưng kỳ lương lõi (PRD-HR) chốt theo THÁNG. Trong 14 ngày không tổ chức nào chạy trọn một vòng chấ"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S3"
+  ],
+  "issue": "Cụm bốn lỗ an toàn tiền của phân hệ PLATFORM mới dựng. (a) SLA gạch nợ VietQR \"≤5 phút\" mà nhà cung cấp webhook biến động số dư chưa chốt và không có AC cho ca "
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Neo giá 89k so với \"1Office ~100k\" nhưng 100k của 1Office là gói ALL-IN-ONE (HR + Work + CRM); gói module đơn của 1Office chỉ 40-60k/user. Fiine PRO 59k đã có c"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "ARR neo vào \"~30 user bình quân × 89k\" = 2,67tr/tháng/tổ chức, nhưng SME mục tiêu 10-200 nhân sự, đầu thấp 10-15 user chỉ trả 0,9-1,3tr. Con số 30 user tự ghi l"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Toàn bộ GTM tự gắn nhãn \"(đề xuất -- PO rà soát, gán owner khi vận hành)\". Referral pilot và đại lý kế toán đều chưa owner; chỉ kênh tự phục vụ có sản phẩm đỡ. "
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "Vòng đời chỉ tả hết hạn → khoá ghi → tạm ngưng → \"xử lý theo chính sách lưu trữ\". Không có story cho khách CHỦ ĐỘNG rời: tự huỷ gói, xuất TOÀN BỘ dữ liệu tổ chứ"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD",
+   "VISION"
+  ],
+  "issue": "Phạm vi \"now\" active là ~52 story / 6 PRD, trong đó 33 \"must\" cho cùng một go-live. Riskiest-assumption của chính BRD (nhân viên không rời chat cá nhân → TASK/C"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-SUPPORT"
+  ],
+  "issue": "Cả 3 story SUPPORT đều must, nhưng đây là module giữ chân khi đã có lượng khách lớn; rủi ro chính của epic (\"đội hỗ trợ nhỏ không giữ nổi SLA\" -- open) cho thấy"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S1"
+  ],
+  "issue": "Quy tắc tiền chỉ định nghĩa pro-rata khi NÂNG và \"hạ gói không hoàn kỳ hiện tại\", không có chính sách hoàn tiền nào, kể cả gói trả năm (tặng 2 tháng) muốn dừng "
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-SUPPORT-E1-S2"
+  ],
+  "issue": "Ghi chú thiết kế tuyên bố \"KHÔNG dùng hạ tầng COMM cho chat hỗ trợ\", nghĩa là phải xây hạ tầng chat real-time THỨ HAI (transport, lưu trữ, hàng đợi phiên, notif"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S2"
+  ],
+  "issue": "Ba quy tắc tính kỳ gia hạn dựa vào thời điểm thanh toán so với hạn, nhưng không AC nào chỉ định múi giờ: kỳ gói tính UTC hay Asia/Ho_Chi_Minh? Job dunning chạy "
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-AI-E2-S5",
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "AC \"ngay sau khởi tạo, trợ lý onboarding PRD-AI-E2-S5 tiếp quản\" là phụ thuộc cứng của một story MUST vào một story SHOULD, không fallback. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-PLATFORM-E3-S1"
+  ],
+  "issue": "\"Điều chỉnh/huỷ hoá đơn: v1 thủ công trên MISA\", nhưng với pro-rata nâng gói, mỗi nâng/hạ giữa kỳ có thể sinh điều chỉnh; ở 100 tổ chức đây là khối lượng vận hà"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-AI-E2-S6",
+   "PRD-SUPPORT-E1-S1"
+  ],
+  "issue": "AC \"dùng chung hạ tầng an toàn LLM với PRD-AI-E2-S6\" nhưng SUPPORT-E1 không có depends_on nào; interface adapter nối AI hỗ trợ vào kill switch/ngưỡng tự tin khô"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Fastdo (threat med) định vị là đối thủ OKR/công việc, nhưng module fCheckin của họ là chấm công GPS + nghỉ phép + dữ liệu lương giá 10.000đ/user. Tanca, phần mề"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Kênh \"đối tác đại lý kế toán/tư vấn HR\" không owner, không mức hoa hồng, không LOI; KPI chỉ \"≥2 đối tác ký quý đầu\". Đại lý trong hệ sinh thái MISA đã có chương"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "ARR 3,2 tỷ chỉ tính doanh thu, không có chi phí: hosting multi-tenant, LLM (≤15% doanh thu = ~13k/user/tháng chưa kiểm với API cost thật), headcount support, ph"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Lark threat med ghi chú \"thiếu chiều sâu HR VN\", đúng, nhưng Lark Starter MIỄN PHÍ ≤20 user (chat+task+docs+video). SME nhỏ 10-20 người: Lark Free + fCheckin = "
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Khác biệt hoá \"hợp nhất + AI tiếng Việt\", không switching cost được định nghĩa, không data network effect, không tích hợp hệ sinh thái giữ chân; Base/1Office ng"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "Cùng một lỗi cấu trúc ở hai chỗ, cờ \"(đề xuất -- PO chốt)\" nằm TRONG AC. E1-S1:24 nhét các mốc vòng đời (14 → 30 → 60 ngày) kèm \"(các mốc là đề xuất)\" vào AC; E"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "User story hứa \"dùng thử đầy đủ trong 15 phút\" nhưng AC chỉ bảo đảm tạo workspace ≤2 phút; thời gian xác minh email/OTP không spec, không rõ 15 phút gồm những g"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S3"
+  ],
+  "issue": "\"Gạch nợ\" nằm ngay tiêu đề story mà không định nghĩa, biệt ngữ tài chính, PO không làm kế toán có thể không hiểu ngay; đến AC mới suy ra nghĩa. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S3"
+  ],
+  "issue": "AC dùng \"IDEMPOTENT\" viết hoa tiếng Anh không dịch, giải thích đi kèm ổn nhưng nhãn thì mù với PO không rành hệ phân tán. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S3"
+  ],
+  "issue": "AC VietQR 56 từ tả trọn luồng (nhận webhook → khớp → xác nhận → gạch nợ) với 3 mệnh đề ngoặc lồng nhau, wall-of-text. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "\"(multi-tenant)\" dùng trong ngoặc không giải thích đủ, PO có thể đọc thành chi tiết kỹ thuật thay vì yêu cầu kinh doanh \"mỗi tổ chức một không gian riêng\". **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-PLATFORM-E2-S2"
+  ],
+  "issue": "Ghi chú thiết kế nhắc \"rủi ro dunning quá tay đã ghi ở sổ rủi ro epic\" nhưng không trỏ link/ID, người đọc không biết tìm ở đâu. **"
+ },
+ {
+  "report": "20260610T181311Z-all.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-PLATFORM-E1-S1"
+  ],
+  "issue": "Story dùng \"trang đăng ký\" trong khi toàn cây dùng \"màn hình\", trôi thuật ngữ trang/màn hình. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-AI-E2-S6"
+  ],
+  "issue": "AI-E2-S6 (đã approved) cho ORG_ADMIN tải tài liệu quy chế lên làm kho tri thức AI; giờ RESOURCE-E1-S3 lại mở cửa thứ hai \"chọn tài liệu đang dùng làm nguồn AI\"."
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": "AC mã hoá khoá-riêng-tenant + zero standing access nằm sát AC xem trước PDF/ảnh/Office ngay trên server. Preview server-side thì server phải đọc nội dung sau gi"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "blocker",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": "Base bán Request/Office thành module riêng 600k–1,2tr/tháng, 1Office all-in tầm 150k/user; còn BoGo nhét cả APPROVAL lẫn RESOURCE vào một giá phẳng không cơ chế"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD",
+   "PRD-APPROVAL"
+  ],
+  "issue": ", hai PRD gắn G2 nhưng ba trigger mua JTBD trong BRD (lương sai / mở chi nhánh / cần chứng từ công-lương) không cái nào là \"cần luồng phê duyệt\" hay \"cần kho tà"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1"
+  ],
+  "issue": ", thêm 5 must-story next trong khi v1 còn 33 must now chưa build, chưa chứng minh giá trị ở pilot; APPROVAL còn dựa vào sơ đồ tổ chức + PIN của HR và quy tắc le"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL"
+  ],
+  "issue": ", APPROVAL định vị thay \"trình ký giấy + chuyển file qua chat\" nhưng Base/1Office bán workflow phê duyệt như tính năng lõi, spec không nói BoGo khác/hơn gì. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", EXEC là người duyệt cấp cao nhất, loại \"chứng từ\" mặc định bậc CAO bắt OTP/camera mỗi lần ký, cửa một-chạm FaceID lại chỉ gắn bậc Thường. Không AC nào cho EXE"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE",
+   "VISION"
+  ],
+  "issue": ", RESOURCE neo vào nỗi đau VISION #3 nhưng rủi ro \"nhân viên vẫn lưu file ở máy/chat → kho rỗng\" đang OPEN, cả hai móc kéo (nguồn AI, đính kèm tờ trình) lại phụ"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S2"
+  ],
+  "issue": ", trục trạng thái nháp/đang-dùng/hết-hiệu-lực + kéo-thả là phần spec TỰ SINH để kanban có trục cột (ghi chú đã tự nhận), không nằm trong ba yêu cầu gốc PO. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", AC \"hash nội dung tờ trình tại thời điểm ký\" không nói phạm vi: chỉ text hay gồm tệp đính kèm? Tệp có thể bị tráo sau ký mà hash vẫn khớp nếu nó không vào has"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", AC trỏ \"giới hạn dung lượng theo gói, cấu hình tại PLATFORM-E2-S1\" nhưng PLATFORM-E2-S1 (đã approved) chẳng có trường dung lượng nào, chỉ user/đơn giá/chu kỳ."
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S4"
+  ],
+  "issue": ", S4 tái dùng \"@mention + đẩy thông báo chung\" nhưng hạ tầng thông báo chung không có story chủ ở bất kỳ epic nào (COMM-E1-S3 ghi rõ việc đẩy nhắc \"không phải s"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S2"
+  ],
+  "issue": ", \"Sửa và trình lại, giữ lịch sử các lần trình\" nhưng không AC nào tả bản ghi ký của lần cũ khi trình lại: còn truy xuất được không, giao diện phân biệt \"ký từ "
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", có \"thu hồi thiết bị khi mất máy\" nhưng không AC nào xử lý người duyệt mất thiết bị lúc đang có tờ trình chờ: fallback PIN có tự kích hoạt không, chưa đặt PIN"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S1"
+  ],
+  "issue": ", đồng trình liên phòng do \"trưởng phòng phòng đó xác nhận\", không AC nào xử lý trưởng phòng đổi (nghỉ/đổi vai) khi tờ trình đang chờ; S4 nhắc hạn chỉ phủ giai "
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S3"
+  ],
+  "issue": ", \"nguồn AI luôn trỏ bản hiện hành\" + \"hết hiệu lực tự gỡ ≤1 giờ\" nhưng không AC nào xử lý khôi phục bản cũ khi tài liệu đang là nguồn AI: AI có tự nhận nội dun"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", \"dịch vụ khoá chuyên dụng\" quản khoá riêng tenant nhưng không story nào tả vòng đời khoá: cấp khi đăng ký, xoay vòng, backup, xoá khi tổ chức đóng; PLATFORM-E"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", xoá thư mục khi \"rỗng hoặc chuyển nội dung\" nhưng không AC nào xử lý bình luận gắn trên thư mục (S4) khi thư mục bị xoá/di chuyển. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL"
+  ],
+  "issue": ", APPROVAL chỉ \"xác thực nội bộ chưa phải ký số\", trong khi MISA AMIS WeSign (từ ~1tr/năm) cho SME ký pháp lý thật, Base Request có chữ ký tích hợp. JTBD thật c"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE"
+  ],
+  "issue": ", \"khoá riêng tenant + zero standing access\" là điểm phân biệt thật (Base/1Office không công bố cam kết tương đương) nhưng GTM trong BRD không khai thác: không "
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRODUCT"
+  ],
+  "issue": ", hai phân hệ horizon next (3–6 tháng) trong khi Lark cho Approval workflow + 100GB storage miễn phí tới 50 user, 1Office có workflow + document ngay gói chuẩn."
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "BRD"
+  ],
+  "issue": ", định vị \"một ứng dụng hợp nhất\" nhưng giai đoạn now ra mắt không có phê duyệt + kho tài liệu, trong khi Base/1Office có đủ ngay; mà EXEC/ORG_ADMIN, người quyế"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1"
+  ],
+  "issue": ", rủi ro chi phí lưu trữ có mitigation \"hạn mức theo gói\" nhưng không một con số: không hạn mức cụ thể cho gói 89k, không so Lark free 100GB/org, không định cỡ "
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S2"
+  ],
+  "issue": ", v2 giới hạn 2 mẫu luồng + 3 cấp; Base Request routing không giới hạn cấp, 1Office tự cấu hình. SME 50–200 người VN thường 4 cấp; spec không có dữ liệu cho thấ"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", zero-standing-access + KMS là tầng bảo mật phức tạp gắn moscow must cho phân hệ mà rủi ro adoption (\"kho rỗng vì thói quen\") còn OPEN. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", AC1 dùng loạt biệt ngữ không giải nghĩa cho PO không rành kỹ thuật: passkey, \"chữ ký mật mã\", sinh trắc không rời thiết bị; và \"FaceID\" không rõ là Apple Face"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", \"BẬC ĐẢM BẢO\" dùng ngay trong AC mà chưa định nghĩa ở đâu: bậc là lớp chính sách hay kỹ thuật, EXEC có luôn bị bậc CAO hay theo loại tờ trình. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-APPROVAL-E1-S3"
+  ],
+  "issue": ", AC đăng ký thiết bị đứng ngang hàng AC ký duyệt nhưng thực ra là bước chuẩn bị một lần; \"xác minh OTP lần đầu\" đặt cạnh \"sinh trắc không rời thiết bị\" dễ đọc "
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", AC2 (\"tải trùng tên → tạo phiên bản mới\") và AC3 (\"QUẢN LÝ PHIÊN BẢN: lịch sử đầy đủ\") chồng lấn cùng một hành vi versioning sau khi AC3 được chèn thêm. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", \"zero standing access\" không giải nghĩa; \"phê duyệt hai người\" không nói hai người là ai (BoGo, tổ chức, hay mỗi bên một); SLA truy cập khẩn cấp không có. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-RESOURCE-E1"
+  ],
+  "issue": ", \"dịch vụ khoá chuyên dụng\" / KMS nhắc ở epic + S1 nhưng không đâu giải thích KMS là gì, BoGo tự host hay thuê ngoài. **"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", \"NGƯỜI CẬP NHẬT gần nhất\" chưa định nghĩa khi nhiều người tải bản liên tiếp; \"không phải mở lịch sử mới biết\" gợi một trường, AC phiên bản lại đòi metadata đủ"
+ },
+ {
+  "report": "20260611T014650Z-PRD-APPROVAL-PRD-RESOURCE.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-RESOURCE-E1-S1"
+  ],
+  "issue": ", \"cross-tenant\" là biệt ngữ nằm trong một AC chức năng, trộn phạm vi kiểm thử vào AC trải nghiệm. **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": ", Spec tuyên chuẩn parity Zalo nhưng không một story nào của E1 spec trả lời/trích dẫn từng tin, thứ Zalo có từ 2016. **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": ", In-scope không có tin nhắn giọng nói; Zalo Help xác nhận đây là mục riêng trong \"Nhắn tin & Gọi\". **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM-E1-S7"
+  ],
+  "issue": ", S7 (màu + tag tin) spec tự ghi rõ là vượt Zalo, nhưng lại gán must, tức trễ là chặn go-live. **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Spec khai chuẩn parity Zalo (DEC-68) nhưng bảng so sánh chỉ 4 dòng và không nhắc reply/quote, tính năng Zalo có từ 2016, đã xác minh hiện hành (trích dẫn nội du"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "blocker",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "In-scope không có voice message; Zalo Help liệt kê \"Gửi tin nhắn giọng nói\" thành mục riêng. Đây là thói quen rất phổ biến của nhân viên hiện trường Việt. **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Zalo có cả \"đang soạn tin\" lẫn trạng thái online (đã xác minh); người dùng Zalo quen đọc tín hiệu này trước khi gửi tiếp. **"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Nhắc hẹn (reminder) trong nhóm là tính năng Zalo nhóm có sẵn, hỗ trợ lặp ngày/tuần/tháng (Zalo Help có mục riêng). COMM không spec, mà cũng không ghi out có chủ"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Video/voice call out-of-scope tường minh, trong khi Zalo có gọi thoại/video nhóm (đã xác minh). Quyết định out hợp lý, nhưng có điều kiện, mà spec không có một "
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "high",
+  "artifacts": [
+   "PRD-COMM-E1-S7"
+  ],
+  "issue": "S7 (màu + tag tin) spec tự nhận là vượt Zalo nhưng gán must, chặn go-live nếu trễ. Giá trị thật của nó nằm ở kho tag chung với TASK (moat), nhưng lúc go-live ng"
+ },
+ {
+  "report": "20260611T032544Z-PRD-COMM-zalo-parity.md",
+  "severity": "medium",
+  "artifacts": [
+   "PRD-COMM"
+  ],
+  "issue": "Zalo có kho sticker lớn (2025 thêm ZSticker AI), phương tiện cảm xúc phổ biến nhất của người Việt khi nhắn tin; trong ngữ cảnh vận hành nội bộ thì đây là tiện í"
+ }
+]

@@ -1,0 +1,784 @@
+{
+ "product:COMM#0": {
+  "uid": "product:COMM#0",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-COMM-E2 frontmatter line 9 sets moscow: should; PRD-COMM-E2-S1 (broadcast with permissions) is also should (line 10). PRD-COMM-E1-S7 (màu + tag) is must (line 11). BRD-G2 explicitly ties management effectiveness to getting operational info to the right people at the right time — broadcast is the primary instrument for that. The PRD's own positioning (comm.md line 60) lists broadcast as a core scope item yet its epic and story are both 'should'. The severity high is fair: if sprint pressure cuts broadcast, the ORG_ADMIN/DEPT_MGR/EXEC job-to-be-done in COMM collapses to being indistinguishable from a regular employee."
+ },
+ "product:COMM#1": {
+  "uid": "product:COMM#1",
+  "verdict": "overreach",
+  "reason": "DEC-70 is a closed KEEP ruling: the PO was presented exactly this argument (S7 is novel, blocks go-live, creates learning overhead vs Zalo-switch goal) and explicitly chose to keep must and accept the delay risk. The finding re-litigates a decided question without new evidence. The consequence (trễ-S7-trễ-cả-cụm) is already recorded in DEC-70 itself. This is not a new product problem — it is a known, accepted risk. Raising it again as a new 'high' finding misrepresents the decision status. The underlying concern about measuring S7 adoption is valid but that is a separate, lower-severity observation, not grounds to reopen DEC-70.",
+  "suggested_severity": "low"
+ },
+ "product:COMM#2": {
+  "uid": "product:COMM#2",
+  "verdict": "upheld",
+  "reason": "PRD-COMM line 97 describes the pull mechanism conceptually ('việc/ca bắt buộc xử lý trong app') and line 96 sets the ≥60% Zalo groups stopping threshold. However, a full scan of all 14 COMM stories (E1-S1 through E2-S2) and the COMM PRD confirms there is no story giving ORG_ADMIN a 'set official-channel policy' screen, a Zalo-usage report, or any adoption monitoring dashboard. The glossary-level definition of 'cơ chế kéo' is not a built story. The severity high is fair: without a concrete built story enforcing the mechanism, the metric in line 96 has no instrument to drive it."
+ },
+ "product:COMM#3": {
+  "uid": "product:COMM#3",
+  "verdict": "upheld",
+  "reason": "S5 AC (line 25) states 'poll ẩn danh thì CẢ NGƯỜI TẠO cũng không xem được ai bầu gì'. Design note line 50 acknowledges 'hệ thống vẫn lưu liên kết người–phiếu ở tầng dữ liệu để chặn bầu trùng' and only mitigates via 'điều khoản dữ liệu nội bộ'. The E1 epic risk block (lines 28-32) notes this risk but the mitigation is 'ghi minh bạch trong điều khoản dữ liệu nội bộ' — not a required UI disclosure AC. The finding correctly identifies that there is no AC mandating a UI-level explanation before creating an anonymous poll. Medium severity is accurate; this is a trust risk that could damage the entire COMM channel but is not a build-blocker."
+ },
+ "product:COMM#4": {
+  "uid": "product:COMM#4",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-COMM-E1 line 18 and PRD-COMM-E2 line 18 both list EXEC in personas. Reading all 14 COMM stories, none have EXEC as a primary actor with a distinct job-to-be-done. E2-S1 (broadcast) lists EXEC as a sender with 'gửi thông báo toàn tổ chức' (AC line 26) — this is the closest EXEC-specific action. However VISION (per shared-context lines 17) describes EXEC's job as seeing attendance/delays/overloaded departments and 'coordinating directly in app'. There are no stories for that coordination/oversight dimension. Medium severity is fair — this is a scope gap for one persona, not a product-killer."
+ },
+ "product:COMM#5": {
+  "uid": "product:COMM#5",
+  "verdict": "upheld",
+  "reason": "S4 is moscow: must (line 11) and its AC (line 24) depends on PRD-TASK-E1-S1 form. The E1 epic risk block (lines 22-27) acknowledges 'trượt thứ tự go-live thì điểm vào trên tin nhắn thành stub không nghiệm thu được' with mitigation 'depends_on khai báo'. The finding correctly notes the mitigation is only a declaration without a fallback behavior spec. However, the go-live ordering (DEC-33) mandates TASK-E1 before COMM, reducing the likelihood. The tech split suggested (UI entry point vs two-way link) is actionable. Medium severity is fair."
+ },
+ "product:COMM#6": {
+  "uid": "product:COMM#6",
+  "verdict": "upheld",
+  "reason": "PRD-COMM line 82 explicitly puts per-event push notification out of scope as 'hạ tầng thông báo nội bộ chung do đội build lo'. A scan of all 9 PRDs (HR, TASK, COMM, AI, PLATFORM, SUPPORT, APPROVAL, RESOURCE, REPORT) finds no PRD owning a story for this shared notification infrastructure. S1 line 51, S8 line 25, and E2-S1 line 51 all reference it. Without an owned story, every notification-related AC across COMM is unverifiable. Medium severity is fair (this is already noted partially at product:COMM#6); the duplicate with tech:COMM#2 is noted but both provide complementary perspectives."
+ },
+ "product:COMM#7": {
+  "uid": "product:COMM#7",
+  "verdict": "upheld",
+  "reason": "DEC-66 (line 727) requires web parity as an acceptance condition for each module with the only exception being hardware-bound mobile features (GPS/face — with mandatory web alternatives). S1 AC (line 29) specifies voice message via mobile paradigm ('nhấn giữ nút mic'). S9 AC (line 24) specifies typing indicator only for 1-1 with no web equivalent mentioned. However, voice message has explicit mobile-hardware-adjacent behavior (hold-mic) and could qualify for the hardware exception under DEC-66 if the team treats it as such. The web alternative path is genuinely unspecified. Low severity is fair — this is a spec gap on implementation detail, not a product direction error."
+ },
+ "tech:COMM#0": {
+  "uid": "tech:COMM#0",
+  "verdict": "upheld",
+  "reason": "Confirmed in S1 design notes line 53: 'entity_type: order|shift|task' with 'order→SALES'. DEC-45 (line 496) explicitly removed SALES from BoGo. The finding correctly identifies a stale reference. No PRD-SALES exists in the product inventory (shared-context line 26 confirms only 9 PRDs, none is SALES). When the ERP-link picker loads entity types, 'order' would have no auth endpoint to call, making deep-link a stub. Severity blocker is appropriate: the ERP-link differentiator is described as the core moat of COMM (S1 design note line 52), and having a dead entity_type in the starting list breaks that differentiator at build time."
+ },
+ "tech:COMM#1": {
+  "uid": "tech:COMM#1",
+  "verdict": "overreach",
+  "reason": "S1 is labeled size: M (line 11) — a deliberate sizing choice by the PO/team. The 9 AC cover multiple surfaces, but the spec is a requirements document, not a sprint plan; story splitting is an implementation decision for the team, not a spec defect. The actual technical surfaces described (real-time chat, file storage, ERP link, voice, offline queue) are architectural sub-concerns within one user-facing feature ('1-1 messaging between employees'). The finding reads as a process concern (sprint velocity, testability in parts) rather than a product spec defect. The story could benefit from splitting, but calling it 'high' severity in a spec critique overstates the defect. No AC is contradictory or missing; the concern is about story granularity.",
+  "suggested_severity": "low"
+ },
+ "tech:COMM#2": {
+  "uid": "tech:COMM#2",
+  "verdict": "upheld",
+  "reason": "Multiple stories reference 'hạ tầng thông báo nội bộ chung' with no PRD owning it: S8 AC line 25, E2-S1 design note line 51. DEC-30 accepted this as a boundary decision. No PRD-PLATFORM story covers notification SLA, retry, or idempotency. High severity is fair — at least 5 COMM stories have AC dependent on this unowned infrastructure, and its absence would cause notification failures at pilot launch."
+ },
+ "tech:COMM#3": {
+  "uid": "tech:COMM#3",
+  "verdict": "upheld",
+  "reason": "S1 AC (line 25) promises 'BẤT KỲ LÚC NÀO trong suốt vòng đời hội thoại' for file/voice access. No AC anywhere in S1 or the COMM PRD defines storage quota, TTL, per-org limits, or cost ceiling. BRD infrastructure cost assumptions (shared-context §1) are per-user aggregates with no chat-storage line item. The finding correctly identifies an unbounded cost commitment. High severity is fair for a SaaS product with no storage cap — this directly affects unit economics."
+ },
+ "tech:COMM#4": {
+  "uid": "tech:COMM#4",
+  "verdict": "upheld",
+  "reason": "S2 AC (line 28) commits to '≤ 5 PHÚT kể từ khi COMM NHẬN được sự kiện từ HR'. The design note in S2 (line 49) explicitly warns 'Nếu HR thực tế chỉ chạy theo lô (batch) thì SLA real-time không đạt'. The AC does not distinguish the two scenarios (real-time event vs batch). This internal contradiction within the same story makes the AC untestable against a known alternate HR implementation mode. Medium severity is fair."
+ },
+ "tech:COMM#5": {
+  "uid": "tech:COMM#5",
+  "verdict": "upheld",
+  "reason": "S8 AC (lines 24-28) has no idempotency requirement for the recurring reminder scheduler. E2-S1 design notes (line 52) explicitly spec idempotency ('lưu trạng thái PENDING/SENT/FAILED; job kiểm trước khi gửi') but this is only a design note, not AC, and it applies to broadcast — not reminders. S8 has no equivalent. The risk of duplicate/missed reminders on server restart is real and not addressed. Medium severity is fair."
+ },
+ "tech:COMM#6": {
+  "uid": "tech:COMM#6",
+  "verdict": "upheld",
+  "reason": "S5 AC (line 25) promises CẢ NGƯỜI TẠO cannot see who voted in anonymous polls. Design note (line 50) confirms vote-person link is stored for dedup. No AC restricts ORG_ADMIN from querying the raw vote table, no API contract prevents returning user_id with choices for anonymous polls when called with admin token, and no data model separation is required by AC. The finding adds specific technical enforcement requirements (API contract, table separation) that go beyond the product-level concern in product:COMM#3. Medium severity is fair."
+ },
+ "tech:COMM#7": {
+  "uid": "tech:COMM#7",
+  "verdict": "upheld",
+  "reason": "S1 AC (line 30) states 'tin gửi lúc mất kết nối được đẩy khi nối lại, KHÔNG rơi tin'. No AC defines maximum queue duration, maximum queue size, behavior on force-quit/device restart, or ordering guarantee on reconnect. The design note (line 50) describes reconnect technology choice but does not bound the queue. In Vietnamese field conditions (30-60 min outages noted in the finding), an unbounded queue promise is untestable and potentially creates memory/storage issues on device. Medium severity is fair."
+ },
+ "product:AI#0": {
+  "uid": "product:AI#0",
+  "verdict": "overreach",
+  "reason": "The finding correctly identifies that S4 was added from a PO interview suggestion (design note line 44 confirms this), and BRD/VISION's 4 pain points and 5 purchase triggers have no explicit mention of internal quiz/training. The risk to G2/G3 metrics is real. However, the severity label 'high' is inflated: S4 is already 'moscow: should' (not 'must'), so it does NOT currently occupy a must slot in MVP. The finding's claim that it is 'chiếm slot must trong MVP' is factually wrong. The underlying concern — a should/now/L story with no validated pain point — is legitimate but carries lower urgency.",
+  "suggested_severity": "medium"
+ },
+ "product:AI#1": {
+  "uid": "product:AI#1",
+  "verdict": "upheld",
+  "reason": "S3 personas confirmed as [STAFF, DEPT_MGR] — EXEC is absent. Design note at line 45 explicitly defers EXEC to 'giai đoạn sau'. VISION pain point #4 ('lãnh đạo thiếu bức tranh toàn cảnh') is the fourth stated core problem, and BRD-G3 positions the AI assistant as a competitive differentiator vs Base/1Office. The buying decision rests with EXEC/leadership who will see no personal value in the MVP AI. The severity high is fair given the EXEC is the economic buyer.",
+  "suggested_severity": "high"
+ },
+ "product:AI#2": {
+  "uid": "product:AI#2",
+  "verdict": "upheld",
+  "reason": "BRD line 180 confirms the hard constraint: LLM cost per org must be ≤15% of that org's subscription revenue. The E2 epic risk mitigation (line 47-48) explicitly delegates this to 'S6 dashboard'. Reading all 5 S6 ACs confirms zero mention of cost visibility or alerting. The gap between the stated mitigation and the actual AC content is real and economically consequential.",
+  "suggested_severity": "high"
+ },
+ "product:AI#3": {
+  "uid": "product:AI#3",
+  "verdict": "upheld",
+  "reason": "S5 AC1 promises step-by-step guidance including 'dựng sơ đồ phòng ban → thêm nhân viên', AC2 promises to link to 'ĐÚNG màn hình thao tác'. GAP-ORG (§3) confirms no story builds department creation or bulk employee import screens. The finding escalates the known gap with a new concrete consequence: S5 acceptance testing will fail because the linked screens do not exist, and the 30-day activation loop (BRD-G3) cannot succeed without them. The escalation meets the §3 threshold.",
+  "suggested_severity": "high"
+ },
+ "product:AI#4": {
+  "uid": "product:AI#4",
+  "verdict": "upheld",
+  "reason": "S2 design note (line 45) and E2 risk (line 39-43) mention NĐ13 concern and mark it 'accepted' with 'BẮT BUỘC rà soát luật sư'. Neither S2's 4 ACs nor E2's epic completion conditions include a legal sign-off gate. QA has no criterion to block go-live. The finding's diagnosis is correct. Medium severity is appropriate since the risk is accepted (not ignored) and the fix is lightweight — add one AC gate.",
+  "suggested_severity": "medium"
+ },
+ "product:AI#5": {
+  "uid": "product:AI#5",
+  "verdict": "upheld",
+  "reason": "File scan confirms all 7 E1 stories and the E1 epic itself carry 'scope: in' alongside 'moscow: wont'. This is a real signal conflict: any tooling or backlog filter querying scope: in will surface these 7 wont stories. The E1 epic design note says it is 'lịch sử' but the frontmatter fields contradict that intent.",
+  "suggested_severity": "low"
+ },
+ "tech:AI#0": {
+  "uid": "tech:AI#0",
+  "verdict": "upheld",
+  "reason": "S1 AC line 27 states '95% câu hỏi được trả lời trong ≤ 10 giây' with no load conditions, document corpus size, or network qualifier. This is not measurable as written. The finding is valid.",
+  "suggested_severity": "high"
+ },
+ "tech:AI#1": {
+  "uid": "tech:AI#1",
+  "verdict": "upheld",
+  "reason": "All 4 S1 ACs cover the happy path (correct answer, low confidence, cross-tenant, performance). None defines behavior when the LLM API or document search pipeline is unavailable. The epic risk section delegates to backend but no AC enforces user-facing graceful degradation. Valid gap.",
+  "suggested_severity": "high"
+ },
+ "tech:AI#2": {
+  "uid": "tech:AI#2",
+  "verdict": "false",
+  "reason": "The §3 known issues list explicitly states 'INVEST overloads (AI-E2-S4 mini-LMS in one story)' as an already-accepted finding. The finding does not add new consequences or a sharper fix beyond what is already documented — it simply restates the same INVEST problem. Per shared-context §3 rules, a finding must escalate with new evidence to earn a place; this one does not."
+ },
+ "tech:AI#3": {
+  "uid": "tech:AI#3",
+  "verdict": "overreach",
+  "reason": "The dependency is real: S5 ACs presuppose workspace provisioning from PLATFORM-E1-S1. However, PLATFORM-E1-S1 AC3 already includes an explicit fallback: 'checklist tĩnh (fallback an toàn); khi trợ lý onboarding sẵn sàng thì trợ lý thay thế checklist tĩnh.' The stories are already designed to be decoupled — PLATFORM-E1-S1 ships first with a static checklist, S5 replaces it when ready. The sprint ordering problem stated in the finding is mitigated by this design. The missing `depends_on` field is a documentation tidiness issue, not a build-blocking gap.",
+  "suggested_severity": "low"
+ },
+ "tech:AI#4": {
+  "uid": "tech:AI#4",
+  "verdict": "upheld",
+  "reason": "S6 AC1 line 24 says 'thay đổi áp dụng ngay' with no time bound. RAG re-indexing latency is a real technical concern: the epic's own risk list (line 54-58) names 'nguồn tri thức lỗi thời' as a medium-impact risk. The AC does not define what 'ngay' means, leaving the team without a testable criterion.",
+  "suggested_severity": "medium"
+ },
+ "tech:AI#5": {
+  "uid": "tech:AI#5",
+  "verdict": "upheld",
+  "reason": "S6 AC1 explicitly commits to migrating directly-uploaded documents into the RESOURCE store when PRD-RESOURCE launches (DEC-59). Checking PRD-RESOURCE and PRD-AI stories confirms no story owns this migration task — no AC covers cross-org data safety, rollback, or owner notification for the migration. This is a genuine unclaimed work item affecting live org data.",
+  "suggested_severity": "medium"
+ },
+ "tech:AI#6": {
+  "uid": "tech:AI#6",
+  "verdict": "upheld",
+  "reason": "S3 ACs confirmed: all 4 assume PRD-TASK is available and return data. No error path AC exists for the case where the TASK subsystem is unavailable. The finding is correct. Medium severity is appropriate — this is a known-class error-handling gap, not a data-safety issue.",
+  "suggested_severity": "medium"
+ },
+ "tech:AI#7": {
+  "uid": "tech:AI#7",
+  "verdict": "upheld",
+  "reason": "E2's risk mitigation (line 37-38) mentions 'kiểm thử chống thao túng prompt-injection' but this tests adversarial user input, not concurrent session context contamination. No AC in S1–S6 requires a cross-tenant prompt isolation test (sending concurrent requests from two orgs and verifying prompt content stays separate). For a SaaS multi-tenant AI product this is a go-live security gate. Medium severity is appropriate; blocker would be an overreach since the architectural pattern (backend-enforced query) reduces the probability.",
+  "suggested_severity": "medium"
+ },
+ "tech:AI#8": {
+  "uid": "tech:AI#8",
+  "verdict": "upheld",
+  "reason": "S2 AC1 examples include 'ngày phép' and 'bảng công'; AC2 blocks access to 'lương của anh X?' (other people's salary). Neither AC explicitly states whether STAFF asking about their own salary is in or out of scope. Design note flags NĐ13 risk but does not resolve the scope question. This ambiguity will cause inconsistent implementation decisions across team members.",
+  "suggested_severity": "medium"
+ },
+ "tech:AI#9": {
+  "uid": "tech:AI#9",
+  "verdict": "upheld",
+  "reason": "S4 AC3 line 26 says 'hệ thống chấm tự động và lưu kết quả' with no definition of retry policy, late submission handling, or result history. These are basic quiz system edge cases that will generate pilot feedback immediately. Low severity is appropriate since S4 is 'moscow: should' and the gaps are operational, not security-critical.",
+  "suggested_severity": "low"
+ },
+ "product:HR#0": {
+  "uid": "product:HR#0",
+  "verdict": "upheld",
+  "reason": "Confirmed at PRD-HR-E1-S1:40 ('nhân viên giao nhận hoặc nhân viên xử lý'), PRD-HR-E1-S2:38 ('quản lý hệ thống'), PRD-HR-E2-S3:37 (same Cleanmatic role labels), PRD-HR-E2-S1:39 ('quản lý hệ thống'). None of the 5 BoGo personas use these labels. Consequence is real: build team and pilot SMEs see old Cleanmatic domain language. Severity 'high' is a stretch for what is essentially a label consistency error — but the persona mismatch touches all 14 HR stories and could cause misdirected QA/demo work. Medium would be more proportionate.",
+  "suggested_severity": "medium"
+ },
+ "product:HR#1": {
+  "uid": "product:HR#1",
+  "verdict": "upheld",
+  "reason": "VISION:64 explicitly promises 'nhập 40 nhân viên từ file' as the Day-1 activation scenario. PRD-HR-E1-S6 ACs cover individual record creation only — no bulk import AC exists anywhere in 14 HR stories. This is a new, sharper angle on the known [GAP-ORG] finding: [GAP-ORG] focuses on org-structure self-service screens; this finding specifically targets bulk employee import as an activation-rate blocker (BRD-G3). The consequence (40-person manual entry killing trial) is concrete and new. Severity 'high' is justified."
+ },
+ "product:HR#2": {
+  "uid": "product:HR#2",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E2.md:40 confirmed: 'Liên kết phiếu chi: Khi bảng lương approved → tạo phiếu chi lương tại PRD-FINANCE.' PRD-FINANCE is absent from the repo per DEC-45. PRD-HR-E2-S2 AC3 already has the correct language ('NGOÀI phạm vi v1 — DEC-45; dùng xuất Excel'). The epic Phạm vi section contradicts its own story AC. Dead reference in an approved epic's scope section is a real defect. Note: this finding is substantively identical to tech:HR#1 — the same line, same fix. One of the two is redundant but both are factually correct."
+ },
+ "product:HR#3": {
+  "uid": "product:HR#3",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S1 design note line 50 confirms: 'Ảnh khuôn mặt đăng ký được ORG_ADMIN (hoặc trưởng phòng được uỷ quyền) upload khi onboard nhân viên.' AC9 (line 32) states the employee must sign consent before registration. These are two different flows with no reconciliation. NĐ13/2023 requires the data subject to personally express consent — admin uploading on their behalf breaks that requirement. The finding correctly identifies a legal compliance gap. Severity 'medium' is appropriate; not a blocker because the fix is spec-level clarification before build."
+ },
+ "product:HR#4": {
+  "uid": "product:HR#4",
+  "verdict": "overreach",
+  "reason": "The finding argues E2-S4 should be downgraded to 'should'. However, PRD-HR-E2-S4 design note line 47 already addresses the core technical risk: 'nếu một nguồn chưa khả dụng... chỉ tiêu KPI từ nguồn đó hiển thị N/A và KHÔNG chặn tính lương cơ bản.' The must/should mismatch with TASK-E3-S2 is covered there. The product critique's recommendation to downgrade to 'should' pending pilot validation is a legitimate product strategy opinion but not a spec defect — the PO explicitly made this call with rationale (design note line 46). Severity 'medium' is appropriate for the residual risk (unvalidated demand), but calling for a moscow downgrade overreaches the verifiable evidence.",
+  "suggested_severity": "low"
+ },
+ "product:HR#5": {
+  "uid": "product:HR#5",
+  "verdict": "overreach",
+  "reason": "E2-S2 has 10 ACs and size=L, which is flagged as an INVEST overload in the known §3 items ('HR-E1-S6 has 11 AC' — S2 also qualifies). The finding re-discovers a known issue. Additionally, the fix proposed (split into A and B stories) is a valid engineering recommendation but all 10 ACs are logically tied to the same payroll-run state machine — splitting them does not remove the dependency: story B cannot be tested without story A's output anyway. The severity 'medium' is fair but the finding adds little new over the known INVEST overload warning.",
+  "suggested_severity": "low"
+ },
+ "product:HR#6": {
+  "uid": "product:HR#6",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S3 AC line 31 confirmed: an endpoint-exposure AC ('Expose endpoint xác thực quyền đọc một ca làm theo ID') is embedded in a business user story about shift assignment. This is a technical interface contract that belongs in design notes or an integration spec, not in business ACs. It obscures what DEPT_MGR should be able to verify. Finding and fix are accurate. Severity 'low' is correct."
+ },
+ "tech:HR#0": {
+  "uid": "tech:HR#0",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-HR-E2-S4 is moscow=must, PRD-TASK-E3-S2 is moscow=should (verified in file). No `depends_on` field in E2-S4 frontmatter. However, E2-S4 design note line 47 already handles the N/A display behavior: 'nếu một nguồn chưa khả dụng... hiển thị N/A và KHÔNG chặn tính lương cơ bản.' So the behavioral consequence the finding warns about is partially mitigated in design notes. The missing `depends_on` field and the must/should mismatch remain real gaps — build team won't see the ordering constraint from the frontmatter alone. Severity 'high' is inflated given the design-note mitigation already exists.",
+  "suggested_severity": "medium"
+ },
+ "tech:HR#1": {
+  "uid": "tech:HR#1",
+  "verdict": "upheld",
+  "reason": "Same defect as product:HR#2 but verified independently from the tech lens. PRD-HR-E2.md:40 confirmed 'tạo phiếu chi lương tại PRD-FINANCE' in the Phạm vi (scope) section of an approved epic. PRD-FINANCE does not exist. This is a dead reference in the official scope section, not a design note. Severity 'high' is justified — it directly misdirects build team reading the epic scope first."
+ },
+ "tech:HR#2": {
+  "uid": "tech:HR#2",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S1 AC (line 33) confirmed: 'lưu cục bộ với timestamp thiết bị'. No AC anywhere in E1-S1 addresses timestamp validation against server time on sync. Android/iOS both allow manual clock adjustment when 'auto time' is disabled. The attack vector is real: adjust device clock to shift time → check in offline → re-enable auto → sync with falsified timestamp. The 'offline-sync' flag only enables manual review, not automated detection. Severity 'high' is fair for a core anti-fraud feature in an HR chấm công product."
+ },
+ "tech:HR#3": {
+  "uid": "tech:HR#3",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S1 AC9 (line 32) says consent is mandatory before face registration ('bắt buộc ký đồng ý điện tử... trước khi đăng ký'). NĐ13/2023 Article 9 grants individuals the right to refuse. No AC in E1-S1 or E1-S6 describes behavior when an employee refuses. E1-S6 only covers deletion after resignation. The refusal-at-onboarding path is absent. Without this, the build team's default will likely be to block onboarding — violating labor law. Severity 'high' is justified given legal compliance consequence."
+ },
+ "tech:HR#4": {
+  "uid": "tech:HR#4",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S1 AC1 (line 24): 'Nút hoạt động tương ứng với ca đã được phân công.' No AC defines behavior when no shift exists for the current day. PRD-HR-E1-S3 confirms shifts can exist or not. If an employee without a shift can still clock in (undefined behavior), payroll calculation in E2-S2 will have no shift reference — this is a concrete data integrity risk. Severity 'medium' is appropriate."
+ },
+ "tech:HR#5": {
+  "uid": "tech:HR#5",
+  "verdict": "false",
+  "reason": "The shared context §3 known items explicitly lists this as an accepted warning: '3 vague AC: \"thông báo lỗi rõ ràng\" HR-E1-S1.' The finding's own text acknowledges it 'đã được ghi nhận là known item (§3)'. The escalation angle (different error types in face recognition need different messages) is valid as a design observation but does not change the severity or add a new consequence beyond what was already accepted. Per the shared context rules, a known item may only be re-reported if it adds new evidence that escalates consequence. The fix proposed (split into 3 testable cases) is useful but constitutes known-issue rehash rather than a new finding."
+ },
+ "tech:HR#6": {
+  "uid": "tech:HR#6",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E2-S2 AC8 addresses concurrent edit lock ('chỉ MỘT người được mở phiên hiệu chỉnh'). AC9 addresses recreate-after-edit warning. Neither AC addresses duplicate creation: two sessions simultaneously clicking 'Tạo bảng lương kỳ X' for the same period. This is a distinct race condition from edit locking. The consequence (two draft payrolls for the same period) is concrete and leads to approval confusion. Severity 'medium' is correct."
+ },
+ "tech:HR#7": {
+  "uid": "tech:HR#7",
+  "verdict": "upheld",
+  "reason": "BRD:158 and DEC-66 confirmed: 'parity web là điều kiện nghiệm thu từng phân hệ'. Searched all 14 HR story files for web/parity mentions — zero ACs reference web behavior, layout, or platform. DEC-66 explicitly makes web parity an acceptance gate per-subsystem. Without web ACs in HR stories, the acceptance gate has no testable criterion. The finding is accurate. However, severity 'medium' rather than high is appropriate — this is a structural gap in acceptance criteria documentation, not a shipped defect. The BRD already carries the rule; the stories merely haven't echoed it.",
+  "suggested_severity": "medium"
+ },
+ "tech:HR#8": {
+  "uid": "tech:HR#8",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E3-S1 AC6 (line 29) confirmed: 'Sau khi DEPT_MGR approve → số ngày phép năm tự động trừ.' No AC in E3-S1 or any other HR story covers leave cancellation post-approval or balance restoration. The leave balance becomes a one-way ledger with no reversal path. This is a real operational gap — employees changing plans or managers approving by mistake have no in-system remedy. Severity 'medium' is correct."
+ },
+ "tech:HR#9": {
+  "uid": "tech:HR#9",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E2-S1 line 50 explicitly names 'PRD-FINANCE-E3' as the config location for commission rates. PRD-FINANCE was eliminated per DEC-45 and does not exist in the current spec tree. The dangling reference is in a design note (not in AC), so it cannot block an acceptance test directly, but any build team member who reads it will look for a PRD-FINANCE-E3 that doesn't exist and commission rate has no new home after the pivot. Low severity is fair for a design-note-only issue with no active AC consequences."
+ },
+ "product:TASK#0": {
+  "uid": "product:TASK#0",
+  "verdict": "upheld",
+  "reason": "PRD-TASK-E1 epic frontmatter (line 18) lists personas [STAFF, DEPT_MGR, ORG_ADMIN] — EXEC is absent. PRD-TASK-E2 epic similarly lists [STAFF, DEPT_MGR]. E1-S2 AC line 31 mentions EXEC as an exception for cross-dept assignment, but EXEC has no declared persona slot in E1 or E2 and no dedicated story for top-down task assignment. VISION line 76 defines EXEC's core need as 'giao việc xuống và theo dấu được đến cùng'. DEC-49 point 6 confirms EXEC can assign cross-dept, yet the spec never builds that capability as a story. High severity is fair — this is a buying-persona gap in a core workflow."
+ },
+ "product:TASK#1": {
+  "uid": "product:TASK#1",
+  "verdict": "overreach",
+  "reason": "E4 IS listed in the PRD-TASK frontmatter epics array (lines 24-27) and is explicitly labeled moscow:must. The scope prose section (lines 52-63) omits a one-line mention of E4, but this is a prose hygiene issue, not a budget/planning risk of the severity claimed. Build teams read the epics list, not only the prose scope description. The ownership boundary concern about HR data is valid but is separately captured in product:TASK#7. The fix is appropriate but severity should be medium, not high.",
+  "suggested_severity": "medium"
+ },
+ "product:TASK#2": {
+  "uid": "product:TASK#2",
+  "verdict": "upheld",
+  "reason": "E2-S4 AC lines 30 and 31 refer to a 'người duyệt mặc định' that can be disabled and an escalation chain — implying the approver is implicitly the assigner or a default role. E1-S1 AC (all 7 items) only has a checkbox 'cần duyệt khi hoàn thành' with no field to name a specific approver. E1-S2 personas and AC also do not address approver selection at task creation. The two AC blocks (E2-S4:30 vs E2-S4:31) assume a 'default approver' concept that is never defined earlier. This is a real build-ambiguity gap with RBAC consequences. High severity is appropriate."
+ },
+ "product:TASK#3": {
+  "uid": "product:TASK#3",
+  "verdict": "upheld",
+  "reason": "E1-S3 is moscow:should and contains 8 AC covering job scheduling, idempotency, makeup periods, cờ 'còn tồn kỳ trước', and timezone handling — workload that typically takes multiple sprints. The design note line 51 itself suggests splitting into two independent acceptance phases, yet moscow and scope remain undivided. The finding does not invent the problem; it escalates advice already in the spec's own design note. Medium severity is appropriate."
+ },
+ "product:TASK#4": {
+  "uid": "product:TASK#4",
+  "verdict": "overreach",
+  "reason": "E4-S3 is already moscow:should (not must), size:S, and has only 3 AC — PO already consciously rút gọn from the larger PRD-REPORT-E2-S1 (per design note line 43). The story will not block MVP if deferred since it is not must. The argument that 'no one will use favorites with 2 modules' is a valid product opinion but the PO has already correctly rated and scoped this story. Medium severity is an overreach for something already correctly classified and de-risked by the PO.",
+  "suggested_severity": "low"
+ },
+ "product:TASK#5": {
+  "uid": "product:TASK#5",
+  "verdict": "upheld",
+  "reason": "E4-S5 AC line 25 requires EMAIL as a delivery channel, and line 28 specifies hard-bounce logic (do not retry, flag for update) and soft-bounce retry (3 attempts with backoff). No story in PRD-TASK, PRD-PLATFORM, PRD-COMM, or elsewhere defines transactional email infrastructure (provider, SPF/DKIM, rate limits). E4-S5 design note says 'tái dùng hạ tầng lập lịch của PRD-TASK-E1-S3' for scheduling — but scheduling infra ≠ email delivery infra. The dependency is untracked. Medium is appropriate (story is moscow:should so not a hard blocker, but the hidden infra cost is real)."
+ },
+ "product:TASK#6": {
+  "uid": "product:TASK#6",
+  "verdict": "upheld",
+  "reason": "E3-S2 AC line 29 establishes task KPI as an input to payroll bonuses but makes no note about data integrity risk when completion status is self-reported without approval. The design note only clarifies 'không tự động cộng lương.' No AC addresses the verification gap (what fraction of tasks have evidence vs self-reported completion). The behavioral risk at SME pilot context is real. Medium severity is appropriate."
+ },
+ "product:TASK#7": {
+  "uid": "product:TASK#7",
+  "verdict": "upheld",
+  "reason": "E4 epic depends_on PRD-HR (frontmatter line 20), E4-S1 reads HR attendance data, but no story in E4 or PRD-HR defines who owns the data contract. E4-S1 design note line 48 notes 'HR + TASK expose số tổng hợp theo phòng ban; quyền enforce ở phân hệ' as a build-coordination note referencing DEC-42, but DEC-42 is a principle without naming an owner. Low severity is appropriate — real but a coordination smell, not a blocking spec gap."
+ },
+ "tech:TASK#0": {
+  "uid": "tech:TASK#0",
+  "verdict": "upheld",
+  "reason": "PRD-TASK-E1-S2 AC line 26 asserts the backward link: 'ca làm phản ánh NGƯỢC danh sách công việc gắn + tỉ lệ hoàn thành của ca.' PRD-HR-E1-S3 has 8 AC and none of them define receiving this event or displaying the task list on the shift detail screen. The 'moat' DEC-29 is the spec's declared primary competitive differentiator — without the HR-side AC, the feature has no acceptance test on the side that must display it, so it can be silently unbuilt. Blocker severity is appropriate."
+ },
+ "tech:TASK#1": {
+  "uid": "tech:TASK#1",
+  "verdict": "upheld",
+  "reason": "E4-S1 AC line 24 requires 'nhân sự đi làm / nghỉ / chưa chấm công — từ phân hệ Nhân sự, nhóm theo phòng ban.' PRD-HR-E1-S4 covers individual and team attendance history (filtered by employee, by day, by location) but not an aggregate count by department for dashboard consumption. E4-S1 design note line 48 acknowledges 'HR + TASK expose số tổng hợp theo phòng ban' as a build-coordination note, but no HR story has an AC for this aggregate endpoint. High severity is appropriate — this is a hard missing contract that will surface at sprint planning."
+ },
+ "tech:TASK#2": {
+  "uid": "tech:TASK#2",
+  "verdict": "overreach",
+  "reason": "E4-S5 is moscow:should, not must, so the missing email infrastructure cannot block MVP. The finding is accurate — no story defines transactional email provider, SPF/DKIM, or quota — but designating this 'high' when the story itself is should overstates the blocking risk. The same gap is already noted in product:TASK#5 at medium. High is an inflation; medium is correct for a should-story dependency gap.",
+  "suggested_severity": "medium"
+ },
+ "tech:TASK#3": {
+  "uid": "tech:TASK#3",
+  "verdict": "upheld",
+  "reason": "E1-S1 frontmatter line 20 lists personas [STAFF, DEPT_MGR], but all AC and the user story voice ('Là trưởng phòng') describe only DEPT_MGR. No AC addresses whether STAFF can create tasks and if so, whether they can only assign to themselves. E1-S2 AC line 31 mentions EXEC as cross-dept exception for DEPT_MGR but says nothing about STAFF. This is a real RBAC gap — the permission model for task creation will need to be guessed at build time. High severity is appropriate."
+ },
+ "tech:TASK#4": {
+  "uid": "tech:TASK#4",
+  "verdict": "upheld",
+  "reason": "E1-S3 AC line 29 describes makeup task creation ('bù các kỳ đã lỡ... chỉ bù kỳ gần nhất') and log generation, but does not specify whether the created makeup task triggers the same notification mechanism as a freshly-assigned task. This affects both the STAFF experience (unexplained overdue task appearing) and the DEPT_MGR visibility. The two possible behaviors are substantively different and neither is currently chosen. Medium severity is appropriate."
+ },
+ "tech:TASK#5": {
+  "uid": "tech:TASK#5",
+  "verdict": "upheld",
+  "reason": "E4-S1 AC line 29 specifies data-staleness SLA (60s/5min) but contains no page-load time SLA. Dashboard aggregates from at least 2 systems across multiple departments. E3-S1 (search) has an explicit ≤1s performance AC. The absence of a load-time SLA means the story cannot be definitively acceptance-tested for performance — a build team must self-invent a threshold. Medium severity is appropriate."
+ },
+ "tech:TASK#6": {
+  "uid": "tech:TASK#6",
+  "verdict": "upheld",
+  "reason": "E4-S1 AC line 27 states 'Tuyệt đối không hiển thị dữ liệu của tổ chức khác' and immediately defers enforcement to source systems: 'Quyền do phân hệ nguồn enforce — dashboard truyền ngữ cảnh người dùng + tổ chức, không tự lọc.' This means the dashboard layer has no verifiable acceptance test for cross-org isolation — a security audit or UAT reviewer cannot pass/fail this requirement at the dashboard layer independently of the source systems. Medium severity is appropriate."
+ },
+ "tech:TASK#7": {
+  "uid": "tech:TASK#7",
+  "verdict": "upheld",
+  "reason": "PRD-TASK-E4-S3 AC line 24 says the catalog lists HR + TASK reports, and E4-S4 exports 'mọi báo cáo trong danh mục.' No HR story exposes a report registry (name, ID, permission, endpoint). E4-S3 design note confirms it navigates to module reports rather than owning them, but that navigation still requires the module to declare what reports exist. The integration dependency is unrecorded in depends_on. Medium severity is fair — the missing registry is a real build-time coordination gap, not a product killer.",
+  "suggested_severity": "medium"
+ },
+ "tech:TASK#8": {
+  "uid": "tech:TASK#8",
+  "verdict": "upheld",
+  "reason": "E4-S5 AC line 27 (4th AC) says 'tái dùng hạ tầng lập lịch của PRD-TASK-E1-S3' in frontmatter, and the design note says 'Tái dùng pattern.' E1-S3 has miss-compensation for nearest period + log only; E4-S5 adds 3-retry with backoff + hard bounce handling — distinct retry policies. Ambiguity about whether 'reuse' means shared code module vs pattern is real. The missing depends_on in frontmatter is also confirmed. Low severity is appropriate — this is a design note clarification, not a product blocker.",
+  "suggested_severity": "low"
+ },
+ "product:PLATFORM+REPORT#0": {
+  "uid": "product:PLATFORM+REPORT#0",
+  "verdict": "upheld",
+  "reason": "GAP-ORG is a known issue but this finding adds a concrete escalation: E1-S1 AC line 27 (4th AC) requires '≥ 60% nhân viên đã chấm công' within 7 days for trial extension, but no story builds the department/employee-import screens required for staff to exist and clock in. Without those screens, the trial-extension trigger (DEC-55) can never fire. This is a new consequence beyond the original GAP-ORG statement. Blocker severity is warranted because it breaks the core activation metric (BRD-G3 ≥70% activation rate) and the ân hạn mechanism."
+ },
+ "product:PLATFORM+REPORT#1": {
+  "uid": "product:PLATFORM+REPORT#1",
+  "verdict": "overreach",
+  "reason": "E3-S2 is legitimately must/now (line 9). The spec itself already gates the pre-conditions explicitly: AC line 25 says 'CHỐT VỚI PHÁP LÝ trước sprint E3' and the design note confirms API contract is build-coordination. The finding argues must→should, but the gating language in the AC already creates a named dependency. This is a real risk but the spec is not blind to it — it's an open build-coordination item, not a structural spec gap. Downgrading to low overstates the remedy; medium is right, but the framing as a spec deficiency is overreach.",
+  "suggested_severity": "low"
+ },
+ "product:PLATFORM+REPORT#2": {
+  "uid": "product:PLATFORM+REPORT#2",
+  "verdict": "overreach",
+  "reason": "The finding is factually correct — PRD-REPORT-E1 completion condition (confirmed at line 39 of PRD-REPORT-E1.md) uses ZONE_MGR, and E1-S1 AC line 25 uses ZONE_MGR/hub trưởng/SYS_ADMIN, and E1-S2 AC line 22 references PRD-SALES-E1-S6/FINANCE/INVENTORY/PAYMENT. However, the entire PRD-REPORT tree carries scope:out + moscow:wont with a prominent DEC-48 banner at the PRD level. The risk of a builder accidentally implementing these ACs is minimal given the clear out/wont marking. High severity is inflated for content that is explicitly tombstoned. The fix (add note banners per epic/story) is reasonable but this is a low-priority housekeeping item.",
+  "suggested_severity": "low"
+ },
+ "product:PLATFORM+REPORT#3": {
+  "uid": "product:PLATFORM+REPORT#3",
+  "verdict": "overreach",
+  "reason": "Confirmed: PRD-REPORT frontmatter line 19 has 'Tỉ lệ báo cáo được truy cập hàng tuần bởi ZONE_MGR (%)' — ZONE_MGR does not exist in BoGo. But PRD-REPORT has scope:out, a DEC-48 banner, and owner still says Cleanmatic. This is version-drift noise in a tombstoned artifact. Medium severity is inflated; this is a low housekeeping item in a wont/out file.",
+  "suggested_severity": "low"
+ },
+ "product:PLATFORM+REPORT#4": {
+  "uid": "product:PLATFORM+REPORT#4",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-REPORT-E1-S1 personas line 18 includes STAFF, and E2-S1 line 18 also includes STAFF. These are cross-module aggregated dashboards. STAFF's JTBD in VISION is personal work/attendance — not org-wide cross-module analytics. However, all these stories are moscow:wont, and the finding itself acknowledges 'nếu REPORT được tái sinh cho BoGo.' Since these are tombstoned stories, low severity is appropriate and consistent with the actual risk.",
+  "suggested_severity": "low"
+ },
+ "tech:PLATFORM+REPORT#0": {
+  "uid": "tech:PLATFORM+REPORT#0",
+  "verdict": "upheld",
+  "reason": "Confirmed: E1-S1 7th AC says trial expiry goes directly to KHOÁ GHI (no grace period). E2-S2 2nd AC says 'Quá hạn gói → vào ÂN HẠN 7 ngày.' E2-S2 design note line 47 says 'một máy trạng thái thuê bao duy nhất.' This is a genuine FSM contradiction — trial and paid follow different paths with no reconciliation. High severity is justified: risk of silently locking a new org that missed the trial by a day with no grace window."
+ },
+ "tech:PLATFORM+REPORT#1": {
+  "uid": "tech:PLATFORM+REPORT#1",
+  "verdict": "overreach",
+  "reason": "E2-S2 AC line 24 says 'Trước hạn gói 14 / 7 / 3 / 1 ngày' but does not specify whether this applies to trial or paid subscriptions. For a 14-day trial, the 14-day reminder would fire on signup day — a real UX problem. However, E2-S2 design note line 48 already flags 'lịch nhắc (14/7/3/1) + ân hạn 7 ngày là đề xuất — PO chốt khi duyệt PRD.' The spec acknowledges this is not finalized. High severity is inflated — this is a PO decision gap already noted in the design notes, not a hidden defect. Downgrading to medium.",
+  "suggested_severity": "medium"
+ },
+ "tech:PLATFORM+REPORT#2": {
+  "uid": "tech:PLATFORM+REPORT#2",
+  "verdict": "upheld",
+  "reason": "E1-S1 4th AC (line 27) requires '≥ 60% nhân viên đã chấm công' but defines no denominator. A new org with just 1 ORG_ADMIN and 0 imported staff yields 60% of 0 — untestable and undefined. No minimum employee threshold is stated. High severity is fair: this is a build-blocker for the trial extension logic that is core to BRD-G3 activation rate."
+ },
+ "tech:PLATFORM+REPORT#3": {
+  "uid": "tech:PLATFORM+REPORT#3",
+  "verdict": "upheld",
+  "reason": "E2-S3 has 9 ACs covering business logic (matching, idempotency, reconciliation, audit log) but none requires webhook signature verification (HMAC, shared secret, IP whitelist, or timestamp anti-replay). The design note mentions 'nhà cung cấp chốt với đội build' but says nothing about signature validation. This is a real payment security gap. High severity is justified — unsigned webhook endpoints in a payment flow are a known attack surface."
+ },
+ "tech:PLATFORM+REPORT#4": {
+  "uid": "tech:PLATFORM+REPORT#4",
+  "verdict": "upheld",
+  "reason": "E1-S1 design note line 45 says 'Các mốc khoá ghi 30 ngày / giữ dữ liệu 60 ngày là đề xuất — PO chốt khi duyệt PRD.' But the 7th AC (frontmatter, story is approved) uses 30 and 60 days as definitive. Story is marked approved as of 2026-06-11. The contradiction between 'approved AC' and 'design note saying pending PO decision' is real and unresolved. Medium severity is fair."
+ },
+ "tech:PLATFORM+REPORT#5": {
+  "uid": "tech:PLATFORM+REPORT#5",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-PLATFORM-E2-S4 frontmatter line 9 has 'horizon: next' while PRD-PLATFORM-E2 (parent epic) has 'horizon: now.' E2-S4 AC line 26 references PRD-RESOURCE-E1-S1 which is also horizon:next. The mixed-horizon epic creates sprint planning ambiguity. Medium severity is fair — it doesn't break the spec structurally but will cause DoD confusion for the E2 epic."
+ },
+ "tech:PLATFORM+REPORT#6": {
+  "uid": "tech:PLATFORM+REPORT#6",
+  "verdict": "upheld",
+  "reason": "E3-S2 line 27 (4th AC) says orgs with unsigned contracts after 7 days get flagged for PLATFORM_ADMIN. No AC defines what BoGo can do next: suspend, continue indefinitely, or set a hard deadline. The design note says 'thủ tục không chặn giá trị' but gives no timeline for enforcement. Without an explicit policy, this is a legal compliance gap (Luật Giao dịch điện tử 2023) with no build-level resolution path. Medium severity is fair."
+ },
+ "tech:PLATFORM+REPORT#7": {
+  "uid": "tech:PLATFORM+REPORT#7",
+  "verdict": "overreach",
+  "reason": "This is substantially the same issue as product:PLATFORM+REPORT#2 seen from the tech lens. Both flag stale Cleanmatic persona/PRD references in moscow:wont stories. The finding is factually correct (E1-S2 AC line 22 references PRD-SALES-E1-S6/FINANCE/INVENTORY/PAYMENT; E1-S1 AC line 25 uses ZONE_MGR/SYS_ADMIN). But all PRD-REPORT artifacts are prominently tombstoned with scope:out + moscow:wont + DEC-48 banner. Medium severity is inflated for dead files. Low is the right ceiling.",
+  "suggested_severity": "low"
+ },
+ "tech:PLATFORM+REPORT#8": {
+  "uid": "tech:PLATFORM+REPORT#8",
+  "verdict": "false",
+  "reason": "INVEST overload for large stories is already a known accepted item in §3 of the shared context ('INVEST overloads: AI-E2-S4 mini-LMS in one story; HR-E1-S6 has 11 AC'). E1-S1 with 8 AC and size:L is the same pattern. The shared context says to only re-report known issues if escalating with a new consequence. This finding does not add a new consequence beyond 'hard to estimate and debug' — which is the generic INVEST concern already accepted. Additionally the split suggestion (E1-S1a/S1b) is a build-team suggestion, not a PO spec gap."
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#0": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#0",
+  "verdict": "overreach",
+  "reason": "The finding is real — the purchase trigger is explicitly noted as unvalidated (PRD-APPROVAL line 65). However, the spec already has a hard build gate via DEC-62: build only starts after pilot reaches ≥60% weekly active AND a paying org signal, and 'Trigger mua cần kiểm ở pilot... không xác nhận được nhu cầu thì PO xem xét hạ moscow trước khi build.' The 5 stories are approved but NOT scheduled to build until that gate passes. The severity 'high' overstates the immediate risk because the mitigation mechanism exists; the genuine gap is that no concrete pilot interview questions are specified — a medium concern, not a high blocker.",
+  "suggested_severity": "medium"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#1": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#1",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE-E1-S2 frontmatter confirms moscow=must for the story that bundles kanban + tag + theme. PRD-RESOURCE-E1 epic risks (lines 37-41) confirm the 'kho rỗng' risk is status=open with only a partial mitigation. Kano analysis is sound: theme/icon is a delighter; empty-warehouse is a must-be gap. The fix (decouple theme MoSCoW) is specific and actionable. Severity high is fair — empty warehouse kills the entire RESOURCE value proposition before collaboration features matter.",
+  "suggested_severity": "high"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#2": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#2",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1-S1 AC line 25 explicitly states AI answers based ONLY on 'kho hướng dẫn chính thức của BoGo (do đội nền tảng biên soạn)'. Scanning all stories finds no story building this knowledge base, no content-ops epic, no PLATFORM_ADMIN authoring story. This is a launch-blocking hidden dependency: S1 is horizon=now, moscow=must, and the AI cannot answer a single question if the knowledge base is empty. Severity high is correct.",
+  "suggested_severity": "high"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#3": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#3",
+  "verdict": "upheld",
+  "reason": "PRD-APPROVAL-E1-S4 frontmatter confirms moscow=should. The epic DoD (PRD-APPROVAL-E1 line 64) states 'Không tờ trình nào quá hạn mà không có cảnh báo + người chịu trách nhiệm hiện hành' — yet the story delivering this is should-priority, creating an internal contradiction. If S4 is cut, the epic DoD cannot be met and the core value promise ('không tờ trình nào mất tích trong ngăn kéo') is hollow. Medium severity is fair.",
+  "suggested_severity": "medium"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#4": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#4",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1-S2 ghi chú line 41 literally says 'HẠ TẦNG CHAT HỖ TRỢ là hạng mục riêng... đội build tách story hạ tầng HOẶC chọn dịch vụ thuê ngoài (ghi tên + tiêu chí) trước sprint — không ẩn khối lượng này trong story M hiện tại.' The story is horizon=now, moscow=must, size=M, and no parallel infrastructure story exists. The vendor decision affects COGS (BRD unit economics), SLA measurement, and multi-tenant data boundary. Medium severity is appropriate.",
+  "suggested_severity": "medium"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#5": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#5",
+  "verdict": "upheld",
+  "reason": "PRD-APPROVAL-E1-S3 ghi chú line 47 explicitly states 'khuôn mặt qua camera... cần mở rộng consent NĐ13 sang mục đích ký duyệt — rà pháp lý trước khi bật.' No story, task, or DoD item tracks this legal review. If the team builds S3 without completing the legal check and enables camera sign-off, this is a regulatory violation (NĐ13/2023). Medium severity is fair — the risk is bounded because camera is fallback-only (PIN/OTP are primary), but there is no guardrail preventing premature activation.",
+  "suggested_severity": "medium"
+ },
+ "product:APPROVAL+RESOURCE+SUPPORT#6": {
+  "uid": "product:APPROVAL+RESOURCE+SUPPORT#6",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE-E1-S4 is moscow=should (correctly). The finding notes a systemic pattern: S3 (search/link) and S4 (comments) both derive value from a populated repository, yet no story addresses how the repository gets populated. The 'kho rỗng' risk (RESOURCE-E1 epic, status=open) applies to all collaboration features. Low severity is appropriate — this is a pattern observation, not a standalone blocker.",
+  "suggested_severity": "low"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#0": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#0",
+  "verdict": "upheld",
+  "reason": "PRD-APPROVAL-E1-S3 frontmatter confirms size=M. The AC contains four distinct authentication flows (passkey/WebAuthn, PIN, OTP email/SMS, face camera), trusted device registration and revocation, configurable assurance levels per submission type, immutable sign record, and hash covering both text and all attachments in fixed order. Each flow has independent edge cases. This is clearly underestimated for a single M story. The suggested split into S3a+S3b is concrete and well-grounded. High severity is fair.",
+  "suggested_severity": "high"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#1": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#1",
+  "verdict": "upheld",
+  "reason": "PRD-APPROVAL-E1-S2 AC line 24 depends on org chart from PRD-HR to determine approvers. The only edge case covered is approver leaving the org (line 27). Missing: org has no org chart yet, department has no head, approver not attached to a clear role. These are realistic early-adoption states. No AC handles a blocking error vs silent failure. High severity is appropriate — this is a silent failure mode in production.",
+  "suggested_severity": "high"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#2": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#2",
+  "verdict": "false",
+  "reason": "DEC-66 (decisions.md line 725-728) explicitly states: 'ngoại lệ duy nhất là tính năng gắn phần cứng di động... phải có đường thay thế tương đương trên web (PIN/OTP, đã có sẵn ở PRD-APPROVAL-E1-S3).' The spec already documents passkey as hardware-bound and PIN/OTP as the intended web alternative, naming this as the sole permitted parity exception. PRD-APPROVAL-E1-S3 AC line 26 states 'trên web/máy không có sinh trắc → dùng PIN hoặc OTP' — this is the documented alternative path, not a violation. The finding misreads DEC-66 as forbidding this, when DEC-66 explicitly permits it and cites S3 as the implementation.",
+  "suggested_severity": "low"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#3": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#3",
+  "verdict": "upheld",
+  "reason": "PRD-PLATFORM-E2-S4 covers only storage quota for RESOURCE (DEC-60 storage add-on). No story covers: defining the billing unit for APPROVAL tờ trình (per submission? per approval step?), a counter/accumulator, cap enforcement, or PLATFORM_ADMIN configuration of tờ trình quota. PRD-APPROVAL line 66 confirms 'APPROVAL là ADD-ON tính theo lượng tờ trình/tháng' as the pricing model (DEC-60). Without a metering story, billing cannot be invoiced. High severity is correct — this is a revenue-blocking gap.",
+  "suggested_severity": "high"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#4": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#4",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE-E1-S1 AC line 26 includes 'KHÔNG xoá lịch sử' (via the KHÔI PHỤC clause creating new versions, not deleting old ones). No AC defines a retention policy (max N versions, max X months). With per-org encryption keys, every version is a separate encrypted blob. No cap means unbounded COGS growth — directly affecting the BRD margin target (≥60%). Medium severity is fair.",
+  "suggested_severity": "medium"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#5": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#5",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE-E1-S3 ghi chú line 41 states 'tài liệu đã tải trực tiếp migrate vào kho' (DEC-59). This migration is a non-trivial technical operation: re-encrypt with org key, place in folder tree (which may not exist at migration time), update AI knowledge source pointers. No story has AC or DoD for this. If migration fails midway, AI knowledge sources point to non-existent files. Medium severity is appropriate.",
+  "suggested_severity": "medium"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#6": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#6",
+  "verdict": "upheld",
+  "reason": "This is the tech-lens counterpart to product#2 and adds complementary value. PRD-SUPPORT-E1-S1 AC line 25 confirms the AI answers from a knowledge base that exists nowhere in the spec. Without a management tool, content updates require deployment or direct DB access, making the AI knowledge base operationally unmaintainable. Medium severity is fair — the launch risk is shared with product#2 (high), but the ongoing tooling gap is a medium operational concern.",
+  "suggested_severity": "medium"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#7": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#7",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1-S2 ghi chú line 41 self-documents the gap: 'HẠ TẦNG CHAT HỖ TRỢ là hạng mục riêng... không ẩn khối lượng này trong story M hiện tại.' Story size=M but the infrastructure scope is unstated. The tech framing adds to product#4 by emphasizing the estimation risk (M could become L or XL) and the need to re-size after vendor decision. Medium severity is appropriate.",
+  "suggested_severity": "medium"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#8": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#8",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1-S2 AC line 26 explicitly marks '≤ 15 phút giờ hành chính (8h–18h T2–T6 — đề xuất, PO chốt)' and ghi chú line 43 reaffirms 'SLA/giờ trực là đề xuất.' A test criterion with 'đề xuất' cannot drive an automated acceptance test. Low severity is appropriate: the fix (PO confirms the number) is trivial and non-blocking for sprint planning, but the story cannot reach DoD without a concrete SLA value.",
+  "suggested_severity": "low"
+ },
+ "tech:APPROVAL+RESOURCE+SUPPORT#9": {
+  "uid": "tech:APPROVAL+RESOURCE+SUPPORT#9",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE-E1-S2 confirmed at the cited location. Story title is 'Xem kanban, gắn tag và theme thư mục' and its 4 ACs cover three independent code paths: (1) free-tag system with suggestions, (2) kanban board with drag-and-drop, (3) folder color/icon themes. The design note at line 41 explicitly states these come from DEC-56 as a direct PO directive. However the finding's fix already acknowledges DEC-56 and proposes either documenting the non-separability or splitting into S2a/S2b. The issue is real — three distinct code paths bundled into one size-M story does violate INVEST Negotiability. Severity 'low' is fair for a next-horizon story that won't block MVP.",
+  "suggested_severity": "low"
+ },
+ "market:whole#0": {
+  "uid": "market:whole#0",
+  "verdict": "upheld",
+  "reason": "BRD line 147-148 shows Tanca listed as 'threat: high' with note 'chấm công + tính lương chuyên sâu phổ biến nhất SME VN'. The competitive table describes Tanca purely as an HR/payroll specialist and makes no mention of a free tier. The finding correctly identifies that BRD's framing does not account for Tanca's free-forever Starter plan covering unlimited employees, basic attendance, eContract, and iOS/Android app — which directly captures the smallest SME segment that BRD's trigger #1 (lương sai lần 2-3) is aimed at. No BRD section acknowledges this free-entry threat. Severity 'high' is appropriate.",
+  "suggested_severity": "high"
+ },
+ "market:whole#1": {
+  "uid": "market:whole#1",
+  "verdict": "upheld",
+  "reason": "PRD-AI line 36 states: 'Đây là điểm khác biệt của BoGo so với Base/1Office (chưa có trợ lý AI tiếng Việt gắn dữ liệu vận hành)'. This claim is the spec's stated differentiation anchor. The finding is correct that this premise is contested: Tanca has announced multiple AI agents including an HR Chatbot. The fix proposed — reframing to 'AI across HR+TASK+COMM data in one unified session, scoped by org chart' — is more defensible. Severity 'high' is appropriate because the differentiation claim underpins BRD-G3 activation strategy.",
+  "suggested_severity": "high"
+ },
+ "market:whole#2": {
+  "uid": "market:whole#2",
+  "verdict": "upheld",
+  "reason": "BRD line 176 explicitly shows 'Fiine PRO ~59k (có chấm công + giao việc)' in the pricing comparison table. The BRD rationale for BoGo's 89k premium is 'ngang tầng all-in-one KÈM trợ lý AI', but this defense is thin — Fiine reportedly also has AI features and a chat-first UX. The spec gives no concrete evidence of BoGo's payroll depth, legal eContract, or document-AI advantages over Fiine. The finding is real: a 33% price gap without a clearly articulated specific advantage is a sales objection the spec doesn't answer. Severity 'medium' is fair.",
+  "suggested_severity": "medium"
+ },
+ "market:whole#3": {
+  "uid": "market:whole#3",
+  "verdict": "upheld",
+  "reason": "BRD line 183-189 confirmed. The GTM table heading explicitly reads 'Go-to-Market _(đề xuất — PO rà soát, gán owner khi vận hành)_' and all three channels (referral, reseller partners, self-serve) have no named owner. G1 targets 100 active orgs in 12 months but has no assigned human responsible for driving any acquisition channel. This is a structural gap — KPIs exist but no accountability. Severity 'high' is appropriate.",
+  "suggested_severity": "high"
+ },
+ "market:whole#4": {
+  "uid": "market:whole#4",
+  "verdict": "upheld",
+  "reason": "BRD line 179-180 confirmed. The spec states 'LLM cost envelope THẬT đo trong 30 ngày pilot đầu — điều kiện giữ AI trong gói chuẩn' and 'vượt ngưỡng thì xét quota/gói AI riêng'. This confirms the finding: the economic viability of AI in the standard plan is deferred to pilot measurement, but the pricing is already fixed at 89k. If LLM costs exceed the 13k/user/month ceiling at any realistic usage level, BoGo faces a forced choice between margin degradation and stripping the core differentiator. Severity 'high' is appropriate.",
+  "suggested_severity": "high"
+ },
+ "market:whole#5": {
+  "uid": "market:whole#5",
+  "verdict": "overreach",
+  "reason": "BRD line 201-202 confirmed. The risk is accurately stated: 'nhân viên không rời nhóm chat cá nhân → TASK/COMM rỗng dữ liệu'. The mitigation listed is 'đo baseline chuyển đổi ngay ở 1–2 tổ chức pilot đầu'. The finding is real — this is diagnosis, not intervention — but the claim that 'no story in TASK or COMM designs a Zalo migration flow' is not necessarily a spec defect. The spec's approach is deliberate: chấm công GPS is the natural forcing hook (employees can't fake attendance via Zalo), and COMM adoption follows from ORG_ADMIN workflow requirements. The absence of a Zalo import/bridge is a product strategy choice, not an oversight. Additionally the fix ('chế độ song song Zalo' or 'bắt buộc onboarding qua app') is a significant product scope addition that should come with its own story. The severity should be 'low' — it is a documented and accepted risk, not an unrecognized one, and the proposed fix overreaches into product strategy territory.",
+  "suggested_severity": "low"
+ },
+ "market:whole#6": {
+  "uid": "market:whole#6",
+  "verdict": "upheld",
+  "reason": "BRD line 178 confirmed: ARR target is 100 orgs × ~30 users × 89k × 12 ≈ 3.2B VND, with '~30 user bình quân là đề xuất'. No BRD section mentions team size, onboarding capacity, or sales headcount. The finding's math is valid: 100 orgs in 12 months from a 3-5 pilot starting point implies ~8 orgs/month growth from month 6, which requires either strong self-serve (no story yet) or a sales team (not defined). Severity 'medium' is fair.",
+  "suggested_severity": "medium"
+ },
+ "market:whole#7": {
+  "uid": "market:whole#7",
+  "verdict": "upheld",
+  "reason": "PRD-PLATFORM line 19-21 confirmed: metrics include 'Tỉ lệ trial → trả phí (%)' as a tracked metric. BRD G1 and G3 have no trial-to-paid conversion rate target — G1 only sets 100 active orgs as absolute count, G3 sets 70% activation rate within first 30 days but not a trial conversion rate. The finding is correct: without a conversion rate target, it is impossible to size GTM requirements. If the trial→paid rate is low, the 100-org target requires far more trial starts than the GTM plan anticipates. Severity 'medium' is fair.",
+  "suggested_severity": "medium"
+ },
+ "market:ai-pricing#0": {
+  "uid": "market:ai-pricing#0",
+  "verdict": "overreach",
+  "reason": "PRD-AI line 36 states the differentiation claim vs 'Base/1Office' specifically, not as a universal claim. The finding escalates this to 'blocker' because Base.vn has 'Hey Base AI' (Coming Soon) and 1Office has '1AI'. However: (1) 'Coming Soon' is not shipped — a product that is not yet available does not invalidate a current spec's competitive positioning; (2) the finding overlaps substantially with market:whole#1 which correctly addresses the same Tanca AI issue; (3) the actual claim in the spec targets Base/1Office, and if both are still pre-launch on their AI features, the claim may still be accurate at spec authoring time. The more substantive risk (Tanca already shipping AI) is already covered by market:whole#1. The 'blocker' severity is inflated for a claim about two competitors with unshipped features. The real issue is the framing should be more defensible, which market:whole#1 already covers.",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#1": {
+  "uid": "market:ai-pricing#1",
+  "verdict": "upheld",
+  "reason": "BRD line 179 confirmed: 'LLM cost envelope THẬT (query/user/tháng × giá token) đo trong 30 ngày pilot đầu — điều kiện giữ AI trong gói chuẩn.' The LLM provider and model are not specified in the spec (PRD-AI makes no mention of a specific provider). Without a provider and model choice, the 13k/user/month ceiling cannot be validated before commercial launch. The finding correctly identifies that typical SME chat behavior (frequent, casual questions) tends to exceed initial LLM cost estimates by 2-3x. Severity 'high' is appropriate. Note: this partially overlaps with market:whole#4 but adds the specific point about provider not being named.",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#2": {
+  "uid": "market:ai-pricing#2",
+  "verdict": "upheld",
+  "reason": "PRD-AI-E2-S4 (evidence cited as PRD-AI-E2:50) — S1's first AC explicitly states 'Giả sử tổ chức đã tải lên tài liệu quy chế', confirming S1 is gated on document upload. S5 (onboarding) AC has a 4-step checklist (org chart → employees → dept manager → attendance config) with no document upload step. The finding is correct: the AI value proposition for S1 and S4 depends entirely on document availability, but S5's onboarding checklist does not require any document upload, meaning organizations can 'complete' onboarding with an empty knowledge base. Severity 'high' is appropriate — empty knowledge base at go-live directly undermines BRD-G3 activation rate.",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#3": {
+  "uid": "market:ai-pricing#3",
+  "verdict": "upheld",
+  "reason": "BRD lines 192-197 confirmed. The 5 buying triggers are: (1) salary errors, (2) opening second branch, (3) needing formal records, (4) audit/inspection, (5) losing files when employee leaves. None of these trigger statements reference AI or an AI assistant. Yet PRD-AI's BRD-G3 assignment and the 'đòn bẩy kích hoạt tổ chức mới' framing positions AI as an activation driver. The tension is real: if buyers are motivated by operational pain (payroll, compliance, records), AI is a retention/stickiness feature post-purchase, not the reason to buy. Misclassifying it as an acquisition hook affects GTM messaging and activation rate modeling. Severity 'high' is appropriate.",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#4": {
+  "uid": "market:ai-pricing#4",
+  "verdict": "upheld",
+  "reason": "BRD line 183 confirmed. The GTM table header 'đề xuất — PO rà soát, gán owner khi vận hành' applies to all three channels. This finding overlaps significantly with market:whole#3 (same evidence, same core problem: no GTM owner). The finding here adds the specific framing of G1 (100 orgs/12 months) having no accountable person. This is redundant with market:whole#3 but upheld as an independent perspective. Severity 'high' is appropriate, though this is essentially the same finding as market:whole#3.",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#5": {
+  "uid": "market:ai-pricing#5",
+  "verdict": "upheld",
+  "reason": "PRD-AI line 65 confirmed: 'BẮT BUỘC rà soát luật sư + cân nhắc che PII / DPA / self-host trước khi mở rộng quy mô'. No threshold is defined for 'mở rộng quy mô'. The finding correctly identifies that without a hard numerical threshold (e.g., 30 paying orgs, or before any fundraising round), this obligation will be indefinitely deferred. With NĐ13/2023 carrying real penalties and G1 targeting 100 orgs (~3000 users), this is a genuine legal risk. Severity 'high' is appropriate (the 'blocker' label the finding uses in why_it_dies is warranted, though the formal severity is listed as 'high').",
+  "suggested_severity": "high"
+ },
+ "market:ai-pricing#6": {
+  "uid": "market:ai-pricing#6",
+  "verdict": "upheld",
+  "reason": "PRD-AI-E2-S4 confirmed. S4 is a mini-LMS: AI generates quiz from document, human reviews, employees take test, manager sees results by department. The moscow is 'should' and size 'L'. The finding is correct that this is functionally a separate product category (LMS) that Tanca (fTrain) and Fastdo already address. More critically, it depends on the same empty-knowledge-base problem (market:ai-pricing#2) — S4 is useless without well-structured training documents that most Vietnamese SMEs don't have in file form. For a pre-revenue startup building HR+TASK+COMM+AI simultaneously, adding a mini-LMS as a 'should' in horizon now is scope risk. The fix (defer to horizon next) is reasonable. Severity 'medium' is appropriate.",
+  "suggested_severity": "medium"
+ },
+ "market:ai-pricing#7": {
+  "uid": "market:ai-pricing#7",
+  "verdict": "false",
+  "reason": "PRD-PLATFORM-E1-S1 AC line 30 explicitly specs the trial-expiry→lock flow: 'Hết 14 ngày chưa thanh toán → tổ chức chuyển KHOÁ GHI... Mọi chuyển trạng thái đều thông báo trước cho ORG_ADMIN qua email + in-app.' PRD-PLATFORM-E2-S2 adds a full dunning/reminder flow (14/7/3/1 day reminders before expiry, 7-day grace, lock-write, suspend). The activation metric (70%) and trial→paid conversion funnel story are all present in PLATFORM. The claim that 'không có AC nào mô tả luồng trial hết → nhắc chuyển gói trả phí' is directly contradicted by these two stories."
+ },
+ "market:ai-pricing#8": {
+  "uid": "market:ai-pricing#8",
+  "verdict": "upheld",
+  "reason": "BRD line 176 confirmed: quotes '1Office all-in-one ~100k' as the comparable without mentioning the 1-year minimum commitment. The finding correctly identifies that BoGo's monthly-billing flexibility is an untapped positioning advantage over 1Office's annual lock-in. The pricing delta (~11%) being insufficient as a moat on its own is also a valid market observation. Severity medium is fair."
+ },
+ "craft:HR+TASK+RESOURCE#0": {
+  "uid": "craft:HR+TASK+RESOURCE#0",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E1-S2 body line 38 confirmed: 'Là quản lý hệ thống'. PRD-HR-E2-S1 body line 39 also confirmed: 'Là quản lý hệ thống'. Frontmatter for both stories defines personas: [ORG_ADMIN]. 'quản lý hệ thống' is not a defined persona in VISION or PRODUCT.md. The mismatch between frontmatter and prose is real and could mislead build team on permission assignment."
+ },
+ "craft:HR+TASK+RESOURCE#1": {
+  "uid": "craft:HR+TASK+RESOURCE#1",
+  "verdict": "upheld",
+  "reason": "Confirmed in multiple files: PRD-HR-E1-S1 line 40 ('nhân viên giao nhận hoặc nhân viên xử lý'), PRD-HR-E2-S1 line 40 ('giao nhận, xử lý, bán hàng'), PRD-HR-E2-S3 line 37 ('nhân viên giao nhận hoặc nhân viên xử lý'), PRD-TASK-E2-S4 line 40 ('nhân viên giao nhận hoặc xử lý'). These are Cleanmatic-era role names that don't exist in BoGo's persona model. VISION defines STAFF as the generic employee persona. Risk of misreading product scope as logistics/laundry-specific is real."
+ },
+ "craft:HR+TASK+RESOURCE#2": {
+  "uid": "craft:HR+TASK+RESOURCE#2",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E2 line 40 confirmed: 'Liên kết phiếu chi: Khi bảng lương approved → tạo phiếu chi lương tại PRD-FINANCE.' PRD-HR-E2-S1 design note line 50 also references 'PRD-FINANCE-E3' for commission config. DEC-45 eliminated PRD-FINANCE from BoGo. Both references point to a non-existent PRD, creating a dangling integration expectation for the build team."
+ },
+ "craft:HR+TASK+RESOURCE#3": {
+  "uid": "craft:HR+TASK+RESOURCE#3",
+  "verdict": "overreach",
+  "reason": "The 'thông báo lỗi rõ ràng' vagueness pattern at PRD-HR-E1-S1 AC line 27 is explicitly listed as a §3 known item (validation-report already catalogued it). The finding does not escalate with new consequences beyond what §3 noted. As a restatement of a known, it should not count as a new finding. Severity already low is fair but verdict is overreach for §3 overlap without escalation.",
+  "suggested_severity": "low"
+ },
+ "craft:HR+TASK+RESOURCE#4": {
+  "uid": "craft:HR+TASK+RESOURCE#4",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E3-S4 body line 39 confirmed: 'mục tiêu phê duyệt trong vòng 2 giờ sau khi nhận'. Frontmatter AC (lines 23-30) has no criterion enforcing or measuring this SLA — closest is AC4 (notification to employee ≤30s AFTER manager approves, not a constraint on when the manager approves). No reminder or escalation mechanism for a manager overdue at the 2-hour mark. The SLA goal in the 'Để' clause is unenforceable without a corresponding AC."
+ },
+ "craft:HR+TASK+RESOURCE#5": {
+  "uid": "craft:HR+TASK+RESOURCE#5",
+  "verdict": "upheld",
+  "reason": "PRD-RESOURCE frontmatter line 6: 'status: approved'. Body line 29: '🔄 Draft'. The contradiction is confirmed. The prose at line 48 does document a build gate (DEC-62), but the emoji 'Draft' vs frontmatter 'approved' still creates a conflicting signal — tooling reads frontmatter as approved, human readers see Draft. The fix of aligning both to one consistent state with the build-gate caveat is correct."
+ },
+ "craft:HR+TASK+RESOURCE#6": {
+  "uid": "craft:HR+TASK+RESOURCE#6",
+  "verdict": "upheld",
+  "reason": "PRD-HR-E2 line 37 confirmed: 'Cuối kỳ lương (nửa tháng hoặc tháng)'. PRD-HR-E2-S1 AC line 27 (frontmatter) confirmed: 'Kỳ lương theo THÁNG (1–cuối tháng). v1 chỉ hỗ trợ kỳ tháng'. Epic scope directly contradicts the story AC. A developer reading the epic scope would implement both half-month and monthly cycles, wasting sprint capacity."
+ },
+ "craft:COMM+SUPPORT+APPROVAL#0": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#0",
+  "verdict": "overreach",
+  "reason": "PRD-APPROVAL-E1-S5 AC line 26 confirmed: 'đang chờ AI duyệt (cấp mấy)'. This is a real capitalization typo — 'AI' should be lowercase 'ai' (Vietnamese pronoun 'who'). However the severity 'high' is inflated. The surrounding text makes intent clear ('nháp bởi ai... đã trình bởi ai... đang chờ AI duyệt... đã duyệt bởi ai') — the pattern 'bởi ai' establishes that 'AI' here is a pronoun, not artificial intelligence. A careful reader or reviewer would catch this; the entire APPROVAL section consistently rejects AI-automated approvals. Fix is valid but consequence is low.",
+  "suggested_severity": "low"
+ },
+ "craft:COMM+SUPPORT+APPROVAL#1": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#1",
+  "verdict": "upheld",
+  "reason": "PRD-COMM-E1-S1 design note line 53 confirmed: 'order→SALES' listed as a PRD that must expose a permission-check endpoint for the ERP-link differentiator. PRD-SALES was eliminated per DEC-45. At sprint start, the build team will look for a SALES endpoint that doesn't exist, either skipping 'order' type or creating an orphan stub. This directly undermines the ERP-link moat which is cited as the key differentiator over Zalo."
+ },
+ "craft:COMM+SUPPORT+APPROVAL#2": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#2",
+  "verdict": "upheld",
+  "reason": "PRD-COMM line 82 confirmed: '...SALES...' in the notification-boundary definition. Line 106 confirmed: 'giao việc/đơn/ca' — 'đơn' (order) has no owning PRD in BoGo v1 after SALES was removed (DEC-45). Two stale references in the same file will confuse new readers about BoGo's actual scope."
+ },
+ "craft:COMM+SUPPORT+APPROVAL#3": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#3",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1-S2 AC line 26 confirmed: 'Phản hồi đầu tiên của người hỗ trợ trong ≤ 15 phút giờ hành chính (8h–18h T2–T6 — đề xuất, PO chốt)'. The phrase 'đề xuất, PO chốt' in parentheses within a formally approved story's AC is a contradiction in terms — ACs are acceptance conditions, not open negotiation points. QA cannot use an undecided number as a pass/fail threshold. Design note line 43 also acknowledges 'SLA/giờ trực là đề xuất', confirming this was never finalized before approval."
+ },
+ "craft:COMM+SUPPORT+APPROVAL#4": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#4",
+  "verdict": "upheld",
+  "reason": "PRD-SUPPORT-E1 line 52 confirmed: 'chuyển tiếp thông minh'. The finding is correct that this is an unmeasurable qualifier in an epic scope description. The actual transfer mechanism is well-defined in S1's AC (2 unsatisfied turns triggers handoff with context), but the epic-level description uses a vague term. However as an epic-scope description (not an AC), the practical impact is low — the operative detail is in the story AC. Severity low is appropriate."
+ },
+ "craft:COMM+SUPPORT+APPROVAL#5": {
+  "uid": "craft:COMM+SUPPORT+APPROVAL#5",
+  "verdict": "overreach",
+  "reason": "PRD-COMM-E1-S2 AC line 25 ('vượt giới hạn hiện lỗi rõ ràng') and PRD-COMM-E2-S1 AC line 28 ('hiện lỗi rõ ràng') confirmed. However §3 known items explicitly list 'COMM-E2-S1' as one of the three known vague-AC instances ('thông báo lỗi rõ ràng' HR-E1-S1, COMM-E2-S1). The COMM-E1-S2 instance is the same pattern. Neither instance adds new consequences beyond what §3 catalogued. This is a restatement of a known issue without escalation.",
+  "suggested_severity": "low"
+ },
+ "craft:AI+PLATFORM+REPORT+spine#0": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#0",
+  "verdict": "overreach",
+  "reason": "PRD-REPORT frontmatter confirmed: approved_by 'Cleanmatic' (line 8), owner 'Cleanmatic' (line 14), status: approved (line 6), plus ZONE_MGR persona in metrics (line 19). However the file already has scope: out (line 20), and body line 30 shows a prominent '⛔ Đã loại khỏi v1 (DEC-48, 2026-06-10)' notice explaining the removal. The three epics carry moscow: wont. A reader cannot miss the exclusion notice. The stale Cleanmatic branding in frontmatter fields is real cleanup work, but the claim that 'đội build mới đọc spec có thể nhầm tưởng đây là yêu cầu còn hiệu lực' overstates the risk given the prominent ⛔ body notice and scope: out. This is a medium-severity cleanup, not a high-severity build-misdirection risk.",
+  "suggested_severity": "medium"
+ },
+ "craft:AI+PLATFORM+REPORT+spine#1": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#1",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-REPORT-E1-S1 is `status: approved`, `moscow: wont`. ACs in frontmatter lines 22 and 25 explicitly reference ZONE_MGR, SYS_ADMIN, FINANCE, SALES, INVENTORY, PAYMENT, CARE — all Cleanmatic ERP concepts absent from BoGo's 5-persona model. No warning callout exists in the file body. A reader scanning the file body would see `status: approved` and Cleanmatic-era AC with no disambiguation banner. Severity high is fair because QA or a new team member reading the approved story has no inline signal that these ACs are historical artefacts and not live requirements."
+ },
+ "craft:AI+PLATFORM+REPORT+spine#2": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#2",
+  "verdict": "overreach",
+  "reason": "The 30-phút number is confirmed to be in decisions.md (lines 309, 397) as an estimate, not in BRD:117 which only says 'giảm ≥ 50%'. The factual observation is correct. However the risk is inflated: PRD-REPORT is `scope: out` (wont), so no build team reads it as live spec. The 'pattern repeating in other PRDs' claim is speculative — no other active PRD was shown to have the same issue. Medium severity for a wont artifact that no build team acts on is overreach; the real risk is low.",
+  "suggested_severity": "low"
+ },
+ "craft:AI+PLATFORM+REPORT+spine#3": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#3",
+  "verdict": "false",
+  "reason": "This is an already-known issue explicitly listed in §3 of shared-context: '\"trả lời ngắn gọn\" AI-E2-S5' is itemised as an accepted open warning from the prior validation report. The finding adds a fix suggestion but §3 rules state findings must add a NEW consequence or sharper fix to qualify as escalation, not just restate the known item with a proposed threshold. The core observation (unmeasurable AC) is real, but the finding does not meet the escalation bar set by the shared context rules. It should not be submitted as a new finding."
+ },
+ "craft:AI+PLATFORM+REPORT+spine#4": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#4",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-PLATFORM prose line 31 reads 'phê duyệt 2026-06-11 (v0.2.0)' while frontmatter has version '0.3.0' and approved_version '0.3.0'. PRD-AI-E2 epic line 64 reads 'phê duyệt 2026-06-10 (v0.2.0)' while frontmatter has version '0.3.0' and approved_version '0.3.0'. Both mismatches are real. Low severity is appropriate — purely cosmetic, no build consequence, easy one-line fix per file."
+ },
+ "craft:AI+PLATFORM+REPORT+spine#5": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#5",
+  "verdict": "overreach",
+  "reason": "The body prose at PRD-AI-E1-S1 line 35 ('Là khách hàng nhắn tin cho Cleanmatic') is confirmed, and the story carries `moscow: wont` with no inline history banner. However, this is a direct instance of the known §3 issue about PRD-AI-E1 being wont Cleanmatic history (explicitly accepted at DEC-47 and logged in shared-context §3 as 'PRD-AI-E1 & PRD-HR-E1 high-risk ratio'). The finding adds nothing new beyond renaming the problem. An additional warning banner may be useful but the escalation does not surface a new consequence. Severity should be low not because the issue is trivial but because it is already known and accepted.",
+  "suggested_severity": "low"
+ },
+ "craft:AI+PLATFORM+REPORT+spine#6": {
+  "uid": "craft:AI+PLATFORM+REPORT+spine#6",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-REPORT frontmatter line 10 has `scope_intent: full` while line 20 has `scope: out` — a genuine intra-artifact contradiction. The field also appears in PRD-COMM (confirmed, line 8) where it is consistent with `scope: core-value`, so the issue is isolated to PRD-REPORT. The finding is accurate that the field is not present in other BoGo artifacts except these two, making it a drift artefact. Script parsers that read `scope_intent` without knowing the pivot context could misread scope. Low severity is appropriate for a wont artifact, but the intra-artifact contradiction is a real (if minor) data hygiene issue."
+ },
+ "spine:whole-tree#0": {
+  "uid": "spine:whole-tree#0",
+  "verdict": "upheld",
+  "reason": "Confirmed: GAP-ORG is the biggest known gap per §3, but this finding explicitly escalates with NEW evidence — it traces the specific downstream failures: COMM-E1-S2 auto-groups, TASK-E1-S2 dept-scoped tasks, TASK-E4-S1 per-dept dashboard, APPROVAL-E1-S2 delegation chain — all silently assume department entities pre-exist. HR-E1-S6 confirmed to have a field 'phòng ban thuộc về' but no entity management. DEC-50 is cited as a broken promise. The escalation is concrete and adds evidence the shared-context §3 entry did not detail. Blocker severity is appropriate — the entire relational backbone of the product is an implied dependency with no story."
+ },
+ "spine:whole-tree#1": {
+  "uid": "spine:whole-tree#1",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-AI-E2-S5 is `moscow: should`. PLATFORM-E1-S1 line 26 confirms the fallback is 'checklist tĩnh' (static checklist) when AI-E2-S5 is not ready. BRD-G3 ≥70% activation is in BRD:129. The logic chain — should story is the primary onboarding driver → high cut risk under 37 must stories → activation rate target at risk — is sound. Blocker severity is defensible but slightly strong given that a static checklist fallback is explicitly specced in PLATFORM-E1-S1. The consequence is degraded experience, not zero onboarding. Severity could reasonably be high, but blocker is not unreasonable."
+ },
+ "spine:whole-tree#2": {
+  "uid": "spine:whole-tree#2",
+  "verdict": "upheld",
+  "reason": "Confirmed: BRD:117 specifies 'đo qua khảo sát pilot trước/sau' but no story defines who runs the survey, when, what is measured, or where results are stored. PRD-TASK mentions a pilot survey in prose but it is not an AC in any story. Without an AC, no build team is responsible for the baseline measurement. If the baseline is never collected, the 50% reduction claim cannot be proven, undermining the key sales argument for conversion from trial to paid. High severity is fair."
+ },
+ "spine:whole-tree#3": {
+  "uid": "spine:whole-tree#3",
+  "verdict": "overreach",
+  "reason": "The finding claims only 1 must story in now for EXEC. Verification shows: PRD-TASK-E4-S1 (must, now) with personas [EXEC, DEPT_MGR, ORG_ADMIN] and PRD-COMM-E1-S5 (must, now) also has EXEC in personas. Additionally TASK-E4-S2/S3/S4/S5 are all should+now with EXEC. The '1 must story' count is incorrect. The broader concern about EXEC experience being thin is real — no story lets EXEC take an action (assign task from dashboard, receive AI summary) rather than just view. But the evidence base misstates the count, inflating the severity. High is overreach; medium better reflects a real but less stark gap.",
+  "suggested_severity": "medium"
+ },
+ "spine:whole-tree#4": {
+  "uid": "spine:whole-tree#4",
+  "verdict": "upheld",
+  "reason": "Confirmed: 37 must stories in horizon now, 21 should stories in now (total ~58 active now stories, with 12 wont stories also in now-flagged horizon). No sprint, wave, or intra-horizon ordering exists in any story frontmatter or PRODUCT.md. The build team cannot determine what must be done first for the first pilot org to log in. The dependency chain (org setup → employee records → attendance → payroll → tasks) is implicit. High severity is appropriate — this is a delivery-planning gap that could cause the entire MVP to be unshippable in 3 months."
+ },
+ "spine:whole-tree#5": {
+  "uid": "spine:whole-tree#5",
+  "verdict": "false",
+  "reason": "This is a direct duplicate of spine:whole-tree#0. Both findings identify the exact same gap (missing org chart / department management story), cite the same VISION promise (cam kết 2 'sơ đồ tổ chức là xương sống'), and propose the same fix (add a story for creating/editing departments). The evidence, consequence, and fix are materially identical. One of the two should be dropped; as spine#0 is more detailed and better evidenced, spine#5 is the redundant duplicate."
+ },
+ "spine:whole-tree#6": {
+  "uid": "spine:whole-tree#6",
+  "verdict": "upheld",
+  "reason": "Confirmed: PLATFORM-E1-S2 gives PLATFORM_ADMIN visibility of each org's activation rate (AC line 25). The only AC that shows ORG_ADMIN their own activation rate is in AI-E2-S5 line 27, which is `moscow: should`. If AI-E2-S5 is cut, ORG_ADMIN has no feedback loop showing their progress toward the 60% North Star. The conditional extension mechanism (PLATFORM-E1-S1 line 27: ≥60% → +16 days) requires ORG_ADMIN to know the target exists, but without the visibility AC they only learn about it after the fact. Medium severity is appropriate."
+ },
+ "spine:whole-tree#7": {
+  "uid": "spine:whole-tree#7",
+  "verdict": "upheld",
+  "reason": "Confirmed: PRD-REPORT frontmatter lines 8 and 14 show approved_by 'Product Owner (đại diện nhóm sản phẩm Cleanmatic)' and owner 'Nhóm sản phẩm Cleanmatic'. The artifact is wont so no build impact, but tooling that filters owner/approved_by fields to identify BoGo artifacts would misclassify this. Low severity is appropriate. Fix is a one-line change to each field."
+ }
+}

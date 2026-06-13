@@ -1,0 +1,130 @@
+[
+ {
+  "id": "tech-task-e4-s1-no-response-time-sla",
+  "lens": "tech",
+  "severity": "medium",
+  "scope_id": "PRD-TASK-E4-S1",
+  "evidence": "PRD-TASK-E4-S1:29",
+  "title": "Dashboard tổng quan không có SLA thời gian tải trang, chỉ có ngưỡng cũ dữ liệu",
+  "why_it_dies": "E4-S1 chỉ quy định độ mới dữ liệu (60 giây/5 phút — dòng 29), nhưng không có AC về thời gian tải trang dashboard. Dashboard gộp dữ liệu từ ít nhất 2 phân hệ (HR + TASK), nhiều phòng ban, nhiều kỳ thời gian — với 100 tổ chức, mỗi tổ chức 30–200 nhân viên, nếu không có SLA thì đội build không biết ngưỡng nào cần đạt khi nghiệm thu. So sánh: E3-S1 (tìm kiếm) rõ ràng ≤ 1 giây trên 10.000 task — E4-S1 thiếu tương đương.",
+  "fix": "Thêm AC vào E4-S1: \"Dashboard tải và hiển thị đầy đủ dữ liệu lần đầu trong ≤ [X] giây đo trên tổ chức chuẩn [Y nhân viên, Z phòng ban] với mạng 4G ≥ 10Mbps.\" PO cần chốt ngưỡng X và tham số chuẩn trước khi story được estimation.",
+  "is_known": false
+ },
+ {
+  "id": "prod-platform-econtract-must-premature",
+  "lens": "product",
+  "severity": "medium",
+  "scope_id": "PRD-PLATFORM-E3-S2",
+  "evidence": "PRD-PLATFORM-E3-S2:10",
+  "title": "Ký hợp đồng điện tử (E3-S2) đánh dấu must ở pilot nhưng cần 3 điều kiện chưa có",
+  "why_it_dies": "Story PRD-PLATFORM-E3-S2 là must, horizon:now, nhưng để chạy được cần: (1) mẫu hợp đồng pháp lý của BoGo đã soạn + duyệt, (2) người có thẩm quyền ký phía BoGo xác định và uỷ quyền theo Luật Giao dịch điện tử 2023, (3) hợp đồng API với VNPT eContract đã ký. Spec ghi 'CHỐT VỚI PHÁP LÝ trước sprint E3' (E3-S2:25) nhưng đây là điều kiện ngoài spec, không được đo hoặc gated. Ở giai đoạn pilot 3-5 tổ chức, BoGo có thể ký hợp đồng thủ công hoặc dùng email xác nhận để không chặn sprint. Đánh must buộc đội build phải tích hợp VNPT ngay lần đầu, trong khi giá trị cho SME là 'có hợp đồng hợp lệ', không nhất thiết phải là qua VNPT. Nếu VNPT gặp sự cố API trước go-live, cả E3 chặn release.",
+  "fix": "Hạ E3-S2 xuống should (giữ E3-S1 HĐĐT là must vì nghĩa vụ thuế thực sự). Thêm điều kiện vào DoD của E3-S2: mẫu hợp đồng duyệt xong, người ký phía BoGo xác định, API VNPT sandbox test pass. Ở pilot, dùng quy trình ký hợp đồng PDF thủ công làm fallback rõ ràng, đo conversion không bị kẹt hợp đồng điện tử trước khi đặt cược must.",
+  "is_known": false
+ },
+ {
+  "id": "prod-report-zombie-ac-dead-personas",
+  "lens": "product",
+  "severity": "high",
+  "scope_id": "PRD-REPORT-E1",
+  "evidence": "PRD-REPORT-E1:35",
+  "title": "Toàn bộ AC của cây REPORT vẫn dùng ZONE_MGR, SYS_ADMIN và các PRD Cleanmatic đã loại — AC mô tả sản phẩm sai",
+  "why_it_dies": "PRD-REPORT đã đánh scope:out / moscow:wont theo DEC-48, nhưng body của 3 epic và 5 story vẫn chứa ZONE_MGR, hub trưởng, SYS_ADMIN (persona đã bị loại ở DEC-45), và tham chiếu tới FINANCE, SALES-E1-S6, INVENTORY, PAYMENT (các PRD đã loại ở DEC-45). Cụ thể: E1 điều kiện hoàn thành (line 39) dùng ZONE_MGR; E1-S1 AC (line 25) yêu cầu phân quyền theo zone/hub; E1-S2 AC (line 22) tham chiếu PRD-SALES-E1-S6 + FINANCE + INVENTORY + PAYMENT; E2-S1 AC (line 26) dùng ZONE_MGR/hub trưởng/SYS_ADMIN. Nếu bất kỳ story nào được tái kích hoạt cho BoGo (vd khi thêm báo cáo cho EXEC), người đọc AC sẽ build theo mô hình chuỗi giặt, không phải SME đa tổ chức.",
+  "fix": "Thêm banner rõ ràng ở đầu mỗi epic/story: 'AC dưới đây là của Cleanmatic ERP — không áp dụng cho BoGo. Kế nhiệm: PRD-TASK-E4.' Hoặc xoá hẳn nội dung body, chỉ giữ frontmatter làm lịch sử (DEC-48 đã cho phép). Ưu tiên đặc biệt cho E1-S2 vì AC còn link tới [[PRD-SALES-E1-S6]] là dead ref.",
+  "is_known": false
+ },
+ {
+  "id": "prod-report-metric-cleanmatic-leftovers",
+  "lens": "product",
+  "severity": "medium",
+  "scope_id": "PRD-REPORT",
+  "evidence": "PRD-REPORT:19",
+  "title": "Metric của PRD-REPORT vẫn đo theo ZONE_MGR Cleanmatic, không khớp BRD-G2 BoGo",
+  "why_it_dies": "Frontmatter PRD-REPORT (line 19) khai metric 'Tỉ lệ báo cáo được truy cập hàng tuần bởi ZONE_MGR (%)'. ZONE_MGR là persona của chuỗi giặt, không tồn tại trong BoGo (DEC-45/46). BRD-G2 BoGo đo `admin-time-reduction` và `core-ops-on-bogo`. Metric BoGo đúng cho REPORT — nếu được tái sinh — sẽ là tỉ lệ EXEC/DEPT_MGR xem dashboard thay vì mở từng phân hệ. Metric sai trong frontmatter của PRD scope:out ít nguy hiểm nhưng làm mờ lý do tại sao REPORT bị loại và gây nhầm cho bất kỳ ai đọc file này để hiểu lịch sử quyết định.",
+  "fix": "Thêm ghi chú vào frontmatter hoặc banner: metrics bên dưới là của phiên bản Cleanmatic, không còn hiệu lực. Kế nhiệm (PRD-TASK-E4) sẽ đo tỉ lệ EXEC/ORG_ADMIN xem dashboard tổng quan theo khuyến nghị của DEC-48. Cập nhật approved_by và owner từ 'Cleanmatic' về 'BoGo' để tránh nhầm lẫn khi tra cứu lịch sử.",
+  "is_known": false
+ },
+ {
+  "id": "mkt-trial-conversion-metric-missing",
+  "lens": "market",
+  "severity": "medium",
+  "scope_id": "PRD-PLATFORM",
+  "evidence": "PRD-PLATFORM:19",
+  "title": "PRD-PLATFORM đo tỉ lệ trial → trả phí nhưng BRD không đặt mục tiêu cho tỉ lệ này",
+  "why_it_dies": "PRD-PLATFORM metrics ghi 'Tỉ lệ trial → trả phí (%)' là một chỉ số quan trọng. Nhưng BRD G1/G3 không có con số mục tiêu cho tỉ lệ chuyển đổi này. Với mục tiêu 100 tổ chức active, nếu tỉ lệ trial→paid chỉ đạt 20% (ngưỡng thấp phổ biến cho SME SaaS), BoGo cần 500 tổ chức đăng ký trial — đòi hỏi GTM lớn hơn nhiều so với 3–5 pilot. Không có mục tiêu tỉ lệ chuyển đổi thì không biết khi nào funnel bị vỡ.",
+  "fix": "Thêm vào BRD-G1 hoặc BRD-G3 một chỉ số trial→paid conversion target (đề xuất: ≥40% để đạt 100 tổ chức từ ~250 trial đăng ký trong 12 tháng). Lấy con số này làm căn cứ để định cỡ kênh GTM cần thiết.",
+  "is_known": false
+ },
+ {
+  "id": "market-pricing-trial-no-cc",
+  "lens": "market",
+  "severity": "medium",
+  "scope_id": "BRD",
+  "evidence": "BRD:177",
+  "title": "Trial 14 ngày không cần thẻ thiếu cơ chế chuyển đổi tự động sang trả phí — activation rate 70% không có đường thực thi",
+  "why_it_dies": "BRD nêu trial 14 ngày full tính năng, không cần thẻ. Cơ chế gia hạn thêm 16 ngày (tổng 30) khi đạt 60% chấm công là tốt. Nhưng không có AC nào trong PRD-PLATFORM mô tả luồng 'trial hết → nhắc chuyển gói trả phí → tổ chức nhập thẻ'. Nếu tổ chức phải chủ động tìm cách trả tiền sau khi hết trial, tỉ lệ chuyển đổi trial→trả phí của B2B SaaS VN thường rất thấp (dưới 10%). Đây là lỗ hổng trong đường đi từ BRD-G3 (activation) sang doanh thu thực.",
+  "fix": "PRD-PLATFORM cần thêm story hoặc AC rõ ràng: (1) email/thông báo in-app nhắc tổ chức về số ngày còn lại trước khi hết trial; (2) khi hết trial, tổ chức vào màn hình yêu cầu nhập thông tin thanh toán để tiếp tục — không tự hết hiệu lực im lặng. Metric cần theo dõi: tỉ lệ trial→paid conversion, ghi vào BRD-G3 metrics.",
+  "is_known": false
+ },
+ {
+  "id": "craft-platform-version-mismatch-callout",
+  "lens": "craft",
+  "severity": "low",
+  "scope_id": "PRD-PLATFORM",
+  "evidence": "PRD-PLATFORM:31",
+  "title": "Callout trạng thái trong PRD-PLATFORM nói 'v0.2.0' nhưng frontmatter ghi version '0.3.0'",
+  "why_it_dies": "Dòng 31 ghi `phê duyệt 2026-06-11 (v0.2.0)` trong khi frontmatter `version: \"0.3.0\"` và `approved_version: \"0.3.0\"`. Người đọc inline text sẽ hiểu phê duyệt ở version cũ hơn, có thể nghi ngờ phiên bản hiện tại chưa được phê duyệt chính thức. Cùng vấn đề xảy ra tại PRD-AI-E2:64 (callout v0.2.0, frontmatter 0.3.0).",
+  "fix": "Sửa dòng 31 của PRD-PLATFORM thành `(v0.3.0)` và dòng 64 của PRD-AI-E2 thành `(v0.3.0)` để khớp frontmatter. Cân nhắc bỏ hẳn số phiên bản khỏi callout inline và chỉ giữ ở frontmatter để tránh lệch về sau.",
+  "is_known": false
+ },
+ {
+  "id": "craft-report-scope-intent-legacy-field",
+  "lens": "craft",
+  "severity": "low",
+  "scope_id": "PRD-REPORT",
+  "evidence": "PRD-REPORT:10",
+  "title": "PRD-REPORT dùng trường frontmatter `scope_intent: full` — trường Cleanmatic-era không có trong schema BoGo",
+  "why_it_dies": "Frontmatter dòng 10 có `scope_intent: full` nhưng artifact đồng thời khai `scope: out` ở dòng 20 — hai trường mâu thuẫn nhau. `scope_intent` không xuất hiện ở bất kỳ artifact BoGo nào khác (chỉ còn PRD-COMM có cùng trường này). Công cụ parse frontmatter hoặc script v2.4.0 có thể đọc nhầm scope.",
+  "fix": "Xóa dòng `scope_intent: full` khỏi PRD-REPORT. Scope hiện tại đã được ghi rõ tại `scope: out` — đủ thông tin.",
+  "is_known": false
+ },
+ {
+  "lens": "product",
+  "severity": "high",
+  "scope_id": "PRD-PLATFORM",
+  "evidence": "VISION:119",
+  "title": "PLATFORM_ADMIN không có story nào xem tổng quan doanh thu — 'chăm sóc và bán hàng' theo VISION mà không có số liệu",
+  "why_it_dies": "VISION mô tả PLATFORM_ADMIN cần 'theo dõi mức độ sử dụng của từng tổ chức để chăm sóc và bán hàng'. PRD-PLATFORM-E1-S2 cho PLATFORM_ADMIN xem mức dùng theo tổ chức (weekly active users), nhưng không có story nào cấp cho PLATFORM_ADMIN tổng quan doanh thu toàn nền tảng: tổng MRR hiện tại, số tổ chức trial vs trả phí vs sắp hết hạn, tổng gạch nợ trong tháng. Không có con số tổng hợp thì đội vận hành không thể đo tiến độ đến G1 (100 tổ chức/12 tháng) và không biết khi nào cần đốc thúc chuyển đổi.",
+  "fix": "Thêm một AC vào PRD-PLATFORM-E1-S2 hoặc thêm story mới: PLATFORM_ADMIN xem dashboard doanh thu gộp — số tổ chức theo trạng thái (trial/active/khoá ghi/tạm ngưng), MRR hiện tại, số gạch nợ thành công/tháng, conversion rate trial→trả phí. Dashboard này đo trực tiếp BRD-G1 từ phía vận hành.",
+  "is_known": false
+ },
+ {
+  "lens": "product",
+  "severity": "medium",
+  "scope_id": "PRD-PLATFORM-E1-S1",
+  "evidence": "PRD-PLATFORM-E1-S1:29",
+  "title": "Chống abuse chỉ giới hạn 1 email/SĐT/tổ chức trial — không có cơ chế phát hiện tổ chức giả mạo dùng nhiều email để lấy trial vô hạn",
+  "why_it_dies": "PRD-PLATFORM-E1-S1 dòng 29 chỉ chặn 'một email/SĐT chỉ mở được MỘT tổ chức trial'. Nhưng với mô hình tự đăng ký không cần thẻ tín dụng, một cá nhân có thể tạo nhiều email (+alias) để có vô số trial 14 ngày — hoặc 30 ngày với gia hạn điều kiện. Không có AC nào về phát hiện hoặc giới hạn theo IP, domain email doanh nghiệp vs email miễn phí (Gmail/Yahoo), hay CAPTCHA nâng cao. BRD-G1 đặt mục tiêu 100 tổ chức *hoạt động tích cực*, không phải 100 trial — nhưng nếu metric trial bị inflate bởi abuse thì conversion rate và north star đều sai.",
+  "fix": "Thêm AC chống abuse vào PRD-PLATFORM-E1-S1: (1) yêu cầu email doanh nghiệp (domain không phải gmail.com/yahoo.com) để đăng ký trial — hoặc xác minh số điện thoại doanh nghiệp; (2) rate limit đăng ký theo IP/subnet trong 24 giờ; (3) PLATFORM_ADMIN thấy tổ chức mới đăng ký kèm fingerprint (IP, user-agent, email domain) để phát hiện cụm trial giả. Điều này bảo vệ tính tin cậy của metric BRD-G1.",
+  "is_known": false
+ },
+ {
+  "lens": "craft",
+  "severity": "high",
+  "scope_id": "PRD-APPROVAL",
+  "evidence": "PRD-APPROVAL:30",
+  "title": "PRD-APPROVAL ghi trạng thái '🔄 Draft' trong thân văn bản nhưng frontmatter đã là 'approved'",
+  "why_it_dies": "Callout body nói chưa phê duyệt, frontmatter nói đã phê duyệt — người đọc không biết đây là tài liệu định hướng xây dựng hay vẫn đang bàn thảo. Finding tương tự đã raise cho PRD-RESOURCE nhưng PRD-APPROVAL bị bỏ sót, trong khi PRD-APPROVAL có 5 story must đã approved và đội build cần rõ trạng thái.",
+  "fix": "Cập nhật callout thành '✅ Approved — Product Owner (đại diện nhóm sản phẩm BoGo) phê duyệt 2026-06-11 (v0.4.0).' để khớp frontmatter.",
+  "is_known": false
+ },
+ {
+  "lens": "craft",
+  "severity": "low",
+  "scope_id": "PRD-COMM",
+  "evidence": "PRD-COMM:9",
+  "title": "PRD-COMM dùng version 'two-part' (0.13) không nhất quán với schema semver của các PRD khác",
+  "why_it_dies": "PRD-COMM version là '0.13' trong khi các PRD cùng thế hệ dùng '0.x.0' (ba phần). Riêng PRD-COMM đã qua 13 lần revision kể từ pivot — version string không cho thấy patch increment — đội build khó biết phiên bản nào khớp với DEC nào khi cần truy nguyên lịch sử thay đổi, đặc biệt khi DEC-63 đến DEC-72 đều chạm vào PRD-COMM.",
+  "fix": "Đổi version: '0.13' → '0.13.0' (hoặc bump lên '0.14.0' nếu DEC-71/72 chưa được phản ánh trong version hiện tại).",
+  "is_known": false
+ }
+]
