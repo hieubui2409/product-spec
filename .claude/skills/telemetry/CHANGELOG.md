@@ -4,6 +4,15 @@ All notable changes to this skill are documented here. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-06-13
+
+### Fixed
+- Day-window lenses (artifact-heat, reliability, validate-proxy, workflow-chains, usage-tokens), the memory/product-memory age helpers, and the harvester accept an injectable `now` — deterministic, testable cutoffs instead of reading the wall clock mid-gather.
+- Consolidated six byte-identical `_parse_ts` copies into `telemetry_paths.parse_ts` (one tolerant ISO/Z parser).
+
+### Changed
+- Declared the `artifact_heat` lens in `SKILL.md` so docs match the dispatcher; corrected the runtime note (lenses need PyYAML, the bundle's single runtime dep) across `SKILL.md`/`README`/`GUIDE`.
+
 ## [1.1.0] — 2026-06-13
 
 ### Added

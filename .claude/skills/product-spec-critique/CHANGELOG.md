@@ -10,6 +10,12 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-06-13
+
+### Fixed
+- `check_report_language` classifies a token as quoted by its own character position inside a `"…"` span, so an unquoted leak whose text also appears inside a quote elsewhere on the line is no longer masked.
+- `critique_inherit` dedups reports via a tolerant timestamp parser, keeping the chronologically-latest row across mixed ISO/short formats instead of the lexicographically-largest string.
+
 ## [1.3.0] — 2026-06-13
 
 ### Changed

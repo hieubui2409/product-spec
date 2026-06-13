@@ -9,6 +9,15 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-06-13
+
+### Fixed
+- `change_log_writer` calendar-validates the entry date (rejects impossible dates like `2026-13-45`) and routes the month-file path through the `docs/product` write-fence.
+- `preferences.save` range-checks outcome-verdict floors to `[0,1]` at the library level, not only in the CLI.
+- `migrate_metric_to_metrics` emits a consistent `noop` flag so a no-op apply is distinguishable from a dry-run.
+- De-duplicated render helpers (`_is_deferred`/`_inline`/`_mark` → `render_common`, `_tip_scalar` → `render_html_escape`) behind re-exporting facades; call sites unchanged.
+- `status_vcs` git subprocess calls gained a 5s timeout guard.
+
 ## [2.4.0] — 2026-06-13
 
 ### Added

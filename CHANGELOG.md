@@ -17,6 +17,29 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-06-13
+A maintenance round: deterministic-clock + parser-dedup hardening, validation tightening, and edge-case fixes across all four skills. Per-skill versions: **product-spec 2.4.1**, **product-spec-critique 1.3.1**, **release 1.2.1**, **telemetry 1.1.1**.
+
+### product-spec
+**Fixed**
+- Calendar-validate change-log entry dates (impossible dates like `2026-13-45` are rejected) and route the month-file path through the `docs/product` write-fence.
+- Range-check outcome-verdict floors to `[0,1]` at the library level, not only in the CLI.
+- Distinguish a no-op `metric:`→`metrics:` apply from a dry-run via a consistent `noop` flag; add a 5s timeout guard to git calls; de-duplicate render helpers behind stable facades.
+
+### product-spec-critique
+**Fixed**
+- Quote classification uses each token's own position inside a `"…"` span, so an unquoted leak whose text also appears inside a quote elsewhere on the line no longer hides.
+- Cross-report inheritance dedups via a tolerant timestamp parser (chronologically-latest, not lexicographically-largest) across mixed timestamp formats.
+
+### release
+**Fixed**
+- `bump_version` strips `+build` metadata before semver arithmetic; the version gate fails soft on malformed `SKILL.md` YAML; a corrupt rollback manifest now surfaces a clear error (exit 1).
+
+### telemetry
+**Fixed**
+- Time-window lenses, age helpers, and the harvester take an injectable clock for deterministic cutoffs; six `_parse_ts` copies consolidated into one tolerant parser.
+- Declared the `artifact_heat` lens and corrected the PyYAML runtime note across docs.
+
 ## [2.4.0] — 2026-06-13
 This release rolls several rounds of field-audit work (real Cleanmatic-ERP usage compared against the kit)
 into one bundle. Per-skill versions: **product-spec 2.4.0**, **product-spec-critique 1.3.0**, **release

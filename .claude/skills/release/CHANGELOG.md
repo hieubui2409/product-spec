@@ -12,6 +12,13 @@ Format: [keepachangelog.com](https://keepachangelog.com/en/1.1.0/). Versioning: 
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-06-13
+
+### Fixed
+- `bump_version` strips a `+build` metadata suffix before semver arithmetic (`1.2.3+build.5`, `1.2.3-rc.1+build` now bump correctly).
+- `verify_skill_versions` fails soft on malformed `SKILL.md` YAML instead of crashing the release-identity gate.
+- `upgrade_apply.rollback` turns a corrupt `rollback-manifest.json` into a clear `ValueError` surfaced via the CLI (exit 1).
+
 ## [1.2.0] — 2026-06-13
 
 ### Added

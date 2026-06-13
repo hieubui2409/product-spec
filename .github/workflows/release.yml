@@ -54,6 +54,9 @@ jobs:
             --extract "${{ steps.version.outputs.value }}" > dist/RELEASE-BODY.md
           echo "----- release body -----"; cat dist/RELEASE-BODY.md
 
+      - name: Build standalone showcase (release asset, fresh from source)
+        run: python3 showcase/build.py
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -61,3 +64,4 @@ jobs:
           files: |
             dist/product-spec-*.tar.gz
             dist/product-spec-*.tar.gz.sha256
+            showcase/product-spec-showcase.html
