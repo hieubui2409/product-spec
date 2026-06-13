@@ -101,6 +101,8 @@ def test_lock_unreleased_refuses_missing_unreleased():
     ("2.0.0", "major", "3.0.0"),
     ("1.2.3-rc.1", "patch", "1.2.4"),   # pre-release suffix stripped before arithmetic
     ("1.2.3-rc.1", "minor", "1.3.0"),
+    ("1.2.3+build.5", "patch", "1.2.4"),       # build metadata stripped before arithmetic
+    ("1.2.3-rc.1+build.5", "minor", "1.3.0"),  # both pre-release + build stripped
 ])
 def test_bump_version(base, level, expected):
     assert release.bump_version(base, level) == expected
@@ -129,6 +131,27 @@ def test_requires_a_mode():
     with pytest.raises(SystemExit) as e:
         release.main([])
     assert e.value.code == 2
+
+
+def test_pre_release_label_appended_in_dry_run(capsys, monkeypatch, tmp_path):
+    # --pre-release appends a label to the version; dry-run must echo it without writing.
+    # Point CHANGELOG/MANIFEST at temp files so the dry-run has a non-empty [Unreleased].
+    changelog = tmp_path / "CHANGELOG.md"
+    changelog.write_text(
+        "# Changelog\n\n## [Unreleased]\n\n- a pending change\n\n## [2.4.0] — 2026-06-01\n\n- prior\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "pack.manifest.yaml"
+    manifest.write_text("version: 2.4.0\nbundle_name: product-spec\n", encoding="utf-8")
+    monkeypatch.setattr(release, "CHANGELOG", changelog)
+    monkeypatch.setattr(release, "MANIFEST", manifest)
+
+    assert release.main(["--release", "2.5.0", "--pre-release", "rc.1"]) == 0
+    out = capsys.readouterr().out
+    assert "2.5.0-rc.1" in out
+    assert "dry-run" in out  # confirms nothing was written
+    # dry-run must not touch the temp files
+    assert "[2.5.0-rc.1]" not in changelog.read_text(encoding="utf-8")
 
 
 def test_extract_on_real_changelog_runs(capsys):

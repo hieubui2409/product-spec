@@ -62,7 +62,11 @@ def _frontmatter(skill_md: Path) -> dict:
     end = text.find("\n---", 3)
     if end == -1:
         return {}
-    return yaml.safe_load(text[3:end]) or {}
+    try:
+        parsed = yaml.safe_load(text[3:end])
+    except yaml.YAMLError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def verify(skill_dirs: list[Path]) -> tuple[list[Result], bool]:

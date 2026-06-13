@@ -78,7 +78,8 @@ def lock_unreleased(text: str, version: str, date: str) -> str:
 
 
 def bump_version(version: str, level: str) -> str:
-    major, minor, patch = (int(x) for x in version.split("-")[0].split("."))
+    core = version.split("+", 1)[0].split("-", 1)[0]
+    major, minor, patch = (int(x) for x in core.split("."))
     if level == "major":
         return f"{major + 1}.0.0"
     if level == "minor":

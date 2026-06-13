@@ -240,7 +240,10 @@ def rollback(backup_dir: Path) -> dict:
         raise FileNotFoundError(
             f"rollback-manifest.json not found in {backup_dir}"
         )
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"corrupt rollback-manifest.json in {backup_dir}: {e}") from e
     entries = data.get("entries", [])
     _restore_from_backup(entries, backup_dir)
     return {
@@ -266,6 +269,6 @@ if __name__ == "__main__":
     try:
         result = rollback(Path(args.rollback))
         print(json.dumps(result, indent=2))
-    except (FileNotFoundError, OSError) as e:
+    except (FileNotFoundError, OSError, ValueError) as e:
         print(f"[upgrade_apply] ERROR: {e}", file=sys.stderr)
         sys.exit(1)
