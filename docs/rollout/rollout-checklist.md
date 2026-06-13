@@ -1,4 +1,4 @@
-# Checklist rollout — mời PO Cleanmatic lên 2.3.0
+# Checklist rollout — mời PO Cleanmatic lên 2.4.0
 
 > **Dành cho chủ kit.** Đây là hiện vật *bàn giao*: skill chỉ soạn checklist, **không tự
 > thao tác trên repo PO, không tự gửi**. Chủ kit chạy từng bước dưới đây (đồng hành cùng PO).
@@ -45,7 +45,7 @@
 
 ## 7. Bàn giao
 
-- [ ] Gửi PO: [thông điệp mời 2.3.0](po-invitation-2.3.0.md) + [notice license](license-notice-agpl-draft.md).
+- [ ] Gửi PO: [thông điệp mời 2.4.0](po-invitation-2.4.0.md) + [notice license](license-notice-agpl-draft.md).
 - [ ] Sau khi PO chạy ổn → cập nhật `docs/audit-trail/BACKLOG.md` mục "Thông báo PO Cleanmatic".
 
 ## Rủi ro & giảm thiểu

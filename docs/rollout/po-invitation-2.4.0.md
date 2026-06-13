@@ -1,14 +1,14 @@
-# Mời nâng cấp lên bản 2.3.0 — bạn mở khoá được gì
+# Mời nâng cấp lên bản 2.4.0 — bạn mở khoá được gì
 
 > **Bản nháp thông điệp gửi PO.** Chủ kit rà lại giọng văn rồi gửi.
 
 Chào bạn,
 
-Bản kit product-spec đã có phiên **2.3.0**. Bạn đang dùng một bản cũ hơn, và việc nâng cấp
+Bản kit product-spec đã có phiên **2.4.0**. Bạn đang dùng một bản cũ hơn, và việc nâng cấp
 mở khoá một loạt năng lực mà bản của bạn còn thiếu. Nâng cấp chạy **một lệnh** (`upgrade.sh`,
 mặc định *xem trước* không đổi gì) và có sẵn đường lùi (`--rollback`). Mình sẽ đồng hành.
 
-## Lên 2.3.0, bạn có thêm:
+## Lên 2.4.0, bạn có thêm:
 
 1. **Hành động theo bản phê bình (apply-critique).** Đi qua một báo cáo phê bình spec theo
    từng phát hiện — Giữ / Đổi (kèm re-approve) / Hoãn — mỗi quyết định ghi lại một mục, không
@@ -28,6 +28,14 @@ mặc định *xem trước* không đổi gì) và có sẵn đường lùi (`-
 
 6. **Bản gửi bạn gọn hơn.** Bộ cài cho người nhận không còn kèm bộ test/đồ phát triển nội bộ —
    chỉ phần chạy thật + giấy phép.
+
+7. **Tinh chỉnh từ kiểm toán thực tế (mới ở 2.4.0).** Bản 2.4.0 gộp thêm một loạt sửa từ đợt
+   field-audit: `--validate` cảnh báo thêm khi mốc thời gian của một mảng lệch với PRD của nó,
+   và khi một persona được nêu tên ở đầu tài liệu nhưng chưa được mô tả; một công cụ điền lại
+   `id:` còn thiếu (chạy thử trước, không bao giờ tự đụng tài liệu đã duyệt); tra cứu quyết định
+   theo tài liệu bị ảnh hưởng kèm chuỗi "quyết định này thay thế quyết định kia"; và phần trực
+   quan thông minh hơn (link `*-latest.html` luôn trỏ sơ đồ mới nhất, cờ "sơ đồ đã cũ", dọn bớt
+   bản render cũ).
 
 Ngoài ra: một dòng nhắc nhẹ trong `--status` cho biết bản bạn đang chạy **đóng gói bao lâu rồi**
 (để biết khi nào nên hỏi bản mới), nhắc xuất bản tài liệu sau khi ký duyệt để dễ chia sẻ, và một
