@@ -62,10 +62,10 @@ def _extract_frontmatter(path: Path) -> dict:
     return fm
 
 
-def _age_days(p: Path) -> int:
+def _age_days(p: Path, now: datetime | None = None) -> int:
     try:
         mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc)
-        return (datetime.now(timezone.utc) - mtime).days
+        return ((now or datetime.now(timezone.utc)) - mtime).days
     except OSError:
         return 0
 

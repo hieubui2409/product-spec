@@ -50,7 +50,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -NoHooks
 ```
 
-Requires Python 3.9+. Stdlib-only → runs on system `python3`; no venv needed on recipients.
+Requires Python 3.9+ and PyYAML (the bundle's single runtime dependency, shipped with product-spec). Runs on system `python3`; no telemetry-specific venv needed.
 
 ### The 8 lenses at a glance
 
@@ -69,7 +69,7 @@ Requires Python 3.9+. Stdlib-only → runs on system `python3`; no venv needed o
 
 The skill **never computes** — a Python script (`analyze_telemetry.py`) gathers deterministically, then the LLM **narrates** the results in plain Vietnamese. The split:
 
-- **Script** (`.claude/skills/telemetry/scripts/analyze_telemetry.py`): stdlib-only, no judgment, produces JSON aggregates.
+- **Script** (`.claude/skills/telemetry/scripts/analyze_telemetry.py`): no judgment, produces JSON aggregates (stdlib + PyYAML).
 - **Skill** (the LLM): reads the aggregates, narrates them honestly, phrases recommendations as **gợi ý** (suggestions) only.
 
 ```bash
@@ -133,9 +133,9 @@ Every report **ends** with **"Cái này KHÔNG đo được"** (This cannot be m
 
 ### Boundaries
 
-- **Read-only.** No edits to spec/code/catalog/memory; no network; no venv override required on recipients.
+- **Read-only.** No edits to spec/code/catalog/memory; no network; needs PyYAML (the bundle's one dep) but no telemetry-specific venv.
 - **No `--apply`.** This is a diagnostic skill, not a fixer. Recommendations are **gợi ý** only.
-- **Stdlib-only.** Runs on system `python3` without venv (venv required only during development in cleanmatic repo).
+- **One dependency (PyYAML).** Runs on system `python3` with PyYAML present (shipped via the bundle); the cleanmatic dev repo provides it through the shared venv.
 - **GATE-NEVER-ASSUME / GATE-NO-SILENT-REVERSAL:** Not applicable in the usual sense (nothing is written/approved), but the skill still never fabricates a metric — an absent signal is reported as absent.
 
 ### Caveats
@@ -197,7 +197,7 @@ Cờ (đều là tùy chọn):
 ./install.sh --no-hooks         # chỉ runtime, không tự động đăng ký hook
 ```
 
-Windows: `powershell -ExecutionPolicy Bypass -File .\install.ps1` (thêm `-NoHooks` nếu cần). Cần Python 3.9+. Chỉ dùng STDLIB → chạy trên system `python3`; người nhận không cần venv.
+Windows: `powershell -ExecutionPolicy Bypass -File .\install.ps1` (thêm `-NoHooks` nếu cần). Cần Python 3.9+ và PyYAML (phụ thuộc runtime duy nhất của bundle, đi kèm product-spec). Chạy trên system `python3`; không cần venv riêng cho telemetry.
 
 ### 8 lăng kính sơ lược
 
@@ -216,7 +216,7 @@ Windows: `powershell -ExecutionPolicy Bypass -File .\install.ps1` (thêm `-NoHoo
 
 Skill **không tính toán gì** — một Python script (`analyze_telemetry.py`) gather định tính, rồi LLM **kể chuyện** kết quả bằng tiếng Việt bình thường. Phân công:
 
-- **Script** (`.claude/skills/telemetry/scripts/analyze_telemetry.py`): chỉ STDLIB, không phán đoán, ra JSON aggregates.
+- **Script** (`.claude/skills/telemetry/scripts/analyze_telemetry.py`): không phán đoán, ra JSON aggregates (stdlib + PyYAML).
 - **Skill** (LLM): đọc aggregates, kể chuyện với thật lòng, đề xuất dưới dạng **gợi ý** chứ không phải lệnh.
 
 ```bash
@@ -280,9 +280,9 @@ Mỗi báo cáo **kết thúc** bằng **"Cái này KHÔNG đo được"**:
 
 ### Ranh giới
 
-- **Chỉ-đọc.** Không sửa spec/code/catalog/memory; không mạng; người nhận không cần venv.
+- **Chỉ-đọc.** Không sửa spec/code/catalog/memory; không mạng; cần PyYAML (phụ thuộc duy nhất của bundle) nhưng không cần venv riêng cho telemetry.
 - **Không `--apply`.** Đây là diagnostic skill, không fixer. Gợi ý thôi.
-- **STDLIB-only.** Chạy trên system `python3` mà không venv (venv chỉ cần dev trong cleanmatic repo).
+- **Một phụ thuộc (PyYAML).** Chạy trên system `python3` khi có PyYAML (đi kèm bundle); venv chỉ cần khi dev trong cleanmatic repo.
 - **GATE-NEVER-ASSUME / GATE-NO-SILENT-REVERSAL:** Không áp dụng thường lệ (không viết/approved), nhưng skill không bao giờ bịa metric — tín hiệu vắng được báo là vắng.
 
 ### Cảnh báo

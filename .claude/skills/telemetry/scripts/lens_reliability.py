@@ -20,15 +20,8 @@ def _path():
     return telemetry_paths.TELEMETRY / "subagent-outcomes.jsonl"
 
 
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
-
-
-def gather(days: int = 30) -> dict:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+def gather(days: int = 30, *, now: datetime | None = None) -> dict:
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     by_type: dict[str, dict] = defaultdict(lambda: {k: 0 for k in _OUTCOMES} | {"total": 0})
     failure_modes: Counter = Counter()
     p = _path()
@@ -39,7 +32,7 @@ def gather(days: int = 30) -> dict:
                 rec = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            ts = _parse_ts(rec.get("ts", ""))
+            ts = telemetry_paths.parse_ts(rec.get("ts", ""))
             if ts and ts < cutoff:
                 continue
             atype = rec.get("agent_type") or "unknown"

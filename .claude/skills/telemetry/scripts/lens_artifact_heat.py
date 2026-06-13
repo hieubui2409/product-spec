@@ -31,19 +31,15 @@ def _sink_path():
     return telemetry_paths.TELEMETRY / _SINK_NAME
 
 
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
-
-
-def gather(days: int = 30) -> dict:
+def gather(days: int = 30, *, now: datetime | None = None) -> dict:
     """Tally artifact edits within the last ``days`` days.
 
     Returns a dict with lens="artifact_heat", total_edits, and rows sorted
-    by edits descending. Skips malformed lines silently (fail-soft)."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    by edits descending. Skips malformed lines silently (fail-soft).
+
+    ``now`` injects the reference clock (default: real UTC now) so the days
+    window is deterministic and testable."""
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     counts: dict[str, int] = defaultdict(int)
     last_edit: dict[str, str] = {}
 
@@ -58,7 +54,7 @@ def gather(days: int = 30) -> dict:
                 rec = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            ts = _parse_ts(rec.get("ts", ""))
+            ts = telemetry_paths.parse_ts(rec.get("ts", ""))
             if ts and ts < cutoff:
                 continue
             artifact = rec.get("artifact_path") or ""

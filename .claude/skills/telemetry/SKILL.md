@@ -5,7 +5,7 @@ user-invocable: true
 when_to_use: "When the (non-technical) product owner asks how their skills are being used, which scripts error or run slow, whether subagents succeed, whether memory is tidy, or whether the last spec validate passed — and wants it explained in plain Vietnamese, not raw logs."
 category: observability
 keywords: [telemetry, usage, health, skills, tokens, sessions, reliability, subagents, memory, validate, vietnamese, dashboard, analytics]
-argument-hint: "[--lens usage|session|health|reliability|workflow|validate|memory|product_memory|forensics|all] [--format ascii|md|mermaid|json] [--days N] [--top N] [--lang vi|en]"
+argument-hint: "[--lens usage|session|health|reliability|workflow|validate|memory|product_memory|artifact_heat|forensics|all] [--format ascii|md|mermaid|json] [--days N] [--top N] [--lang vi|en]"
 metadata:
   author: cleanmatic
   version: "1.1.0"
@@ -33,7 +33,7 @@ A **read-only** skill that tells the product owner, **in plain Vietnamese**, thr
 The split both repos follow: a **script gathers** (deterministic, never judges), the **skill narrates** (judges, in VI). The skill NEVER recomputes a number — it narrates the script's dict.
 
 ```bash
-# Recipient bundle: system python3 (the scripts are stdlib-only — no venv needed).
+# Recipient bundle: system python3 with PyYAML (the bundle's single runtime dep, shipped via product-spec).
 python3 ./.claude/skills/telemetry/scripts/analyze_telemetry.py \
   --lens all --format ascii [--days 30] [--top 10]
 # In the cleanmatic dev repo, use the shared venv: ./.claude/skills/.venv/bin/python3 …
@@ -44,7 +44,7 @@ Default behaviour when the PO invokes `/cleanmatic:telemetry`:
 2. Read the aggregates; **narrate in Vietnamese** (default). Switch to English with `--lang en` (the script also localizes its fixed labels) or just "in English".
 3. Lead with the honesty gate; recommendations are **gợi ý (suggestions)** only.
 
-Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--lang vi|en` (fixed-label language, vi default), `--session <id>` / `--all-sessions` (forensics). Stdlib-only → runs under system `python3` (no venv required on recipients).
+Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--top N`, `--lang vi|en` (fixed-label language, vi default), `--session <id>` / `--all-sessions` (forensics). Runs under system `python3`; needs PyYAML (the bundle's single runtime dependency, shipped with product-spec).
 
 ## Lenses
 
@@ -58,6 +58,7 @@ Pass-through flags: `--lens <name>`, `--format md|mermaid|json`, `--days N`, `--
 | `validate`   | `last_validated.json` + `hook-telemetry` | validate-pass proxy (internal quality, NOT market outcome) |
 | `memory`     | `~/.claude/projects/<root>/memory/`   | orphans, dead index entries, broken `[[links]]`, staleness (read-only) |
 | `product_memory` | `docs/product/.memory/`           | spec-store health: last-validated age, missing state files, critique-cache size (read-only) |
+| `artifact_heat` | `artifact-events.jsonl`            | artifact-edit frequency: most-edited spec artifacts (heat ranking), within `--days` window |
 | `forensics`  | session transcript JSONL              | one session reconstructed (skills/tools/tokens/files/duration) |
 | `all`        | the above (minus forensics)           | the dashboard-lite the PO reads first |
 

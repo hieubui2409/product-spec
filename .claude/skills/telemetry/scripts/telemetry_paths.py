@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 
 MAX_SINK_BYTES = 8 * 1024 * 1024  # 8 MB → one .bak generation, then overwrite
@@ -93,6 +94,17 @@ def low_volume_gate(count: int, threshold: int = LOW_VOLUME_THRESHOLD) -> bool:
         return int(count) < int(threshold)
     except (TypeError, ValueError):
         return True  # unknown volume → treat as gated (conservative)
+
+
+def parse_ts(raw: str):
+    """Parse a telemetry/session ISO-8601 timestamp (tolerating a trailing ``Z``)
+    into a ``datetime``, or ``None`` if it is missing/malformed. One home for the
+    read-side lenses (artifact-heat, forensics, reliability, usage-tokens,
+    validate-proxy, workflow-chains) so they share ONE tolerant parser (DRY)."""
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
 
 
 def disabled() -> bool:

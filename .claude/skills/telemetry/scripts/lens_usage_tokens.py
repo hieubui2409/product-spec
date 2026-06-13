@@ -25,17 +25,10 @@ def _invocations_path():
     return telemetry_paths.TELEMETRY / "invocations.jsonl"
 
 
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
-
-
-def gather_invocations(days: int, catalog: dict) -> dict:
+def gather_invocations(days: int, catalog: dict, now: datetime | None = None) -> dict:
     counts: dict[str, int] = defaultdict(int)
     by_day: dict[str, int] = defaultdict(int)
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     p = _invocations_path()
     if p.exists():
         for line in p.read_text(encoding="utf-8").splitlines():
@@ -46,7 +39,7 @@ def gather_invocations(days: int, catalog: dict) -> dict:
             skill = to_dir_id(rec.get("skill", ""), catalog)
             if not skill:
                 continue
-            ts = _parse_ts(rec.get("ts", ""))
+            ts = telemetry_paths.parse_ts(rec.get("ts", ""))
             if ts and ts < cutoff:
                 continue
             counts[skill] += 1
@@ -55,14 +48,14 @@ def gather_invocations(days: int, catalog: dict) -> dict:
     return {"counts": dict(counts), "by_day": dict(sorted(by_day.items()))}
 
 
-def gather_tokens(days: int, catalog: dict) -> dict[str, int]:
+def gather_tokens(days: int, catalog: dict, now: datetime | None = None) -> dict[str, int]:
     """Per-skill token attribution across session transcripts within the window.
     Directional, not billing-exact (spans include inter-skill reasoning)."""
     sdir = telemetry_paths.sessions_dir()
     tokens: dict[str, int] = defaultdict(int)
     if not sdir.exists():
         return {}
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     for sf in sorted(sdir.glob("*.jsonl")):
         current: str | None = None
         try:
@@ -75,7 +68,7 @@ def gather_tokens(days: int, catalog: dict) -> dict[str, int]:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                ts = _parse_ts(rec.get("timestamp", ""))
+                ts = telemetry_paths.parse_ts(rec.get("timestamp", ""))
                 if ts and ts < cutoff:
                     # Pre-window records are skipped wholesale, so a Skill span opened
                     # just before the cutoff under-attributes its in-window tail. Token
@@ -98,13 +91,14 @@ def gather_tokens(days: int, catalog: dict) -> dict[str, int]:
     return dict(tokens)
 
 
-def gather(days: int = 30, with_tokens: bool = True, skills_dir=None) -> dict:
+def gather(days: int = 30, with_tokens: bool = True, skills_dir=None, *, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
     catalog = load_catalog(skills_dir)
-    inv = gather_invocations(days, catalog)
+    inv = gather_invocations(days, catalog, now)
     counts = inv["counts"]
     cat_dirs = catalog["dirs"]
     owned = catalog.get("owned") or set()
-    tokens = gather_tokens(days, catalog) if with_tokens else {}
+    tokens = gather_tokens(days, catalog, now) if with_tokens else {}
     # never_used = OWNED skills not invoked (the actionable list). Unused vendored
     # external skills are expected, not prune candidates → counted separately, not
     # listed (M1: avoids an "85 chưa dùng" headline dominated by ck:* tools).

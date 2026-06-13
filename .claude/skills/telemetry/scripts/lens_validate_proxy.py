@@ -34,13 +34,6 @@ def _hook_path():
     return telemetry_paths.TELEMETRY / "hook-telemetry.jsonl"
 
 
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
-
-
 def _read_marker() -> dict | None:
     try:
         data = json.loads(_marker_path().read_text(encoding="utf-8"))
@@ -49,12 +42,12 @@ def _read_marker() -> dict | None:
     return data if isinstance(data, dict) and data.get("snapshot") else None
 
 
-def _validate_runs(days: int) -> tuple[int, int]:
+def _validate_runs(days: int, now: datetime | None = None) -> tuple[int, int]:
     """(runs, passes) of validate-flow scripts within the window."""
     p = _hook_path()
     if not p.exists():
         return 0, 0
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     runs = passes = 0
     for line in p.read_text(encoding="utf-8").splitlines():
         try:
@@ -63,7 +56,7 @@ def _validate_runs(days: int) -> tuple[int, int]:
             continue
         if not _VALIDATE_SCRIPT_RE.search(rec.get("script", "")):
             continue
-        ts = _parse_ts(rec.get("ts", ""))
+        ts = telemetry_paths.parse_ts(rec.get("ts", ""))
         if ts and ts < cutoff:
             continue
         runs += 1
@@ -72,9 +65,10 @@ def _validate_runs(days: int) -> tuple[int, int]:
     return runs, passes
 
 
-def gather(days: int = 30) -> dict:
+def gather(days: int = 30, *, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
     marker = _read_marker()
-    runs, passes = _validate_runs(days)
+    runs, passes = _validate_runs(days, now)
     if marker is None and runs == 0:
         # reason_code is language-neutral; the renderer localizes it (no EN prose
         # baked into the gathered dict, which would leak into VI output).

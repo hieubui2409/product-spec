@@ -51,11 +51,11 @@ def _load_self_corrections(corrections_path: Path) -> list[dict]:
     return []
 
 
-def _load_artifact_events(telemetry_path: Path, days: int) -> list[dict]:
+def _load_artifact_events(telemetry_path: Path, days: int, now: datetime | None = None) -> list[dict]:
     """Read artifact-events.jsonl within the days window. Returns []. Read-only."""
     if not telemetry_path.exists():
         return []
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     records = []
     try:
         with open(str(telemetry_path), encoding="utf-8") as fh:
@@ -85,6 +85,7 @@ def harvest_suggestions(
     days: int = 30,
     corrections_path: Path | None = None,
     repeat_threshold: int = _DEFAULT_REPEAT_THRESHOLD,
+    now: datetime | None = None,
 ) -> dict:
     """Gather read-only suggestions from self-corrections + repeat artifact edits.
 
@@ -139,7 +140,7 @@ def harvest_suggestions(
     # --- Source 2: repeat artifact edits (from P6 artifact-events sink) ------
     import telemetry_paths  # noqa: E402 — stdlib-only module; imported lazily to stay fail-open
     events_path = telemetry_paths.TELEMETRY / "artifact-events.jsonl"
-    events = _load_artifact_events(events_path, days=days)
+    events = _load_artifact_events(events_path, days=days, now=now)
 
     # Count edits per artifact
     edit_counts: defaultdict[str, int] = defaultdict(int)

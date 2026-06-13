@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
 
 import telemetry_paths
@@ -17,13 +16,6 @@ import telemetry_paths
 _TOKEN_KEYS = ("input_tokens", "output_tokens", "cache_read_input_tokens",
                "cache_creation_input_tokens")
 _FILE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
-
-
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
 
 
 def parse_session(path: Path) -> dict:
@@ -44,7 +36,7 @@ def parse_session(path: Path) -> dict:
             except json.JSONDecodeError:
                 continue
             msg = rec.get("message") if isinstance(rec.get("message"), dict) else {}
-            ts = _parse_ts(rec.get("timestamp", "")) or _parse_ts(msg.get("timestamp", ""))
+            ts = telemetry_paths.parse_ts(rec.get("timestamp", "")) or telemetry_paths.parse_ts(msg.get("timestamp", ""))
             if ts:
                 first_ts = first_ts or ts
                 last_ts = ts

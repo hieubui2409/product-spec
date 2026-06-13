@@ -31,10 +31,10 @@ def _product_memory_dir(root: str | None) -> Path:
     return base / "docs" / "product" / ".memory"
 
 
-def _age_days(p: Path) -> int | None:
+def _age_days(p: Path, now: datetime | None = None) -> int | None:
     try:
         mtime = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc)
-        return (datetime.now(timezone.utc) - mtime).days
+        return ((now or datetime.now(timezone.utc)) - mtime).days
     except OSError:
         return None
 

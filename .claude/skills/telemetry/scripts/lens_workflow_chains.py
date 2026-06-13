@@ -39,15 +39,8 @@ def _invocations_path():
     return telemetry_paths.TELEMETRY / "invocations.jsonl"
 
 
-def _parse_ts(raw: str):
-    try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        return None
-
-
-def actual_chains(days: int, catalog: dict) -> list[list[str]]:
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+def actual_chains(days: int, catalog: dict, now: datetime | None = None) -> list[list[str]]:
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=days)
     by_session: dict[str, list[tuple]] = defaultdict(list)
     p = _invocations_path()
     if p.exists():
@@ -58,7 +51,7 @@ def actual_chains(days: int, catalog: dict) -> list[list[str]]:
                 continue
             skill = to_dir_id(rec.get("skill", ""), catalog)
             sess = rec.get("session", "")
-            ts = _parse_ts(rec.get("ts", ""))
+            ts = telemetry_paths.parse_ts(rec.get("ts", ""))
             if not skill or not sess or (ts and ts < cutoff):
                 continue
             by_session[sess].append((ts or datetime.min.replace(tzinfo=timezone.utc), skill))
@@ -104,9 +97,10 @@ def _norm(chain: list[str]) -> str:
     return " → ".join(chain)
 
 
-def gather(days: int = 30, top: int = 10, min_sessions: int = 5, skills_dir=None) -> dict:
+def gather(days: int = 30, top: int = 10, min_sessions: int = 5, skills_dir=None, *, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
     catalog = load_catalog(skills_dir)
-    actual = actual_chains(days, catalog)
+    actual = actual_chains(days, catalog, now)
     declared = declared_chains(catalog)
     declared_set = {_norm(c) for c in declared}
     chain_freq = Counter(_norm(c) for c in actual if c)

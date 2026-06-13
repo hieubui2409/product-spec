@@ -23,7 +23,7 @@ It is **NOT**:
 
 ## 2. Core concepts — the mental model (read this once)
 
-1. **Script gathers; LLM narrates.** The Python script (`analyze_telemetry.py`) reads append-only JSONL sinks (deterministic, stdlib-only) and produces JSON aggregates. The skill **narrates** those numbers in plain Vietnamese, following the narration contract (`references/narration-contract.md`).
+1. **Script gathers; LLM narrates.** The Python script (`analyze_telemetry.py`) reads append-only JSONL sinks (deterministic, stdlib + PyYAML) and produces JSON aggregates. The skill **narrates** those numbers in plain Vietnamese, following the narration contract (`references/narration-contract.md`).
 
 2. **Eight lenses, one report.** The `--all` report shows all eight lenses (except forensics, which is a deep-dive separate from the dashboard). Each lens answers one question:
    - `usage` — which skills, how often, token weight, never-used?

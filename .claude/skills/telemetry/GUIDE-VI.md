@@ -23,7 +23,7 @@ Nó **KHÔNG PHẢI**:
 
 ## 2. Khái niệm cốt lõi — mô hình tư duy (đọc một lần)
 
-1. **Script gather; LLM kể chuyện.** Python script (`analyze_telemetry.py`) đọc JSONL sink chỉ-append (định tính, STDLIB-only) rồi ra JSON aggregates. Skill **kể chuyện** những con số đó bằng tiếng Việt bình thường, theo narration contract (`references/narration-contract.md`).
+1. **Script gather; LLM kể chuyện.** Python script (`analyze_telemetry.py`) đọc JSONL sink chỉ-append (định tính, stdlib + PyYAML) rồi ra JSON aggregates. Skill **kể chuyện** những con số đó bằng tiếng Việt bình thường, theo narration contract (`references/narration-contract.md`).
 
 2. **Tám lăng kính, một báo cáo.** Báo cáo `--all` hiển thị cả tám lăng kính (forensics là sâu-đặc-thù, tách riêng khỏi dashboard). Mỗi lăng kính trả lời một câu:
    - `usage` — skill nào, bao nhiêu lần, token weight, chưa dùng?

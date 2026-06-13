@@ -9,6 +9,7 @@ Tests:
 import importlib
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -89,18 +90,19 @@ class TestHeatLensTalliesPerArtifact:
         assert rows[0]["last_edit"] == "2026-06-12T09:00:00+00:00"
 
     def test_heat_lens_respects_days_window(self, tmp_path, monkeypatch):
-        """Events older than days cutoff must be excluded."""
+        """Events older than days cutoff must be excluded (deterministic via injected now)."""
         lens = _setup_telemetry(monkeypatch, tmp_path)
 
         events = [
-            # Very old event (100 days ago mock — we use days=0 to exclude all)
             {"ts": "2020-01-01T00:00:00+00:00", "artifact_path": "docs/product/OLD.md", "op": "Edit", "session": "s1"},
             {"ts": "2026-06-12T10:00:00+00:00", "artifact_path": "docs/product/NEW.md", "op": "Edit", "session": "s2"},
         ]
         _write_artifact_events(tmp_path, events)
 
-        # With days=1, only the recent event should be included
-        result = lens.gather(days=1)
+        # Inject a fixed clock so the days=1 window is deterministic regardless of the real date:
+        # cutoff = 2026-06-13T00:00 − 1d = 2026-06-12T00:00 → NEW (10:00) inside, OLD (2020) outside.
+        now = datetime(2026, 6, 13, tzinfo=timezone.utc)
+        result = lens.gather(days=1, now=now)
         rows = result["rows"]
         artifact_names = [r["artifact"] for r in rows]
         assert "docs/product/NEW.md" in artifact_names
