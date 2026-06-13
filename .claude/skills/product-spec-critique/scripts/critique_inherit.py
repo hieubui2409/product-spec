@@ -17,6 +17,7 @@ the lenses receive but the lens prompt is told to ignore them (consolidator-only
 import hashlib
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -134,6 +135,30 @@ def _classify(evidence_id: str, scope: str, ancestors_set: Set[str],
     return "drop"
 
 
+def _ts_key(raw: Any):
+    """Chronological sort key tolerant of every report_ts convention actually
+    stored: ISO-8601 (`2026-06-13T..`), filename stamps `YYMMDD` / `YYMMDD-HHMM`,
+    and compact `YYYYMMDDThhmmss[Z]`. Compared as naive datetimes; empty/garbage
+    sorts oldest so a malformed stamp can never win the 'keep most-recent' dedup.
+
+    Replaces a raw lexicographic compare, under which a short `260601` outranked
+    an ISO `2026-06-14T..` (char '6' > '0' at index 2) and kept the STALE finding.
+    """
+    s = str(raw or "").strip()
+    if s:
+        try:
+            return datetime.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            pass
+        s2 = s.replace("Z", "")
+        for fmt in ("%Y%m%dT%H%M%S", "%y%m%d-%H%M", "%Y%m%d", "%y%m%d"):
+            try:
+                return datetime.strptime(s2, fmt)
+            except ValueError:
+                continue
+    return datetime.min
+
+
 def _index_rows(root) -> List[Dict[str, Any]]:
     """Index entries deduped per FINDING, keeping the most-recent report_ts.
 
@@ -148,7 +173,7 @@ def _index_rows(root) -> List[Dict[str, Any]]:
             continue
         key = entry.get("finding_fingerprint") or eid
         cur = best.get(key)
-        if cur is None or str(entry.get("report_ts") or "") >= str(cur.get("report_ts") or ""):
+        if cur is None or _ts_key(entry.get("report_ts")) >= _ts_key(cur.get("report_ts")):
             best[key] = entry
     return list(best.values())
 

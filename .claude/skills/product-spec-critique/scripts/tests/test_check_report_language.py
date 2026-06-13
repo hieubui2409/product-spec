@@ -79,6 +79,18 @@ def test_gloss_and_proper_noun_are_review_not_leak():
     assert any(f["needs_review"] for f in findings)
 
 
+def test_unquoted_token_not_masked_by_substring_in_a_quote():
+    # An unquoted Vietnamese word whose text also appears INSIDE a separate quoted
+    # span on the same line must still surface as unquoted (a likely leak) — not be
+    # silently reclassified as a legit source-quote by a substring match.
+    text = ('---\nlang: en\nlevel: 9\n---\n# Critique\n'
+            '1. The metric giải was dropped though the title says "phân giải cao".\n')
+    findings = crl.scan_text(text)
+    assert findings
+    assert any(f["unquoted_vi"] for f in findings), \
+        "an unquoted vi token must not be masked by the same text inside a quote"
+
+
 def test_vi_report_is_skipped(tmp_path):
     p = tmp_path / "r-vi.md"
     p.write_text(VI_REPORT, encoding="utf-8")

@@ -354,6 +354,22 @@ def test_index_rows_none_fingerprint_does_not_merge(tmp_path):
     assert len(s1) == 2
 
 
+def test_index_rows_dedup_mixed_ts_formats_keeps_chronologically_latest(tmp_path):
+    # M-2 regression: report_ts mixes filename stamps (YYMMDD) and ISO (_now()).
+    # A lexicographic compare wrongly ranks "260601" above "2026-06-14T.." ('6'>'0'
+    # at index 2) and keeps the STALE finding; the chronological key must keep the
+    # genuinely newer ISO (June-14) finding instead.
+    proj = make_proj(tmp_path)
+    fp = "feedfacefeedface"
+    critique_cache.upsert_findings(proj, "2026-06-14T00:00:00+00:00", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:9", fp)])
+    critique_cache.upsert_findings(proj, "260601", "PRD-AUTH-E1-S1",
+                                   [_row("PRD-AUTH-E1-S1:5", fp)])
+    same = [r for r in ci._index_rows(proj) if r.get("finding_fingerprint") == fp]
+    assert len(same) == 1
+    assert same[0]["evidence_id"] == "PRD-AUTH-E1-S1:9"  # ISO June-14 is chronologically latest
+
+
 def test_rollup_blocker_count_not_inflated_by_line_drift(tmp_path):
     # Crit 1 end-to-end: one logical blocker across two re-critiques (same fp,
     # drifted line) counts ONCE in the rollup, not twice.

@@ -79,10 +79,6 @@ def _has_vietnamese_char(token: str) -> bool:
     return False
 
 
-def _strip_quotes(tok: str) -> str:
-    return tok.strip('"“”\'.,;:()')
-
-
 def scan_text(text: str) -> List[Dict[str, Any]]:
     """Return per-line findings for an en report body. Each finding separates:
 
@@ -97,13 +93,17 @@ def scan_text(text: str) -> List[Dict[str, Any]]:
     body = _body(text)
     findings: List[Dict[str, Any]] = []
     for i, line in enumerate(body.splitlines(), 1):
-        spans = re.findall(r'"[^"]*"', line)
+        # Character ranges covered by "…" quoted spans, so a token is classified as
+        # quoted iff its OWN position sits inside a span — not merely because its text
+        # also appears as a substring of some quoted span elsewhere on the line.
+        quote_ranges = [(m.start(), m.end()) for m in re.finditer(r'"[^"]*"', line)]
         quoted, unquoted = [], []
-        for w in re.findall(r"\S+", line):
+        for m in re.finditer(r"\S+", line):
+            w = m.group()
             if not _has_vietnamese_char(w):
                 continue
-            bare = _strip_quotes(w)
-            in_quote = any(bare and bare in s for s in spans)
+            ws, we = m.start(), m.end()
+            in_quote = any(qs <= ws and we <= qe for qs, qe in quote_ranges)
             (quoted if in_quote else unquoted).append(w)
         struct = [s for s in _VI_STRUCTURAL if s in line]
         if struct or quoted or unquoted:
