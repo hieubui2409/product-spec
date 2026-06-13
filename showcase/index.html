@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Product Spec Harness — Interactive Showcase</title>
+<meta name="description" content="An interactive, standalone tour of the Product Spec Harness: four Claude Code skills that define, validate, critique, ship and observe product specs." />
+<style>
+/* ============================================================
+   Product Spec Harness — standalone showcase
+   No external fonts, no CDN, no mermaid. Pure SVG + CSS + vanilla JS.
+   ============================================================ */
+:root{
+  --bg:#070b16;
+  --bg-2:#0b1120;
+  --panel:rgba(20,28,48,.62);
+  --panel-solid:#121a2e;
+  --stroke:rgba(120,150,210,.16);
+  --stroke-2:rgba(120,150,210,.28);
+  --txt:#e8edf9;
+  --txt-dim:#9aa6c4;
+  --txt-faint:#6b779a;
+  /* per-skill accents */
+  --spec:#38bdf8;      /* cyan   — product-spec */
+  --crit:#fb5e7e;      /* rose   — critique     */
+  --rel:#34d399;       /* emerald— release      */
+  --tel:#a78bfa;       /* violet — telemetry    */
+  --gold:#fbbf24;
+  --ok:#34d399; --warn:#fbbf24; --bad:#fb5e7e;
+  --r:18px;
+  --maxw:1120px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--txt);
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,system-ui,sans-serif;
+  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+/* bilingual toggle: hide the other language */
+body.lang-en .vi{display:none !important}
+body.lang-vi .en{display:none !important}
+
+a{color:var(--spec);text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{line-height:1.18;margin:0 0 .4em;font-weight:700;letter-spacing:-.01em}
+code,.mono{font-family:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace}
+code{background:rgba(120,150,210,.12);padding:.12em .42em;border-radius:6px;font-size:.86em;color:#cfe3ff;border:1px solid var(--stroke)}
+section{position:relative;padding:96px 24px;}
+.wrap{max-width:var(--maxw);margin:0 auto;position:relative;z-index:2}
+.eyebrow{display:inline-block;font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;font-weight:700;color:var(--txt-faint);margin-bottom:14px}
+.lead{font-size:1.12rem;color:var(--txt-dim);max-width:62ch}
+.muted{color:var(--txt-dim)}
+.faint{color:var(--txt-faint)}
+
+/* ---- background mesh ---- */
+.bgfx{position:fixed;inset:0;z-index:0;pointer-events:none}
+#net{position:fixed;inset:0;z-index:0;opacity:.55}
+.glow{position:fixed;border-radius:50%;filter:blur(120px);opacity:.32;z-index:0;pointer-events:none}
+.glow.g1{width:560px;height:560px;background:#1d4ed8;top:-160px;left:-120px}
+.glow.g2{width:520px;height:520px;background:#7c3aed;top:38%;right:-180px}
+.glow.g3{width:480px;height:480px;background:#0f766e;bottom:-160px;left:30%}
+
+/* ===================== NAV ===================== */
+nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(7,11,22,.92),rgba(7,11,22,.66));
+  border-bottom:1px solid var(--stroke)}
+.nav-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 24px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:conic-gradient(from 0deg,var(--spec),var(--crit),var(--rel),var(--tel),var(--spec));box-shadow:0 0 14px var(--spec)}
+.nav-links{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.nav-links a{color:var(--txt-dim);font-size:.86rem;font-weight:600;padding:7px 11px;border-radius:9px;transition:.2s}
+.nav-links a:hover{color:var(--txt);background:rgba(120,150,210,.12);text-decoration:none}
+.langtoggle{display:flex;border:1px solid var(--stroke-2);border-radius:10px;overflow:hidden;font-weight:700;font-size:.8rem}
+.langtoggle button{background:transparent;color:var(--txt-faint);border:0;padding:7px 12px;cursor:pointer;transition:.2s;font-family:inherit}
+.langtoggle button.active{background:linear-gradient(135deg,var(--spec),#6366f1);color:#04122a}
+@media(max-width:780px){.nav-links{display:none}}
+
+/* ===================== HERO ===================== */
+.hero{padding:120px 24px 80px;text-align:center;overflow:hidden}
+.hero h1{font-size:clamp(2.5rem,7vw,4.6rem);margin-bottom:.2em;font-weight:800;letter-spacing:-.03em}
+.hero h1 .grad{background:linear-gradient(110deg,var(--spec) 5%,#818cf8 40%,var(--crit) 70%,var(--gold) 98%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.verbs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:22px 0 8px}
+.verbs span{font-size:.84rem;font-weight:700;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid var(--stroke-2);color:var(--txt-dim);background:var(--panel)}
+.verbs span b{color:var(--txt)}
+.hero .lead{margin:18px auto 0;text-align:center;font-size:1.16rem}
+.hero-badges{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:38px}
+.sb{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;border:1px solid var(--stroke);background:var(--panel);min-width:200px;text-align:left;transition:.25s var(--ease)}
+.sb:hover{transform:translateY(-4px);border-color:var(--ac)}
+.sb .ic{width:34px;height:34px;flex:none}
+.sb .nm{font-weight:800;font-size:.94rem}
+.sb .vr{font-size:.74rem;color:var(--txt-faint);font-family:monospace}
+.sb .ac-dot{width:8px;height:8px;border-radius:50%;background:var(--ac);box-shadow:0 0 10px var(--ac);margin-left:auto}
+.scroll-cue{margin-top:54px;display:inline-flex;flex-direction:column;align-items:center;gap:6px;color:var(--txt-faint);font-size:.76rem;letter-spacing:.2em;text-transform:uppercase}
+.scroll-cue .arrow{width:22px;height:22px;border-right:2px solid var(--txt-faint);border-bottom:2px solid var(--txt-faint);transform:rotate(45deg);animation:bob 1.8s var(--ease) infinite}
+@keyframes bob{0%,100%{transform:rotate(45deg) translate(0,0);opacity:.4}50%{transform:rotate(45deg) translate(4px,4px);opacity:1}}
+
+/* ===================== PIPELINE ===================== */
+.pipe-stage{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+.pstation{position:relative;padding:20px 16px;border-radius:16px;border:1px solid var(--stroke);background:var(--panel);overflow:hidden;transition:.3s var(--ease)}
+.pstation:hover{transform:translateY(-5px);border-color:var(--ac);box-shadow:0 18px 40px -22px var(--ac)}
+.pstation::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 0,var(--ac),transparent 60%);opacity:.10}
+.pstation .num{font-family:monospace;font-size:.72rem;color:var(--ac);font-weight:700;letter-spacing:.1em}
+.pstation h4{margin:8px 0 4px;font-size:1.02rem}
+.pstation p{font-size:.82rem;color:var(--txt-dim);margin:0}
+.pstation .role{display:inline-block;margin-top:10px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-faint);font-weight:700}
+@media(max-width:820px){.pipe-stage{grid-template-columns:1fr 1fr}}
+.loopnote{margin-top:14px;display:flex;align-items:center;gap:10px;justify-content:center;font-size:.84rem;color:var(--txt-dim)}
+.loopnote svg{flex:none}
+
+/* ===================== SKILL SECTIONS ===================== */
+.skill-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:8px}
+.skill-head .badge{flex:none;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;border:1px solid var(--stroke-2);background:var(--panel)}
+.skill-head .ttl h2{margin:0;font-size:clamp(1.7rem,3.6vw,2.5rem)}
+.skill-head .ttl .who{font-size:.78rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ac)}
+.skill-head .ver{margin-left:auto;font-family:monospace;font-size:.8rem;color:var(--txt-faint);border:1px solid var(--stroke);border-radius:999px;padding:5px 12px;align-self:center}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:.4;margin:0 0 34px}
+
+.cards{display:grid;gap:16px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--stroke);border-radius:var(--r);padding:22px;position:relative;transition:.3s var(--ease)}
+.card:hover{border-color:var(--stroke-2)}
+.card h3{font-size:1.06rem;display:flex;align-items:center;gap:9px}
+.card h3 .pin{width:9px;height:9px;border-radius:3px;background:var(--ac)}
+.card p{font-size:.9rem;color:var(--txt-dim);margin:.3em 0 0}
+
+/* flag chips */
+.chipgroup{margin-top:8px}
+.chipgroup h4{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-faint);margin:18px 0 9px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font-family:monospace;font-size:.78rem;padding:6px 11px;border-radius:9px;border:1px solid var(--stroke);background:rgba(120,150,210,.06);color:#cfe0ff;transition:.18s;cursor:default}
+.chip:hover{border-color:var(--ac);color:#fff;transform:translateY(-2px);box-shadow:0 8px 18px -10px var(--ac)}
+.chip .x{color:var(--txt-faint)}
+
+/* spec hierarchy tree */
+.tree{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.tnode{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:13px;border:1px solid var(--stroke);background:var(--panel-solid);position:relative;transition:.3s var(--ease)}
+.tnode:hover{transform:translateX(6px);border-color:var(--spec)}
+.tnode .tg{font-family:monospace;font-size:.7rem;font-weight:700;padding:4px 9px;border-radius:7px;letter-spacing:.06em;flex:none}
+.tnode .tt{font-weight:700;font-size:.96rem}
+.tnode .td{font-size:.8rem;color:var(--txt-dim)}
+.tnode .cnt{margin-left:auto;font-size:.72rem;color:var(--txt-faint);font-family:monospace}
+.tconn{height:20px;width:2px;margin-left:32px;background:linear-gradient(180deg,var(--spec),transparent)}
+.lvl-v{--c:#818cf8}.lvl-b{--c:#38bdf8}.lvl-p{--c:#22d3ee}.lvl-e{--c:#2dd4bf}.lvl-s{--c:#34d399}
+.tnode .tg{background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 40%,transparent)}
+
+/* viz views grid */
+.views{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:6px}
+.view{padding:11px 10px;border-radius:11px;border:1px solid var(--stroke);background:var(--panel-solid);text-align:center;font-size:.78rem;font-weight:600;color:var(--txt-dim);transition:.2s;cursor:default;position:relative}
+.view:hover{color:#fff;border-color:var(--spec);transform:translateY(-3px);background:rgba(56,189,248,.08)}
+.view .vt{display:block;font-size:.62rem;color:var(--txt-faint);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+
+/* gate cards */
+.gate{border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(251,191,36,.08),transparent);border-radius:0 13px 13px 0;padding:16px 18px;margin-top:12px}
+.gate b{color:var(--gold)}
+.tri{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tri span{font-size:.76rem;padding:5px 12px;border-radius:8px;border:1px solid var(--stroke-2);font-weight:700}
+.tri .keep{color:var(--ok);border-color:rgba(52,211,153,.4)}
+.tri .change{color:var(--warn);border-color:rgba(251,191,36,.4)}
+.tri .hybrid{color:var(--tel);border-color:rgba(167,139,250,.4)}
+
+/* ===== critique: lenses ===== */
+.lenses{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+@media(max-width:860px){.lenses{grid-template-columns:1fr 1fr}}
+.lens{padding:18px 15px;border-radius:15px;border:1px solid var(--stroke);background:var(--panel);position:relative;overflow:hidden;transition:.3s var(--ease)}
+.lens:hover{transform:translateY(-5px)}
+.lens .lic{width:40px;height:40px;margin-bottom:10px}
+.lens h4{margin:0 0 4px;font-size:1rem}
+.lens .fw{font-size:.74rem;color:var(--txt-faint);font-family:monospace;line-height:1.5}
+.lens.p{--lc:#f472b6}.lens.t{--lc:#fb923c}.lens.m{--lc:#facc15}.lens.c{--lc:#a78bfa}
+.lens::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--lc)}
+
+/* voice dial */
+.dial-wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center;margin-top:6px}
+@media(max-width:860px){.dial-wrap{grid-template-columns:1fr}}
+.heatbar{height:14px;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#34d399,#facc15,#fb923c,#fb5e7e,#dc2626);position:relative;margin:30px 0 8px}
+.heatbar .knob{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--crit);transform:translate(-50%,-50%);box-shadow:0 4px 14px rgba(0,0,0,.5);transition:left .25s var(--ease),border-color .25s}
+input[type=range].vrange{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;background:rgba(120,150,210,.2);outline:none;margin-top:4px}
+input[type=range].vrange::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--crit);cursor:pointer;border:3px solid #fff;box-shadow:0 0 12px var(--crit)}
+input[type=range].vrange::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--crit);cursor:pointer;border:3px solid #fff}
+.scalemarks{display:flex;justify-content:space-between;font-size:.66rem;color:var(--txt-faint);font-family:monospace;margin-top:6px}
+.dial-readout{border:1px solid var(--stroke);border-radius:15px;padding:20px;background:var(--panel-solid);min-height:180px}
+.dial-readout .lv{font-size:2.6rem;font-weight:800;font-family:monospace;line-height:1}
+.dial-readout .nm{font-weight:800;font-size:1.05rem;margin:.2em 0}
+.dial-readout .ds{font-size:.86rem;color:var(--txt-dim)}
+.dial-readout .alias{font-family:monospace;font-size:.74rem;color:var(--crit)}
+.dangertag{display:inline-block;margin-top:10px;font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:7px}
+.dangertag.safe{color:var(--ok);background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3)}
+.dangertag.danger{color:var(--bad);background:rgba(251,94,126,.12);border:1px solid rgba(251,94,126,.35)}
+
+.floor{margin-top:16px;border:1px dashed rgba(251,94,126,.4);border-radius:13px;padding:14px 18px;background:rgba(251,94,126,.05)}
+.floor b{color:var(--crit)}
+
+/* finding anatomy */
+.finding{border:1px solid var(--stroke);border-radius:14px;overflow:hidden;margin-top:6px;font-family:monospace;font-size:.84rem}
+.finding .row{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--stroke);align-items:flex-start}
+.finding .row:last-child{border-bottom:0}
+.finding .tag{flex:none;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+.finding .ev{background:rgba(56,189,248,.14);color:var(--spec)}
+.finding .die{background:rgba(251,94,126,.14);color:var(--crit)}
+.finding .fix{background:rgba(52,211,153,.14);color:var(--rel)}
+.finding .txt{color:var(--txt);font-family:inherit}
+
+/* ===== release: deterministic flow ===== */
+.flowline{display:flex;align-items:stretch;gap:0;margin-top:8px;flex-wrap:wrap}
+.fstep{flex:1;min-width:120px;border:1px solid var(--stroke);background:var(--panel);border-radius:13px;padding:14px 12px;text-align:center;position:relative;transition:.3s var(--ease)}
+.fstep:hover{border-color:var(--rel);transform:translateY(-4px)}
+.fstep .fi{width:30px;height:30px;margin:0 auto 8px}
+.fstep .fn{font-weight:700;font-size:.84rem}
+.fstep .fd{font-size:.7rem;color:var(--txt-faint);margin-top:2px}
+.farrow{display:flex;align-items:center;color:var(--rel);font-size:1.2rem;padding:0 2px}
+@media(max-width:780px){.farrow{transform:rotate(90deg)}}
+.drop-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.drop-list .d{font-family:monospace;font-size:.76rem;padding:5px 11px;border-radius:8px;border:1px solid rgba(251,94,126,.3);background:rgba(251,94,126,.07);color:#ffb3c2}
+.drop-list .d::before{content:"⊘ ";color:var(--crit)}
+.deterministic{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+.deterministic .dt{font-family:monospace;font-size:.78rem;color:var(--txt-dim);padding:6px 12px;border-radius:8px;background:var(--panel-solid);border:1px solid var(--stroke)}
+.deterministic .dt b{color:var(--rel)}
+
+/* ===== telemetry dashboard ===== */
+.lensgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px}
+@media(max-width:860px){.lensgrid{grid-template-columns:repeat(2,1fr)}}
+.lcell{padding:13px 12px;border-radius:12px;border:1px solid var(--stroke);background:var(--panel-solid);transition:.2s;position:relative}
+.lcell:hover{border-color:var(--tel);background:rgba(167,139,250,.07);transform:translateY(-3px)}
+.lcell .ln{font-family:monospace;font-weight:700;font-size:.82rem;color:var(--tel)}
+.lcell .lds{font-size:.72rem;color:var(--txt-faint);margin-top:3px}
+.bars{margin-top:8px}
+.bar{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:.82rem}
+.bar .bl{width:130px;font-family:monospace;color:var(--txt-dim);flex:none}
+.bar .bt{flex:1;height:12px;border-radius:999px;background:rgba(120,150,210,.12);overflow:hidden}
+.bar .bf{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--tel),#6366f1);width:0;transition:width 1.1s var(--ease)}
+.bar .bv{font-family:monospace;color:var(--txt-faint);width:40px;text-align:right;flex:none;font-size:.78rem}
+.honest{margin-top:16px;border:1px solid rgba(167,139,250,.3);border-radius:13px;padding:16px 18px;background:rgba(167,139,250,.05)}
+.honest .h{font-weight:800;color:var(--tel);display:flex;align-items:center;gap:8px}
+.honest ul{margin:.5em 0 0;padding-left:1.1em;font-size:.86rem;color:var(--txt-dim)}
+
+/* ===== the rig ===== */
+.rig{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+@media(max-width:860px){.rig{grid-template-columns:1fr}}
+.rcell{border:1px solid var(--stroke);border-radius:15px;padding:18px;background:var(--panel)}
+.rcell .rt{font-weight:800;font-size:.96rem;display:flex;align-items:center;gap:9px}
+.rcell .rn{font-family:monospace;font-size:.72rem;color:var(--gold);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);border-radius:7px;padding:2px 8px;margin-left:auto}
+.rcell ul{margin:.6em 0 0;padding-left:1.05em;font-size:.84rem;color:var(--txt-dim)}
+.rcell code{font-size:.76rem}
+
+/* feature stat strip */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}}
+.stat{text-align:center;padding:20px 14px;border-radius:15px;border:1px solid var(--stroke);background:var(--panel)}
+.stat .n{font-size:2.4rem;font-weight:800;font-family:monospace;background:linear-gradient(120deg,var(--spec),var(--tel));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.stat .l{font-size:.78rem;color:var(--txt-dim);margin-top:6px}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* footer */
+footer{padding:60px 24px 50px;border-top:1px solid var(--stroke);background:var(--bg-2);position:relative;z-index:2}
+.foot-in{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:30px}
+@media(max-width:780px){.foot-in{grid-template-columns:1fr}}
+footer h4{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-faint)}
+footer a{color:var(--txt-dim);display:block;font-size:.88rem;padding:3px 0}
+footer a:hover{color:var(--spec)}
+.lic{font-size:.82rem;color:var(--txt-faint);margin-top:14px;max-width:46ch}
+.sectitle{font-size:clamp(1.5rem,3.2vw,2.1rem);margin-bottom:10px}
+.callout{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:13px;border:1px solid var(--stroke);background:var(--panel);margin-top:16px}
+.callout .ci{font-size:1.4rem;flex:none}
+</style>
+</head>
+<body class="lang-en">
+
+<div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+<canvas id="net"></canvas>
+
+<!-- ===================== NAV ===================== -->
+<nav>
+  <div class="nav-in">
+    <div class="brand"><span class="dot"></span><span>Product&nbsp;Spec&nbsp;Harness</span></div>
+    <div class="nav-links">
+      <a href="#pipeline"><span class="en">Pipeline</span><span class="vi">Quy trình</span></a>
+      <a href="#product-spec">product-spec</a>
+      <a href="#critique">critique</a>
+      <a href="#release">release</a>
+      <a href="#telemetry">telemetry</a>
+      <a href="#rig"><span class="en">The rig</span><span class="vi">Bộ đồ nghề</span></a>
+    </div>
+    <div class="langtoggle" role="group" aria-label="language">
+      <button id="btn-en" class="active" onclick="setLang('en')">EN</button>
+      <button id="btn-vi" onclick="setLang('vi')">VI</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span class="en">A harness for Claude Code · v2.4.0</span><span class="vi">Một harness cho Claude Code · v2.4.0</span></div>
+    <h1>
+      <span class="en">Bulletproof a spec<br><span class="grad">before a line of code.</span></span>
+      <span class="vi">Ép chặt một spec<br><span class="grad">trước khi viết dòng code đầu tiên.</span></span>
+    </h1>
+    <div class="verbs">
+      <span class="en"><b>Define</b></span><span class="vi"><b>Định nghĩa</b></span>
+      <span class="en"><b>Validate</b></span><span class="vi"><b>Kiểm tra</b></span>
+      <span class="en"><b>Critique</b></span><span class="vi"><b>Phản biện</b></span>
+      <span class="en"><b>Ship</b></span><span class="vi"><b>Đóng gói</b></span>
+      <span class="en"><b>Observe</b></span><span class="vi"><b>Quan sát</b></span>
+    </div>
+    <p class="lead">
+      <span class="en">Not a pile of skills — a coordinated <code>.claude/</code> rig: four skills, seven critique sub-agents, the hooks that instrument them, a shared eval-gate, and a deterministic packager. Plain language for product owners, no code required.</span>
+      <span class="vi">Không phải một mớ skill — mà cả một bộ <code>.claude/</code> phối hợp: bốn skill, bảy sub-agent phản biện, các hook đo lường chúng, một eval-gate dùng chung, và một bộ đóng gói deterministic. Bằng ngôn ngữ bình thường cho Product Owner, không cần code.</span>
+    </p>
+
+    <div class="hero-badges">
+      <div class="sb" style="--ac:var(--spec)">
+        <svg class="ic" viewBox="0 0 40 40" fill="none"><rect x="6" y="5" width="20" height="26" rx="3" stroke="var(--spec)" stroke-width="2"/><path d="M11 12h10M11 17h10M11 22h6" stroke="var(--spec)" stroke-width="2" stroke-linecap="round"/><circle cx="29" cy="28" r="7" fill="var(--bg)" stroke="var(--spec)" stroke-width="2"/><path d="m26.5 28 1.8 1.8L32 26" stroke="var(--spec)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div><div class="nm">product-spec</div><div class="vr">v2.4.0</div></div><span class="ac-dot"></span>
+      </div>
+      <div class="sb" style="--ac:var(--crit)">
+        <svg class="ic" viewBox="0 0 40 40" fill="none"><path d="M20 6c-7 6-11 9-11 16a11 11 0 0 0 22 0c0-7-4-10-11-16Z" stroke="var(--crit)" stroke-width="2" stroke-linejoin="round"/><path d="M20 14c-3 3-5 5-5 8a5 5 0 0 0 10 0c0-3-2-5-5-8Z" fill="var(--crit)" opacity=".4"/></svg>
+        <div><div class="nm">…-critique</div><div class="vr">v1.3.0</div></div><span class="ac-dot"></span>
+      </div>
+      <div class="sb" style="--ac:var(--rel)">
+        <svg class="ic" viewBox="0 0 40 40" fill="none"><path d="M20 5 33 12v16L20 35 7 28V12L20 5Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/><path d="M7 12l13 7 13-7M20 19v16" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg>
+        <div><div class="nm">release</div><div class="vr">v1.2.0</div></div><span class="ac-dot"></span>
+      </div>
+      <div class="sb" style="--ac:var(--tel)">
+        <svg class="ic" viewBox="0 0 40 40" fill="none"><path d="M7 30V10M14 30V18M21 30v-8M28 30V14M35 30V6" stroke="var(--tel)" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <div><div class="nm">telemetry</div><div class="vr">v1.1.0</div></div><span class="ac-dot"></span>
+      </div>
+    </div>
+
+    <div class="scroll-cue"><span class="en">Scroll the pipeline</span><span class="vi">Cuộn xem quy trình</span><span class="arrow"></span></div>
+  </div>
+</header>
+
+<!-- ===================== PIPELINE ===================== -->
+<section id="pipeline">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">The closed loop</span><span class="vi">Vòng khép kín</span></div>
+    <h2 class="sectitle"><span class="en">One pipeline, four skills, a feedback loop</span><span class="vi">Một quy trình, bốn skill, một vòng phản hồi</span></h2>
+    <p class="lead"><span class="en">Raw ideas in one end; a structured, validated, brutally-critiqued, packaged spec out the other — and the usage of the whole rig flows back as observability.</span><span class="vi">Ý tưởng thô vào một đầu; một spec có cấu trúc, đã kiểm tra, bị phản biện gắt, đã đóng gói ra đầu kia — và mức dùng của cả bộ chảy ngược về thành quan trắc.</span></p>
+
+    <div class="pipe-stage">
+      <div class="pstation" style="--ac:var(--spec)">
+        <div class="num">01</div>
+        <h4>product-spec</h4>
+        <p><span class="en">Interview → Vision · BRD · PRD · Epic · Story. Validate, approve, visualize.</span><span class="vi">Phỏng vấn → Vision · BRD · PRD · Epic · Story. Kiểm tra, duyệt, trực quan hóa.</span></p>
+        <span class="role"><span class="en">Define</span><span class="vi">Định nghĩa</span></span>
+      </div>
+      <div class="pstation" style="--ac:var(--crit)">
+        <div class="num">02</div>
+        <h4>…-critique</h4>
+        <p><span class="en">Four lenses tear it apart: product · tech · market · craft. Why it dies + a fix.</span><span class="vi">Bốn lăng kính xé nó ra: product · tech · market · craft. Vì sao chết + cách sửa.</span></p>
+        <span class="role"><span class="en">Challenge</span><span class="vi">Phản biện</span></span>
+      </div>
+      <div class="pstation" style="--ac:var(--rel)">
+        <div class="num">03</div>
+        <h4>release</h4>
+        <p><span class="en">Pack a curated <code>.claude/</code> subset into a deterministic, hashed tar.gz.</span><span class="vi">Đóng gói tập con <code>.claude/</code> chọn lọc thành tar.gz deterministic, có hash.</span></p>
+        <span class="role"><span class="en">Ship</span><span class="vi">Đóng gói</span></span>
+      </div>
+      <div class="pstation" style="--ac:var(--tel)">
+        <div class="num">04</div>
+        <h4>telemetry</h4>
+        <p><span class="en">Read-only usage &amp; health of your own tooling, in plain Vietnamese.</span><span class="vi">Mức dùng &amp; sức khỏe chỉ-đọc của chính bộ đồ nghề, bằng tiếng Việt thuần.</span></p>
+        <span class="role"><span class="en">Observe</span><span class="vi">Quan sát</span></span>
+      </div>
+    </div>
+
+    <div class="loopnote">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 0 1 14-3M20 15a8 8 0 0 1-14 3" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/><path d="M18 3v3.5h-3.5M6 21v-3.5h3.5" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="en"><b>The return edge:</b> a critique report flows back into product-spec via <code>--apply-critique</code> → recorded decisions. <code>--learn</code> closes spec → build → measure → learn.</span>
+      <span class="vi"><b>Cạnh quay về:</b> báo cáo phản biện chảy ngược vào product-spec qua <code>--apply-critique</code> → các quyết định được ghi. <code>--learn</code> khép vòng spec → build → đo → học.</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n" data-count="4">4</div><div class="l"><span class="en">coordinated skills</span><span class="vi">skill phối hợp</span></div></div>
+      <div class="stat"><div class="n" data-count="7">7</div><div class="l"><span class="en">critique sub-agents</span><span class="vi">sub-agent phản biện</span></div></div>
+      <div class="stat"><div class="n" data-count="20">20</div><div class="l"><span class="en">visualization views</span><span class="vi">khung nhìn trực quan</span></div></div>
+      <div class="stat"><div class="n" data-count="0">0</div><div class="l"><span class="en">network calls at runtime</span><span class="vi">lần gọi mạng khi chạy</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PRODUCT-SPEC ===================== -->
+<section id="product-spec">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--spec)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><rect x="6" y="5" width="20" height="26" rx="3" stroke="var(--spec)" stroke-width="2"/><path d="M11 12h10M11 17h10M11 22h6" stroke="var(--spec)" stroke-width="2" stroke-linecap="round"/><circle cx="29" cy="28" r="7" fill="var(--bg)" stroke="var(--spec)" stroke-width="2"/><path d="m26.5 28 1.8 1.8L32 26" stroke="var(--spec)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">For non-technical product owners</span><span class="vi">Cho Product Owner không chuyên kỹ thuật</span></div><h2>product-spec</h2></div>
+      <div class="ver">v2.4.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--spec)"></div>
+
+    <p class="lead" style="margin-bottom:26px"><span class="en">Runs a phased interview, captures your product as a strictly-traceable hierarchy, validates it deterministically (structure) and by judgment (LLM), and visualizes it — all in plain language. Output lives under <code>docs/product/</code>; it never writes prose anywhere else.</span><span class="vi">Chạy một cuộc phỏng vấn theo giai đoạn, ghi sản phẩm của bạn thành cây có truy vết chặt, kiểm tra cả về cấu trúc (script) lẫn nhận định (LLM), và trực quan hóa — tất cả bằng ngôn ngữ bình thường. Đầu ra ở <code>docs/product/</code>; không bao giờ ghi văn ra ngoài.</span></p>
+
+    <!-- hierarchy tree -->
+    <div class="cards grid-2">
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">The traceable hierarchy</span><span class="vi">Cây truy vết</span></h3>
+        <p style="margin-bottom:14px"><span class="en">Every story traces up to a goal; every goal traces down to acceptance criteria. Hover a level.</span><span class="vi">Mỗi story truy ngược lên một mục tiêu; mỗi mục tiêu truy xuống tới tiêu chí chấp nhận. Rê chuột vào từng tầng.</span></p>
+        <div class="tree">
+          <div class="tnode lvl-v"><span class="tg">VISION</span><div><div class="tt"><span class="en">Vision</span><span class="vi">Tầm nhìn</span></div><div class="td"><span class="en">north-star + personas</span><span class="vi">north-star + personas</span></div></div><span class="cnt">×1</span></div>
+          <div class="tconn"></div>
+          <div class="tnode lvl-b"><span class="tg">BRD-G1</span><div><div class="tt">BRD</div><div class="td"><span class="en">business goals + metrics</span><span class="vi">mục tiêu kinh doanh + chỉ số</span></div></div><span class="cnt">×1</span></div>
+          <div class="tconn"></div>
+          <div class="tnode lvl-p"><span class="tg">PRD-AUTH</span><div><div class="tt">PRD</div><div class="td"><span class="en">one per feature-area</span><span class="vi">mỗi vùng tính năng một cái</span></div></div><span class="cnt">×N</span></div>
+          <div class="tconn"></div>
+          <div class="tnode lvl-e"><span class="tg">…-E1</span><div><div class="tt">Epic</div><div class="td"><span class="en">a slice of the PRD</span><span class="vi">một lát của PRD</span></div></div><span class="cnt">×N</span></div>
+          <div class="tconn"></div>
+          <div class="tnode lvl-s"><span class="tg">…-E1-S1</span><div><div class="tt"><span class="en">Story + AC</span><span class="vi">Story + AC</span></div><div class="td"><span class="en">size S/M/L · acceptance criteria</span><span class="vi">cỡ S/M/L · tiêu chí chấp nhận</span></div></div><span class="cnt">×N</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Validate — script first, LLM judges</span><span class="vi">Validate — script trước, LLM nhận định</span></h3>
+        <p><span class="en">Deterministic scripts catch the structural failures; the LLM layer adds the judgment a script can't.</span><span class="vi">Script tất định bắt lỗi cấu trúc; lớp LLM thêm phần nhận định mà script không làm được.</span></p>
+        <div class="chipgroup">
+          <h4><span class="en">Structural (scripts)</span><span class="vi">Cấu trúc (script)</span></h4>
+          <div class="chips">
+            <span class="chip">orphans</span><span class="chip">missing AC</span><span class="chip">ID integrity</span><span class="chip">broken trace</span><span class="chip">timing drift</span><span class="chip">undescribed persona</span>
+          </div>
+        </div>
+        <div class="chipgroup">
+          <h4><span class="en">Judgment (LLM)</span><span class="vi">Nhận định (LLM)</span></h4>
+          <div class="chips">
+            <span class="chip">INVEST</span><span class="chip">vagueness</span><span class="chip">core-value drift</span><span class="chip">duplication</span><span class="chip">contradiction</span>
+          </div>
+        </div>
+        <div class="gate">
+          <b>GATE — <span class="en">no silent reversal.</span><span class="vi">không đảo ngầm.</span></b>
+          <span class="en"> A new claim that contradicts an <code>approved</code> artifact is surfaced verbatim, never auto-fixed:</span>
+          <span class="vi"> Một khẳng định mới mâu thuẫn với tài liệu <code>approved</code> được nêu nguyên văn, không bao giờ tự sửa:</span>
+          <div class="tri"><span class="keep">Keep</span><span class="change">Change + re-approve</span><span class="hybrid">Hybrid</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- flag map -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">Every capability, grouped</span><span class="vi">Toàn bộ năng lực, theo nhóm</span></h3>
+      <div class="chipgroup">
+        <h4><span class="en">Author the spec</span><span class="vi">Soạn spec</span></h4>
+        <div class="chips"><span class="chip">--product</span><span class="chip">--brd</span><span class="chip">--prd</span><span class="chip">--epic</span><span class="chip">--story</span><span class="chip">--auto</span><span class="chip">--discover</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Govern &amp; evolve</span><span class="vi">Quản trị &amp; tiến hóa</span></h4>
+        <div class="chips"><span class="chip">--validate</span><span class="chip">--strict</span><span class="chip">--approve</span><span class="chip">--update</span><span class="chip">--decision</span><span class="chip">--apply-critique</span><span class="chip">--status</span><span class="chip">--reflect</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Learn &amp; share</span><span class="vi">Học &amp; chia sẻ</span></h4>
+        <div class="chips"><span class="chip">--learn <span class="x">→ OUT-n</span></span><span class="chip">--summary <span class="x">exec|release-notes</span></span><span class="chip">--export</span><span class="chip">--layers</span><span class="chip">--depth</span><span class="chip">--compact-mode</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Personalize</span><span class="vi">Cá nhân hóa</span></h4>
+        <div class="chips"><span class="chip">--lang <span class="x">en|vi</span></span><span class="chip">--voice</span><span class="chip">preferences.py <span class="x">interview_rigor</span></span><span class="chip">action_prompting</span></div>
+      </div>
+    </div>
+
+    <!-- viz views -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">--viz — 20 views, 3 formats (ascii · mermaid · html)</span><span class="vi">--viz — 20 khung nhìn, 3 định dạng (ascii · mermaid · html)</span></h3>
+      <p><span class="en">Pick a view; ASCII is always available offline, HTML-native views render a self-contained, sanitized page.</span><span class="vi">Chọn một khung nhìn; ASCII luôn có offline, các khung HTML-native tạo trang tự chứa, đã được làm sạch.</span></p>
+      <div class="views" style="margin-top:14px">
+        <div class="view"><span class="vt">graph</span>tree</div>
+        <div class="view"><span class="vt">graph</span>heatmap</div>
+        <div class="view"><span class="vt">graph</span>scope</div>
+        <div class="view"><span class="vt">graph</span>roadmap</div>
+        <div class="view"><span class="vt">graph</span>persona</div>
+        <div class="view"><span class="vt">graph</span>gap</div>
+        <div class="view"><span class="vt">graph</span>moscow</div>
+        <div class="view"><span class="vt">graph</span>time</div>
+        <div class="view"><span class="vt">graph</span>delta</div>
+        <div class="view"><span class="vt">html</span>risk</div>
+        <div class="view"><span class="vt">html</span>competition</div>
+        <div class="view"><span class="vt">html</span>dashboard</div>
+        <div class="view"><span class="vt">body</span>board</div>
+        <div class="view"><span class="vt">body</span>explorer</div>
+        <div class="view"><span class="vt">govern</span>audit</div>
+        <div class="view"><span class="vt">learn</span>scorecard</div>
+        <div class="view"><span class="vt">learn</span>insight-gap</div>
+        <div class="view"><span class="vt">learn</span>outcome-trend</div>
+        <div class="view"><span class="vt">learn</span>learning-map</div>
+        <div class="view"><span class="vt">learn</span>learning</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CRITIQUE ===================== -->
+<section id="critique">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--crit)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M20 6c-7 6-11 9-11 16a11 11 0 0 0 22 0c0-7-4-10-11-16Z" stroke="var(--crit)" stroke-width="2" stroke-linejoin="round"/><path d="M20 14c-3 3-5 5-5 8a5 5 0 0 0 10 0c0-3-2-5-5-8Z" fill="var(--crit)" opacity=".4"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">An opinion, not a pass/fail</span><span class="vi">Một quan điểm, không phải pass/fail</span></div><h2>product-spec-critique</h2></div>
+      <div class="ver">v1.3.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--crit)"></div>
+
+    <p class="lead" style="margin-bottom:26px"><span class="en"><code>--validate</code> says the spec is <i>sound</i>. Critique says whether it is any <i>good</i> — a brutal-but-grounded tear-down across four lenses. It reuses validate's findings as ammo, then says what validate cannot: why it would die, where it sits in the market, whether the writing holds up. It <b>never edits your spec</b> and is <b>never</b> in a CI gate.</span><span class="vi"><code>--validate</code> nói spec <i>vững</i>. Critique nói nó có <i>tốt</i> không — một bản mổ xẻ gắt-nhưng-có-căn-cứ qua bốn lăng kính. Nó tái dùng phát hiện của validate làm "đạn", rồi nói điều validate không nói: vì sao nó chết, đứng đâu trên thị trường, chữ nghĩa có vững không. Nó <b>không bao giờ sửa spec</b> và <b>không bao giờ</b> vào cổng CI.</span></p>
+
+    <!-- four lenses -->
+    <div class="lenses">
+      <div class="lens p">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" stroke="#f472b6" stroke-width="2"/><path d="M20 6v28M6 20h28" stroke="#f472b6" stroke-width="1.4" opacity=".5"/><circle cx="20" cy="20" r="5" fill="#f472b6"/></svg>
+        <h4><span class="en">Product</span><span class="vi">Sản phẩm</span></h4>
+        <div class="fw">JTBD · Value-Prop · Kano · RICE · riskiest-assumption</div>
+      </div>
+      <div class="lens t">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M16 6 8 22h7l-2 12 14-18h-7l3-10Z" stroke="#fb923c" stroke-width="2" stroke-linejoin="round" fill="#fb923c" fill-opacity=".25"/></svg>
+        <h4><span class="en">Tech</span><span class="vi">Kỹ thuật</span></h4>
+        <div class="fw">INVEST · Given-When-Then · NFR gaps · hidden deps</div>
+      </div>
+      <div class="lens m">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M6 28 16 18l6 6 12-14" stroke="#facc15" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 10h6v6" stroke="#facc15" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h4><span class="en">Market</span><span class="vi">Thị trường</span></h4>
+        <div class="fw">Lean Canvas · Porter · Blue Ocean · me-too? <span style="color:var(--spec)">+web</span></div>
+      </div>
+      <div class="lens c">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M10 30 28 12l2-2a3 3 0 0 1 4 4l-2 2L14 34l-6 2 2-6Z" stroke="#a78bfa" stroke-width="2" stroke-linejoin="round"/></svg>
+        <h4><span class="en">Craft</span><span class="vi">Chữ nghĩa</span></h4>
+        <div class="fw">CSI-4Cs · plain-language · term drift · show-don't-tell</div>
+      </div>
+    </div>
+
+    <!-- fan-out pipeline -->
+    <div class="callout" style="--ac:var(--crit)">
+      <span class="ci">⚙️</span>
+      <div>
+        <span class="en"><b>How a critique is built:</b> <code>critique_scan.py</code> assembles one evidence bundle → four <b>read-only</b> lens agents fan out in parallel → an <b>opus consolidator</b> dedups, ranks, picks the top-3, flags repeat-offenders → a <b>sonnet humanizer</b> strips AI/translation tells while keeping the bite → the main agent writes <i>one</i> markdown report. Re-runs are cheap: unchanged spec reuses cached lens arrays; a bare level bump only re-renders the voice.</span>
+        <span class="vi"><b>Một bản phản biện được dựng thế nào:</b> <code>critique_scan.py</code> ráp một bundle bằng chứng → bốn lens agent <b>chỉ-đọc</b> chạy song song → một <b>opus consolidator</b> khử trùng, xếp hạng, chọn top-3, gắn cờ tái phạm → một <b>sonnet humanizer</b> bóc dấu vết AI/dịch máy mà giữ độ "gắt" → main agent ghi <i>một</i> báo cáo markdown. Chạy lại rẻ: spec không đổi thì tái dùng mảng lens đã cache; chỉ tăng mức thì chỉ render lại giọng.</span>
+      </div>
+    </div>
+
+    <!-- voice dial -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">The voice dial — 9 levels, one redline</span><span class="vi">Núm chỉnh giọng — 9 mức, một lằn ranh</span></h3>
+      <div class="dial-wrap">
+        <div>
+          <p class="muted" style="font-size:.9rem"><span class="en">Drag from gentle to brutal. Default is <b>5</b>. Levels 1–4 only ever attack the artifact. <b>6–9 are dangerous, opt-in</b>, and 9 re-confirms on every run.</span><span class="vi">Kéo từ nhẹ tới gắt. Mặc định <b>5</b>. Mức 1–4 chỉ công kích hiện vật. <b>6–9 nguy hiểm, phải opt-in</b>, và mức 9 hỏi lại mỗi lần chạy.</span></p>
+          <div class="heatbar"><div class="knob" id="knob"></div></div>
+          <input type="range" min="1" max="9" value="5" class="vrange" id="vrange" oninput="setLevel(this.value)" />
+          <div class="scalemarks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+        </div>
+        <div class="dial-readout" id="readout"></div>
+      </div>
+      <div class="floor">
+        <b>⛔ <span class="en">Universal-harm floor — at every level, even 9, even with consent.</span><span class="vi">Lằn ranh universal-harm — ở mọi mức, kể cả 9, kể cả khi bạn đồng ý.</span></b>
+        <span class="en"> The line is the <i>target</i>, not the harshness: it attacks the <b>work</b>, never <b>you</b>. No real-violence threats, no protected-characteristic slurs, no family-targeted profanity, no self-harm or sexual content. Every line always keeps an evidence ID and a fix.</span>
+        <span class="vi"> Lằn ranh là <i>đối tượng</i>, không phải độ gắt: nó nhắm <b>công việc</b>, không nhắm <b>bạn</b>. Không đe dọa bạo lực thật, không miệt thị đặc điểm con người, không chửi nhắm gia đình, không tự hại/tình dục. Mỗi dòng luôn giữ mã bằng chứng và một cách sửa.</span>
+      </div>
+    </div>
+
+    <!-- finding anatomy -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">Anatomy of one finding</span><span class="vi">Giải phẫu một phát hiện</span></h3>
+      <p><span class="en">No free-floating insults — every line is grounded and ends in a fix.</span><span class="vi">Không có lời chê lửng lơ — mỗi dòng đều có căn cứ và kết bằng cách sửa.</span></p>
+      <div class="finding">
+        <div class="row"><span class="tag ev">evidence</span><span class="txt">PRD-CHECKOUT:42 — "fast, intuitive, seamless checkout"</span></div>
+        <div class="row"><span class="tag die"><span class="en">why it dies</span><span class="vi">vì sao chết</span></span><span class="txt"><span class="en">Three unmeasurable adjectives, zero target metric. Engineering can't build "intuitive"; QA can't test it.</span><span class="vi">Ba tính từ không đo được, không chỉ số mục tiêu. Dev không build được "intuitive"; QA không test được.</span></span></div>
+        <div class="row"><span class="tag fix">fix</span><span class="txt"><span class="en">Replace with "checkout completes in ≤ 3 taps, p95 &lt; 1.5s". Now it's an AC.</span><span class="vi">Thay bằng "checkout xong trong ≤ 3 chạm, p95 &lt; 1.5s". Giờ nó là một AC.</span></span></div>
+      </div>
+    </div>
+
+    <!-- scope + reuse + inherit chips -->
+    <div class="cards grid-2" style="margin-top:16px">
+      <div class="card">
+        <h4 style="margin-bottom:10px"><span class="en">Scope &amp; lenses</span><span class="vi">Phạm vi &amp; lăng kính</span></h4>
+        <div class="chips"><span class="chip">all</span><span class="chip">PRD-AUTH</span><span class="chip">…-E1-S1</span><span class="chip">--product</span><span class="chip">--tech</span><span class="chip">--market</span><span class="chip">--craft</span><span class="chip">--interactive</span></div>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:10px"><span class="en">Reuse, web &amp; cross-critique</span><span class="vi">Tái dùng, web &amp; liên-phản-biện</span></h4>
+        <div class="chips"><span class="chip">--fresh</span><span class="chip">--refresh-web</span><span class="chip">--no-web</span><span class="chip">--no-inherit</span><span class="chip">--no-rollup</span><span class="chip">--inherit <span class="x">nearest|deep</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RELEASE ===================== -->
+<section id="release">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--rel)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M20 5 33 12v16L20 35 7 28V12L20 5Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/><path d="M7 12l13 7 13-7M20 19v16" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">For developers</span><span class="vi">Cho lập trình viên</span></div><h2>release</h2></div>
+      <div class="ver">v1.2.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--rel)"></div>
+
+    <p class="lead" style="margin-bottom:26px"><span class="en">Two halves of one job: <b>pack</b> a curated <code>.claude/</code> subset into a <b>deterministic</b> tar.gz, and run the <b>release lifecycle</b> on the root <code>CHANGELOG.md</code>. Same inputs → byte-identical bundle, every time.</span><span class="vi">Hai nửa của một việc: <b>đóng gói</b> tập con <code>.claude/</code> chọn lọc thành tar.gz <b>deterministic</b>, và chạy <b>vòng đời phát hành</b> trên <code>CHANGELOG.md</code> gốc. Cùng đầu vào → bundle giống nhau từng byte, mọi lần.</span></p>
+
+    <!-- pack flow -->
+    <div class="card">
+      <h3><span class="pin"></span><span class="en">The deterministic pack flow</span><span class="vi">Luồng đóng gói deterministic</span></h3>
+      <div class="flowline" style="margin-top:14px">
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M5 7h22v18H5z" stroke="var(--rel)" stroke-width="2"/><path d="M5 12h22M10 17h12M10 21h8" stroke="var(--rel)" stroke-width="1.6"/></svg><div class="fn">manifest</div><div class="fd"><span class="en">source of truth</span><span class="vi">source of truth</span></div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M16 4c-6 5-9 7-9 13a9 9 0 0 0 18 0c0-6-3-8-9-13Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg><div class="fn">safety_check</div><div class="fd"><span class="en">always-drop</span><span class="vi">luôn loại bỏ</span></div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M6 8h20M6 14h20M6 20h20M6 26h20" stroke="var(--rel)" stroke-width="2" stroke-linecap="round"/></svg><div class="fn"><span class="en">sorted walk</span><span class="vi">duyệt đã sắp</span></div><div class="fd">mtime=0</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M16 4 28 10v12L16 28 4 22V10L16 4Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg><div class="fn">tarball</div><div class="fd">.tar.gz</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="11" stroke="var(--rel)" stroke-width="2"/><path d="m11 16 3.5 3.5L22 12" stroke="var(--rel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="fn">.sha256</div><div class="fd"><span class="en">sidecar</span><span class="vi">sidecar</span></div></div>
+      </div>
+      <div class="deterministic">
+        <span class="dt"><b>PAX</b> format</span>
+        <span class="dt">mtime=<b>0</b></span>
+        <span class="dt">uid=gid=<b>0</b></span>
+        <span class="dt">gzip header mtime=<b>0</b></span>
+        <span class="dt"><b><span class="en">byte-identical</span><span class="vi">giống từng byte</span></b></span>
+      </div>
+    </div>
+
+    <div class="cards grid-2" style="margin-top:16px">
+      <!-- safety filter -->
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">The safety filter — non-removable</span><span class="vi">Bộ lọc an toàn — không thể tắt</span></h3>
+        <p><span class="en">No flag pulls these back into a bundle. Settings &amp; CK-config are opt-in only.</span><span class="vi">Không cờ nào kéo những thứ này lại vào bundle. Settings &amp; CK-config phải opt-in.</span></p>
+        <div class="drop-list">
+          <span class="d">.env / secrets / keys</span><span class="d">.git/</span><span class="d">runtime caches</span><span class="d">session state</span><span class="d">telemetry/*.jsonl</span><span class="d">__tests__</span>
+        </div>
+      </div>
+      <!-- release lifecycle -->
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Release lifecycle (release.py)</span><span class="vi">Vòng đời phát hành (release.py)</span></h3>
+        <p><span class="en">Lock <code>[Unreleased]</code> → <code>[X.Y.Z]</code>, bump the manifest, hand the owner the tag push. The tag — never auto-pushed — fires the CI that publishes the GitHub Release.</span><span class="vi">Khóa <code>[Unreleased]</code> → <code>[X.Y.Z]</code>, bump manifest, đưa chủ kit lệnh push tag. Tag — không bao giờ tự push — kích CI để phát hành GitHub Release.</span></p>
+        <div class="chips" style="margin-top:10px"><span class="chip">--extract</span><span class="chip">--release <span class="x">X.Y.Z</span></span><span class="chip">--bump <span class="x">major|minor|patch</span></span><span class="chip">--pre-release</span><span class="chip">--date</span><span class="chip">--apply</span><span class="chip">--push</span></div>
+      </div>
+    </div>
+
+    <!-- pack flags -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">Pack flags</span><span class="vi">Cờ đóng gói</span></h3>
+      <div class="chips" style="margin-top:8px"><span class="chip">--manifest</span><span class="chip">--skills</span><span class="chip">--agents</span><span class="chip">--hooks</span><span class="chip">--rules</span><span class="chip">--extra</span><span class="chip">--version</span><span class="chip">--bundle-name</span><span class="chip">--out</span><span class="chip">--dry-run</span><span class="chip">--compute-sha</span><span class="chip">--include-settings</span><span class="chip">--include-ck-config</span><span class="chip">--include-shared</span><span class="chip">--max-size</span><span class="chip">--source-date-epoch</span><span class="chip">--strict</span><span class="chip">--json</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TELEMETRY ===================== -->
+<section id="telemetry">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--tel)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M7 30V10M14 30V18M21 30v-8M28 30V14M35 30V6" stroke="var(--tel)" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">Read-only · honest by design</span><span class="vi">Chỉ-đọc · trung thực theo thiết kế</span></div><h2>telemetry</h2></div>
+      <div class="ver">v1.1.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--tel)"></div>
+
+    <p class="lead" style="margin-bottom:26px"><span class="en">After you've used the harness a while, telemetry tells you — in plain Vietnamese — how your own tooling is doing. A script gathers deterministic counts; the skill narrates them. It reports <b>whether the machinery runs</b> (usage &amp; health), never <b>whether the product wins the market</b>.</span><span class="vi">Sau khi dùng harness một thời gian, telemetry cho bạn biết — bằng tiếng Việt thuần — bộ đồ nghề của bạn đang chạy thế nào. Script gom số liệu tất định; skill diễn giải. Nó báo <b>máy móc có chạy không</b> (mức dùng &amp; sức khỏe), không bao giờ báo <b>sản phẩm có thắng thị trường không</b>.</span></p>
+
+    <!-- 10 lenses -->
+    <div class="card">
+      <h3><span class="pin"></span><span class="en">10 lenses, 4 formats (ascii · md · mermaid · json)</span><span class="vi">10 lăng kính, 4 định dạng (ascii · md · mermaid · json)</span></h3>
+      <div class="lensgrid" style="margin-top:14px">
+        <div class="lcell"><div class="ln">usage</div><div class="lds"><span class="en">counts · tokens · never-used</span><span class="vi">đếm · token · chưa dùng</span></div></div>
+        <div class="lcell"><div class="ln">session</div><div class="lds"><span class="en">duration · files · co-occurrence</span><span class="vi">thời lượng · file · đồng hiện</span></div></div>
+        <div class="lcell"><div class="ln">health</div><div class="lds"><span class="en">script errors · avg ms</span><span class="vi">lỗi script · ms TB</span></div></div>
+        <div class="lcell"><div class="ln">reliability</div><div class="lds"><span class="en">subagent success/fail</span><span class="vi">subagent đạt/hỏng</span></div></div>
+        <div class="lcell"><div class="ln">workflow</div><div class="lds"><span class="en">actual vs declared chains</span><span class="vi">chuỗi thực vs khai báo</span></div></div>
+        <div class="lcell"><div class="ln">validate</div><div class="lds"><span class="en">validate-pass proxy</span><span class="vi">proxy validate-pass</span></div></div>
+        <div class="lcell"><div class="ln">memory</div><div class="lds"><span class="en">orphans · dead links</span><span class="vi">mồ côi · link chết</span></div></div>
+        <div class="lcell"><div class="ln">product_memory</div><div class="lds"><span class="en">spec-store health</span><span class="vi">sức khỏe spec-store</span></div></div>
+        <div class="lcell"><div class="ln">forensics</div><div class="lds"><span class="en">one session rebuilt</span><span class="vi">dựng lại một phiên</span></div></div>
+        <div class="lcell"><div class="ln">all</div><div class="lds"><span class="en">the dashboard-lite</span><span class="vi">bảng tổng quan gọn</span></div></div>
+      </div>
+    </div>
+
+    <div class="cards grid-2" style="margin-top:16px">
+      <!-- fake usage bars -->
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Usage lens (sample)</span><span class="vi">Lăng kính usage (mẫu)</span></h3>
+        <div class="bars" data-bars>
+          <div class="bar"><span class="bl">product-spec</span><span class="bt"><span class="bf" data-w="88"></span></span><span class="bv">88</span></div>
+          <div class="bar"><span class="bl">…-critique</span><span class="bt"><span class="bf" data-w="54"></span></span><span class="bv">54</span></div>
+          <div class="bar"><span class="bl">telemetry</span><span class="bt"><span class="bf" data-w="31"></span></span><span class="bv">31</span></div>
+          <div class="bar"><span class="bl">release</span><span class="bt"><span class="bf" data-w="12"></span></span><span class="bv">12</span></div>
+        </div>
+        <p class="faint" style="font-size:.78rem;margin-top:10px"><span class="en">Token weight &amp; ms are inferred — labelled "ước lượng", never exact.</span><span class="vi">Token &amp; ms là suy ra — gắn nhãn "ước lượng", không bao giờ chính xác.</span></p>
+      </div>
+
+      <!-- honesty gate -->
+      <div class="card">
+        <div class="honest" style="margin-top:0">
+          <div class="h">⚖️ <span class="en">"Cái này KHÔNG đo được"</span><span class="vi">"Cái này KHÔNG đo được"</span></div>
+          <p class="muted" style="font-size:.86rem;margin:.5em 0 0"><span class="en">Every report ends with what it does <b>not</b> measure:</span><span class="vi">Mỗi báo cáo kết bằng những gì nó <b>không</b> đo:</span></p>
+          <ul>
+            <li><span class="en">market / user outcome — usage ≠ effectiveness</span><span class="vi">kết quả thị trường / người dùng — mức dùng ≠ hiệu quả</span></li>
+            <li><span class="en">any thin lens → "chưa đủ dữ liệu", never spun</span><span class="vi">lăng kính mỏng → "chưa đủ dữ liệu", không thổi phồng</span></li>
+            <li><span class="en">suggestions only — no authority to prune or edit</span><span class="vi">chỉ gợi ý — không có quyền cắt hay sửa</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="--ac:var(--tel)">
+      <span class="ci">🪝</span>
+      <div><span class="en"><b>5 telemetry sink hooks + 2 enforcement hooks</b> share one runtime and one on/off file. The 5 sinks auto-register at install, are fail-open, make no network calls, and write only to gitignored <code>.claude/telemetry/*.jsonl</code>. The 2 enforcement hooks (memory-gap, critique-nudge) default <b>off</b> — a blocking hook is never fallback-enabled. Global kill-switch: <code>CK_TELEMETRY_DISABLED=1</code>.</span><span class="vi"><b>5 sink hook telemetry + 2 hook cưỡng chế</b> dùng chung một runtime và một file bật/tắt. 5 sink tự đăng ký khi cài, fail-open, không gọi mạng, chỉ ghi vào <code>.claude/telemetry/*.jsonl</code> đã gitignore. 2 hook cưỡng chế (memory-gap, critique-nudge) mặc định <b>tắt</b> — hook chặn không bao giờ được bật theo fallback. Công tắc tổng: <code>CK_TELEMETRY_DISABLED=1</code>.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THE RIG ===================== -->
+<section id="rig">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">Under the hood</span><span class="vi">Bên trong</span></div>
+    <h2 class="sectitle"><span class="en">What the harness installs — the whole rig</span><span class="vi">Harness cài những gì — cả bộ</span></h2>
+    <p class="lead"><span class="en">Installing the bundle drops a coordinated <code>.claude/</code> tree into your project. Four skills share one Python venv; everything runs offline after install.</span><span class="vi">Cài bundle là thả vào dự án một cây <code>.claude/</code> phối hợp. Bốn skill dùng chung một venv Python; mọi thứ chạy offline sau khi cài.</span></p>
+
+    <div class="rig">
+      <div class="rcell"><div class="rt">🧩 <span class="en">4 skills</span><span class="vi">4 skill</span><span class="rn">/skills</span></div><ul><li>product-spec</li><li>product-spec-critique</li><li>release</li><li>telemetry</li></ul></div>
+      <div class="rcell"><div class="rt">🤖 <span class="en">7 sub-agents</span><span class="vi">7 sub-agent</span><span class="rn">/agents</span></div><ul><li>product · tech · market · craft critic</li><li>critique-consolidator</li><li>critique-humanizer</li><li>memory-harvester</li></ul></div>
+      <div class="rcell"><div class="rt">🪝 <span class="en">Hooks</span><span class="vi">Hook</span><span class="rn">/hooks</span></div><ul><li><span class="en">5 telemetry sinks (auto)</span><span class="vi">5 sink telemetry (tự động)</span></li><li><span class="en">memory-gap (opt-in)</span><span class="vi">memory-gap (opt-in)</span></li><li><span class="en">critique-nudge (opt-in)</span><span class="vi">critique-nudge (opt-in)</span></li></ul></div>
+      <div class="rcell"><div class="rt">📐 <span class="en">Rules</span><span class="vi">Rule</span><span class="rn">/rules</span></div><ul><li><span class="en">workflow · orchestration</span><span class="vi">workflow · điều phối</span></li><li><span class="en">development · docs</span><span class="vi">phát triển · tài liệu</span></li><li><span class="en">the always-on safety floor</span><span class="vi">lằn ranh an toàn luôn bật</span></li></ul></div>
+      <div class="rcell"><div class="rt">🧪 <span class="en">Shared eval-gate</span><span class="vi">Eval-gate dùng chung</span><span class="rn">/_shared</span></div><ul><li><code>run_evals.py</code> <span class="en">(structural)</span><span class="vi">(cấu trúc)</span></li><li><code>llm_eval.py</code> <span class="en">(advisory)</span><span class="vi">(advisory)</span></li><li><span class="en">runnable golden fixtures</span><span class="vi">fixture golden chạy được</span></li></ul></div>
+      <div class="rcell"><div class="rt">📦 <span class="en">Packager + installer</span><span class="vi">Đóng gói + installer</span><span class="rn">root</span></div><ul><li><code>pack.manifest.yaml</code></li><li><code>install.sh</code> · <code>install.ps1</code></li><li><span class="en">multiplatform, idempotent</span><span class="vi">đa nền tảng, idempotent</span></li></ul></div>
+    </div>
+
+    <div class="callout" style="--ac:var(--gold);margin-top:22px">
+      <span class="ci">🔒</span>
+      <div><span class="en"><b>Privacy:</b> all four skills make <b>no network calls at runtime</b>. product-spec's one-time installer vendors Mermaid/marked/DOMPurify from a public CDN, then verifies each against a pinned SHA-256. After install, everything runs on your machine.</span><span class="vi"><b>Quyền riêng tư:</b> cả bốn skill <b>không gọi mạng khi chạy</b>. Installer một lần của product-spec tải Mermaid/marked/DOMPurify từ CDN công khai rồi verify từng cái bằng SHA-256 đã ghim. Sau khi cài, mọi thứ chạy trên máy bạn.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="foot-in">
+    <div>
+      <div class="brand" style="font-size:1.15rem"><span class="dot"></span><span>Product Spec Harness</span></div>
+      <p class="lic"><span class="en">Copyright © 2026 Hieu Bui. Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). Use, study, modify and share freely — but a modified network service or distribution must release its complete source under AGPL-3.0 too.</span><span class="vi">Bản quyền © 2026 Hieu Bui. Cấp phép theo GNU Affero General Public License v3.0 (AGPL-3.0). Tự do dùng, nghiên cứu, sửa và chia sẻ — nhưng bản đã sửa chạy dưới dạng dịch vụ mạng hoặc phân phối phải công bố toàn bộ source dưới AGPL-3.0.</span></p>
+    </div>
+    <div>
+      <h4><span class="en">Skills</span><span class="vi">Skill</span></h4>
+      <a href="../.claude/skills/product-spec/">product-spec</a>
+      <a href="../.claude/skills/product-spec-critique/">product-spec-critique</a>
+      <a href="../.claude/skills/release/">release</a>
+      <a href="../.claude/skills/telemetry/">telemetry</a>
+    </div>
+    <div>
+      <h4><span class="en">Docs</span><span class="vi">Tài liệu</span></h4>
+      <a href="../README.md">README</a>
+      <a href="../CHANGELOG.md">CHANGELOG</a>
+      <a href="../CONTRIBUTING.md">CONTRIBUTING</a>
+      <a href="../.claude/skills/product-spec/GUIDE-VI.md">GUIDE-VI</a>
+    </div>
+  </div>
+  <p class="faint" style="text-align:center;max-width:var(--maxw);margin:34px auto 0;font-size:.78rem"><span class="en">This page is a standalone showcase — no build step, no external requests. Open it in any browser.</span><span class="vi">Trang này là một showcase tự chứa — không cần build, không gọi mạng. Mở bằng bất kỳ trình duyệt nào.</span></p>
+</footer>
+
+<script>
+/* ---------------- language toggle ---------------- */
+function setLang(l){
+  document.body.classList.toggle('lang-vi', l==='vi');
+  document.body.classList.toggle('lang-en', l==='en');
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-vi').classList.toggle('active', l==='vi');
+  document.documentElement.lang = l;
+  try{ localStorage.setItem('psh-lang', l); }catch(e){}
+}
+(function(){ try{ var s=localStorage.getItem('psh-lang'); if(s) setLang(s);}catch(e){} })();
+
+/* ---------------- voice level dial ---------------- */
+var LEVELS = {
+  1:{en:["Warm","Polite, encouraging. Artifact only — never you.","--warm"], vi:["Ấm áp","Lịch sự, động viên. Chỉ hiện vật — không nhắm bạn.","--warm"], danger:false},
+  2:{en:["Gentle","Soft-spoken notes, kindly framed.","--gentle"], vi:["Nhẹ nhàng","Góp ý nhẹ, đóng khung tử tế.","--gentle"], danger:false},
+  3:{en:["Blunt","Direct, no cushioning — still about the work.","--blunt"], vi:["Thẳng","Trực diện, không đệm — vẫn về công việc.","--blunt"], danger:false},
+  4:{en:["Savage","Sharp and unsparing on the artifact.","--savage"], vi:["Gắt","Sắc và không nương tay với hiện vật.","--savage"], danger:false},
+  5:{en:["No-mercy","The default. Brutal, may jab you, but all about the work.","--no-mercy (default)"], vi:["Không khoan nhượng","Mặc định. Tàn nhẫn, có thể đá xéo bạn, nhưng vẫn về công việc.","--no-mercy (mặc định)"], danger:false},
+  6:{en:["Roast","Roasts you as the author. Opt-in — asks to confirm.","--roast"], vi:["Quay","Chửi thẳng bạn với tư cách tác giả. Opt-in — hỏi xác nhận.","--roast"], danger:true},
+  7:{en:["Harsher register","Escalates the Vietnamese register (ông/tôi → mày/tao). Opt-in.","level 7"], vi:["Bậc gắt hơn","Leo thang đại từ (ông/tôi → mày/tao). Opt-in.","mức 7"], danger:true},
+  8:{en:["Harsher still","Stronger register, still grounded in evidence + a fix.","level 8"], vi:["Gắt hơn nữa","Đại từ mạnh hơn, vẫn dựa bằng chứng + cách sửa.","mức 8"], danger:true},
+  9:{en:["Work-profanity","Work-aimed profanity. RE-CONFIRMS on every run; declines down to 8.","level 9"], vi:["Chửi thề (vào việc)","Chửi thề nhắm-công-việc. HỎI LẠI mỗi lần chạy; từ chối thì lùi về 8.","mức 9"], danger:true}
+};
+function setLevel(v){
+  v = +v;
+  var L = LEVELS[v];
+  var lang = document.body.classList.contains('lang-vi') ? 'vi' : 'en';
+  var d = L[lang];
+  var knob = document.getElementById('knob');
+  knob.style.left = ((v-1)/8*100) + '%';
+  knob.style.borderColor = L.danger ? '#dc2626' : '#34d399';
+  var tag = L.danger
+    ? '<span class="dangertag danger">'+(lang==='vi'?'Nguy hiểm · opt-in':'Danger · opt-in')+'</span>'
+    : '<span class="dangertag safe">'+(lang==='vi'?'An toàn · hiện vật':'Safe · artifact-only')+'</span>';
+  document.getElementById('readout').innerHTML =
+    '<div class="lv" style="color:'+(L.danger?'#fb5e7e':'#38bdf8')+'">'+v+'</div>'+
+    '<div class="nm">'+d[0]+'</div>'+
+    '<div class="alias">'+d[2]+'</div>'+
+    '<div class="ds" style="margin-top:6px">'+d[1]+'</div>'+
+    tag;
+}
+setLevel(5);
+// re-render readout text when language flips
+['btn-en','btn-vi'].forEach(function(id){
+  document.getElementById(id).addEventListener('click', function(){ setLevel(document.getElementById('vrange').value); });
+});
+
+/* ---------------- scroll reveal + bar fill + counters ---------------- */
+var io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(!e.isIntersecting) return;
+    e.target.classList.add('in');
+    // fill bars
+    e.target.querySelectorAll('[data-bars] .bf').forEach(function(b){ b.style.width = b.dataset.w + '%'; });
+    // count up
+    e.target.querySelectorAll('[data-count]').forEach(function(n){
+      var t = +n.dataset.count, cur = 0, step = Math.max(1, Math.round(t/28));
+      if(t===0){ n.textContent='0'; return; }
+      var iv = setInterval(function(){ cur+=step; if(cur>=t){cur=t;clearInterval(iv);} n.textContent=cur; }, 26);
+    });
+    io.unobserve(e.target);
+  });
+},{threshold:.16});
+document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+
+/* ---------------- hero constellation network ---------------- */
+(function(){
+  var c = document.getElementById('net'), x = c.getContext('2d'), W,H,pts,raf;
+  var COLORS = ['#38bdf8','#fb5e7e','#34d399','#a78bfa'];
+  function size(){ W=c.width=innerWidth; H=c.height=Math.max(innerHeight, 700); init(); }
+  function init(){
+    var n = Math.min(64, Math.floor(W/26));
+    pts = [];
+    for(var i=0;i<n;i++){
+      pts.push({x:Math.random()*W, y:Math.random()*H, vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28, c:COLORS[i%4]});
+    }
+  }
+  function draw(){
+    x.clearRect(0,0,W,H);
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i]; p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+      x.beginPath(); x.arc(p.x,p.y,1.6,0,6.28); x.fillStyle=p.c; x.globalAlpha=.8; x.fill();
+      for(var j=i+1;j<pts.length;j++){
+        var q=pts[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<128){ x.globalAlpha=(1-d/128)*.22; x.strokeStyle=p.c; x.lineWidth=1; x.beginPath(); x.moveTo(p.x,p.y); x.lineTo(q.x,q.y); x.stroke(); }
+      }
+    }
+    x.globalAlpha=1; raf=requestAnimationFrame(draw);
+  }
+  size(); draw();
+  addEventListener('resize', function(){ cancelAnimationFrame(raf); size(); draw(); });
+  // pause when tab hidden
+  document.addEventListener('visibilitychange', function(){ if(document.hidden){cancelAnimationFrame(raf);} else {draw();} });
+})();
+</script>
+</body>
+</html>
