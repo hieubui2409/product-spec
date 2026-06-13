@@ -140,6 +140,9 @@ assets/
 # Exception: release ships installer templates + manifest example in assets/
 !.claude/skills/release/assets/
 !.claude/skills/release/assets/**
+# Exception: the feature showcase ships its shared stylesheet + script in assets/
+!showcase/assets/
+!showcase/assets/**
 
 # External repos for study/reference
 external/
