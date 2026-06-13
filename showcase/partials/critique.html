@@ -1,0 +1,130 @@
+<!-- ===================== CRITIQUE ===================== -->
+<section id="critique">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--crit)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M20 6c-7 6-11 9-11 16a11 11 0 0 0 22 0c0-7-4-10-11-16Z" stroke="var(--crit)" stroke-width="2" stroke-linejoin="round"/><path d="M20 14c-3 3-5 5-5 8a5 5 0 0 0 10 0c0-3-2-5-5-8Z" fill="var(--crit)" opacity=".4"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">An opinion, not a pass/fail</span><span class="vi">Một quan điểm, không phải pass/fail</span></div><h2>product-spec-critique</h2></div>
+      <div class="ver">v1.3.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--crit)"></div>
+
+    <p class="lead" style="margin-bottom:18px"><span class="en"><code>--validate</code> says the spec is <i>sound</i>. Critique says whether it is any <i>good</i> — a brutal-but-grounded tear-down across four lenses that reuses validate's findings as ammo, then says what validate cannot: why it would die, where it sits in the market, whether the writing holds up. It <b>never edits your spec</b> and is <b>never</b> in a CI gate.</span><span class="vi"><code>--validate</code> nói spec <i>vững</i>. Critique nói nó có <i>tốt</i> không — một bản mổ xẻ gắt-nhưng-có-căn-cứ qua bốn lăng kính, tái dùng phát hiện của validate làm "đạn", rồi nói điều validate không nói: vì sao chết, đứng đâu trên thị trường, chữ nghĩa có vững không. Nó <b>không bao giờ sửa spec</b> và <b>không bao giờ</b> vào cổng CI.</span></p>
+
+    <!-- when to use -->
+    <div class="whenuse">
+      <div class="wu yes">
+        <h4><span class="en">✓ Reach for it when</span><span class="vi">✓ Dùng khi</span></h4>
+        <ul>
+          <li><span class="en"><code>--validate</code> passes but the spec still feels weak</span><span class="vi"><code>--validate</code> qua rồi mà spec vẫn thấy yếu</span></li>
+          <li><span class="en">you want the why-it-dies + market + craft read</span><span class="vi">bạn muốn cái nhìn vì-sao-chết + thị trường + chữ nghĩa</span></li>
+          <li><span class="en">before committing real build budget to an epic</span><span class="vi">trước khi rót ngân sách build thật vào một epic</span></li>
+        </ul>
+      </div>
+      <div class="wu no">
+        <h4><span class="en">✗ Not for</span><span class="vi">✗ Không dùng để</span></h4>
+        <ul>
+          <li><span class="en">a CI gate — it's an opinion, non-deterministic</span><span class="vi">cổng CI — đây là quan điểm, không tất định</span></li>
+          <li><span class="en">structural checks — that's <code>--validate</code>'s job</span><span class="vi">kiểm tra cấu trúc — đó là việc của <code>--validate</code></span></li>
+          <li><span class="en">editing the spec — it only reports</span><span class="vi">sửa spec — nó chỉ báo cáo</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ HERO: one real finding, six voice levels ============ -->
+    <div class="hero-ex" style="--ac:var(--crit)">
+      <div class="xlabel"><span class="en">Worked example</span><span class="vi">Ví dụ thật</span></div>
+      <h3 style="margin:2px 0 6px"><span class="en">One real finding, six voice levels</span><span class="vi">Một phát hiện thật, sáu mức giọng</span></h3>
+      <p class="muted" style="font-size:.9rem">
+        <span class="en">Step through the levels. The <b>evidence and the fix never move</b> — only the voice sharpens. This is verbatim output from critiquing <code>examples/acme-shop</code>. <span class="realtag">real output</span></span>
+        <span class="vi">Bấm qua từng mức. <b>Bằng chứng và cách sửa không đổi</b> — chỉ giọng gắt dần. Đây là đầu ra nguyên văn khi phản biện <code>examples/acme-shop</code>. <span class="realtag">đầu ra thật</span></span>
+      </p>
+      <!--FINDING_DATA-->
+      <div class="fstep-bar" id="fbar" role="tablist" aria-label="voice level"></div>
+      <div class="finding-card">
+        <div class="fmeta">
+          <span class="fev" id="fev"></span>
+          <span class="fsp" id="fsp"></span>
+          <span class="flv" id="flv"></span>
+        </div>
+        <div class="finding-body" id="fbody">
+          <div class="ftext" id="ftext"></div>
+          <div class="dgate">
+            <div class="dg-h">⛔ <span class="en">Levels 7–9 are opt-in</span><span class="vi">Mức 7–9 phải opt-in</span></div>
+            <div class="dg-d"><span class="en">These contain real work-targeted profanity (Vietnamese). The line attacks the <b>work</b>, never a person — but it's hidden by default.</span><span class="vi">Có chửi thề thật nhắm-công-việc (tiếng Việt). Lằn ranh nhắm vào <b>công việc</b>, không nhắm con người — nhưng mặc định ẩn đi.</span></div>
+            <button type="button" id="dgate-reveal"><span class="en">Reveal levels 7–9</span><span class="vi">Hiện mức 7–9</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="flock" id="flock"></div>
+      <p class="faint" style="font-size:.76rem;margin-top:10px">
+        <span class="en">Output is plain Vietnamese — that's the language the skill speaks. The same finding also renders in English via <code>--lang en</code>.</span>
+        <span class="vi">Đầu ra là tiếng Việt thuần — đúng ngôn ngữ skill nói. Cùng phát hiện cũng render được tiếng Anh qua <code>--lang en</code>.</span>
+      </p>
+    </div>
+
+    <!-- four lenses -->
+    <h3 style="margin:34px 0 0"><span class="en">Four lenses, four read-only sub-agents</span><span class="vi">Bốn lăng kính, bốn sub-agent chỉ-đọc</span></h3>
+    <div class="lenses" style="margin-top:14px">
+      <div class="lens p">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" stroke="#f472b6" stroke-width="2"/><path d="M20 6v28M6 20h28" stroke="#f472b6" stroke-width="1.4" opacity=".5"/><circle cx="20" cy="20" r="5" fill="#f472b6"/></svg>
+        <h4><span class="en">Product</span><span class="vi">Sản phẩm</span></h4>
+        <div class="fw">JTBD · Value-Prop · Kano · RICE · riskiest-assumption</div>
+      </div>
+      <div class="lens t">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M16 6 8 22h7l-2 12 14-18h-7l3-10Z" stroke="#fb923c" stroke-width="2" stroke-linejoin="round" fill="#fb923c" fill-opacity=".25"/></svg>
+        <h4><span class="en">Tech</span><span class="vi">Kỹ thuật</span></h4>
+        <div class="fw">INVEST · Given-When-Then · NFR gaps · hidden deps</div>
+      </div>
+      <div class="lens m">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M6 28 16 18l6 6 12-14" stroke="#facc15" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 10h6v6" stroke="#facc15" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h4><span class="en">Market</span><span class="vi">Thị trường</span></h4>
+        <div class="fw">Lean Canvas · Porter · Blue Ocean · me-too? <span style="color:var(--spec)">+web</span></div>
+      </div>
+      <div class="lens c">
+        <svg class="lic" viewBox="0 0 40 40" fill="none"><path d="M10 30 28 12l2-2a3 3 0 0 1 4 4l-2 2L14 34l-6 2 2-6Z" stroke="#a78bfa" stroke-width="2" stroke-linejoin="round"/></svg>
+        <h4><span class="en">Craft</span><span class="vi">Chữ nghĩa</span></h4>
+        <div class="fw">CSI-4Cs · plain-language · term drift · show-don't-tell</div>
+      </div>
+    </div>
+
+    <!-- fan-out pipeline -->
+    <div class="callout" style="--ac:var(--crit)">
+      <span class="ci">⚙️</span>
+      <div>
+        <span class="en"><b>How a critique is built:</b> <code>critique_scan.py</code> assembles one evidence bundle → four <b>read-only</b> lens agents fan out in parallel → an <b>opus consolidator</b> dedups, ranks, picks the top-3, flags repeat-offenders → a <b>sonnet humanizer</b> strips AI/translation tells while keeping the bite → the main agent writes <i>one</i> markdown report. Re-runs are cheap: unchanged spec reuses cached lens arrays; a bare level bump only re-renders the voice.</span>
+        <span class="vi"><b>Một bản phản biện được dựng thế nào:</b> <code>critique_scan.py</code> ráp một bundle bằng chứng → bốn lens agent <b>chỉ-đọc</b> chạy song song → một <b>opus consolidator</b> khử trùng, xếp hạng, chọn top-3, gắn cờ tái phạm → một <b>sonnet humanizer</b> bóc dấu vết AI/dịch máy mà giữ độ "gắt" → main agent ghi <i>một</i> báo cáo markdown. Chạy lại rẻ: spec không đổi thì tái dùng mảng lens đã cache; chỉ tăng mức thì chỉ render lại giọng.</span>
+      </div>
+    </div>
+
+    <!-- voice dial (what the levels mean) -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">The voice dial — what each level means</span><span class="vi">Núm chỉnh giọng — mỗi mức nghĩa là gì</span></h3>
+      <div class="dial-wrap">
+        <div>
+          <p class="muted" style="font-size:.9rem"><span class="en">Drag from gentle to brutal. Default is <b>5</b>. Levels 1–4 only ever attack the artifact. <b>6–9 are dangerous, opt-in</b>, and 9 re-confirms on every run.</span><span class="vi">Kéo từ nhẹ tới gắt. Mặc định <b>5</b>. Mức 1–4 chỉ công kích hiện vật. <b>6–9 nguy hiểm, phải opt-in</b>, và mức 9 hỏi lại mỗi lần chạy.</span></p>
+          <div class="heatbar"><div class="knob" id="knob"></div></div>
+          <input type="range" min="1" max="9" value="5" class="vrange" id="vrange" oninput="setLevel(this.value)" />
+          <div class="scalemarks"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+        </div>
+        <div class="dial-readout" id="readout"></div>
+      </div>
+      <div class="floor">
+        <b>⛔ <span class="en">Universal-harm floor — at every level, even 9, even with consent.</span><span class="vi">Lằn ranh universal-harm — ở mọi mức, kể cả 9, kể cả khi bạn đồng ý.</span></b>
+        <span class="en"> The line is the <i>target</i>, not the harshness: it attacks the <b>work</b>, never <b>you</b>. No real-violence threats, no protected-characteristic slurs, no family-targeted profanity, no self-harm or sexual content. Every line always keeps an evidence ID and a fix.</span>
+        <span class="vi"> Lằn ranh là <i>đối tượng</i>, không phải độ gắt: nó nhắm <b>công việc</b>, không nhắm <b>bạn</b>. Không đe dọa bạo lực thật, không miệt thị đặc điểm con người, không chửi nhắm gia đình, không tự hại/tình dục. Mỗi dòng luôn giữ mã bằng chứng và một cách sửa.</span>
+      </div>
+    </div>
+
+    <!-- appendix: scope + reuse chips -->
+    <div class="cards grid-2" style="margin-top:16px">
+      <div class="card">
+        <h4 style="margin-bottom:10px"><span class="en">Scope &amp; lenses</span><span class="vi">Phạm vi &amp; lăng kính</span></h4>
+        <div class="chips"><span class="chip">all</span><span class="chip">PRD-AUTH</span><span class="chip">…-E1-S1</span><span class="chip">--product</span><span class="chip">--tech</span><span class="chip">--market</span><span class="chip">--craft</span><span class="chip">--interactive</span></div>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:10px"><span class="en">Reuse, web &amp; cross-critique</span><span class="vi">Tái dùng, web &amp; liên-phản-biện</span></h4>
+        <div class="chips"><span class="chip">--fresh</span><span class="chip">--refresh-web</span><span class="chip">--no-web</span><span class="chip">--no-inherit</span><span class="chip">--no-rollup</span><span class="chip">--inherit <span class="x">nearest|deep</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,7 @@
+bundle_root: product-spec-2.4.0
+file_count: 318
+total_bytes: 4626012
+output_path: /home/hieubt15/Documents/vsf/product-spec/.claude/skills/release/scripts/dist/product-spec-2.4.0.tar.gz
+max_size: 104857600
+would_be_sha256: 414c2cbac29472cdba8f8e4a95f4cb784be6ad092b730844ba7ba806dbc8ba8f
+over_max_size: False

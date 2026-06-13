@@ -1,0 +1,50 @@
+{
+  "evidence": "PRD-MOBILE:13 · BRD-G5",
+  "spec": "moscow: could  ·  giá trị: “browse and buy faster”",
+  "note_en": "The SAME real finding (same evidence, same fix) — only the voice changes. Verbatim Vietnamese output; the skill speaks plain Vietnamese.",
+  "note_vi": "Cùng MỘT phát hiện thật (cùng bằng chứng, cùng cách sửa) — chỉ giọng đổi. Trích nguyên văn tiếng Việt.",
+  "levels": [
+    {
+      "n": 1,
+      "alias_en": "--warm",
+      "alias_vi": "ấm áp",
+      "danger": false,
+      "vi": "**[nặng][product · market] PRD-MOBILE:5**. Di động đang là mục tiêu của năm thứ hai (`BRD-G5`), đó là một hướng tốt. Để đội phát triển vững tin hơn, PRD và story nên nói thêm nhu cầu trên di động khác gì so với trên web. Chỗ này đáng lưu tâm: trường `competitive_parity` đang ghi `behind` cả Shopify lẫn Etsy nhưng ưu tiên lại để `moscow: could`, nên dễ thành làm cho có. Có thể thử: thêm một nhu cầu chỉ di động mới đáp ứng được (ví dụ đẩy thông báo khi cửa hàng ra mẫu mới), hoặc ghi rõ rằng đây là bước chạy theo cho bằng đối thủ để mọi người cùng đặt đúng kỳ vọng."
+    },
+    {
+      "n": 3,
+      "alias_en": "--blunt",
+      "alias_vi": "thẳng",
+      "danger": false,
+      "vi": "**[nặng][product · market] PRD-MOBILE:5**. Di động được đặt thành mục tiêu của năm thứ hai (`BRD-G5`), nhưng cả PRD lẫn story chỉ hứa hẹn một ứng dụng di động riêng \"cho nhanh\", chẳng nói được nhu cầu trên di động khác gì so với trên web. Vì sao chết: làm ứng dụng chỉ để cho có ứng dụng. Trường `competitive_parity` ghi `behind` cả Shopify lẫn Etsy mà mức ưu tiên vẫn để `moscow: could`, tức là đuổi cho bằng đối thủ chứ không có gì khác biệt. Sửa: nêu một nhu cầu chỉ di động mới đáp ứng được (đẩy thông báo khi cửa hàng ra mẫu mới, mua hàng lúc đang di chuyển), hoặc hạ kỳ vọng xuống và nói thẳng rằng đây chỉ là chạy theo cho bằng bạn bằng bè."
+    },
+    {
+      "n": 5,
+      "alias_en": "--no-mercy (default)",
+      "alias_vi": "không khoan nhượng (mặc định)",
+      "danger": false,
+      "vi": "**[chặn][product · market] PRD-MOBILE:13.** Di động là mục tiêu năm thứ hai (`BRD-G5`, brd.md:32) nhưng PRD-MOBILE để `moscow: could` (PRD-MOBILE:13), `competitive_parity` ghi `behind` cả Shopify lẫn Etsy, và metric chỉ là `mobile-mau` (PRD-MOBILE:15) — số lượt mở app, không phải doanh thu hay repeat-purchase. Tức là bạn đặt một mục tiêu năm-2 vào ngăn \"làm cũng được\", rồi đo nó bằng vanity metric. Vì sao chết: một mục tiêu có deadline mà ưu tiên `could` và đo bằng MAU sẽ không bao giờ được làm tới nơi — đội sẽ ship một cái vỏ app cho có, thua đối thủ ở đúng thứ họ mạnh, và `BRD-G5` thành lời hứa suông. Sửa: hoặc nâng `moscow` cho khớp với một mục tiêu BRD năm-2 và đổi metric sang GMV-trên-mobile / repeat-purchase, hoặc thú thật rằng mobile chưa phải ưu tiên và gỡ deadline năm-2 khỏi `BRD-G5`. _(DEC-worthy: chỉnh ưu tiên/metric của một mục tiêu BRD.)_"
+    },
+    {
+      "n": 7,
+      "alias_en": "level 7 · ông/tôi",
+      "alias_vi": "mức 7 · ông/tôi",
+      "danger": true,
+      "vi": "**[nặng][product] PRD-MOBILE:13**. Ông đặt cả một ứng dụng di động làm mục tiêu năm thứ hai (`BRD-G5`) mà lại để `moscow: could`, rồi phần giá trị chỉ nói \"browse and buy faster\". Nhanh hơn web ở chỗ nào thì không thấy ông trả lời. Banh nóc vì: làm app chỉ để có app, đúng kiểu chạy theo cho bằng đối thủ chứ không có nhu cầu di động nào riêng. Tư duy sản phẩm tới đây là còn non. Gõ lại cho tử tế: nêu một nhu cầu chỉ di động mới đáp ứng được (đẩy thông báo khi thương hiệu ra mẫu mới, mua nhanh lúc đang di chuyển), hoặc hạ kỳ vọng và nói thẳng đây là đuổi cho kịp."
+    },
+    {
+      "n": 8,
+      "alias_en": "level 8 · mày/tao",
+      "alias_vi": "mức 8 · mày/tao",
+      "danger": true,
+      "vi": "**[nặng][product] PRD-MOBILE:13**. Cả một app di động đặt làm mục tiêu năm thứ hai (`BRD-G5`) mà mày để `moscow: could`, phần giá trị chỉ vỏn vẹn \"browse and buy faster\". Nhanh hơn web chỗ nào thì mày không buồn nói. Nát bét vì: đây là làm app cho có app, đú theo đối thủ chứ chẳng có nhu cầu di động nào riêng. Mày làm cái gì cũng kiểu nửa vời như vầy, nêu mục tiêu xong bỏ ngỏ phần khó. Gõ lại ngay: chỉ ra một nhu cầu chỉ di động mới giải được, hoặc hạ kỳ vọng và thừa nhận đây là chạy theo cho kịp."
+    },
+    {
+      "n": 9,
+      "alias_en": "level 9 · +profanity",
+      "alias_vi": "mức 9 · +chửi thề",
+      "danger": true,
+      "vi": "**[nặng][product] PRD-MOBILE:13**. Đm, cả một app di động đặt làm mục tiêu năm hai (`BRD-G5`) mà để `moscow: could`, giá trị thì độc một câu \"browse and buy faster\". Nhanh hơn web chỗ nào? Không có. Banh xác vì: làm app cho có app, đú theo Shopify với Etsy chứ chẳng có lấy một nhu cầu di động nào riêng, viết kiểu này thì đội phát triển build xong cũng chẳng biết để làm gì. Gõ lại, đừng để tao nhắc lại: nêu một nhu cầu chỉ di động giải được, hoặc hạ kỳ vọng và ghi thẳng đây là chạy theo cho kịp."
+    }
+  ]
+}

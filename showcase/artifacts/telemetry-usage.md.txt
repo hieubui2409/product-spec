@@ -1,0 +1,12 @@
+## Mức dùng kỹ năng (30 ngày gần đây)
+
+Tổng lượt gọi: **35** trên **4** kỹ năng; catalog 0.
+
+| # | Kỹ năng                          | Lượt |
+| --- | -------------------------------- | ---- |
+| 1 | cleanmatic-product-spec          | 16   |
+| 2 | cleanmatic-product-spec-critique | 9    |
+| 3 | cleanmatic-telemetry             | 6    |
+| 4 | cleanmatic-release               | 4    |
+
+**Chưa dùng lần nào (sở hữu):** 0

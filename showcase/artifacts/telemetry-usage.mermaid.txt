@@ -1,0 +1,8 @@
+```mermaid
+pie showData
+    title Mức dùng kỹ năng
+    "cleanmatic-product-spec" : 16
+    "cleanmatic-product-spec-critique" : 9
+    "cleanmatic-telemetry" : 6
+    "cleanmatic-release" : 4
+```

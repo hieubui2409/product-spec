@@ -1,0 +1,92 @@
+<!-- ===================== TELEMETRY ===================== -->
+<section id="telemetry">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--tel)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M7 30V10M14 30V18M21 30v-8M28 30V14M35 30V6" stroke="var(--tel)" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">Read-only · honest by design</span><span class="vi">Chỉ-đọc · trung thực theo thiết kế</span></div><h2>telemetry</h2></div>
+      <div class="ver">v1.1.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--tel)"></div>
+
+    <p class="lead" style="margin-bottom:18px"><span class="en">After you've used the harness a while, telemetry tells you — in plain Vietnamese — how your own tooling is doing. A script gathers deterministic counts; the skill narrates them. It reports <b>whether the machinery runs</b> (usage &amp; health), never <b>whether the product wins the market</b>.</span><span class="vi">Sau khi dùng harness một thời gian, telemetry cho bạn biết — bằng tiếng Việt thuần — bộ đồ nghề của bạn đang chạy thế nào. Script gom số liệu tất định; skill diễn giải. Nó báo <b>máy móc có chạy không</b> (mức dùng &amp; sức khỏe), không bao giờ báo <b>sản phẩm có thắng thị trường không</b>.</span></p>
+
+    <!-- when to use -->
+    <div class="whenuse">
+      <div class="wu yes">
+        <h4><span class="en">✓ Reach for it when</span><span class="vi">✓ Dùng khi</span></h4>
+        <ul>
+          <li><span class="en">you want to know which skills actually get used</span><span class="vi">bạn muốn biết skill nào thực sự được dùng</span></li>
+          <li><span class="en">a script is erroring or slow and you want proof</span><span class="vi">một script lỗi hay chậm và bạn cần bằng chứng</span></li>
+          <li><span class="en">checking subagent success / validate-pass health</span><span class="vi">kiểm tra subagent đạt/hỏng · sức khỏe validate-pass</span></li>
+        </ul>
+      </div>
+      <div class="wu no">
+        <h4><span class="en">✗ Can't tell you</span><span class="vi">✗ Không thể nói</span></h4>
+        <ul>
+          <li><span class="en">market or user outcome — usage ≠ effectiveness</span><span class="vi">kết quả thị trường/người dùng — mức dùng ≠ hiệu quả</span></li>
+          <li><span class="en">exact tokens/ms — those are labelled "ước lượng"</span><span class="vi">token/ms chính xác — gắn nhãn "ước lượng"</span></li>
+          <li><span class="en">what to prune — it suggests, never edits</span><span class="vi">cắt cái gì — chỉ gợi ý, không sửa</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ HERO: one lens, four formats ============ -->
+    <div class="hero-ex" style="--ac:var(--tel)">
+      <div class="xlabel"><span class="en">Worked example</span><span class="vi">Ví dụ thật</span></div>
+      <h3 style="margin:2px 0 6px"><span class="en">One lens, four formats</span><span class="vi">Một lăng kính, bốn định dạng</span></h3>
+      <p class="muted" style="font-size:.9rem">
+        <span class="en">The <code>usage</code> lens over the same data, rendered four ways: <b>ascii</b> to glance, <b>md</b> to paste, <b>mermaid</b> to chart, <b>json</b> to pipe. <span class="realtag sample">sample data</span></span>
+        <span class="vi">Lăng kính <code>usage</code> trên cùng dữ liệu, render bốn kiểu: <b>ascii</b> để liếc, <b>md</b> để dán, <b>mermaid</b> để vẽ, <b>json</b> để nối ống. <span class="realtag sample">dữ liệu mẫu</span></span>
+      </p>
+      <div class="fmt-tabs" id="teltabs">
+        <button data-fmt="ascii" class="on">ascii</button>
+        <button data-fmt="md">md</button>
+        <button data-fmt="mermaid">mermaid</button>
+        <button data-fmt="json">json</button>
+      </div>
+      <div class="term">
+        <div class="tbar"><i></i><i></i><i></i><span class="tcmd">analyze_telemetry.py --lens usage --format <span id="telcmd">ascii</span> --lang vi</span></div>
+        <div class="fmt-pane on" data-pane="ascii"><!--TEL_ASCII--></div>
+        <div class="fmt-pane" data-pane="md"><!--TEL_MD--></div>
+        <div class="fmt-pane" data-pane="mermaid"><!--TEL_MERMAID--></div>
+        <div class="fmt-pane" data-pane="json"><!--TEL_JSON--></div>
+      </div>
+      <p class="faint" style="font-size:.76rem;margin-top:10px"><span class="en">Mermaid is shown as <b>source</b> — the page vendors no chart library, staying dependency-free. Numbers are clearly-labelled sample data.</span><span class="vi">Mermaid hiện ở dạng <b>nguồn</b> — trang không nhúng thư viện vẽ nào, giữ không-phụ-thuộc. Số liệu là dữ liệu mẫu có gắn nhãn rõ.</span></p>
+    </div>
+
+    <!-- 10 lenses -->
+    <div class="card" style="margin-top:34px">
+      <h3><span class="pin"></span><span class="en">10 lenses, 4 formats (ascii · md · mermaid · json)</span><span class="vi">10 lăng kính, 4 định dạng (ascii · md · mermaid · json)</span></h3>
+      <div class="lensgrid" style="margin-top:14px">
+        <div class="lcell"><div class="ln">usage</div><div class="lds"><span class="en">counts · tokens · never-used</span><span class="vi">đếm · token · chưa dùng</span></div></div>
+        <div class="lcell"><div class="ln">session</div><div class="lds"><span class="en">duration · files · co-occurrence</span><span class="vi">thời lượng · file · đồng hiện</span></div></div>
+        <div class="lcell"><div class="ln">health</div><div class="lds"><span class="en">script errors · avg ms</span><span class="vi">lỗi script · ms TB</span></div></div>
+        <div class="lcell"><div class="ln">reliability</div><div class="lds"><span class="en">subagent success/fail</span><span class="vi">subagent đạt/hỏng</span></div></div>
+        <div class="lcell"><div class="ln">workflow</div><div class="lds"><span class="en">actual vs declared chains</span><span class="vi">chuỗi thực vs khai báo</span></div></div>
+        <div class="lcell"><div class="ln">validate</div><div class="lds"><span class="en">validate-pass proxy</span><span class="vi">proxy validate-pass</span></div></div>
+        <div class="lcell"><div class="ln">memory</div><div class="lds"><span class="en">orphans · dead links</span><span class="vi">mồ côi · link chết</span></div></div>
+        <div class="lcell"><div class="ln">product_memory</div><div class="lds"><span class="en">spec-store health</span><span class="vi">sức khỏe spec-store</span></div></div>
+        <div class="lcell"><div class="ln">forensics</div><div class="lds"><span class="en">one session rebuilt</span><span class="vi">dựng lại một phiên</span></div></div>
+        <div class="lcell"><div class="ln">all</div><div class="lds"><span class="en">the dashboard-lite</span><span class="vi">bảng tổng quan gọn</span></div></div>
+      </div>
+    </div>
+
+    <!-- honesty gate -->
+    <div class="card" style="margin-top:16px">
+      <div class="honest" style="margin-top:0">
+        <div class="h">⚖️ <span class="en">"Cái này KHÔNG đo được"</span><span class="vi">"Cái này KHÔNG đo được"</span></div>
+        <p class="muted" style="font-size:.86rem;margin:.5em 0 0"><span class="en">Every report ends with what it does <b>not</b> measure:</span><span class="vi">Mỗi báo cáo kết bằng những gì nó <b>không</b> đo:</span></p>
+        <ul>
+          <li><span class="en">market / user outcome — usage ≠ effectiveness</span><span class="vi">kết quả thị trường / người dùng — mức dùng ≠ hiệu quả</span></li>
+          <li><span class="en">any thin lens → "chưa đủ dữ liệu", never spun</span><span class="vi">lăng kính mỏng → "chưa đủ dữ liệu", không thổi phồng</span></li>
+          <li><span class="en">suggestions only — no authority to prune or edit</span><span class="vi">chỉ gợi ý — không có quyền cắt hay sửa</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="--ac:var(--tel)">
+      <span class="ci">🪝</span>
+      <div><span class="en"><b>5 telemetry sink hooks + 2 enforcement hooks</b> share one runtime and one on/off file. The 5 sinks auto-register at install, are fail-open, make no network calls, and write only to gitignored <code>.claude/telemetry/*.jsonl</code>. The 2 enforcement hooks (memory-gap, critique-nudge) default <b>off</b> — a blocking hook is never fallback-enabled. Global kill-switch: <code>CK_TELEMETRY_DISABLED=1</code>.</span><span class="vi"><b>5 sink hook telemetry + 2 hook cưỡng chế</b> dùng chung một runtime và một file bật/tắt. 5 sink tự đăng ký khi cài, fail-open, không gọi mạng, chỉ ghi vào <code>.claude/telemetry/*.jsonl</code> đã gitignore. 2 hook cưỡng chế (memory-gap, critique-nudge) mặc định <b>tắt</b> — hook chặn không bao giờ được bật theo fallback. Công tắc tổng: <code>CK_TELEMETRY_DISABLED=1</code>.</span></div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,107 @@
+<!-- ===================== RELEASE ===================== -->
+<section id="release">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--rel)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M20 5 33 12v16L20 35 7 28V12L20 5Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/><path d="M7 12l13 7 13-7M20 19v16" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">For developers</span><span class="vi">Cho lập trình viên</span></div><h2>release</h2></div>
+      <div class="ver">v1.2.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--rel)"></div>
+
+    <p class="lead" style="margin-bottom:18px"><span class="en">Two halves of one job: <b>pack</b> a curated <code>.claude/</code> subset into a <b>deterministic</b> tar.gz, and run the <b>release lifecycle</b> on the root <code>CHANGELOG.md</code>. Same inputs → byte-identical bundle, every time.</span><span class="vi">Hai nửa của một việc: <b>đóng gói</b> tập con <code>.claude/</code> chọn lọc thành tar.gz <b>deterministic</b>, và chạy <b>vòng đời phát hành</b> trên <code>CHANGELOG.md</code> gốc. Cùng đầu vào → bundle giống nhau từng byte, mọi lần.</span></p>
+
+    <!-- when to use -->
+    <div class="whenuse">
+      <div class="wu yes">
+        <h4><span class="en">✓ Reach for it when</span><span class="vi">✓ Dùng khi</span></h4>
+        <ul>
+          <li><span class="en">sharing/installing a curated <code>.claude/</code> subset</span><span class="vi">chia sẻ/cài một tập con <code>.claude/</code> chọn lọc</span></li>
+          <li><span class="en">cutting a versioned release (lock changelog, bump, tag)</span><span class="vi">cắt một bản phát hành có version (khóa changelog, bump, tag)</span></li>
+          <li><span class="en">you need a reproducible, hashed artifact</span><span class="vi">bạn cần hiện vật tái lập, có hash</span></li>
+        </ul>
+      </div>
+      <div class="wu no">
+        <h4><span class="en">✗ Won't do</span><span class="vi">✗ Sẽ không làm</span></h4>
+        <ul>
+          <li><span class="en">pack secrets — the safety filter is non-removable</span><span class="vi">đóng gói secret — bộ lọc an toàn không tắt được</span></li>
+          <li><span class="en">push the tag for you — that's owner-owned</span><span class="vi">tự push tag — đó là việc của chủ kit</span></li>
+          <li><span class="en">make any network call at runtime</span><span class="vi">gọi mạng khi chạy</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ HERO: deterministic dry-run + secret strip ============ -->
+    <div class="hero-ex" style="--ac:var(--rel)">
+      <div class="xlabel"><span class="en">Worked example</span><span class="vi">Ví dụ thật</span></div>
+      <h3 style="margin:2px 0 6px"><span class="en">Preview the pack — deterministic &amp; hashed</span><span class="vi">Xem trước bản đóng gói — tất định &amp; có hash</span></h3>
+      <p class="muted" style="font-size:.9rem">
+        <span class="en"><code>--dry-run --compute-sha</code> lists what <i>would</i> ship and the exact SHA-256 of the bundle — without writing a tarball. Run twice, same hash. <span class="realtag">real output</span></span>
+        <span class="vi"><code>--dry-run --compute-sha</code> liệt kê những gì <i>sẽ</i> đóng gói và đúng SHA-256 của bundle — mà không ghi tarball. Chạy hai lần, cùng một hash. <span class="realtag">đầu ra thật</span></span>
+      </p>
+      <div class="term">
+        <div class="tbar"><i></i><i></i><i></i><span class="tcmd">python -m pack --root . --dry-run --compute-sha</span></div>
+        <!--RELEASE_DRYRUN-->
+      </div>
+
+      <h3 style="margin:26px 0 6px"><span class="en">The safety filter, doing its job</span><span class="vi">Bộ lọc an toàn, đang làm việc</span></h3>
+      <p class="muted" style="font-size:.9rem">
+        <span class="en">Plant secrets in a tree, then scan it. Legit files stay; secrets are dropped by an <b>immutable</b> rule — no flag pulls them back. <span class="realtag">real scan</span></span>
+        <span class="vi">Cấy secret vào một cây rồi quét. File hợp lệ ở lại; secret bị loại bởi một luật <b>không thể sửa</b> — không cờ nào kéo lại được. <span class="realtag">quét thật</span></span>
+      </p>
+      <div class="strip">
+        <div class="striprow kept"><span class="fn">.claude/skills/acme/SKILL.md</span><span class="vb"><span class="en">kept</span><span class="vi">giữ</span></span></div>
+        <div class="striprow kept"><span class="fn">.claude/skills/acme/run.py</span><span class="vb"><span class="en">kept</span><span class="vi">giữ</span></span></div>
+        <div class="striprow drop"><span class="fn">.claude/skills/acme/.env</span><span class="rule">always-drop:exact:.env</span><span class="vb"><span class="en">dropped</span><span class="vi">loại</span></span></div>
+        <div class="striprow drop"><span class="fn">.claude/skills/acme/aws-secret.json</span><span class="rule">pattern:**/*secret*.json</span><span class="vb"><span class="en">dropped</span><span class="vi">loại</span></span></div>
+        <div class="striprow drop"><span class="fn">.claude/skills/acme/server.pem</span><span class="rule">pattern:**/*.pem</span><span class="vb"><span class="en">dropped</span><span class="vi">loại</span></span></div>
+      </div>
+      <p class="faint" style="font-size:.76rem;margin-top:10px"><span class="en">Always-dropped: <code>.env</code> &amp; secrets/keys, <code>.git/</code>, runtime caches, session state, <code>telemetry/*.jsonl</code>, tests. Settings &amp; CK-config are opt-in only.</span><span class="vi">Luôn loại: <code>.env</code> &amp; secret/key, <code>.git/</code>, cache runtime, session state, <code>telemetry/*.jsonl</code>, tests. Settings &amp; CK-config phải opt-in.</span></p>
+    </div>
+
+    <!-- pack flow -->
+    <div class="card" style="margin-top:34px">
+      <h3><span class="pin"></span><span class="en">The deterministic pack flow</span><span class="vi">Luồng đóng gói deterministic</span></h3>
+      <div class="flowline" style="margin-top:14px">
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M5 7h22v18H5z" stroke="var(--rel)" stroke-width="2"/><path d="M5 12h22M10 17h12M10 21h8" stroke="var(--rel)" stroke-width="1.6"/></svg><div class="fn">manifest</div><div class="fd"><span class="en">source of truth</span><span class="vi">source of truth</span></div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M16 4c-6 5-9 7-9 13a9 9 0 0 0 18 0c0-6-3-8-9-13Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg><div class="fn">safety_check</div><div class="fd"><span class="en">always-drop</span><span class="vi">luôn loại bỏ</span></div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M6 8h20M6 14h20M6 20h20M6 26h20" stroke="var(--rel)" stroke-width="2" stroke-linecap="round"/></svg><div class="fn"><span class="en">sorted walk</span><span class="vi">duyệt đã sắp</span></div><div class="fd">mtime=0</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><path d="M16 4 28 10v12L16 28 4 22V10L16 4Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/></svg><div class="fn">tarball</div><div class="fd">.tar.gz</div></div>
+        <div class="farrow">→</div>
+        <div class="fstep"><svg class="fi" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="11" stroke="var(--rel)" stroke-width="2"/><path d="m11 16 3.5 3.5L22 12" stroke="var(--rel)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="fn">.sha256</div><div class="fd"><span class="en">sidecar</span><span class="vi">sidecar</span></div></div>
+      </div>
+      <div class="deterministic">
+        <span class="dt"><b>PAX</b> format</span>
+        <span class="dt">mtime=<b>0</b></span>
+        <span class="dt">uid=gid=<b>0</b></span>
+        <span class="dt">gzip header mtime=<b>0</b></span>
+        <span class="dt"><b><span class="en">byte-identical</span><span class="vi">giống từng byte</span></b></span>
+      </div>
+    </div>
+
+    <div class="cards grid-2" style="margin-top:16px">
+      <!-- safety filter -->
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">The safety filter — non-removable</span><span class="vi">Bộ lọc an toàn — không thể tắt</span></h3>
+        <p><span class="en">No flag pulls these back into a bundle. Settings &amp; CK-config are opt-in only.</span><span class="vi">Không cờ nào kéo những thứ này lại vào bundle. Settings &amp; CK-config phải opt-in.</span></p>
+        <div class="drop-list">
+          <span class="d">.env / secrets / keys</span><span class="d">.git/</span><span class="d">runtime caches</span><span class="d">session state</span><span class="d">telemetry/*.jsonl</span><span class="d">__tests__</span>
+        </div>
+      </div>
+      <!-- release lifecycle -->
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Release lifecycle (release.py)</span><span class="vi">Vòng đời phát hành (release.py)</span></h3>
+        <p><span class="en">Lock <code>[Unreleased]</code> → <code>[X.Y.Z]</code>, bump the manifest, hand the owner the tag push. The tag — never auto-pushed — fires the CI that publishes the GitHub Release.</span><span class="vi">Khóa <code>[Unreleased]</code> → <code>[X.Y.Z]</code>, bump manifest, đưa chủ kit lệnh push tag. Tag — không bao giờ tự push — kích CI để phát hành GitHub Release.</span></p>
+        <div class="chips" style="margin-top:10px"><span class="chip">--extract</span><span class="chip">--release <span class="x">X.Y.Z</span></span><span class="chip">--bump <span class="x">major|minor|patch</span></span><span class="chip">--pre-release</span><span class="chip">--date</span><span class="chip">--apply</span><span class="chip">--push</span></div>
+      </div>
+    </div>
+
+    <!-- appendix: pack flags -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">Pack flags</span><span class="vi">Cờ đóng gói</span></h3>
+      <div class="chips" style="margin-top:8px"><span class="chip">--manifest</span><span class="chip">--skills</span><span class="chip">--agents</span><span class="chip">--hooks</span><span class="chip">--rules</span><span class="chip">--extra</span><span class="chip">--version</span><span class="chip">--bundle-name</span><span class="chip">--out</span><span class="chip">--dry-run</span><span class="chip">--compute-sha</span><span class="chip">--include-settings</span><span class="chip">--include-ck-config</span><span class="chip">--include-shared</span><span class="chip">--max-size</span><span class="chip">--source-date-epoch</span><span class="chip">--strict</span><span class="chip">--json</span></div>
+    </div>
+  </div>
+</section>

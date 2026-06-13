@@ -1,0 +1,135 @@
+<!-- ===================== PRODUCT-SPEC ===================== -->
+<section id="product-spec">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--spec)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><rect x="6" y="5" width="20" height="26" rx="3" stroke="var(--spec)" stroke-width="2"/><path d="M11 12h10M11 17h10M11 22h6" stroke="var(--spec)" stroke-width="2" stroke-linecap="round"/><circle cx="29" cy="28" r="7" fill="var(--bg)" stroke="var(--spec)" stroke-width="2"/><path d="m26.5 28 1.8 1.8L32 26" stroke="var(--spec)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="ttl"><div class="who"><span class="en">For non-technical product owners</span><span class="vi">Cho Product Owner không chuyên kỹ thuật</span></div><h2>product-spec</h2></div>
+      <div class="ver">v2.4.0</div>
+    </div>
+    <div class="divider" style="--ac:var(--spec)"></div>
+
+    <p class="lead" style="margin-bottom:18px"><span class="en">Runs a phased interview, captures your product as a strictly-traceable hierarchy, validates it deterministically (structure) and by judgment (LLM), and visualizes it — all in plain language. Output lives under <code>docs/product/</code>; it never writes prose anywhere else.</span><span class="vi">Chạy một cuộc phỏng vấn theo giai đoạn, ghi sản phẩm của bạn thành cây có truy vết chặt, kiểm tra cả về cấu trúc (script) lẫn nhận định (LLM), và trực quan hóa — tất cả bằng ngôn ngữ bình thường. Đầu ra ở <code>docs/product/</code>; không bao giờ ghi văn ra ngoài.</span></p>
+
+    <!-- when to use -->
+    <div class="whenuse">
+      <div class="wu yes">
+        <h4><span class="en">✓ Reach for it when</span><span class="vi">✓ Dùng khi</span></h4>
+        <ul>
+          <li><span class="en">a non-technical PO needs to capture a product as a real spec</span><span class="vi">một PO không-kỹ-thuật cần ghi sản phẩm thành spec thật</span></li>
+          <li><span class="en">you want traceability Vision → Story with acceptance criteria</span><span class="vi">bạn muốn truy vết Vision → Story kèm tiêu chí chấp nhận</span></li>
+          <li><span class="en">starting a product from scratch, no code yet</span><span class="vi">khởi tạo sản phẩm từ đầu, chưa có code</span></li>
+        </ul>
+      </div>
+      <div class="wu no">
+        <h4><span class="en">✗ Not for</span><span class="vi">✗ Không dùng để</span></h4>
+        <ul>
+          <li><span class="en">writing code — it specs, the build team builds</span><span class="vi">viết code — nó đặc tả, đội build mới build</span></li>
+          <li><span class="en">setting scope or sign-off for you — that's the PO's call</span><span class="vi">tự quyết phạm vi hay duyệt — đó là việc của PO</span></li>
+          <li><span class="en">prose outside <code>docs/product/</code></span><span class="vi">văn bản ngoài <code>docs/product/</code></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============ HERO: follow acme-shop Vision → Story ============ -->
+    <div class="hero-ex" style="--ac:var(--spec)">
+      <div class="xlabel"><span class="en">Worked example</span><span class="vi">Ví dụ thật</span></div>
+      <h3 style="margin:2px 0 6px"><span class="en">Follow <code>acme-shop</code>: Vision → Story</span><span class="vi">Theo <code>acme-shop</code>: Vision → Story</span></h3>
+      <p class="muted" style="font-size:.9rem">
+        <span class="en">One real trace path through the sample spec — every step exists in <code>examples/acme-shop</code>. The story at the end traces all the way up to the goal. <span class="realtag">real spec</span></span>
+        <span class="vi">Một đường truy vết thật xuyên spec mẫu — mỗi bước đều có trong <code>examples/acme-shop</code>. Story ở cuối truy ngược tới tận mục tiêu. <span class="realtag">spec thật</span></span>
+      </p>
+      <div class="walk">
+        <div class="wstep v"><span class="wtag">VISION</span><div class="wt">Acme Shop</div><div class="wd"><span class="en">north-star + personas</span><span class="vi">north-star + personas</span></div></div>
+        <div class="wstep b"><span class="wtag">BRD-G1</span><div class="wt"><span class="en">Onboard 100 boutique brands / 12mo</span><span class="vi">Đưa 100 thương hiệu lên / 12 tháng</span></div><div class="wd"><span class="en">business goal + metric</span><span class="vi">mục tiêu + chỉ số</span></div></div>
+        <div class="wstep p"><span class="wtag">PRD-CATALOG</span><div class="wt"><span class="en">Catalog &amp; Storefront</span><span class="vi">Catalog &amp; Cửa hàng</span></div><div class="wd"><span class="en">feature area</span><span class="vi">vùng tính năng</span></div></div>
+        <div class="wstep e"><span class="wtag">…-E1</span><div class="wt"><span class="en">Catalog Management</span><span class="vi">Quản lý Catalog</span></div><div class="wd"><span class="en">epic — a slice</span><span class="vi">epic — một lát</span></div></div>
+        <div class="wstep s"><span class="wtag">…-E1-S1</span><div class="wt"><span class="en">Add &amp; publish a product</span><span class="vi">Thêm &amp; đăng sản phẩm</span></div><div class="wd"><span class="en">story + AC · approved</span><span class="vi">story + AC · đã duyệt</span></div></div>
+      </div>
+
+      <p class="muted" style="font-size:.86rem;margin-top:20px"><span class="en">That path is one branch. Here is the <b>full tree</b>, straight from <code>--viz tree --format ascii</code>:</span><span class="vi">Đường đó chỉ là một nhánh. Đây là <b>cả cây</b>, lấy thẳng từ <code>--viz tree --format ascii</code>:</span></p>
+      <div class="term">
+        <div class="tbar"><i></i><i></i><i></i><span class="tcmd">visualize.py --root examples/acme-shop --view tree --format ascii</span></div>
+        <!--VIZ_TREE-->
+      </div>
+
+      <p class="muted" style="font-size:.86rem;margin-top:20px"><span class="en">Same graph, <code>--view board --format html</code> — a self-contained, sanitized page (live below):</span><span class="vi">Cùng đồ thị, <code>--view board --format html</code> — một trang tự chứa, đã làm sạch (chạy thật bên dưới):</span></p>
+      <!--BOARD_EMBED-->
+      <p class="faint" style="font-size:.76rem;margin-top:10px"><span class="en">20 views in all (graph · html · learning), each in ascii / mermaid / html. The board above is the real rendered artifact, embedded.</span><span class="vi">Tổng 20 khung nhìn (graph · html · learning), mỗi cái ở ascii / mermaid / html. Bảng trên là hiện vật render thật, được nhúng.</span></p>
+    </div>
+
+    <!-- validate (script-first / LLM) -->
+    <div class="card" style="margin-top:34px">
+      <h3><span class="pin"></span><span class="en">Validate — script first, LLM judges</span><span class="vi">Validate — script trước, LLM nhận định</span></h3>
+      <p><span class="en">Deterministic scripts catch the structural failures; the LLM layer adds the judgment a script can't.</span><span class="vi">Script tất định bắt lỗi cấu trúc; lớp LLM thêm phần nhận định mà script không làm được.</span></p>
+      <div class="cards grid-2" style="margin-top:12px">
+        <div class="chipgroup">
+          <h4><span class="en">Structural (scripts)</span><span class="vi">Cấu trúc (script)</span></h4>
+          <div class="chips">
+            <span class="chip">orphans</span><span class="chip">missing AC</span><span class="chip">ID integrity</span><span class="chip">broken trace</span><span class="chip">timing drift</span><span class="chip">undescribed persona</span>
+          </div>
+        </div>
+        <div class="chipgroup">
+          <h4><span class="en">Judgment (LLM)</span><span class="vi">Nhận định (LLM)</span></h4>
+          <div class="chips">
+            <span class="chip">INVEST</span><span class="chip">vagueness</span><span class="chip">core-value drift</span><span class="chip">duplication</span><span class="chip">contradiction</span>
+          </div>
+        </div>
+      </div>
+      <div class="gate">
+        <b>GATE — <span class="en">no silent reversal.</span><span class="vi">không đảo ngầm.</span></b>
+        <span class="en"> A new claim that contradicts an <code>approved</code> artifact is surfaced verbatim, never auto-fixed:</span>
+        <span class="vi"> Một khẳng định mới mâu thuẫn với tài liệu <code>approved</code> được nêu nguyên văn, không bao giờ tự sửa:</span>
+        <div class="tri"><span class="keep">Keep</span><span class="change">Change + re-approve</span><span class="hybrid">Hybrid</span></div>
+      </div>
+    </div>
+
+    <!-- appendix: flag map -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">Every capability, grouped</span><span class="vi">Toàn bộ năng lực, theo nhóm</span></h3>
+      <div class="chipgroup">
+        <h4><span class="en">Author the spec</span><span class="vi">Soạn spec</span></h4>
+        <div class="chips"><span class="chip">--product</span><span class="chip">--brd</span><span class="chip">--prd</span><span class="chip">--epic</span><span class="chip">--story</span><span class="chip">--auto</span><span class="chip">--discover</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Govern &amp; evolve</span><span class="vi">Quản trị &amp; tiến hóa</span></h4>
+        <div class="chips"><span class="chip">--validate</span><span class="chip">--strict</span><span class="chip">--approve</span><span class="chip">--update</span><span class="chip">--decision</span><span class="chip">--apply-critique</span><span class="chip">--status</span><span class="chip">--reflect</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Learn &amp; share</span><span class="vi">Học &amp; chia sẻ</span></h4>
+        <div class="chips"><span class="chip">--learn <span class="x">→ OUT-n</span></span><span class="chip">--summary <span class="x">exec|release-notes</span></span><span class="chip">--export</span><span class="chip">--layers</span><span class="chip">--depth</span><span class="chip">--compact-mode</span></div>
+      </div>
+      <div class="chipgroup">
+        <h4><span class="en">Personalize</span><span class="vi">Cá nhân hóa</span></h4>
+        <div class="chips"><span class="chip">--lang <span class="x">en|vi</span></span><span class="chip">--voice</span><span class="chip">preferences.py <span class="x">interview_rigor</span></span><span class="chip">action_prompting</span></div>
+      </div>
+    </div>
+
+    <!-- appendix: viz views -->
+    <div class="card" style="margin-top:16px">
+      <h3><span class="pin"></span><span class="en">--viz — 20 views, 3 formats (ascii · mermaid · html)</span><span class="vi">--viz — 20 khung nhìn, 3 định dạng (ascii · mermaid · html)</span></h3>
+      <p><span class="en">Pick a view; ASCII is always available offline, HTML-native views render a self-contained, sanitized page.</span><span class="vi">Chọn một khung nhìn; ASCII luôn có offline, các khung HTML-native tạo trang tự chứa, đã được làm sạch.</span></p>
+      <div class="views" style="margin-top:14px">
+        <div class="view"><span class="vt">graph</span>tree</div>
+        <div class="view"><span class="vt">graph</span>heatmap</div>
+        <div class="view"><span class="vt">graph</span>scope</div>
+        <div class="view"><span class="vt">graph</span>roadmap</div>
+        <div class="view"><span class="vt">graph</span>persona</div>
+        <div class="view"><span class="vt">graph</span>gap</div>
+        <div class="view"><span class="vt">graph</span>moscow</div>
+        <div class="view"><span class="vt">graph</span>time</div>
+        <div class="view"><span class="vt">graph</span>delta</div>
+        <div class="view"><span class="vt">html</span>risk</div>
+        <div class="view"><span class="vt">html</span>competition</div>
+        <div class="view"><span class="vt">html</span>dashboard</div>
+        <div class="view"><span class="vt">body</span>board</div>
+        <div class="view"><span class="vt">body</span>explorer</div>
+        <div class="view"><span class="vt">govern</span>audit</div>
+        <div class="view"><span class="vt">learn</span>scorecard</div>
+        <div class="view"><span class="vt">learn</span>insight-gap</div>
+        <div class="view"><span class="vt">learn</span>outcome-trend</div>
+        <div class="view"><span class="vt">learn</span>learning-map</div>
+        <div class="view"><span class="vt">learn</span>learning</div>
+      </div>
+    </div>
+  </div>
+</section>

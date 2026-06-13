@@ -1,0 +1,52 @@
+{
+  "lens": "usage_tokens",
+  "days": 30,
+  "total_invocations": 35,
+  "skills_used": 4,
+  "catalog_size": 0,
+  "owned_size": 0,
+  "never_used": [],
+  "never_used_external_count": 0,
+  "by_day": {
+    "2026-06-01": 2,
+    "2026-06-02": 5,
+    "2026-06-03": 2,
+    "2026-06-04": 2,
+    "2026-06-05": 5,
+    "2026-06-06": 1,
+    "2026-06-07": 2,
+    "2026-06-08": 5,
+    "2026-06-09": 1,
+    "2026-06-10": 3,
+    "2026-06-11": 5,
+    "2026-06-12": 2
+  },
+  "with_tokens": false,
+  "rows": [
+    {
+      "skill": "cleanmatic-product-spec",
+      "count": 16,
+      "tokens": 0,
+      "owned": false
+    },
+    {
+      "skill": "cleanmatic-product-spec-critique",
+      "count": 9,
+      "tokens": 0,
+      "owned": false
+    },
+    {
+      "skill": "cleanmatic-telemetry",
+      "count": 6,
+      "tokens": 0,
+      "owned": false
+    },
+    {
+      "skill": "cleanmatic-release",
+      "count": 4,
+      "tokens": 0,
+      "owned": false
+    }
+  ],
+  "gated": false
+}

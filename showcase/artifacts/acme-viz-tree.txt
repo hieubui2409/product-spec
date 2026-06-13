@@ -1,0 +1,73 @@
+PRODUCT: Acme Shop
+  [goal:BRD-G1] Onboard 100 boutique brands in 12 months · approved
+    [prd:PRD-CATALOG] Catalog & Storefront · approved
+      [epic:PRD-CATALOG-E1] Catalog Management Epic · approved
+        [story:PRD-CATALOG-E1-S1] Add and publish a product · approved
+        [story:PRD-CATALOG-E1-S2] Track inventory per variant · approved
+      [epic:PRD-CATALOG-E2] Brand Storefront Epic · approved
+        [story:PRD-CATALOG-E2-S1] Browse the catalog · approved
+        [story:PRD-CATALOG-E2-S2] Product detail page · approved
+    [prd:PRD-CHECKOUT] Checkout · approved
+      [epic:PRD-CHECKOUT-E1] Sign-In + Address Epic · approved
+        [story:PRD-CHECKOUT-E1-S1] Magic-link sign-in at checkout · approved
+        [story:PRD-CHECKOUT-E1-S2] Saved addresses for returning shoppers · approved
+      [epic:PRD-CHECKOUT-E2] Stripe Payment Epic · approved
+        [story:PRD-CHECKOUT-E2-S1] Pay with Stripe at checkout · approved
+        [story:PRD-CHECKOUT-E2-S2] Order confirmation email · approved
+      [epic:PRD-CHECKOUT-E3] Order Tracking Epic · approved
+        [story:PRD-CHECKOUT-E3-S1] Track order status · approved
+  [goal:BRD-G2] Achieve 80% 90-day repeat-purchase rate · approved
+    [prd:PRD-CHECKOUT] Checkout · approved
+      [epic:PRD-CHECKOUT-E1] Sign-In + Address Epic · approved
+        [story:PRD-CHECKOUT-E1-S1] Magic-link sign-in at checkout · approved
+        [story:PRD-CHECKOUT-E1-S2] Saved addresses for returning shoppers · approved
+      [epic:PRD-CHECKOUT-E2] Stripe Payment Epic · approved
+        [story:PRD-CHECKOUT-E2-S1] Pay with Stripe at checkout · approved
+        [story:PRD-CHECKOUT-E2-S2] Order confirmation email · approved
+      [epic:PRD-CHECKOUT-E3] Order Tracking Epic · approved
+        [story:PRD-CHECKOUT-E3-S1] Track order status · approved
+    [prd:PRD-FANCRM] Fan-CRM · review
+      [epic:PRD-FANCRM-E1] Fan Messaging Epic · review
+        [story:PRD-FANCRM-E1-S1] Send a fan broadcast · draft
+        [story:PRD-FANCRM-E1-S2] Reply inbox · draft
+      [epic:PRD-FANCRM-E2] Audience Segments Epic · draft
+        [story:PRD-FANCRM-E2-S1] Segment by purchase history · draft
+  [goal:BRD-G3] Reach $2M GMV in the first year · approved
+    [prd:PRD-ANALYTICS] Brand Analytics · draft
+      [epic:PRD-ANALYTICS-E1] Revenue Dashboard Epic · draft
+        [story:PRD-ANALYTICS-E1-S1] View revenue over time · draft
+        [story:PRD-ANALYTICS-E1-S2] Export report CSV · draft
+    [prd:PRD-CATALOG] Catalog & Storefront · approved
+      [epic:PRD-CATALOG-E1] Catalog Management Epic · approved
+        [story:PRD-CATALOG-E1-S1] Add and publish a product · approved
+        [story:PRD-CATALOG-E1-S2] Track inventory per variant · approved
+      [epic:PRD-CATALOG-E2] Brand Storefront Epic · approved
+        [story:PRD-CATALOG-E2-S1] Browse the catalog · approved
+        [story:PRD-CATALOG-E2-S2] Product detail page · approved
+    [prd:PRD-CHECKOUT] Checkout · approved
+      [epic:PRD-CHECKOUT-E1] Sign-In + Address Epic · approved
+        [story:PRD-CHECKOUT-E1-S1] Magic-link sign-in at checkout · approved
+        [story:PRD-CHECKOUT-E1-S2] Saved addresses for returning shoppers · approved
+      [epic:PRD-CHECKOUT-E2] Stripe Payment Epic · approved
+        [story:PRD-CHECKOUT-E2-S1] Pay with Stripe at checkout · approved
+        [story:PRD-CHECKOUT-E2-S2] Order confirmation email · approved
+      [epic:PRD-CHECKOUT-E3] Order Tracking Epic · approved
+        [story:PRD-CHECKOUT-E3-S1] Track order status · approved
+  [goal:BRD-G4] Keep average brand payout latency under 3 days · approved
+    [prd:PRD-ANALYTICS] Brand Analytics · draft
+      [epic:PRD-ANALYTICS-E1] Revenue Dashboard Epic · draft
+        [story:PRD-ANALYTICS-E1-S1] View revenue over time · draft
+        [story:PRD-ANALYTICS-E1-S2] Export report CSV · draft
+    [prd:PRD-PAYOUTS] Brand Payouts · approved
+      [epic:PRD-PAYOUTS-E1] Automated Payouts Epic · approved
+        [story:PRD-PAYOUTS-E1-S1] Scheduled payout run · approved
+        [story:PRD-PAYOUTS-E1-S2] Payout statement export · approved
+  [goal:BRD-G5] Launch native mobile shopping by year 2 · review
+    [prd:PRD-MOBILE] Native Mobile Shopping · draft
+      [epic:PRD-MOBILE-E1] Mobile App Shell Epic · draft
+        [story:PRD-MOBILE-E1-S1] Mobile browse and buy · draft
+  [goal:BRD-G6] Scale to 500 brands with cross-brand discovery (year 3) · draft
+    [prd:PRD-DISCOVERY *] Cross-Brand Discovery · draft
+      [epic:PRD-DISCOVERY-E1 *] Cross-Brand Discovery Epic · draft
+        [story:PRD-DISCOVERY-E1-S1 *] Personalized discovery feed · draft
+— 42 nodes · 6 goals · 7 prds · 11 epics · 18 stories · 0 findings
