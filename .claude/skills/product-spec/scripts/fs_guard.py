@@ -5,12 +5,15 @@ fs_guard — the shared soft-fence path-assert for every SCRIPT-driven disk writ
 The skill only ever writes under `<root>/docs/product/`. This module is the one
 home for that invariant. The fence covers the SCRIPT writers whose target path is
 caller-influenced (the HTML visual writer, the export writer, the template
-instantiator, and the memory-store writers): each resolves its target through
-`assert_under_docs_product` BEFORE opening the file. Writers whose leaf name is a
-deterministic hard-coded constant under an already-resolved `<root>` — the graph
-snapshot writer and the traceability-matrix writer — are intentionally un-fenced:
-they take no caller-influenced path component, so there is nothing for the fence to
-contain.
+instantiator, the change-log month-file writer, and the memory-store writers): each
+resolves its target through `assert_under_docs_product` BEFORE opening the file.
+
+Writers whose target carries no caller-influenced path component are intentionally
+un-fenced: the graph snapshot writer and the traceability-matrix writer (a
+deterministic hard-coded leaf under an already-resolved `<root>`), and the in-place
+`migrate_*` migrators — every migrator target is either a hard-coded `docs/product/`
+leaf or a result of globbing `docs/product/` itself, so the glob root IS the fence
+and there is no caller-influenced component left to contain.
 
 Why a dedicated module (not extending the widely-imported encoding_utils): the
 fence is imported by several writers that should depend on a tiny, single-purpose

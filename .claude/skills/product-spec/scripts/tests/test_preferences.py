@@ -374,3 +374,18 @@ def test_set_float_floor_valid_persists_as_float(tmp_path):
     assert res.returncode == 0, res.stderr
     val = preferences.load(tmp_path)["outcome_hit_floor"]
     assert val == 0.95 and isinstance(val, float)
+
+
+def test_save_float_floor_out_of_range_raises_at_library_level(tmp_path):
+    # save() is the library-level guard: a programmatic caller (not just the CLI)
+    # must not be able to persist a float floor outside [0, 1], nor a bool / non-number.
+    for bad in (1.5, -0.1, "0.9", True):
+        with pytest.raises(preferences.PreferenceError):
+            preferences.save(tmp_path, {"outcome_hit_floor": bad})
+
+
+def test_save_float_floor_valid_round_trips(tmp_path):
+    preferences.save(tmp_path, {"outcome_hit_floor": 0.8, "outcome_partial_floor": 0.4})
+    loaded = preferences.load(tmp_path)
+    assert loaded["outcome_hit_floor"] == 0.8
+    assert loaded["outcome_partial_floor"] == 0.4

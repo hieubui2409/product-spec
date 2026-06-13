@@ -20,8 +20,11 @@ Usage from generate_templates.py --write for change_log_entry:
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+from fs_guard import assert_under_docs_product
 
 # Matches the heading line "## YYYY-MM-DD — ..." that starts every change-log entry.
 _HEADING_DATE_RE = re.compile(r"^##\s+(?P<date>\d{4}-\d{2}-\d{2})\s+—", re.MULTILINE)
@@ -31,22 +34,38 @@ _ARTIFACT_RE = re.compile(r"\*\*Artifact[^:]*:\*\*\s*(?P<ids>.+?)(?:\s*\(|\s*$)"
 _ACTION_RE = re.compile(r"\*\*Action[^:]*:\*\*\s*(?P<action>[^|\n]+?)(?:\s*\||\s*$)", re.MULTILINE)
 
 
+def _is_real_date(date: str) -> bool:
+    """True iff `date` is a real YYYY-MM-DD calendar date (rejects 2026-13-45,
+    2026-02-30, etc.) — strptime validates format AND calendar validity."""
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
 def _parse_date(entry_md: str, when: Optional[str]) -> str:
     """Return a YYYY-MM-DD date string for the entry.
 
     Priority: `when` param (deterministic injection) > heading date in entry text.
-    Raises ValueError if neither is available.
+    Both sources are validated as REAL calendar dates so the month-key derivation
+    (`date[:7]`) can never produce a bogus month dir. Raises ValueError if neither
+    is available or the resolved date is not a real date.
     """
     if when:
-        # Validate format loosely — must be YYYY-MM-DD
-        if not re.match(r"^\d{4}-\d{2}-\d{2}$", when):
+        if not _is_real_date(when):
             raise ValueError(
-                f"write_change_log_entry: `when` must be YYYY-MM-DD, got {when!r}"
+                f"write_change_log_entry: `when` must be a real YYYY-MM-DD date, got {when!r}"
             )
         return when
     m = _HEADING_DATE_RE.search(entry_md)
     if m:
-        return m.group("date")
+        date = m.group("date")
+        if not _is_real_date(date):
+            raise ValueError(
+                f"write_change_log_entry: entry heading date {date!r} is not a real calendar date"
+            )
+        return date
     raise ValueError(
         "write_change_log_entry: cannot determine entry date — "
         "no `when` provided and no '## YYYY-MM-DD —' heading found in entry_md"
@@ -117,8 +136,12 @@ def write_change_log_entry(root, entry_md: str, *, when: Optional[str] = None) -
     month = _month_key(date)
 
     cl_dir = root / "docs" / "product" / "change-log"
-    cl_dir.mkdir(parents=True, exist_ok=True)
     month_file = cl_dir / f"{month}.md"
+    # Soft-fence the constructed target before any mkdir/write. `month` is already
+    # constrained to YYYY-MM by the validated date, but routing it through the shared
+    # assert keeps the "every script write lands under docs/product/" invariant whole.
+    assert_under_docs_product(month_file, root)
+    cl_dir.mkdir(parents=True, exist_ok=True)
 
     # Read existing content for dedup check
     existing = ""

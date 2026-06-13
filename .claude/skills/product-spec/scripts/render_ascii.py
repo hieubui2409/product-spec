@@ -18,9 +18,10 @@ resolve them as `render_ascii.<name>`.
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-# `_hashable` lives in render_common (was byte-identically duplicated here and in
-# render_ascii_board); imported so existing `render_ascii._hashable` call sites keep working.
-from render_common import _hashable
+# These small helpers live in render_common (were byte-identically duplicated here and in
+# render_ascii_board); imported so existing `render_ascii._hashable` / `._is_deferred` /
+# `._inline` / `._mark` call sites keep resolving as module attributes.
+from render_common import _hashable, _is_deferred, _inline, _mark
 
 from i18n_labels import label
 from spec_graph import (
@@ -52,11 +53,6 @@ from render_ascii_board import (
 )
 
 
-def _is_deferred(node: Dict[str, Any]) -> bool:
-    """A node is 'deferred' if either MoSCoW says won't OR scope says out."""
-    return node.get("moscow") == "wont" or node.get("scope") == "out"
-
-
 def is_visible(node: Optional[Dict[str, Any]], filter_wont: bool) -> bool:
     """Whether a (possibly missing) node survives --filter-wont. One home for the
     deferred-visibility rule the tree renderers share (a missing node — flagged by
@@ -79,25 +75,11 @@ def _ascii_product_name(graph: Dict[str, Any]) -> str:
     return _inline(_product(graph).get("name") or "(no PRODUCT.md)")
 
 
-def _mark(node: Dict[str, Any], text: str) -> str:
-    """Suffix the rendered text with a `*` when the node is deferred."""
-    return f"{text} *" if _is_deferred(node) else text
-
-
 def _node_id_marker(node: Dict[str, Any], nid: str) -> str:
     """The `<id>` token (with a trailing ` *` when deferred) used inside the
     text-summary bracket — so the marker sits adjacent to the id, keeping the
     deferred contract a literal `<id> *` substring regardless of the title."""
     return f"{nid} *" if _is_deferred(node) else nid
-
-
-def _inline(s: Any) -> str:
-    """Collapse any whitespace run (incl. CR/LF/tabs) to a single space and strip
-    the ends. A free-text title written as a multi-line YAML scalar would otherwise
-    inject extra lines into a one-line-per-node text summary or tree row, corrupting
-    the deterministic grammar (and any naive line-count parser of the CI output).
-    Mermaid's `_safe_label` and export's `_heading` collapse the same way."""
-    return " ".join(str(s).split())
 
 
 def _summary_line(node: Optional[Dict[str, Any]], nid: str, depth: int) -> str:

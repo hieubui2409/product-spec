@@ -11,7 +11,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 from i18n_labels import label
-from render_common import _hashable
+from render_common import _hashable, _is_deferred, _inline, _mark
 from spec_graph import children_of, parents_of, HORIZON_ORDER
 
 
@@ -27,22 +27,7 @@ _BOARD_CARD_TYPES = ("goal", "prd", "epic", "story")
 _LOCALIZED_COLS = {"now", "next", "later", "must", "should", "could", "wont", "unassigned"}
 
 
-def _is_deferred(node: Dict[str, Any]) -> bool:
-    """A node is 'deferred' if either MoSCoW says won't OR scope says out."""
-    return node.get("moscow") == "wont" or node.get("scope") == "out"
-
-
-def _inline(s: Any) -> str:
-    """Collapse any whitespace run to a single space and strip the ends."""
-    return " ".join(str(s).split())
-
-
-def _mark(node: Dict[str, Any], text: str) -> str:
-    """Suffix the rendered text with a `*` when the node is deferred."""
-    return f"{text} *" if _is_deferred(node) else text
-
-
-# _hashable imported from render_common (see import block above).
+# _hashable / _is_deferred / _inline / _mark imported from render_common (see import block above).
 
 
 def _ascii_product_name(graph: Dict[str, Any]) -> str:

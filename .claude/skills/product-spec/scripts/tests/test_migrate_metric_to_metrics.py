@@ -208,6 +208,8 @@ def test_migrate_is_noop_on_modern_metrics_spec(tmp_path):
     assert brd.read_bytes() == before, "a modern metrics-plural BRD must be left byte-for-byte"
     assert not (brd.parent / "brd.md.bak").exists(), "no .bak for an untouched modern spec"
     assert report.get("migrated") in ([], None), "nothing to migrate on a modern spec"
+    assert report.get("noop") is True, "an --apply that changed nothing must flag noop"
+    assert report.get("applied") is False, "a no-op apply did not write → applied stays False"
 
 
 def test_migrate_preserves_inline_comment_on_scalar_metric(tmp_path):

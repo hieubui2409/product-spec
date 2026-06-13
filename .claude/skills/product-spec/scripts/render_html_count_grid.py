@@ -18,14 +18,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from render_html_escape import _escape
-
-
-def _tip_scalar(v: Any) -> str:
-    """Coerce a node field that may arrive as a 1-element list to a plain string."""
-    if isinstance(v, list):
-        v = v[0] if v else ""
-    return str(v) if v not in (None, "") else ""
+from render_html_escape import _escape, _tip_scalar
 
 
 # ── Shared count-grid CSS ──────────────────────────────────────────────────────

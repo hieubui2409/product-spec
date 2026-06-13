@@ -170,6 +170,11 @@ ENUMS: Dict[str, frozenset] = {
     "action_prompting": frozenset({"minimal", "standard", "proactive"}),
 }
 
+# Continuous-range (non-enum) float keys: write-path range-checks each to [0, 1].
+# (The cross-key partial < hit invariant is enforced at READ by
+# outcome_verdict.load_floors, not here — this is a per-key bound only.)
+_FLOAT_RANGE_KEYS: frozenset = frozenset({"outcome_hit_floor", "outcome_partial_floor"})
+
 
 def _prefs_path(root) -> Path:
     return Path(root) / "docs" / "product" / ".memory" / "preferences.yaml"
@@ -230,6 +235,15 @@ def save(root, prefs: Dict[str, Any]) -> Path:
             raise PreferenceError(
                 f"preference 'dismissed_reminders' must be a list; got {type(value).__name__}"
             )
+        if key in _FLOAT_RANGE_KEYS:
+            # bool is a subclass of int — reject it explicitly so True/False can't
+            # masquerade as 1.0/0.0 and slip through the [0, 1] range check.
+            if isinstance(value, bool) or not isinstance(value, (int, float)) \
+                    or not (0.0 <= float(value) <= 1.0):
+                raise PreferenceError(
+                    f"preference {key!r}={value!r} must be a number in [0, 1]"
+                )
+            value = float(value)
         out[key] = value
 
     path = _prefs_path(root)

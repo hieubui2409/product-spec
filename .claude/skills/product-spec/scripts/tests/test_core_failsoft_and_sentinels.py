@@ -332,6 +332,27 @@ def test_index_artifacts_includes_malformed_id_artifact():
     assert idx["<invalid-id>"]["body"] == "body text"
 
 
+def test_index_artifacts_sentinel_collision_keeps_last_no_crash():
+    """Two artifacts that BOTH coerce to the '<invalid-id>' sentinel collide on one
+    key. By design the index degrades to last-write-wins WITHOUT crashing — the id
+    errors themselves are surfaced separately by check_consistency, not here."""
+    first = {
+        "ok": True,
+        "frontmatter": {"id": ["a", "b"], "type": "prd"},   # malformed: list
+        "body": "first",
+        "file": "prds/a.md",
+    }
+    second = {
+        "ok": True,
+        "frontmatter": {"id": {"k": "v"}, "type": "prd"},   # malformed: dict
+        "body": "second",
+        "file": "prds/b.md",
+    }
+    idx = index_artifacts([first, second])
+    assert list(idx.keys()) == ["<invalid-id>"], "both malformed ids collide on one sentinel key"
+    assert idx["<invalid-id>"]["file"] == "prds/b.md", "last malformed-id artifact wins the slot"
+
+
 def test_index_artifacts_normal_id_unchanged():
     """Normal string ID still works."""
     artifact = {

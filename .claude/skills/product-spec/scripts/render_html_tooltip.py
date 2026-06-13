@@ -21,13 +21,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict
 
-
-def _tip_scalar(v: Any) -> str:
-    """Coerce a node field that may arrive as a 1-element list (a hand-edited
-    `status: [draft]`) to a plain string for the tooltip meta line."""
-    if isinstance(v, list):
-        v = v[0] if v else ""
-    return str(v) if v not in (None, "") else ""
+from render_html_escape import _tip_scalar
 
 
 def tooltip_index(graph: Dict[str, Any]) -> Dict[str, Dict[str, str]]:

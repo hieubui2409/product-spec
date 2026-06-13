@@ -203,9 +203,6 @@ def _persona_has_portrait(persona_lower: str, headings: List[str]) -> bool:
     ``## Alice — the busy admin`` while still warning when the persona name appears
     nowhere as a heading lead token.
     """
-    import re as _re
-    # Separator pattern after the persona name: whitespace, dash, en/em-dash, colon.
-    _SEP_RE = _re.compile(r"^(.+?)(\s|[-–—:])", _re.UNICODE)
     for heading in headings:
         heading_lower = heading.lower()
         if heading_lower == persona_lower:

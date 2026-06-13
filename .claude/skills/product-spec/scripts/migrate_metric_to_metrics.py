@@ -217,12 +217,17 @@ def migrate(root: Path, apply: bool, confirmed_by: Optional[str],
         "schema_version": "1.0",
         "root": str(root),
         "applied": False,
+        "noop": False,
         "would_rename": [],
         "confirm_required": [],
         "migrated": [],
     }
     plan = plan_brd(root)
     if plan is None:
+        # Nothing to migrate (no BRD, unparseable, or already on the plural schema).
+        # Same no-op signal as the apply-time no-op branch below, so a caller sees one
+        # consistent flag regardless of which path concluded "nothing changed".
+        report["noop"] = True
         return report
 
     report["would_rename"] = [plan]
@@ -246,7 +251,10 @@ def migrate(root: Path, apply: bool, confirmed_by: Optional[str],
         text = fh.read()
     new_text, renamed, _had_marker = _transform(text)
     if new_text is None or not renamed or new_text == text:
-        # Nothing actually changed (no parseable fence / already migrated) — no write.
+        # --apply ran but the transform was a no-op (no parseable fence / already
+        # migrated). Flag it so a caller can tell this apart from a dry-run that
+        # simply did not write.
+        report["noop"] = True
         return report
 
     bak = brd.with_name(brd.name + ".bak")

@@ -50,9 +50,9 @@ def _is_git_work_tree(root: Path) -> bool:
     try:
         proc = subprocess.run(
             ["git", "rev-parse", "--is-inside-work-tree"],
-            cwd=str(root), capture_output=True, text=True,
+            cwd=str(root), capture_output=True, text=True, timeout=5,
         )
-    except (OSError, FileNotFoundError):
+    except (OSError, FileNotFoundError, subprocess.TimeoutExpired):
         return False
     return proc.returncode == 0 and proc.stdout.strip() == "true"
 
@@ -66,9 +66,9 @@ def _uncommitted_file_count(spec_root: Path) -> int:
     try:
         proc = subprocess.run(
             ["git", "status", "--porcelain", "--", str(spec_root)],
-            cwd=str(spec_root), capture_output=True, text=True,
+            cwd=str(spec_root), capture_output=True, text=True, timeout=5,
         )
-    except (OSError, FileNotFoundError):
+    except (OSError, FileNotFoundError, subprocess.TimeoutExpired):
         return 0
     if proc.returncode != 0:
         return 0

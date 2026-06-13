@@ -34,7 +34,7 @@ configure_utf8_console()
 ALLOWED_EXT = {".md", ".txt"}
 DEFAULT_MAX_BYTES = 1_000_000   # 1 MB per file
 DEFAULT_MAX_FILES = 50          # bounded directory fan-out
-DEFAULT_MAX_DEPTH = 4           # bounded directory recursion
+DEFAULT_MAX_DEPTH = 4           # bounded recursion: levels INCLUSIVE of the named dir (named dir = depth 1)
 
 
 def _has_dotfile_component(resolved: Path, root: Path) -> bool:
@@ -92,6 +92,8 @@ def resolve_inputs(paths: List[str], root, *, max_files: int = DEFAULT_MAX_FILES
 
     def _walk_dir(d: Path, depth: int):
         nonlocal truncated
+        # depth is 1 for the PO-named dir (see the `_walk_dir(resolved, 1)` call below),
+        # so `depth > max_depth` admits max_depth levels INCLUSIVE of that named dir.
         if depth > max_depth:
             truncated = True
             return
