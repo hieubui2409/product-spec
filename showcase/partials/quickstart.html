@@ -1,0 +1,176 @@
+<!-- ===================== QUICKSTART ===================== -->
+<section id="quickstart-intro">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--ok)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="13" stroke="var(--ok)" stroke-width="2"/>
+          <path d="M16 14l10 6-10 6V14Z" fill="var(--ok)"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who"><span class="en">Zero to a validated spec in under ten minutes</span><span class="vi">Từ tay không đến spec đã kiểm tra trong dưới mười phút</span></div>
+        <h2><span class="en">Quick start</span><span class="vi">Bắt đầu nhanh</span></h2>
+      </div>
+    </div>
+    <div class="divider" style="--ac:var(--ok)"></div>
+    <p class="lead"><span class="en">Five steps: install the harness once, define your first spec through a guided interview, validate and critique it, visualize the hierarchy, and preview a release — all in plain language, no code required from you.</span><span class="vi">Năm bước: cài harness một lần, định nghĩa spec đầu tiên qua phỏng vấn có hướng dẫn, kiểm tra và phản biện nó, trực quan hóa cây cấu trúc, và xem trước bản phát hành — tất cả bằng ngôn ngữ bình thường, không cần code từ phía bạn.</span></p>
+  </div>
+</section>
+
+<!-- ===== STEP 1: Install ===== -->
+<section id="quickstart-install">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STEP 1</span><span class="vi">BƯỚC 1</span></div>
+    <h2 class="sectitle" id="install-once"><span class="en">Install once</span><span class="vi">Cài một lần</span></h2>
+    <p><span class="en">One command drops the coordinated <code>.claude/</code> rig — four skills, seven critique sub-agents, hooks, rules, and the shared eval-gate — into your project. Requires <strong>Python 3.11+</strong>. Full details and options on the <a href="@install">Install</a> page.</span><span class="vi">Một lệnh thả cả bộ <code>.claude/</code> phối hợp — bốn skill, bảy sub-agent phản biện, hooks, rules, và eval-gate dùng chung — vào dự án của bạn. Yêu cầu <strong>Python 3.11+</strong>. Chi tiết đầy đủ và tùy chọn ở trang <a href="@install">Cài đặt</a>.</span></p>
+
+    <div class="steps" style="margin-top:16px">
+      <div class="step">
+        <h4><span class="en">POSIX (macOS / Linux / WSL)</span><span class="vi">POSIX (macOS / Linux / WSL)</span></h4>
+        <div class="cmdline"><code>bash .claude/skills/product-spec/install.sh</code></div>
+      </div>
+      <div class="step">
+        <h4><span class="en">Windows (PowerShell)</span><span class="vi">Windows (PowerShell)</span></h4>
+        <div class="cmdline"><code>powershell -ExecutionPolicy Bypass -File .\.claude\skills\product-spec\install.ps1</code></div>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:14px;font-size:.9rem"><span class="en">The installer creates the shared venv at <code>.claude/skills/.venv/</code>, installs <code>pyyaml</code>, and vendors Mermaid, marked, and DOMPurify for offline HTML output — verifying each against a pinned SHA-256. Re-running is safe (idempotent). After install, open Claude Code in your project folder so it picks up the new skills, then proceed below.</span><span class="vi">Trình cài tạo venv dùng chung tại <code>.claude/skills/.venv/</code>, cài <code>pyyaml</code>, và vendor Mermaid, marked, DOMPurify cho đầu ra HTML offline — kiểm từng cái bằng SHA-256 đã ghim. Chạy lại an toàn (idempotent). Sau khi cài, mở Claude Code trong thư mục dự án để nó nhận skill mới, rồi tiến hành bên dưới.</span></p>
+  </div>
+</section>
+
+<!-- ===== STEP 2: First spec ===== -->
+<section id="quickstart-first-spec">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STEP 2</span><span class="vi">BƯỚC 2</span></div>
+    <h2 class="sectitle" id="first-spec"><span class="en">Define your first spec</span><span class="vi">Định nghĩa spec đầu tiên</span></h2>
+    <p><span class="en">Run <code>product-spec</code> from the Claude Code command palette. With no flags it shows a menu; the interview walks you through Vision → BRD → PRD → Epic → Story with acceptance criteria, one question at a time. Output lands in <code>docs/product/</code> — markdown files with YAML frontmatter, never written elsewhere. See the <a href="@product-spec">product-spec</a> skill page and <a href="@spec-hierarchy">spec hierarchy</a> for the full contract.</span><span class="vi">Chạy <code>product-spec</code> từ command palette của Claude Code. Không có cờ nào thì hiện menu; cuộc phỏng vấn dẫn bạn qua Vision → BRD → PRD → Epic → Story kèm tiêu chí chấp nhận, từng câu một. Đầu ra ở <code>docs/product/</code> — file markdown có YAML frontmatter, không bao giờ ghi ra ngoài. Xem trang skill <a href="@product-spec">product-spec</a> và <a href="@spec-hierarchy">cây spec</a> để biết hợp đồng đầy đủ.</span></p>
+
+    <div class="cmdline" style="margin-top:14px"><code>/cleanmatic:product-spec</code></div>
+
+    <div class="cards grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">The five-layer hierarchy</span><span class="vi">Cây năm tầng</span></h3>
+        <p><span class="en">Every node traces up to the Vision and down to testable acceptance criteria. IDs like <code>PRD-CATALOG-E1-S2</code> encode the full path.</span><span class="vi">Mọi node truy ngược lên Vision và truy xuôi xuống tiêu chí chấp nhận có thể kiểm thử. Mã như <code>PRD-CATALOG-E1-S2</code> mã hóa toàn bộ đường dẫn.</span></p>
+        <div class="chipgroup" style="margin-top:10px">
+          <div class="chips">
+            <span class="chip">Vision</span>
+            <span class="chip">BRD</span>
+            <span class="chip">PRD</span>
+            <span class="chip">Epic</span>
+            <span class="chip">Story + AC</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Useful flags to know early</span><span class="vi">Cờ hữu ích biết sớm</span></h3>
+        <p><span class="en">You don't have to start from scratch. Drop a brain-dump and let the skill structure it, or target a single feature area.</span><span class="vi">Bạn không cần bắt đầu từ đầu. Đổ "bãi ý tưởng" và để skill cấu trúc lại, hoặc chỉ nhắm vào một vùng tính năng.</span></p>
+        <div class="chipgroup" style="margin-top:10px">
+          <div class="chips">
+            <span class="chip">--auto</span>
+            <span class="chip">--prd <span class="x">&lt;feature&gt;</span></span>
+            <span class="chip">--discover <span class="x">&lt;path&gt;</span></span>
+            <span class="chip">--lang <span class="x">en|vi</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STEP 3: Validate & Critique ===== -->
+<section id="quickstart-validate">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STEP 3</span><span class="vi">BƯỚC 3</span></div>
+    <h2 class="sectitle" id="validate-critique"><span class="en">Validate &amp; critique</span><span class="vi">Kiểm tra &amp; phản biện</span></h2>
+    <p><span class="en"><code>--validate</code> runs deterministic scripts first (orphans, missing AC, ID integrity, broken trace) then an LLM judgment layer (INVEST, vagueness, core-value drift). It is the reproducible gate. <code>product-spec-critique</code> goes further — four lens sub-agents tear the same spec apart and say what <code>--validate</code> cannot: why it would die in the market. See <a href="@validation">validation</a> and <a href="@critique">critique</a> for the full depth.</span><span class="vi"><code>--validate</code> chạy script tất định trước (mồ côi, thiếu AC, tính toàn vẹn ID, truy vết gãy) rồi lớp LLM nhận định (INVEST, mơ hồ, lệch giá trị cốt lõi). Đây là cổng tái lập được. <code>product-spec-critique</code> đi xa hơn — bốn sub-agent lăng kính xé cùng spec đó và nói điều <code>--validate</code> không nói được: vì sao nó chết trên thị trường. Xem <a href="@validation">validation</a> và <a href="@critique">critique</a> để biết chiều sâu đầy đủ.</span></p>
+
+    <div class="steps" style="margin-top:18px">
+      <div class="step">
+        <h4><span class="en">Structural + LLM validation</span><span class="vi">Kiểm tra cấu trúc + LLM</span></h4>
+        <div class="cmdline"><code>/cleanmatic:product-spec --validate</code></div>
+      </div>
+      <div class="step">
+        <h4><span class="en">Four-lens critique (product / tech / market / craft)</span><span class="vi">Phản biện bốn lăng kính (product / tech / market / craft)</span></h4>
+        <div class="cmdline"><code>/cleanmatic:product-spec-critique</code></div>
+        <p class="muted" style="font-size:.88rem;margin-top:8px"><span class="en">Default voice is level 5 — brutal but grounded, all about the work. Dial it with <code>--level 1..9</code>. Critique never edits your spec and is never a CI gate.</span><span class="vi">Giọng mặc định là mức 5 — gắt nhưng có căn cứ, xoay quanh công việc. Điều chỉnh bằng <code>--level 1..9</code>. Critique không bao giờ sửa spec và không bao giờ là cổng CI.</span></p>
+      </div>
+    </div>
+
+    <div class="gate" style="margin-top:20px">
+      <b><span class="en">No-silent-reversal gate.</span><span class="vi">Cổng không-đảo-ngầm.</span></b>
+      <span class="en"> If a new claim contradicts an <code>approved</code> artifact, the harness surfaces it verbatim and asks the PO to choose:</span>
+      <span class="vi"> Nếu một khẳng định mới mâu thuẫn với tài liệu <code>approved</code>, harness nêu nguyên văn và yêu cầu PO chọn:</span>
+      <div class="tri"><span class="keep">Keep</span><span class="change">Change + re-approve</span><span class="hybrid">Hybrid</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STEP 4: Visualize & ship ===== -->
+<section id="quickstart-visualize">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STEP 4</span><span class="vi">BƯỚC 4</span></div>
+    <h2 class="sectitle" id="visualize-ship"><span class="en">Visualize &amp; ship</span><span class="vi">Trực quan hóa &amp; đóng gói</span></h2>
+    <p><span class="en">Once the spec is validated and approved, two more commands close the loop: <code>--viz</code> renders the hierarchy in 20 views across three formats; <code>release --dry-run</code> previews the deterministic bundle without writing a tarball; and <code>telemetry</code> reads the harness's own health back to you in plain Vietnamese. Full docs: <a href="@release">release</a> and <a href="@telemetry">telemetry</a>.</span><span class="vi">Khi spec đã được kiểm tra và duyệt, hai lệnh nữa khép vòng: <code>--viz</code> dựng cây cấu trúc trong 20 khung nhìn qua ba định dạng; <code>release --dry-run</code> xem trước bundle tất định mà không ghi tarball; và <code>telemetry</code> đọc sức khỏe của chính harness bằng tiếng Việt thuần. Tài liệu đầy đủ: <a href="@release">release</a> và <a href="@telemetry">telemetry</a>.</span></p>
+
+    <div class="steps" style="margin-top:18px">
+      <div class="step">
+        <h4><span class="en">Visualize the spec tree (20 views — ascii, mermaid, html)</span><span class="vi">Trực quan hóa cây spec (20 khung nhìn — ascii, mermaid, html)</span></h4>
+        <div class="cmdline"><code>/cleanmatic:product-spec --viz tree</code></div>
+      </div>
+      <div class="step">
+        <h4><span class="en">Preview a release bundle without writing a tarball</span><span class="vi">Xem trước bundle phát hành mà không ghi tarball</span></h4>
+        <div class="cmdline"><code>/cleanmatic:release -m pack --manifest .claude/pack.manifest.yaml --dry-run</code></div>
+      </div>
+      <div class="step">
+        <h4><span class="en">Read harness usage &amp; health in one glance</span><span class="vi">Đọc mức dùng &amp; sức khỏe harness trong một cái liếc</span></h4>
+        <div class="cmdline"><code>/cleanmatic:telemetry</code></div>
+      </div>
+    </div>
+
+    <div class="callout" style="--ac:var(--ok);margin-top:20px">
+      <span class="ci">🔒</span>
+      <div><span class="en"><b>No network calls at runtime.</b> The installer vendors Mermaid, marked, and DOMPurify locally, each verified against a pinned SHA-256. After install, all four skills run entirely on your machine. Telemetry sinks write only to gitignored <code>.claude/telemetry/*.jsonl</code> — nothing is transmitted.</span><span class="vi"><b>Không gọi mạng khi chạy.</b> Trình cài vendor Mermaid, marked, DOMPurify cục bộ, mỗi cái được kiểm bằng SHA-256 đã ghim. Sau khi cài, cả bốn skill chạy hoàn toàn trên máy bạn. Sink telemetry chỉ ghi vào <code>.claude/telemetry/*.jsonl</code> đã gitignore — không có gì được truyền đi.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="quickstart-faq">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">FAQ</span><span class="vi">HỎI ĐÁP</span></div>
+    <h2 class="sectitle" id="quickstart-faq-head"><span class="en">Common questions</span><span class="vi">Câu hỏi thường gặp</span></h2>
+    <div class="faq" style="--ac:var(--ok)">
+      <details>
+        <summary><span class="en">Do I need to write any code?</span><span class="vi">Tôi có cần viết code không?</span></summary>
+        <div class="fa"><span class="en">No. The four skills are invoked entirely through the Claude Code command palette in plain language. The <code>product-spec</code> and <code>product-spec-critique</code> skills are designed specifically for non-technical product owners.</span><span class="vi">Không. Bốn skill được gọi hoàn toàn qua command palette của Claude Code bằng ngôn ngữ bình thường. Skill <code>product-spec</code> và <code>product-spec-critique</code> được thiết kế đặc biệt cho Product Owner không chuyên kỹ thuật.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">Where does the spec output land?</span><span class="vi">Đầu ra spec nằm ở đâu?</span></summary>
+        <div class="fa"><span class="en"><code>product-spec</code> writes only to <code>docs/product/</code> inside your project — markdown files with YAML frontmatter. It never writes prose anywhere else in the repo.</span><span class="vi"><code>product-spec</code> chỉ ghi vào <code>docs/product/</code> bên trong dự án của bạn — file markdown có YAML frontmatter. Không bao giờ ghi văn ra nơi khác trong repo.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">Can I re-run the installer safely?</span><span class="vi">Có chạy lại trình cài an toàn không?</span></summary>
+        <div class="fa"><span class="en">Yes — the installer is idempotent. Each step checks whether it is already done and skips if so. The vendored JS files are verified against pinned SHA-256 hashes on every run.</span><span class="vi">Có — trình cài là idempotent. Mỗi bước kiểm xem đã làm chưa và bỏ qua nếu rồi. Các file JS đã vendor được kiểm bằng SHA-256 đã ghim ở mỗi lần chạy.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">Can I use the harness in Vietnamese?</span><span class="vi">Tôi có dùng harness bằng tiếng Việt không?</span></summary>
+        <div class="fa"><span class="en">Yes. Pass <code>--lang vi</code> and the interview, story descriptions, and AC are written in Vietnamese. IDs and frontmatter keys stay English for structural stability. Visualization labels also localize. The <code>telemetry</code> skill narrates entirely in plain Vietnamese by default.</span><span class="vi">Có. Truyền <code>--lang vi</code> và phỏng vấn, mô tả story, AC được viết bằng tiếng Việt. Mã và khóa frontmatter vẫn là tiếng Anh để cấu trúc ổn định. Nhãn trực quan cũng được bản địa hóa. Skill <code>telemetry</code> mặc định trần thuật hoàn toàn bằng tiếng Việt thuần.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">What if the HTML visualization shows a blank diagram?</span><span class="vi">Nếu trực quan hóa HTML hiện sơ đồ trống thì sao?</span></summary>
+        <div class="fa"><span class="en">Re-run the installer — it will re-vendor the Mermaid engine. ASCII and body views never require the CDN; only Mermaid graph views fall back to a CDN script if the local vendor copy is missing.</span><span class="vi">Chạy lại trình cài — nó sẽ vendor lại Mermaid engine. Khung nhìn ASCII và body không bao giờ cần CDN; chỉ khung nhìn Mermaid graph mới fall back về CDN script nếu bản vendor cục bộ bị thiếu.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">What happens if a new claim contradicts an approved artifact?</span><span class="vi">Điều gì xảy ra nếu khẳng định mới mâu thuẫn với tài liệu đã duyệt?</span></summary>
+        <div class="fa"><span class="en">The harness surfaces the contradiction verbatim and gives the PO three choices: <strong>Keep</strong> (reject the new claim), <strong>Change</strong> (re-approve with owner + date), or <strong>Hybrid</strong> (record both, schedule a follow-up). It never silently picks a side or edits approved content.</span><span class="vi">Harness nêu mâu thuẫn nguyên văn và cho PO ba lựa chọn: <strong>Giữ</strong> (bác khẳng định mới), <strong>Đổi</strong> (duyệt lại với chủ + ngày), hoặc <strong>Kết hợp</strong> (ghi cả hai, lên lịch theo dõi). Không bao giờ tự chọn bên hay sửa nội dung đã duyệt.</span></div>
+      </details>
+    </div>
+
+    <div class="cta-row" style="margin-top:28px">
+      <a class="btn-cta primary" href="@install"><span class="en">Full install guide</span><span class="vi">Hướng dẫn cài đặt đầy đủ</span></a>
+      <a class="btn-cta ghost" href="@journey"><span class="en">See the full journey</span><span class="vi">Xem hành trình đầy đủ</span></a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,150 @@
+<!-- ===================== DECISION REGISTER ===================== -->
+<section id="decision-register-intro">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--gold)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <path d="M20 6l3.5 7 7.5 1.1-5.5 5.3 1.3 7.6L20 23.5l-6.8 3.5 1.3-7.6L9 14.1l7.5-1.1L20 6Z" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" fill="none"/>
+          <path d="M14 30h12M17 33h6" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who"><span class="en">Every PO ruling — recorded, never re-litigated</span><span class="vi">Mọi phán quyết của PO — được ghi lại, không tranh luận lại</span></div>
+        <h2><span class="en">Decision Register</span><span class="vi">Sổ Quyết định</span></h2>
+      </div>
+      <div class="ver">DEC-&lt;n&gt; · --decision</div>
+    </div>
+    <div class="divider" style="--ac:var(--gold)"></div>
+
+    <p class="lead"><span class="en">When a contradiction with an approved artifact surfaces — or when the PO makes a call that settles a debate — the ruling is recorded as a <code>DEC-&lt;n&gt;</code> entry in <code>docs/product/decisions.md</code>. This is the authoritative home for ruled drift. Downstream artifacts that changed as a result point back with <code>po_ruling_ref: DEC-&lt;n&gt;</code> so the same ground is never covered twice.</span><span class="vi">Khi một mâu thuẫn với tài liệu đã duyệt xuất hiện — hoặc khi PO đưa ra phán quyết chấm dứt tranh luận — phán quyết đó được ghi vào mục <code>DEC-&lt;n&gt;</code> trong <code>docs/product/decisions.md</code>. Đây là nơi lưu trữ có thẩm quyền cho các lệch hướng đã được phán xử. Các tài liệu downstream thay đổi vì phán quyết này trỏ về bằng <code>po_ruling_ref: DEC-&lt;n&gt;</code> để không bao giờ phải đào lại vấn đề cũ.</span></p>
+  </div>
+</section>
+
+<section id="decision-register-contradiction">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">WHEN A CLAIM CONTRADICTS APPROVED</span><span class="vi">KHI MỘT KHẲNG ĐỊNH MÂU THUẪN VỚI APPROVED</span></div>
+    <h2 class="sectitle" id="contradiction"><span class="en">GATE-NO-SILENT-REVERSAL — surface verbatim, never flip</span><span class="vi">GATE-NO-SILENT-REVERSAL — nêu nguyên văn, không bao giờ tự đảo</span></h2>
+
+    <p><span class="en">A new claim that contradicts an <code>approved</code> artifact is a stop point. The skill does NOT edit the artifact, pick a side, or tidy up the inconsistency. It surfaces the contradiction verbatim and presents exactly three choices to the PO. This gate is always on — it is never waived, even when the PO says "just proceed".</span><span class="vi">Một khẳng định mới mâu thuẫn với tài liệu <code>approved</code> là điểm dừng. Skill KHÔNG sửa tài liệu, không chọn phe, không dọn dẹp mâu thuẫn. Nó nêu mâu thuẫn nguyên văn và đưa ra đúng ba lựa chọn cho PO. Gate này luôn bật — không bao giờ được miễn, kể cả khi PO nói "cứ tiếp tục".</span></p>
+
+    <div class="cards grid-2" style="margin-top:18px">
+      <div class="card" style="--ac:var(--gold)">
+        <h3><span class="pin"></span><span class="en">Two ways a decision gets opened</span><span class="vi">Hai cách mở một quyết định</span></h3>
+        <div class="steps" style="--ac:var(--gold)">
+          <div class="step">
+            <h4><span class="en">Auto-opened by contradiction</span><span class="vi">Tự mở khi có mâu thuẫn</span></h4>
+            <p><span class="en"><code>--validate</code> or <code>--update</code> detects a contradiction with an approved artifact → GATE fires → PO chooses Keep / Change / Hybrid → ruling recorded as <code>DEC-&lt;n&gt;</code>.</span><span class="vi"><code>--validate</code> hoặc <code>--update</code> phát hiện mâu thuẫn với tài liệu approved → GATE kích hoạt → PO chọn Keep / Change / Hybrid → phán quyết ghi vào <code>DEC-&lt;n&gt;</code>.</span></p>
+          </div>
+          <div class="step">
+            <h4><span class="en">PO-direct via <code>--decision</code></span><span class="vi">PO ghi thẳng bằng <code>--decision</code></span></h4>
+            <p><span class="en">The PO records a ruling they've already made, without a triggering contradiction — e.g. "we settled the guest-checkout debate, log it." Distinct from <code>--reflect</code>, which recovers decisions that were never logged.</span><span class="vi">PO ghi một phán quyết đã thực hiện, không cần có mâu thuẫn kích hoạt — ví dụ "chúng tôi đã chốt vụ guest-checkout, ghi lại đi." Khác với <code>--reflect</code>, cái đó khôi phục quyết định chưa bao giờ được ghi.</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="--ac:var(--gold)">
+        <h3><span class="pin"></span><span class="en">What the skill never does</span><span class="vi">Skill không bao giờ làm gì</span></h3>
+        <ul style="padding-left:18px;font-size:.88rem;line-height:1.8">
+          <li><span class="en">Auto-flip an approved artifact based on a contradiction</span><span class="vi">Tự đảo tài liệu approved vì mâu thuẫn</span></li>
+          <li><span class="en">Invent a <code>DEC-&lt;n&gt;</code> without explicit PO confirmation of the ruling text + rationale</span><span class="vi">Tự bịa một <code>DEC-&lt;n&gt;</code> mà không có xác nhận rõ ràng của PO về nội dung + lý do</span></li>
+          <li><span class="en">Re-litigate a decided <code>DEC-&lt;n&gt;</code> on its own initiative</span><span class="vi">Tự mình mở lại tranh luận về <code>DEC-&lt;n&gt;</code> đã phán xử</span></li>
+          <li><span class="en">Skip the gate when the PO says "skip asking"</span><span class="vi">Bỏ qua gate khi PO nói "đừng hỏi nữa"</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="decision-register-keep-change-hybrid">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">KEEP · CHANGE · HYBRID</span><span class="vi">GIỮ NGUYÊN · THAY ĐỔI · KẾT HỢP</span></div>
+    <h2 class="sectitle" id="keep-change-hybrid"><span class="en">Three choices — only the PO decides</span><span class="vi">Ba lựa chọn — chỉ PO mới quyết định</span></h2>
+
+    <p><span class="en">When GATE-NO-SILENT-REVERSAL fires, the skill presents the contradiction verbatim and waits. Exactly three choices are offered — no defaults, no hints about which one to pick.</span><span class="vi">Khi GATE-NO-SILENT-REVERSAL kích hoạt, skill trình bày mâu thuẫn nguyên văn và chờ. Đúng ba lựa chọn được đưa ra — không có mặc định, không gợi ý nên chọn cái nào.</span></p>
+
+    <div class="tri" style="margin:20px 0 0">
+      <span class="keep"><span class="en">Keep</span><span class="vi">Giữ nguyên</span></span>
+      <span class="change"><span class="en">Change + re-approve</span><span class="vi">Thay đổi + duyệt lại</span></span>
+      <span class="hybrid"><span class="en">Hybrid</span><span class="vi">Kết hợp</span></span>
+    </div>
+
+    <div class="gate" style="margin-top:18px">
+      <b><span class="en">What each choice means</span><span class="vi">Ý nghĩa từng lựa chọn</span></b>
+      <ul style="margin-top:10px;padding-left:18px;font-size:.88rem;line-height:1.9">
+        <li>
+          <span class="en"><b>Keep</b> — reject the new claim. The approved artifact is unchanged. The new claim is recorded in <code>DEC-&lt;n&gt;</code> as rejected, with rationale.</span>
+          <span class="vi"><b>Giữ nguyên</b> — bác bỏ khẳng định mới. Tài liệu approved không đổi. Khẳng định mới được ghi vào <code>DEC-&lt;n&gt;</code> là bị bác, kèm lý do.</span>
+        </li>
+        <li>
+          <span class="en"><b>Change</b> — accept the new claim. The PO must supply an owner name and date for re-approval. Only then does the skill update the approved artifact and bump <code>approved_version</code>. This is the only path that touches approved content.</span>
+          <span class="vi"><b>Thay đổi</b> — chấp nhận khẳng định mới. PO phải cung cấp tên owner và ngày để duyệt lại. Chỉ sau đó skill mới cập nhật tài liệu approved và tăng <code>approved_version</code>. Đây là con đường duy nhất chạm đến nội dung approved.</span>
+        </li>
+        <li>
+          <span class="en"><b>Hybrid</b> — record both the existing and new claim; define a follow-up to reconcile. Neither version is auto-discarded. The tension is preserved and documented until the PO resolves it explicitly.</span>
+          <span class="vi"><b>Kết hợp</b> — ghi cả khẳng định hiện tại và mới; xác định một việc theo dõi để hòa giải. Không phiên bản nào bị bỏ tự động. Mâu thuẫn được bảo toàn và ghi lại cho đến khi PO giải quyết rõ ràng.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="callout" style="--ac:var(--gold);margin-top:18px">
+      <span class="ci">⚠️</span>
+      <div>
+        <span class="en"><b>If unsure whether it truly contradicts — ask.</b> Surfacing a contradiction that turns out to be a misread is far safer than silently reversing approved content that was intentional. When in doubt, treat it as a contradiction and surface it.</span>
+        <span class="vi"><b>Nếu không chắc có thực sự mâu thuẫn không — hỏi.</b> Nêu ra một mâu thuẫn hóa ra là hiểu nhầm thì an toàn hơn nhiều so với việc âm thầm đảo ngược nội dung approved mang tính chủ ý. Khi nghi ngờ, coi đó là mâu thuẫn và nêu ra.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="decision-register-recorded">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">RECORDED SO IT'S NOT RE-LITIGATED</span><span class="vi">GHI LẠI ĐỂ KHÔNG TRANH LUẬN LẠI</span></div>
+    <h2 class="sectitle" id="recorded"><span class="en">The register is append-only — one writer, no overwrites</span><span class="vi">Sổ chỉ ghi thêm — một người ghi, không ghi đè</span></h2>
+
+    <p><span class="en">All writes go through <code>decision_register.py --append</code>. The file is append-only: prior records are byte-unchanged. Each entry is a <code>---</code>-fenced YAML block plus a <code>## DEC-&lt;n&gt;</code> heading and a free-text rationale note — the same storage model as the Outcome Register.</span><span class="vi">Tất cả ghi chép đều đi qua <code>decision_register.py --append</code>. File chỉ ghi thêm: các record trước đó không thay đổi byte. Mỗi mục là một khối YAML được đánh dấu <code>---</code> cộng với tiêu đề <code>## DEC-&lt;n&gt;</code> và ghi chú lý do tự do — cùng mô hình lưu trữ như Outcome Register.</span></p>
+
+    <div class="cards grid-2" style="margin-top:18px">
+      <div class="card" style="--ac:var(--gold)">
+        <h3><span class="pin"></span><span class="en">Decision Register — <code>decisions.md</code></span><span class="vi">Sổ Quyết định — <code>decisions.md</code></span></h3>
+        <p style="font-size:.86rem"><span class="en">Authoritative home for ruled drift. Monotonic <code>DEC-&lt;n&gt;</code> IDs; never reused. Downstream artifacts that changed point back via <code>po_ruling_ref: DEC-&lt;n&gt;</code>. View with <code>--decision list</code>; record with <code>--decision</code>.</span><span class="vi">Nơi lưu có thẩm quyền cho các lệch hướng đã phán xử. ID <code>DEC-&lt;n&gt;</code> đơn điệu tăng; không bao giờ tái sử dụng. Các tài liệu downstream thay đổi trỏ về bằng <code>po_ruling_ref: DEC-&lt;n&gt;</code>. Xem bằng <code>--decision list</code>; ghi bằng <code>--decision</code>.</span></p>
+      </div>
+      <div class="card" style="--ac:var(--gold)">
+        <h3><span class="pin"></span><span class="en">Outcome Register — <code>outcomes.md</code></span><span class="vi">Sổ Kết quả — <code>outcomes.md</code></span></h3>
+        <p style="font-size:.86rem"><span class="en">Sister register written by <code>--learn</code>. Records measured outcomes vs BRD goals as <code>OUT-&lt;n&gt;</code> entries. A <code>miss</code> on an approved goal is surfaced to the PO, never auto-edited — same no-silent-reversal guarantee.</span><span class="vi">Sổ chị em được ghi bởi <code>--learn</code>. Ghi kết quả đo lường thực tế so với mục tiêu BRD dưới dạng mục <code>OUT-&lt;n&gt;</code>. <code>miss</code> trên mục tiêu approved được nêu cho PO, không bao giờ tự sửa — cùng đảm bảo không-đảo-ngầm.</span></p>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:20px;font-size:.88rem"><span class="en">Example <code>DEC-1</code> entry (illustrative — not captured output):</span><span class="vi">Ví dụ mục <code>DEC-1</code> (minh họa — không phải đầu ra thật):</span></p>
+    <div class="term">
+      <div class="tbar"><i></i><i></i><i></i><span class="tcmd">product-spec --decision list</span></div>
+<pre>## DEC-1
+
+---
+id: DEC-1
+ruling: change
+artifact: PRD-CHECKOUT
+contradiction: "New claim sets scope: out; existing approved says scope: core-value."
+choice: Change
+re_approved_by: "Jane Doe"
+re_approved_at: "2026-06-17"
+re_approved_version: "1.1.0"
+rationale: >
+  Guest checkout removed from core-value after competitive analysis showed
+  no differentiation vs Shopify. Moved to 'next' horizon as scope: in.
+---</pre>
+    </div>
+
+    <div class="honest" style="margin-top:22px">
+      <div class="h">⚖️ <span class="en">What the register cannot do</span><span class="vi">Sổ không thể làm gì</span></div>
+      <ul>
+        <li><span class="en">Prove a ruling was well-reasoned — it records that the PO made it, not that it was correct.</span><span class="vi">Chứng minh một phán quyết được lý luận tốt — nó ghi PO đã ra phán quyết, không chứng minh phán quyết đúng.</span></li>
+        <li><span class="en">Auto-propagate a ruling downstream — the impact-pass flags affected nodes for PO review; regeneration is opt-in.</span><span class="vi">Tự lan truyền phán quyết xuống downstream — impact-pass gắn cờ các node bị ảnh hưởng để PO xem xét; tạo lại là opt-in.</span></li>
+        <li><span class="en">Replace <code>--reflect</code> — if decisions were made but never logged, <code>--reflect</code> recovers them retroactively from git history and <code>.memory/</code>.</span><span class="vi">Thay thế <code>--reflect</code> — nếu quyết định đã được đưa ra nhưng chưa ghi, <code>--reflect</code> khôi phục chúng từ lịch sử git và <code>.memory/</code>.</span></li>
+      </ul>
+    </div>
+
+    <div class="cta-row" style="margin-top:24px">
+      <a class="btn-cta primary" href="@validation"><span class="en">Validation &amp; approval gate →</span><span class="vi">Validation &amp; cổng phê duyệt →</span></a>
+      <a class="btn-cta ghost" href="@critique"><span class="en">Critique skill</span><span class="vi">Skill critique</span></a>
+    </div>
+  </div>
+</section>

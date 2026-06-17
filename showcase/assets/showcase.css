@@ -22,13 +22,27 @@
   --r:18px;
   --maxw:1120px;
   --ease:cubic-bezier(.22,.61,.36,1);
+  /* shadcn-inspired semantic bridge — maps shadcn's token vocabulary onto the
+     existing palette so components read consistently (dark theme, neutral base,
+     one primary, a radius scale). Aesthetic alignment, not a new palette. */
+  --background:var(--bg); --foreground:var(--txt);
+  --card:var(--panel); --card-solid:var(--panel-solid);
+  --muted:var(--txt-dim); --muted-foreground:var(--txt-faint);
+  --border:var(--stroke); --border-strong:var(--stroke-2);
+  --ring:var(--spec); --primary:var(--spec);
+  --radius:14px; --radius-sm:9px; --radius-lg:18px; --radius-full:999px;
+  --shadow-sm:0 1px 2px rgba(2,6,16,.4);
+  --shadow:0 10px 30px -18px rgba(2,6,16,.8);
+  --shadow-lg:0 24px 60px -30px rgba(2,6,16,.9);
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;scrollbar-gutter:stable;background:#070b16;color-scheme:dark}/* reserve scrollbar space so short<->tall pages don't shift horizontally; dark canvas + color-scheme kill the white flash between page navigations */
 body{
   margin:0;background:var(--bg);color:var(--txt);
   font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,system-ui,sans-serif;
-  line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  /* overflow-x:clip (not hidden) — clip horizontal overflow WITHOUT making <body> a
+     scroll container, which would make the sticky sidebar + TOC jitter on scroll. */
+  line-height:1.6;overflow-x:clip;-webkit-font-smoothing:antialiased;
 }
 /* bilingual toggle: hide the other language */
 body.lang-en .vi{display:none !important}
@@ -53,21 +67,23 @@ section{position:relative;padding:96px 24px;}
 .glow.g1{width:560px;height:560px;background:#1d4ed8;top:-160px;left:-120px}
 .glow.g2{width:520px;height:520px;background:#7c3aed;top:38%;right:-180px}
 .glow.g3{width:480px;height:480px;background:#0f766e;bottom:-160px;left:30%}
+/* frosted-glass panels over the 3D hero — translucent --panel surfaces get a blur
+   so the animated background reads through them as glass. Layout unchanged.
+   Blur kept small (3px): a larger radius samples the bright constellation past the
+   card edge and paints a visible halo ring just inside the border (a double-border look). */
+.card,.callout,.honest,.stat,.faq details,.cs-more,.wu,.hero-ex,.dial-readout,.finding-card{
+  -webkit-backdrop-filter:blur(3px) saturate(115%); backdrop-filter:blur(3px) saturate(115%)}
 
 /* ===================== NAV ===================== */
-nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
-  background:linear-gradient(180deg,rgba(7,11,22,.92),rgba(7,11,22,.66));
-  border-bottom:1px solid var(--stroke)}
-.nav-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:18px;padding:12px 24px}
+/* The top bar is .app-header (styled in the DOCS section); the only <nav> on a page is
+   the right-rail TOC, which must stay fully transparent over the 3D background and carry
+   no blur of its own (a blur here repaints every scroll frame and reads as jitter). So:
+   no bare nav{} rule. */
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em}
 .brand .dot{width:11px;height:11px;border-radius:50%;background:conic-gradient(from 0deg,var(--spec),var(--crit),var(--rel),var(--tel),var(--spec));box-shadow:0 0 14px var(--spec)}
-.nav-links{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
-.nav-links a{color:var(--txt-dim);font-size:.86rem;font-weight:600;padding:7px 11px;border-radius:9px;transition:.2s}
-.nav-links a:hover{color:var(--txt);background:rgba(120,150,210,.12);text-decoration:none}
 .langtoggle{display:flex;border:1px solid var(--stroke-2);border-radius:10px;overflow:hidden;font-weight:700;font-size:.8rem}
 .langtoggle button{background:transparent;color:var(--txt-faint);border:0;padding:7px 12px;cursor:pointer;transition:.2s;font-family:inherit}
 .langtoggle button.active{background:linear-gradient(135deg,var(--spec),#6366f1);color:#04122a}
-@media(max-width:780px){.nav-links{display:none}}
 
 /* ===================== HERO ===================== */
 .hero{padding:120px 24px 80px;text-align:center;overflow:hidden}
@@ -368,6 +384,180 @@ footer a:hover{color:var(--spec)}
 .whenuse .wu h4{font-size:.82rem;letter-spacing:.04em;margin-bottom:8px}
 .whenuse .wu.yes h4{color:var(--ok)}.whenuse .wu.no h4{color:var(--bad)}
 .whenuse .wu ul{margin:0;padding-left:1.05em;font-size:.85rem;color:var(--txt-dim);line-height:1.7}
+
+/* mode/profile table (cheatsheet, voice levels, finder) */
+.modetable{width:100%;border-collapse:collapse;margin-top:14px;font-size:.86rem}
+.modetable th,.modetable td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--stroke)}
+.modetable th{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-faint);font-weight:700}
+.modetable td:first-child{font-family:monospace;font-weight:700;color:var(--ac,var(--spec))}
+.modetable tr:hover td{background:rgba(120,150,210,.05)}
+
+/* ===================== DOCS: SLIM HEADER ===================== */
+:root{--hh:58px;--side-w:264px;--toc-w:212px}
+.app-header{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(7,11,22,.92),rgba(7,11,22,.66));border-bottom:1px solid var(--stroke)}
+.app-header-in{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:12px 24px}
+.app-header .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;color:var(--txt)}
+.app-header .brand:hover{text-decoration:none}
+.app-header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.btn-guides{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.86rem;color:var(--txt-dim);
+  padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--stroke-2);background:var(--panel);transition:.2s}
+.btn-guides:hover{border-color:var(--spec);color:#fff;text-decoration:none;transform:translateY(-1px)}
+.btn-guides.active{color:var(--txt);background:rgba(120,150,210,.16)}
+.btn-guides svg{width:16px;height:16px;flex:none}
+.side-toggle{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:var(--radius-sm);
+  border:1px solid var(--stroke-2);background:var(--panel);color:var(--txt);cursor:pointer;flex:none}
+.side-toggle svg{width:20px;height:20px}
+
+/* ===================== DOCS: LAYOUT + SIDEBAR ===================== */
+.docs-layout{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);
+  gap:36px;padding:0 24px;align-items:start}
+.docs-side{position:sticky;top:var(--hh);align-self:start;max-height:calc(100dvh - var(--hh));
+  overflow-y:auto;padding:24px 6px 48px}
+.docs-side::-webkit-scrollbar{width:9px}.docs-side::-webkit-scrollbar-thumb{background:var(--stroke-2);border-radius:9px}
+.docs-main{min-width:0}
+/* right "On this page" TOC — built by showcase.js; the third column only
+   appears when JS finds >=1 section heading (adds .has-toc) on a wide screen. */
+.toc{display:none}
+.toc .toc-h{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-faint);
+  font-weight:800;padding:0 10px 8px}
+.toc a{display:block;padding:5px 10px;color:var(--txt-faint);border-left:2px solid var(--stroke);
+  line-height:1.4;font-size:.82rem;transition:.15s}
+.toc a:hover{color:var(--txt);text-decoration:none;border-left-color:var(--stroke-2)}
+.toc a.active{color:var(--txt);border-left-color:var(--spec);font-weight:600}
+@media(min-width:1201px){
+  /* reserve the 3-column geometry for EVERY docs page (TOC column included) so the
+     main content keeps one constant width — landing <-> guide navigation never jumps */
+  .docs-layout{max-width:1340px;grid-template-columns:var(--side-w) minmax(0,1fr) var(--toc-w)}
+  .docs-layout.has-toc .toc{display:block;position:sticky;top:var(--hh);align-self:start;
+    max-height:calc(100dvh - var(--hh));overflow-y:auto;padding:24px 0 48px}
+}
+body.view-home .toc{display:none}
+body.view-home .docs-layout{display:block;max-width:none;padding:0}
+body.view-home .docs-side{display:none}
+
+.side-cat{margin:20px 0 6px;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--txt-faint);font-weight:800;padding:0 12px}
+.side-link{display:block;padding:8px 12px;border-radius:var(--radius-sm);font-size:.9rem;color:var(--txt-dim);font-weight:600;
+  border-left:2px solid transparent;transition:.18s}
+.side-link:hover{color:var(--txt);background:rgba(120,150,210,.10);text-decoration:none}
+.side-link.active{color:var(--txt);background:rgba(120,150,210,.14);border-left-color:var(--spec)}
+.side-link.side-top{margin-bottom:4px;font-weight:700}
+
+/* breathing room between sections on detail pages. Sections start with either an
+   .eyebrow (Step N) or the .sectitle directly; give whichever leads the gap, and
+   collapse it when a sectitle follows its own eyebrow so the pair stays tight. */
+body.view-guide .sectitle,body.view-guide .eyebrow{margin-top:48px}
+body.view-guide .eyebrow+.sectitle{margin-top:6px}
+body.view-guide section{padding:34px 0}
+body.view-guide .docs-main .wrap{max-width:none;margin:0}
+body.view-guide .crumb{max-width:none;padding:18px 0 0}
+
+/* guides landing: per-category overview blocks */
+.cat-ov{margin-top:32px}
+.cat-ov .cat-intro{margin:2px 0 14px}
+/* card-as-link (guides landing + concept cross-links) */
+a.card{color:inherit;text-decoration:none;display:block}
+a.card:hover{text-decoration:none;border-color:var(--ac,var(--stroke-2));transform:translateY(-3px);
+  box-shadow:0 18px 40px -28px var(--ac,#000)}
+
+/* hero / funnel call-to-action buttons (shadcn-style primary + ghost) */
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:26px}
+.hero .cta-row{justify-content:center}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;
+  padding:13px 22px;border-radius:12px;transition:.22s var(--ease)}
+.btn-cta.primary{color:#04122a;background:linear-gradient(135deg,var(--spec),#6366f1);border:1px solid transparent}
+.btn-cta.primary:hover{text-decoration:none;transform:translateY(-2px);box-shadow:0 18px 40px -20px var(--spec)}
+.btn-cta.ghost{color:var(--txt);background:var(--panel);border:1px solid var(--stroke-2)}
+.btn-cta.ghost:hover{text-decoration:none;border-color:var(--spec);color:#fff;transform:translateY(-2px)}
+
+/* numbered "how to run it" steps */
+.steps{counter-reset:step;margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.steps .step{position:relative;padding:14px 16px 14px 58px;border:1px solid var(--stroke);
+  border-radius:13px;background:var(--panel-solid)}
+.steps .step::before{counter-increment:step;content:counter(step);position:absolute;left:14px;top:14px;
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-family:monospace;font-weight:800;
+  font-size:.85rem;color:var(--ac,var(--spec));background:color-mix(in srgb,var(--ac,var(--spec)) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--ac,var(--spec)) 38%,transparent)}
+.steps .step h4{margin:0 0 3px;font-size:.96rem}
+.steps .step p{margin:0;font-size:.86rem;color:var(--txt-dim)}
+.steps .step code{font-size:.8rem}
+
+/* "type this in Claude Code" line above a result terminal */
+.cmdline{margin-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.84rem;color:var(--txt-faint)}
+.cmdline code{font-size:.82rem;color:var(--txt);background:var(--panel);border:1px solid var(--stroke);border-radius:8px;padding:3px 9px}
+
+/* FAQ (native <details>, no JS) */
+.faq{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.faq details{border:1px solid var(--stroke);border-radius:13px;background:var(--panel);overflow:hidden}
+.faq summary{cursor:pointer;list-style:none;padding:15px 18px;font-weight:700;font-size:.95rem;color:var(--txt);
+  display:flex;align-items:center;gap:10px;transition:.18s}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{content:"+";color:var(--ac,var(--spec));font-weight:800;font-size:1.15rem;flex:none;
+  width:16px;text-align:center}
+.faq details[open] summary::before{content:"–"}
+.faq summary:hover{background:rgba(120,150,210,.06)}
+.faq .fa{padding:0 18px 16px 44px;color:var(--txt-dim);font-size:.9rem;line-height:1.7}
+.faq .fa code{font-size:.82rem}
+
+/* cheatsheet: progressive-disclosure groups */
+.cs-more{margin-top:14px;border:1px solid var(--stroke);border-radius:13px;background:var(--panel);overflow:hidden}
+.cs-more>summary{cursor:pointer;list-style:none;padding:13px 16px;font-weight:700;font-size:.9rem;color:var(--txt);display:flex;align-items:center;gap:10px}
+.cs-more>summary::-webkit-details-marker{display:none}
+.cs-more>summary::before{content:"+";color:var(--spec);font-weight:800;font-size:1.1rem;flex:none}
+.cs-more[open]>summary::before{content:"–"}
+.cs-more>summary:hover{background:rgba(120,150,210,.06)}
+.cs-more .modetable{margin:0 16px 16px}
+
+/* glossary: 4-column term table — top-aligned, definitions allowed to breathe */
+.modetable.gloss{font-size:.83rem}
+.modetable.gloss th,.modetable.gloss td{vertical-align:top;padding:10px 12px}
+.modetable.gloss td:first-child{white-space:nowrap}
+.modetable.gloss td:nth-child(2){color:var(--txt-dim);font-family:inherit;font-weight:400}
+.modetable.gloss td:nth-child(3),.modetable.gloss td:last-child{font-size:.78rem;color:var(--txt-faint)}
+.modetable.gloss .x{display:block;margin-top:2px}
+.keepish{color:#34d399;font-weight:700}
+.outish{color:#fb7185;font-weight:800;letter-spacing:.05em}
+/* the 4-column glossary table is the one table wide enough to clip on a phone
+   (body is overflow-x:clip) — let it scroll horizontally instead of losing a column */
+@media(max-width:680px){.modetable.gloss{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+
+/* finder: tie-breaker rules list */
+.tielist{margin:.2em 0 0;padding-left:1.1em;font-size:.88rem;color:var(--txt-dim);line-height:1.75}
+.tielist li{margin-bottom:7px}
+.tielist li:last-child{margin-bottom:0}
+/* skill tier badges (finder / cheatsheet) — pill, never collide with .tier cards */
+.ttag{display:inline-block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;font-weight:800;
+  padding:2px 7px;border-radius:var(--radius-full);vertical-align:middle;margin-left:6px;border:1px solid}
+.ttag.product{color:#7dd3fc;border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.10)}
+.ttag.quality{color:#fda4af;border-color:rgba(253,164,175,.42);background:rgba(253,164,175,.10)}
+.ttag.ops{color:#a7f3d0;border-color:rgba(167,243,208,.35);background:rgba(167,243,208,.08)}
+
+/* mobile drawer */
+.scrim{display:none;position:fixed;inset:0;z-index:60;background:rgba(3,6,14,.6)}
+body.side-open .scrim{display:block}
+@media(max-width:900px){
+  .docs-layout{display:block;padding:0 18px}
+  body.view-guide .side-toggle{display:inline-flex}
+  .docs-side{position:fixed;top:0;left:0;bottom:0;z-index:70;width:284px;height:100dvh;max-height:none;
+    background:var(--bg-2);border-right:1px solid var(--stroke);padding:20px 10px 48px;
+    transform:translateX(-102%);transition:transform .25s var(--ease)}
+  body.side-open .docs-side{transform:none}
+  body.view-home .docs-side{display:none}
+}
+
+/* ===================== SHADCN POLISH ===================== */
+/* segmented control look for the EN/VI toggle + the telemetry format tabs */
+.langtoggle{border-radius:var(--radius-sm);background:var(--panel)}
+.card{box-shadow:var(--shadow-sm)}
+.card:hover{box-shadow:var(--shadow)}
+
+/* ===================== KEYBOARD FOCUS ===================== */
+a:focus-visible,button:focus-visible,summary:focus-visible,
+.side-link:focus-visible,.btn-guides:focus-visible,.side-toggle:focus-visible,
+.btn-cta:focus-visible,.langtoggle button:focus-visible,a.card:focus-visible{
+  outline:2px solid var(--spec);outline-offset:2px;border-radius:8px}
+.faq summary:focus-visible{outline:2px solid var(--spec);outline-offset:-2px}
 
 /* ===================== REDUCED MOTION ===================== */
 @media (prefers-reduced-motion: reduce){

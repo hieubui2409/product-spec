@@ -1,0 +1,248 @@
+<!-- ===================== VOICE LEVELS ===================== -->
+<section id="voice-levels-intro">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--crit)">
+      <div class="badge"><svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M8 20h4l3-10 4 20 3-14 3 8 3-4h4" stroke="var(--crit)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="ttl">
+        <div class="who"><span class="en">For product owners who want honest feedback</span><span class="vi">Cho Product Owner muốn phản hồi thẳng thắn</span></div>
+        <h2><span class="en">Voice levels</span><span class="vi">Mức giọng phê bình</span></h2>
+      </div>
+    </div>
+    <div class="divider" style="--ac:var(--crit)"></div>
+    <p class="lead"><span class="en">The critique skill speaks at nine levels of harshness — from a warm peer review to a no-holds-barred roast. One dial. The evidence and the fix never move; only the voice sharpens. Level 5 is the default. Levels 6–9 are opt-in and carry an explicit danger gate. Every level obeys the universal-harm floor with no exception.</span><span class="vi">Skill phê bình nói ở chín mức độ gắt — từ đánh giá nhẹ nhàng đến chửi không giữ tay. Một núm chỉnh. Bằng chứng và cách sửa không đổi; chỉ giọng điệu sắc dần. Mức 5 là mặc định. Mức 6–9 phải bật thủ công và đi kèm gate cảnh báo. Mọi mức đều tuân thủ sàn universal-harm, không ngoại lệ.</span></p>
+  </div>
+</section>
+
+<section id="voice-levels-nine">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">THE SCALE</span><span class="vi">THANG MỨC GIỌNG</span></div>
+    <h2 class="sectitle" id="nine-levels"><span class="en">The nine levels</span><span class="vi">Chín mức giọng</span></h2>
+    <p class="muted" style="margin:-4px 0 18px"><span class="en">Aliases exist for levels 1–6. Levels 7–9 have no alias — invoke with <code>--level 7</code>, <code>--level 8</code>, <code>--level 9</code>. Level 5 is the ungated default baseline; no warning, no confirm, just runs.</span><span class="vi">Mức 1–6 có tên gọi tắt. Mức 7–9 không có tên — dùng <code>--level 7</code>, <code>--level 8</code>, <code>--level 9</code>. Mức 5 là mặc định không cần gate; chạy thẳng, không cảnh báo, không xác nhận.</span></p>
+    <table class="modetable" style="--ac:var(--crit)">
+      <thead>
+        <tr>
+          <th><span class="en">Level</span><span class="vi">Mức</span></th>
+          <th><span class="en">Alias</span><span class="vi">Tên gọi</span></th>
+          <th><span class="en">What it does</span><span class="vi">Giọng điệu</span></th>
+          <th><span class="en">Gating</span><span class="vi">Kiểm soát</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>1</code></td>
+          <td><code>--warm</code></td>
+          <td><span class="en">Gentle and encouraging, softens the blow. Attacks the artifact only.</span><span class="vi">Nhẹ nhàng, khích lệ, làm dịu tin xấu. Chỉ nhắm vào hiện vật.</span></td>
+          <td><span class="keepish"><span class="en">No gate</span><span class="vi">Không gate</span></span></td>
+        </tr>
+        <tr>
+          <td><code>2</code></td>
+          <td><code>--gentle</code></td>
+          <td><span class="en">Matter-of-fact with a dry edge. Still artifact-only.</span><span class="vi">Bình thản với chút khô khan. Vẫn chỉ nhắm hiện vật.</span></td>
+          <td><span class="keepish"><span class="en">No gate</span><span class="vi">Không gate</span></span></td>
+        </tr>
+        <tr>
+          <td><code>3</code></td>
+          <td><code>--blunt</code></td>
+          <td><span class="en">Direct sarcasm. Critic may voice a first-person reaction. Personal attack forbidden.</span><span class="vi">Mỉa mai thẳng thắn. Người phê có thể nêu phản ứng của mình. Không công kích cá nhân.</span></td>
+          <td><span class="keepish"><span class="en">No gate</span><span class="vi">Không gate</span></span></td>
+        </tr>
+        <tr>
+          <td><code>4</code></td>
+          <td><code>--savage</code></td>
+          <td><span class="en">Heavy sarcasm, nothing softened. Sharper first-person reaction allowed. Personal attack still forbidden.</span><span class="vi">Mỉa mai nặng, không nhẹ giọng. Phản ứng cá nhân sắc hơn được. Vẫn không công kích người viết.</span></td>
+          <td><span class="keepish"><span class="en">No gate</span><span class="vi">Không gate</span></span></td>
+        </tr>
+        <tr>
+          <td><code>5</code></td>
+          <td><code>--no-mercy</code> <b><span class="en">(default)</span><span class="vi">(mặc định)</span></b></td>
+          <td><span class="en">Brutal and theatrical. Personal barbs at the author are allowed but not required. The ungated baseline.</span><span class="vi">Tàn nhẫn và kịch tính. Được phép chích xéo người viết nhưng không bắt buộc. Là baseline mặc định, không cần gate.</span></td>
+          <td><span class="keepish"><span class="en">No gate — runs immediately</span><span class="vi">Không gate — chạy ngay</span></span></td>
+        </tr>
+        <tr>
+          <td><code>6</code></td>
+          <td><code>--roast</code></td>
+          <td><span class="en">Danger: insults the PO as well as the work. Personal attack becomes mandatory. Never for professional settings.</span><span class="vi">Nguy hiểm: chửi cả người viết lẫn công việc. Công kích cá nhân bắt buộc. Không dùng chỗ chuyên nghiệp.</span></td>
+          <td><span class="outish"><span class="en">Warn + confirm required</span><span class="vi">Cảnh báo + xác nhận</span></span></td>
+        </tr>
+        <tr>
+          <td><code>7</code></td>
+          <td><span class="muted"><span class="en">none</span><span class="vi">không có</span></span></td>
+          <td><span class="en">Confrontational <code>ông/tôi</code> address (gender: <code>bà/tôi</code>). Attacks competence and effort. No profanity.</span><span class="vi">Xưng hô <code>ông/tôi</code> đối đầu (giới tính: <code>bà/tôi</code>). Đánh vào năng lực và tinh thần làm việc. Không tục.</span></td>
+          <td><span class="outish"><span class="en">Warn + confirm or standing reminder</span><span class="vi">Cảnh báo + xác nhận hoặc nhắc nhở thường trực</span></span></td>
+        </tr>
+        <tr>
+          <td><code>8</code></td>
+          <td><span class="muted"><span class="en">none</span><span class="vi">không có</span></span></td>
+          <td><span class="en">Street register <code>mày/tao</code> (dialect: <code>mi/tau</code> for Trung). Attacks competence and character. No profanity.</span><span class="vi">Xưng hô đường phố <code>mày/tao</code> (phương ngữ Trung: <code>mi/tau</code>). Đánh vào năng lực và tính cách. Không tục.</span></td>
+          <td><span class="outish"><span class="en">Warn + confirm or standing reminder</span><span class="vi">Cảnh báo + xác nhận hoặc nhắc nhở thường trực</span></span></td>
+        </tr>
+        <tr>
+          <td><code>9</code></td>
+          <td><span class="muted"><span class="en">none</span><span class="vi">không có</span></span></td>
+          <td><span class="en"><code>mày/tao</code> + work-targeted profanity (<code>đm</code>/<code>vl</code> tier). All internal restraints lifted. Unbounded scorn within the floor.</span><span class="vi"><code>mày/tao</code> + tục nhắm vào spec (<code>đm</code>/<code>vl</code>). Tất cả kiềm chế nội bộ được bỏ. Khinh bỉ không giới hạn trong phạm vi sàn.</span></td>
+          <td><span class="outish"><span class="en">Re-confirms on EVERY run; declines → level 8</span><span class="vi">Hỏi lại MỖI lần chạy; từ chối → xuống mức 8</span></span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:.84rem;margin-top:12px"><span class="en">The interactive voice dial lives on the critique skill page — see <a href="@critique">product-spec-critique</a>. That page shows verbatim output from <code>examples/acme-shop</code> at levels 1–6 so you can hear each level before choosing.</span><span class="vi">Núm giọng tương tác nằm ở trang skill phê bình — xem <a href="@critique">product-spec-critique</a>. Trang đó hiển thị đầu ra thật từ <code>examples/acme-shop</code> ở mức 1–6 để bạn nghe trước khi chọn.</span></p>
+  </div>
+</section>
+
+<section id="voice-levels-optin">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">DANGER GATE</span><span class="vi">CỔNG NGUY HIỂM</span></div>
+    <h2 class="sectitle" id="opt-in"><span class="en">Opt-in above 5</span><span class="vi">Phải opt-in từ mức 6 trở lên</span></h2>
+    <p class="muted" style="margin:-4px 0 18px"><span class="en">Levels 1–5 run without any confirmation. From level 6 upward, the skill shows an explicit danger warning and requires a confirm before proceeding. Level 9 goes further: it re-confirms on every single run — not once per session, every run — and if you decline the re-confirm, the level drops to 8 for that run.</span><span class="vi">Mức 1–5 chạy không cần xác nhận. Từ mức 6 trở lên, skill hiện cảnh báo nguy hiểm rõ ràng và yêu cầu xác nhận trước khi tiếp tục. Mức 9 còn thêm bước: hỏi lại mỗi lần chạy — không phải mỗi phiên, mà mỗi lần — nếu bạn từ chối thì mức tự động xuống 8 cho lần đó.</span></p>
+    <div class="cards grid-2">
+      <div class="card" style="--ac:var(--crit)">
+        <h3><span class="pin"></span><span class="en">Levels 6–8 — one confirm</span><span class="vi">Mức 6–8 — xác nhận một lần</span></h3>
+        <p><span class="en">On first use (or without a standing preference), the skill shows a danger warning via <code>AskUserQuestion</code> and asks you to confirm. With a stored preference at levels 6–8, a standing reminder is shown instead. Never inferred from a vague request.</span><span class="vi">Lần đầu dùng (hoặc chưa có preference lưu sẵn), skill hiện cảnh báo nguy hiểm qua <code>AskUserQuestion</code> và hỏi xác nhận. Nếu đã lưu preference ở mức 6–8, sẽ hiện nhắc nhở thường trực thay vì gate đầy đủ. Không bao giờ suy diễn từ yêu cầu mơ hồ.</span></p>
+        <div class="chips" style="margin-top:10px">
+          <span class="chip">--roast</span>
+          <span class="chip">--level 7</span>
+          <span class="chip">--level 8</span>
+        </div>
+      </div>
+      <div class="card" style="--ac:var(--crit)">
+        <h3><span class="pin"></span><span class="en">Level 9 — re-confirms every run</span><span class="vi">Mức 9 — hỏi lại mỗi lần</span></h3>
+        <p><span class="en">There is no "standing preference" that bypasses the re-confirm at level 9. Every invocation asks again. Decline → level 8 for that run; the stored preference is unchanged. This is the only level with this behavior.</span><span class="vi">Không có "preference thường trực" nào bỏ qua gate ở mức 9. Mỗi lần gọi đều hỏi lại. Từ chối → xuống mức 8 cho lần đó; preference đã lưu không đổi. Đây là mức duy nhất có hành vi này.</span></p>
+        <div class="chips" style="margin-top:10px">
+          <span class="chip">--level 9</span>
+          <span class="chip" style="color:var(--crit)"><span class="en">declines → 8</span><span class="vi">từ chối → 8</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="voice-levels-artifact">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">WHAT GETS ATTACKED</span><span class="vi">ĐỐI TƯỢNG BỊ CÔNG KÍCH</span></div>
+    <h2 class="sectitle" id="artifact-not-author"><span class="en">Artifact, not author</span><span class="vi">Công việc, không phải con người</span></h2>
+    <p class="muted" style="margin:-4px 0 18px"><span class="en">At every level, the critique attacks the <b>work</b> — the artifact, the claim, the assumption — not who you are as a person. Levels 1–4 forbid personal attack entirely. Level 5 (the default) lifts that restriction and may include a barb at the author, but doesn't require one. Level 6 makes the personal attack mandatory, which is why it is opt-in and never appropriate in a professional setting.</span><span class="vi">Ở mọi mức, phê bình công kích <b>công việc</b> — hiện vật, luận điểm, giả định — không phải con người bạn. Mức 1–4 cấm hoàn toàn việc công kích cá nhân. Mức 5 (mặc định) bỏ giới hạn đó và có thể châm biếm người viết, nhưng không bắt buộc. Mức 6 bắt buộc phải công kích cá nhân — đó là lý do nó phải opt-in và không bao giờ dùng trong môi trường chuyên nghiệp.</span></p>
+    <table class="modetable" style="--ac:var(--crit)">
+      <thead>
+        <tr>
+          <th><span class="en">Levels</span><span class="vi">Mức</span></th>
+          <th><span class="en">Personal attack</span><span class="vi">Công kích cá nhân</span></th>
+          <th><span class="en">Attack scope</span><span class="vi">Phạm vi công kích</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>1–4</code></td>
+          <td><span class="outish"><span class="en">Forbidden</span><span class="vi">Bị cấm</span></span></td>
+          <td><span class="en">The artifact, the claim, the assumption only</span><span class="vi">Chỉ hiện vật, luận điểm, giả định</span></td>
+        </tr>
+        <tr>
+          <td><code>5</code></td>
+          <td><span class="keepish"><span class="en">Lifted — allowed, not required</span><span class="vi">Bỏ giới hạn — được phép, không bắt buộc</span></span></td>
+          <td><span class="en">The artifact + optional author barb</span><span class="vi">Hiện vật + chích xéo người viết tùy chọn</span></td>
+        </tr>
+        <tr>
+          <td><code>6</code></td>
+          <td><span class="outish" style="background:var(--crit-faint,rgba(239,68,68,.12));color:var(--crit)"><span class="en">Required</span><span class="vi">Bắt buộc</span></span></td>
+          <td><span class="en">Effort and care on this specific spec — not identity, not character beyond lazy/careless</span><span class="vi">Tinh thần và sự cẩn thận với spec này cụ thể — không phải danh tính, không phải tính cách ngoài lười/bất cẩn</span></td>
+        </tr>
+        <tr>
+          <td><code>7</code></td>
+          <td><span class="outish" style="background:var(--crit-faint,rgba(239,68,68,.12));color:var(--crit)"><span class="en">Required</span><span class="vi">Bắt buộc</span></span></td>
+          <td><span class="en">Competence + effort; confrontational <code>ông/tôi</code> address</span><span class="vi">Năng lực + tinh thần; xưng hô <code>ông/tôi</code> đối đầu</span></td>
+        </tr>
+        <tr>
+          <td><code>8</code></td>
+          <td><span class="outish" style="background:var(--crit-faint,rgba(239,68,68,.12));color:var(--crit)"><span class="en">Required</span><span class="vi">Bắt buộc</span></span></td>
+          <td><span class="en">Competence + character; street register <code>mày/tao</code></span><span class="vi">Năng lực + tính cách; giọng đường phố <code>mày/tao</code></span></td>
+        </tr>
+        <tr>
+          <td><code>9</code></td>
+          <td><span class="outish" style="background:var(--crit-faint,rgba(239,68,68,.12));color:var(--crit)"><span class="en">Required</span><span class="vi">Bắt buộc</span></span></td>
+          <td><span class="en">All internal restraints lifted within the universal-harm floor; <code>mày/tao</code> + work-targeted profanity</span><span class="vi">Tất cả kiềm chế nội bộ bỏ trong giới hạn sàn; <code>mày/tao</code> + tục nhắm công việc</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout" style="--ac:var(--crit);margin-top:18px">
+      <span class="ci">📌</span>
+      <div><span class="en">Every finding at every level — even 9 — must cite a real <code>artifact_id:line</code> from the spec and end with a concrete, actionable fix. A line with no evidence or no fix is dropped. The voice is how a finding is delivered; the evidence and the fix are non-negotiable structure.</span><span class="vi">Mọi phát hiện ở mọi mức — kể cả 9 — phải trích dẫn <code>artifact_id:line</code> thật từ spec và kết thúc bằng một cách sửa cụ thể, thực hiện được. Dòng không có bằng chứng hoặc không có cách sửa bị loại. Giọng điệu là cách truyền đạt phát hiện; bằng chứng và cách sửa là cấu trúc không thể bỏ.</span></div>
+    </div>
+    <p class="muted" style="font-size:.84rem;margin-top:14px"><span class="en">Decisions about voice gating are recorded at <a href="@decision-register">Decision Register</a>. The critique page also links to the relevant DEC entries.</span><span class="vi">Các quyết định về kiểm soát giọng được ghi tại <a href="@decision-register">Decision Register</a>. Trang phê bình cũng liên kết tới các mục DEC liên quan.</span></p>
+  </div>
+</section>
+
+<section id="voice-levels-floor">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">NON-REMOVABLE CONSTRAINT</span><span class="vi">GIỚI HẠN KHÔNG THỂ BỎ</span></div>
+    <h2 class="sectitle" id="universal-harm-floor"><span class="en">The universal-harm floor</span><span class="vi">Sàn universal-harm</span></h2>
+    <p class="muted" style="margin:-4px 0 18px"><span class="en">This is a harder line than the personal-attack limits above. It is decided by the <b>target</b> of a line, not its strength. A brutal line aimed at the work is IN at any level. A mild line aimed at a protected characteristic is OUT at every level — including 9 — including with explicit PO consent. No flag, no preference, no confirmation overrides it.</span><span class="vi">Đây là giới hạn cứng hơn giới hạn công kích cá nhân ở trên. Nó được quyết định bởi <b>đối tượng</b> của dòng chữ, không phải độ mạnh. Một dòng tàn nhẫn nhắm vào công việc là ĐƯỢC ở mọi mức. Một dòng nhẹ nhàng nhắm vào đặc điểm được bảo vệ là KHÔNG ở mọi mức — kể cả mức 9 — kể cả khi PO đã đồng ý tường minh. Không cờ, không preference, không xác nhận nào ghi đè được.</span></p>
+    <div class="floor">
+      <b>⛔ <span class="en">Universal-harm floor — overrides ALL levels, even 9, even with consent. Lines crossing it are dropped, not softened.</span><span class="vi">Sàn universal-harm — ghi đè MỌI mức, kể cả 9, kể cả khi đã đồng ý. Dòng vi phạm bị loại, không được làm dịu đi.</span></b>
+      <table class="modetable" style="--ac:var(--crit);margin-top:14px">
+        <thead>
+          <tr>
+            <th><span class="en">Aimed at…</span><span class="vi">Nhắm vào…</span></th>
+            <th><span class="en">At any level</span><span class="vi">Ở mọi mức</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="en">The <b>work</b> — the idea, spec, claim, decision, or effort on this artifact</span><span class="vi"><b>Công việc</b> — ý tưởng, spec, luận điểm, quyết định, tinh thần làm việc với hiện vật này</span></td>
+            <td><span class="keepish"><span class="en">IN — up to level 9</span><span class="vi">ĐƯỢC — tới mức 9</span></span></td>
+          </tr>
+          <tr>
+            <td><span class="en">Real threat of violence toward the author</span><span class="vi">Đe dọa bạo lực thật nhắm vào người viết</span></td>
+            <td><span class="outish">OUT</span></td>
+          </tr>
+          <tr>
+            <td><span class="en">Slur on a protected characteristic (gender, ethnicity, religion, age, disability, sexuality, appearance, regional origin)</span><span class="vi">Lăng mạ đặc điểm được bảo vệ (giới tính, dân tộc, tôn giáo, tuổi, khuyết tật, xu hướng tình dục, ngoại hình, vùng xuất xứ)</span></td>
+            <td><span class="outish">OUT</span></td>
+          </tr>
+          <tr>
+            <td><span class="en">Profanity taking the author's family as object (the literal family-target form)</span><span class="vi">Tục ngữ lấy gia đình người viết làm đối tượng (dạng nhắm gia đình nghĩa đen)</span></td>
+            <td><span class="outish">OUT</span></td>
+          </tr>
+          <tr>
+            <td><span class="en">Self-harm encouragement</span><span class="vi">Cổ vũ tự hại</span></td>
+            <td><span class="outish">OUT</span></td>
+          </tr>
+          <tr>
+            <td><span class="en">Sexual content directed at the author</span><span class="vi">Nội dung tình dục nhắm vào người viết</span></td>
+            <td><span class="outish">OUT</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout" style="--ac:var(--crit);margin-top:18px">
+      <span class="ci">⚖️</span>
+      <div>
+        <span class="en"><b>The dividing question:</b> is this line aimed at the <b>work, the effort, the competence on this spec</b> (IN) — or at who the author <b>is as a person</b>, their body, family, or safety (OUT)? When borderline, it is OUT. "Cái AC này rỗng vl" attacks the work criterion — IN at level 9. "đm cái scope mâu thuẫn với BRD-G2" attacks the spec — IN. "đừng để tao nhắc lại" is an authoritative scolding idiom, not a violence threat — IN.</span>
+        <span class="vi"><b>Câu hỏi quyết định:</b> dòng này nhắm vào <b>công việc, tinh thần, năng lực với spec này</b> (ĐƯỢC) — hay vào <b>con người</b> người viết, thân thể, gia đình, hay sự an toàn của họ (KHÔNG)? Khi ở ranh giới, là KHÔNG. "Cái AC này rỗng vl" tấn công tiêu chí công việc — ĐƯỢC ở mức 9. "đm cái scope mâu thuẫn với BRD-G2" tấn công spec — ĐƯỢC. "đừng để tao nhắc lại" là thành ngữ rầy la có thẩm quyền, không phải đe dọa bạo lực — ĐƯỢC.</span>
+      </div>
+    </div>
+    <p class="faint" style="font-size:.84rem;margin-top:14px"><span class="en">The floor applies identically to the lean agents, the consolidator, and the humanizer — the second-pass editor drops a line crossing it rather than softening it. For the full IN/OUT adjudication table see <a href="@critique">product-spec-critique</a>.</span><span class="vi">Sàn áp dụng giống nhau cho lens agent, consolidator và humanizer — biên-tập lượt hai loại thẳng dòng vi phạm thay vì làm dịu. Xem bảng phán xét IN/OUT đầy đủ tại <a href="@critique">product-spec-critique</a>.</span></p>
+  </div>
+</section>
+
+<section id="voice-levels-faq">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">COMMON QUESTIONS</span><span class="vi">CÂU HỎI THƯỜNG GẶP</span></div>
+    <h2 class="sectitle" id="voice-faq"><span class="en">FAQ</span><span class="vi">Hỏi đáp</span></h2>
+    <div class="faq" style="--ac:var(--crit)">
+      <details>
+        <summary><span class="en">What is the default level and do I need to configure anything?</span><span class="vi">Mức mặc định là bao nhiêu và tôi có cần cấu hình gì không?</span></summary>
+        <div class="fa"><span class="en">Level 5 (<code>--no-mercy</code>) is the default and requires nothing. It runs immediately with no warning. You can override it per-run with <code>--level N</code> (or an alias), or set the <code>critique_level</code> preference in <code>preferences.yaml</code> to change the baseline for all runs.</span><span class="vi">Mức 5 (<code>--no-mercy</code>) là mặc định và không cần cấu hình gì. Chạy ngay không cảnh báo. Bạn có thể đổi theo từng lần với <code>--level N</code> (hoặc tên gọi tắt), hoặc đặt preference <code>critique_level</code> trong <code>preferences.yaml</code> để đổi baseline cho tất cả các lần chạy.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">I set level 9 as my preference — do I still get asked every run?</span><span class="vi">Tôi đặt mức 9 làm preference — có còn bị hỏi mỗi lần không?</span></summary>
+        <div class="fa"><span class="en">Yes. Level 9 re-confirms on every single run regardless of any stored preference. That is by design: the behavior is severe enough that each invocation is an active choice. Decline → level 8 for that run; your stored preference stays unchanged.</span><span class="vi">Có. Mức 9 hỏi lại mỗi lần chạy bất kể preference đã lưu. Đây là thiết kế có chủ đích: hành vi đủ mạnh để mỗi lần gọi phải là lựa chọn chủ động. Từ chối → xuống mức 8 cho lần đó; preference đã lưu không thay đổi.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">Can I use level 6–9 in a real team review or a shared report?</span><span class="vi">Tôi có thể dùng mức 6–9 trong đánh giá nhóm thật hay báo cáo chia sẻ không?</span></summary>
+        <div class="fa"><span class="en">No. Levels 6–9 are designed as a private, cathartic "destroy-me" mode intended only for the spec's own author. Level 6 in particular is described as "never appropriate for any professional setting" — not a real review, not a shared report, nothing a colleague or stakeholder will read. Keep levels 1–5 for team-visible work.</span><span class="vi">Không. Mức 6–9 được thiết kế như một chế độ "chửi tôi đi" riêng tư, chỉ dành cho chính tác giả của spec. Mức 6 được mô tả là "không bao giờ phù hợp với bất kỳ môi trường chuyên nghiệp nào" — không dùng trong review thật, không dùng trong báo cáo chia sẻ, không để đồng nghiệp hay bên liên quan đọc. Giữ mức 1–5 cho công việc nhóm.</span></div>
+      </details>
+      <details>
+        <summary><span class="en">Does a higher level mean longer output?</span><span class="vi">Mức cao hơn có nghĩa là đầu ra dài hơn không?</span></summary>
+        <div class="fa"><span class="en">No. Report length is controlled by <code>critique_detail_level</code> (concise/standard/verbose). The voice level changes tone and sharpness; the detail level changes size. They are independent knobs.</span><span class="vi">Không. Độ dài báo cáo được kiểm soát bởi <code>critique_detail_level</code> (concise/standard/verbose). Mức giọng đổi giọng và độ sắc; mức chi tiết đổi kích thước. Hai núm này độc lập nhau.</span></div>
+      </details>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,180 @@
+<!-- ===================== FINDER ===================== -->
+<section id="finder">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--gold)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <circle cx="17" cy="17" r="10" stroke="var(--gold)" stroke-width="2"/>
+          <path d="m24.5 24.5 7 7" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 17h8M17 13v8" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who" style="color:var(--gold)"><span class="en">Which skill do I need?</span><span class="vi">Tôi cần skill nào?</span></div>
+        <h2><span class="en">Skill finder</span><span class="vi">Bộ chọn skill</span></h2>
+      </div>
+      <div class="ver">match the goal</div>
+    </div>
+    <div class="divider" style="--ac:var(--gold)"></div>
+
+    <p class="lead"><span class="en">Match the <b>goal</b>, not the name. The four skills each own a distinct job — they overlap at the edges. Scan the "if you want to…" tables to land on the right one, then use the <b>tie-breaker</b> rules when two skills both seem to fit. Still unsure? The last section points you to worked examples.</span><span class="vi">Khớp theo <b>mục tiêu</b>, không theo tên. Bốn skill mỗi cái giữ một công việc riêng — chúng chồng nhau ở rìa. Đọc bảng "nếu bạn muốn…" để chọn đúng cái, rồi dùng quy tắc <b>phân định</b> khi hai skill có vẻ cùng hợp. Vẫn chưa chắc? Phần cuối trỏ đến các ví dụ thật.</span></p>
+
+    <!-- ── Pick by goal ── -->
+    <h2 class="sectitle" id="pick-by-goal"><span class="en">Pick by what you want</span><span class="vi">Chọn theo điều bạn muốn</span></h2>
+    <p class="muted" style="margin:-4px 0 18px"><span class="en">Four goal clusters — one per skill. Each cluster names the concrete things that skill handles. The pills show who it is designed for.</span><span class="vi">Bốn nhóm mục tiêu — mỗi skill một nhóm. Mỗi nhóm liệt kê những việc cụ thể skill đó xử lý. Các nhãn pill cho biết nó thiết kế cho ai.</span></p>
+
+    <!-- product-spec card -->
+    <a class="card" href="@product-spec" style="--ac:var(--spec);display:block;text-decoration:none;margin-bottom:14px">
+      <h3>
+        <span class="pin"></span>
+        <code>/cleanmatic:product-spec</code>
+        <span class="ttag product" style="margin-left:8px">Product Owner</span>
+      </h3>
+      <p style="margin:4px 0 10px"><span class="en"><b>Define, structure, and govern a product spec.</b> Use this when you are building or evolving the spec itself — from first interview to approved story.</span><span class="vi"><b>Định nghĩa, cấu trúc, và quản trị spec sản phẩm.</b> Dùng khi bạn đang xây hoặc phát triển bản thân spec — từ phỏng vấn đầu tiên đến story đã duyệt.</span></p>
+      <ul class="tielist">
+        <li><span class="en">Start a product from scratch (Vision → BRD → PRD → Epic → Story)</span><span class="vi">Bắt đầu sản phẩm từ đầu (Vision → BRD → PRD → Epic → Story)</span></li>
+        <li><span class="en">Add a new feature area (<code>--prd</code>), epic (<code>--epic</code>), or story (<code>--story</code>)</span><span class="vi">Thêm vùng tính năng mới (<code>--prd</code>), epic (<code>--epic</code>), hoặc story (<code>--story</code>)</span></li>
+        <li><span class="en">Decompose a brain-dump into a structured spec (<code>--auto</code>)</span><span class="vi">Phân rã "bãi ý tưởng" thành spec có cấu trúc (<code>--auto</code>)</span></li>
+        <li><span class="en">Seed the spec from raw transcripts or notes (<code>--discover</code>)</span><span class="vi">Gieo spec từ transcript thô hay ghi chú (<code>--discover</code>)</span></li>
+        <li><span class="en">Run the structural + LLM validation gate (<code>--validate</code>)</span><span class="vi">Chạy cổng kiểm tra cấu trúc + LLM (<code>--validate</code>)</span></li>
+        <li><span class="en">Sign off an artifact (<code>--approve</code>) or log a ruling (<code>--decision</code>)</span><span class="vi">Ký duyệt artifact (<code>--approve</code>) hoặc ghi phán quyết (<code>--decision</code>)</span></li>
+        <li><span class="en">Update the spec without losing prior decisions (<code>--update</code>)</span><span class="vi">Cập nhật spec mà không mất quyết định cũ (<code>--update</code>)</span></li>
+        <li><span class="en">Produce a 1-page exec brief or release-notes delta (<code>--summary</code>)</span><span class="vi">Tạo tóm tắt 1 trang cho lãnh đạo hoặc delta release-notes (<code>--summary</code>)</span></li>
+        <li><span class="en">Visualize the spec tree, roadmap, board, or MoSCoW coverage (<code>--viz</code>)</span><span class="vi">Trực quan hóa cây spec, lộ trình, bảng, hay phủ MoSCoW (<code>--viz</code>)</span></li>
+        <li><span class="en">Act on a critique report finding-by-finding (<code>--apply-critique</code>)</span><span class="vi">Xử lý báo cáo critique từng phát hiện một (<code>--apply-critique</code>)</span></li>
+        <li><span class="en">Record real outcomes vs BRD goals after launch (<code>--learn</code>)</span><span class="vi">Ghi kết quả thực tế so với mục tiêu BRD sau khi ra mắt (<code>--learn</code>)</span></li>
+      </ul>
+    </a>
+
+    <!-- critique card -->
+    <a class="card" href="@critique" style="--ac:var(--crit);display:block;text-decoration:none;margin-bottom:14px">
+      <h3>
+        <span class="pin"></span>
+        <code>/cleanmatic:product-spec-critique</code>
+        <span class="ttag quality" style="margin-left:8px">Product Owner</span>
+      </h3>
+      <p style="margin:4px 0 10px"><span class="en"><b>Get an honest, opinionated tear-down of an existing spec.</b> Use this after the spec exists and you want to know whether it is any <i>good</i> — not just structurally sound.</span><span class="vi"><b>Nhận đánh giá thẳng thắn, có quan điểm về spec hiện tại.</b> Dùng sau khi spec đã tồn tại và bạn muốn biết nó có <i>tốt</i> không — không chỉ là vững về cấu trúc.</span></p>
+      <ul class="tielist">
+        <li><span class="en">Find out why a spec would fail in the market (market lens)</span><span class="vi">Tìm hiểu vì sao spec sẽ thất bại trên thị trường (lăng kính market)</span></li>
+        <li><span class="en">Catch features nobody needs, fake personas, solution-first thinking (product lens)</span><span class="vi">Phát hiện tính năng không ai cần, personas bịa, tư duy giải-pháp-trước (lăng kính product)</span></li>
+        <li><span class="en">Find untestable AC, non-INVEST stories, hidden dependencies (tech lens)</span><span class="vi">Tìm AC không thể kiểm thử, story không INVEST, phụ thuộc ẩn (lăng kính tech)</span></li>
+        <li><span class="en">Audit writing quality — vague adjectives, term drift, wall-of-text (craft lens)</span><span class="vi">Kiểm tra chất lượng viết — tính từ mơ hồ, trôi thuật ngữ, tường văn bản (lăng kính craft)</span></li>
+        <li><span class="en">Pre-stakeholder gut-check on a PRD, epic, or story by ID</span><span class="vi">Kiểm tra nhanh trước khi trình stakeholder về PRD, epic, hay story theo ID</span></li>
+        <li><span class="en">Tune the voice from gentle coaching to brutal honesty (<code>--level 1..9</code>)</span><span class="vi">Chỉnh giọng từ cố vấn nhẹ nhàng đến thẳng thắn không khoan nhượng (<code>--level 1..9</code>)</span></li>
+        <li><span class="en">Re-run cheaply after a fix — reuses prior lens work when the spec is unchanged</span><span class="vi">Chạy lại rẻ sau khi sửa — tái dùng kết quả lăng kính cũ khi spec không đổi</span></li>
+      </ul>
+    </a>
+
+    <!-- release card -->
+    <a class="card" href="@release" style="--ac:var(--rel);display:block;text-decoration:none;margin-bottom:14px">
+      <h3>
+        <span class="pin"></span>
+        <code>/cleanmatic:release</code>
+        <span class="ttag ops" style="margin-left:8px">Developer</span>
+      </h3>
+      <p style="margin:4px 0 10px"><span class="en"><b>Pack and ship the harness bundle.</b> Use this when you need to share the <code>.claude/</code> rig with another repo or cut an official versioned release.</span><span class="vi"><b>Đóng gói và ship bundle harness.</b> Dùng khi bạn cần chia sẻ bộ <code>.claude/</code> cho repo khác hoặc cắt release phiên bản chính thức.</span></p>
+      <ul class="tielist">
+        <li><span class="en">Bundle a curated subset of <code>.claude/</code> into a deterministic, versioned <code>tar.gz</code></span><span class="vi">Đóng gói tập con được chọn của <code>.claude/</code> thành <code>tar.gz</code> tất định, có phiên bản</span></li>
+        <li><span class="en">Preview the file list and size before building (<code>--dry-run</code>)</span><span class="vi">Xem trước danh sách file và dung lượng trước khi build (<code>--dry-run</code>)</span></li>
+        <li><span class="en">Build from an existing manifest (<code>--manifest</code>) or compose one interactively</span><span class="vi">Build từ manifest có sẵn (<code>--manifest</code>) hoặc soạn tương tác</span></li>
+        <li><span class="en">Lock the CHANGELOG, bump the version, and hand off the tag-push for CI (<code>release.py</code>)</span><span class="vi">Khoá CHANGELOG, tăng phiên bản, và bàn giao tag-push cho CI (<code>release.py</code>)</span></li>
+        <li><span class="en">Seed a teammate's repo from this repo's working <code>.claude/</code> setup</span><span class="vi">Gieo repo của đồng nghiệp từ bộ <code>.claude/</code> đang chạy của repo này</span></li>
+      </ul>
+    </a>
+
+    <!-- telemetry card -->
+    <a class="card" href="@telemetry" style="--ac:var(--tel);display:block;text-decoration:none;margin-bottom:14px">
+      <h3>
+        <span class="pin"></span>
+        <code>/cleanmatic:telemetry</code>
+        <span class="ttag product" style="margin-left:8px">Product Owner</span>
+      </h3>
+      <p style="margin:4px 0 10px"><span class="en"><b>Read how your tooling is actually running — in plain Vietnamese.</b> Use this after you have been using the harness for a while and want an honest usage + health read. It never writes anything.</span><span class="vi"><b>Đọc bộ đồ nghề của bạn đang chạy thế nào — bằng tiếng Việt thuần.</b> Dùng sau khi bạn đã dùng harness một thời gian và muốn đọc mức dùng + sức khỏe trung thực. Nó không bao giờ ghi gì.</span></p>
+      <ul class="tielist">
+        <li><span class="en">See which skills get used and which are never touched (<code>--lens usage</code>)</span><span class="vi">Xem skill nào hay dùng và skill nào chưa bao giờ chạm (<code>--lens usage</code>)</span></li>
+        <li><span class="en">Find scripts that error or run slow (<code>--lens health</code>)</span><span class="vi">Tìm script lỗi hoặc chạy chậm (<code>--lens health</code>)</span></li>
+        <li><span class="en">Check subagent success / failure rates (<code>--lens reliability</code>)</span><span class="vi">Kiểm tra tỷ lệ thành công / thất bại của subagent (<code>--lens reliability</code>)</span></li>
+        <li><span class="en">See if the last <code>--validate</code> passed — as an internal quality proxy (<code>--lens validate</code>)</span><span class="vi">Xem lần <code>--validate</code> cuối có pass không — như proxy chất lượng nội bộ (<code>--lens validate</code>)</span></li>
+        <li><span class="en">Audit memory tidiness — orphans, dead links, staleness (<code>--lens memory</code>)</span><span class="vi">Kiểm tra sự gọn gàng của bộ nhớ — mồ côi, link chết, độ cũ (<code>--lens memory</code>)</span></li>
+        <li><span class="en">Reconstruct a single session's full activity (<code>--lens forensics --session &lt;id&gt;</code>)</span><span class="vi">Dựng lại toàn bộ hoạt động của một phiên (<code>--lens forensics --session &lt;id&gt;</code>)</span></li>
+        <li><span class="en">Get the full dashboard in one run (<code>--lens all</code>, the default)</span><span class="vi">Lấy bảng điều khiển đầy đủ trong một lần chạy (<code>--lens all</code>, mặc định)</span></li>
+      </ul>
+    </a>
+
+    <!-- ── Tie-breakers ── -->
+    <h2 class="sectitle" id="tie-breakers"><span class="en">Tie-breakers</span><span class="vi">Phân định khi hai skill cùng hợp</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">When two skills seem to overlap, these rules settle it. They reflect the design intent documented in the SKILL.md files.</span><span class="vi">Khi hai skill có vẻ chồng nhau, các quy tắc này giải quyết. Chúng phản ánh mục đích thiết kế được ghi trong các file SKILL.md.</span></p>
+
+    <div class="card" style="--ac:var(--gold)">
+      <ul class="tielist">
+        <li>
+          <b><span class="en">Define vs critique:</span><span class="vi">Định nghĩa vs critique:</span></b>
+          <span class="en">No spec yet, or you are still building it → <a href="@product-spec"><code>product-spec</code></a>. Spec already exists and you want to know if it is any <i>good</i> → <a href="@critique"><code>product-spec-critique</code></a>. Critique is a consumer — it reads what product-spec wrote; it can't run without an existing spec.</span>
+          <span class="vi">Chưa có spec, hoặc bạn vẫn đang xây → <a href="@product-spec"><code>product-spec</code></a>. Spec đã tồn tại và bạn muốn biết nó có <i>tốt</i> không → <a href="@critique"><code>product-spec-critique</code></a>. Critique là consumer — nó đọc những gì product-spec đã viết; không chạy được nếu không có spec sẵn.</span>
+        </li>
+        <li>
+          <b><span class="en">Validate vs critique:</span><span class="vi">Validate vs critique:</span></b>
+          <span class="en">Want a deterministic pass/fail on structure → <code>product-spec --validate</code> (the CI gate). Want an opinionated read on whether it is worth building → <a href="@critique"><code>product-spec-critique</code></a> (never a CI gate; non-deterministic by design).</span>
+          <span class="vi">Muốn pass/fail tất định về cấu trúc → <code>product-spec --validate</code> (cổng CI). Muốn đánh giá có quan điểm về việc nó có đáng xây không → <a href="@critique"><code>product-spec-critique</code></a> (không bao giờ là cổng CI; không tất định theo thiết kế).</span>
+        </li>
+        <li>
+          <b><span class="en">Act on critique vs just read it:</span><span class="vi">Xử lý critique vs chỉ đọc:</span></b>
+          <span class="en">You have a critique report and want to record decisions from it → <code>product-spec --apply-critique &lt;report&gt;</code>. You just want the tear-down → <a href="@critique"><code>product-spec-critique</code></a>.</span>
+          <span class="vi">Bạn có báo cáo critique và muốn ghi quyết định từ nó → <code>product-spec --apply-critique &lt;báo cáo&gt;</code>. Bạn chỉ muốn đọc phần mổ xẻ → <a href="@critique"><code>product-spec-critique</code></a>.</span>
+        </li>
+        <li>
+          <b><span class="en">Ship a bundle vs observe usage:</span><span class="vi">Ship bundle vs quan sát mức dùng:</span></b>
+          <span class="en">Need to package and distribute the <code>.claude/</code> rig → <a href="@release"><code>release</code></a> (developer, writes a tarball). Need to read how the rig is being used on a machine → <a href="@telemetry"><code>telemetry</code></a> (PO, read-only, no writes).</span>
+          <span class="vi">Cần đóng gói và phân phối bộ <code>.claude/</code> → <a href="@release"><code>release</code></a> (developer, ghi tarball). Cần đọc bộ đó đang được dùng thế nào trên một máy → <a href="@telemetry"><code>telemetry</code></a> (PO, chỉ đọc, không ghi).</span>
+        </li>
+        <li>
+          <b><span class="en">Telemetry validate lens vs product-spec --validate:</span><span class="vi">Lăng kính validate của telemetry vs product-spec --validate:</span></b>
+          <span class="en"><code>--lens validate</code> in telemetry is a <i>proxy</i> — it reads whether the last validate run passed. Run <code>product-spec --validate</code> to actually validate the spec now. They are different actions: observe vs execute.</span>
+          <span class="vi"><code>--lens validate</code> trong telemetry là <i>proxy</i> — nó đọc lần chạy validate cuối có pass không. Chạy <code>product-spec --validate</code> để thực sự validate spec ngay bây giờ. Đây là hai hành động khác nhau: quan sát vs thực thi.</span>
+        </li>
+        <li>
+          <b><span class="en">record outcome vs observe health:</span><span class="vi">ghi kết quả vs quan sát sức khỏe:</span></b>
+          <span class="en">Want to record a PO-declared outcome (target vs actual for a BRD goal) → <code>product-spec --learn</code>. Want to read the internal quality proxy of whether validate passed → <a href="@telemetry"><code>telemetry --lens validate</code></a>. The former writes; the latter reads.</span>
+          <span class="vi">Muốn ghi kết quả do PO khai (mục tiêu so với thực tế cho mục tiêu BRD) → <code>product-spec --learn</code>. Muốn đọc proxy chất lượng nội bộ xem validate có pass không → <a href="@telemetry"><code>telemetry --lens validate</code></a>. Cái trước ghi; cái sau đọc.</span>
+        </li>
+        <li>
+          <b><span class="en">release (cut) vs release (observe):</span><span class="vi">release (cắt) vs release (quan sát):</span></b>
+          <span class="en">Cutting a versioned release of the bundle → <a href="@release"><code>release</code></a>. Observing how the installed skills are being used on someone's machine → <a href="@telemetry"><code>telemetry</code></a>. No overlap: one is the build tool, one is the usage reader.</span>
+          <span class="vi">Cắt release phiên bản của bundle → <a href="@release"><code>release</code></a>. Quan sát cách các skill đã cài đang được dùng trên máy ai đó → <a href="@telemetry"><code>telemetry</code></a>. Không chồng nhau: cái kia là build tool, cái này là đọc mức dùng.</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Hard limits ── -->
+    <h2 class="sectitle" id="hard-limits"><span class="en">What none of them do</span><span class="vi">Những gì không skill nào làm</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">Scope boundaries that apply across all four skills — not skill-by-skill gaps, but design constraints of the whole harness.</span><span class="vi">Ranh giới phạm vi áp dụng cho cả bốn skill — không phải khoảng trống theo từng skill, mà là ràng buộc thiết kế của toàn bộ harness.</span></p>
+    <div class="floor">
+      <ul>
+        <li><span class="en"><b>No production code.</b> The harness specifies, critiques, packs, and observes — it never writes application code. That is the build team's job.</span><span class="vi"><b>Không viết code production.</b> Harness đặc tả, chỉ trích, đóng gói và quan sát — không bao giờ viết code ứng dụng. Đó là việc của đội build.</span></li>
+        <li><span class="en"><b>No autonomous scope decisions.</b> Scope (<code>in</code> / <code>out</code> / <code>core-value</code>) is always the PO's call. The harness flags, surfaces, and asks — it never assumes scope. (GATE-NEVER-ASSUME.)</span><span class="vi"><b>Không tự quyết phạm vi.</b> Phạm vi (<code>in</code> / <code>out</code> / <code>core-value</code>) luôn là quyết định của PO. Harness gắn cờ, nêu ra và hỏi — không bao giờ giả định phạm vi. (GATE-NEVER-ASSUME.)</span></li>
+        <li><span class="en"><b>No silent reversals of approved content.</b> Any contradiction with an <code>approved</code> artifact is a stop point — surfaced verbatim with Keep · Change · Hybrid choices. Never auto-fixed. (GATE-NO-SILENT-REVERSAL.)</span><span class="vi"><b>Không đảo ngầm nội dung đã duyệt.</b> Mọi mâu thuẫn với artifact <code>approved</code> là điểm dừng — nêu nguyên văn với các lựa chọn Giữ · Đổi · Kết hợp. Không bao giờ tự sửa. (GATE-NO-SILENT-REVERSAL.)</span></li>
+        <li><span class="en"><b>No market-effectiveness measurement.</b> Telemetry measures machinery health, not market outcomes. Even <code>--learn</code> in product-spec records PO-declared outcomes offline — it is not a market analytics tool.</span><span class="vi"><b>Không đo hiệu quả thị trường.</b> Telemetry đo sức khỏe máy móc, không phải kết quả thị trường. Kể cả <code>--learn</code> trong product-spec chỉ ghi kết quả do PO khai offline — đó không phải công cụ analytics thị trường.</span></li>
+        <li><span class="en"><b>No network calls at runtime.</b> After install, all four skills run offline. (One caveat: if Mermaid failed to vendor at install time, product-spec's graph views fall back to a CDN script at browser-render — re-run the installer to vendor it.)</span><span class="vi"><b>Không gọi mạng khi chạy.</b> Sau khi cài, cả bốn skill chạy offline. (Một ngoại lệ: nếu Mermaid không được vendor khi cài, khung nhìn đồ thị của product-spec sẽ fallback sang CDN lúc render trình duyệt — chạy lại installer để vendor nó.)</span></li>
+      </ul>
+    </div>
+
+    <!-- ── Still unsure ── -->
+    <h2 class="sectitle" id="still-unsure"><span class="en">Still unsure?</span><span class="vi">Vẫn chưa chắc?</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">Two resources that cover the full story: a step-by-step guided tour, and a worked end-to-end journey.</span><span class="vi">Hai tài nguyên bao quát toàn bộ câu chuyện: bản hướng dẫn từng bước, và hành trình thực tế từ đầu đến cuối.</span></p>
+    <div class="cards grid-2">
+      <a class="card" href="@quickstart" style="--ac:var(--ok)">
+        <h3><span class="pin"></span><span class="en">Quickstart</span><span class="vi">Bắt đầu nhanh</span></h3>
+        <p><span class="en">Install → first command → first output. Start here if you have never run any of the four skills before.</span><span class="vi">Cài đặt → lệnh đầu tiên → đầu ra đầu tiên. Bắt đầu từ đây nếu bạn chưa chạy bất kỳ skill nào trong bốn cái.</span></p>
+      </a>
+      <a class="card" href="@journey" style="--ac:var(--gold)">
+        <h3><span class="pin"></span><span class="en">End-to-end journey</span><span class="vi">Hành trình từ đầu đến cuối</span></h3>
+        <p><span class="en">Follow a real product from blank page to shipped bundle — every skill in context, in order. Read this to see how the four skills interlock.</span><span class="vi">Theo dõi một sản phẩm thật từ trang trắng đến bundle đã ship — mỗi skill trong ngữ cảnh, theo thứ tự. Đọc để thấy bốn skill móc nối với nhau thế nào.</span></p>
+      </a>
+    </div>
+
+    <div class="callout" style="--ac:var(--txt-faint);margin-top:24px">
+      <span class="ci">💡</span>
+      <div><span class="en">Once you know which skill to run, the <a href="@cheatsheet">cheatsheet</a> has every flag in tables for fast reference. The <a href="@glossary">glossary</a> has the exact definitions for terms like <code>validate</code>, <code>DEC-&lt;n&gt;</code>, <code>voice level</code>, and <code>deterministic pack</code>.</span><span class="vi">Khi đã biết skill nào cần chạy, <a href="@cheatsheet">tra cứu nhanh</a> có mọi cờ trong bảng để tham khảo nhanh. <a href="@glossary">Glossary</a> có định nghĩa chính xác cho các thuật ngữ như <code>validate</code>, <code>DEC-&lt;n&gt;</code>, <code>voice level</code>, và <code>deterministic pack</code>.</span></div>
+    </div>
+  </div>
+</section>

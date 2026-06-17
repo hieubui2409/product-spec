@@ -1,0 +1,47 @@
+name: Deploy showcase to GitHub Pages
+
+# Rebuilds showcase/ from its single source of truth and publishes the result to
+# GitHub Pages on every push to master that touches the showcase (or this workflow).
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'showcase/**'
+      - '.github/workflows/showcase-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-flight one finish (don't cancel a deploy).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build the showcase (stdlib only)
+        run: python3 showcase/build.py
+      - uses: actions/configure-pages@v5
+      - name: Upload showcase/ as the Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: showcase
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,244 @@
+<!-- ===================== GLOSSARY ===================== -->
+<section id="glossary">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--rel)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <path d="M9 7h16a3 3 0 0 1 3 3v23l-5-3-5 3-5-3-5 3V10a3 3 0 0 1 3-3Z" stroke="var(--rel)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M13 13h12M13 18h12M13 23h8" stroke="var(--rel)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who" style="color:var(--rel)"><span class="en">The shared language of the harness</span><span class="vi">Ngôn ngữ chung của harness</span></div>
+        <h2><span class="en">Glossary</span><span class="vi">Thuật ngữ</span></h2>
+      </div>
+      <div class="ver">36 terms</div>
+    </div>
+    <div class="divider" style="--ac:var(--rel)"></div>
+
+    <p class="lead"><span class="en">One settled word replaces a paragraph of re-explanation. Definitions here are copied from the canonical sources — SKILL.md files, CLAUDE.md GATEs, and the five operating principles. Each term carries what it <b>forbids</b> (the wording the harness avoids) and the gate, principle, or skill that backs it.</span><span class="vi">Một từ đã chốt thay cho cả đoạn giải thích lại. Các định nghĩa ở đây lấy từ nguồn gốc chuẩn — các file SKILL.md, các GATE của CLAUDE.md, và năm nguyên tắc vận hành. Mỗi thuật ngữ kèm điều nó <b>cấm</b> (cách nói harness tránh dùng) và gate, nguyên tắc, hoặc skill làm chỗ dựa.</span></p>
+
+    <div class="callout" style="--ac:var(--txt-faint);margin-top:18px;margin-bottom:30px">
+      <span class="ci">📖</span>
+      <div><span class="en">The <b>Forbidden wording</b> column names phrases the harness actively avoids — unmeasurable adjectives, overconfident wording, silent-reversal language. These are not style suggestions; they reflect documented design decisions in CLAUDE.md and the skill SKILL.md files.</span><span class="vi">Cột <b>Cách nói bị cấm</b> liệt kê các cụm từ harness chủ động tránh — tính từ không đo được, ngôn ngữ tự tin quá mức, ngôn ngữ đảo ngầm. Đây không phải gợi ý phong cách; chúng phản ánh các quyết định thiết kế đã ghi trong CLAUDE.md và các file SKILL.md.</span></div>
+    </div>
+
+    <!-- ── A. Spec hierarchy artifacts ── -->
+    <h2 class="sectitle" id="gl-spec-artifacts"><span class="en">Spec hierarchy artifacts</span><span class="vi">Các artifact cây spec</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">The five artifact levels that product-spec builds. Each level has exactly one parent (except Vision). IDs are parent-scoped and stable.</span><span class="vi">Năm cấp artifact mà product-spec dựng. Mỗi cấp có đúng một parent (trừ Vision). ID có phạm vi theo parent và ổn định.</span></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Vision</code></td>
+          <td><span class="en">The north-star narrative: why the product exists, who it is for, and what winning looks like. Captured in <code>vision.md</code>. Root of the whole hierarchy — no parent. All BRD goals must trace to it.</span><span class="vi">Câu chuyện định hướng: tại sao sản phẩm tồn tại, cho ai, và thành công trông như thế nào. Ghi trong <code>vision.md</code>. Gốc của toàn bộ cây — không có parent. Mọi mục tiêu BRD phải truy ngược về đây.</span></td>
+          <td><span class="x"><span class="en">"vision statement" (implies a one-liner; the artifact is richer)</span><span class="vi">"tuyên bố tầm nhìn" (ngụ ý một dòng; artifact phong phú hơn)</span></span></td>
+          <td><code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>BRD</code></td>
+          <td><span class="en">Business Requirements Document. The single BRD holds business goals (<code>BRD-G1</code>, <code>BRD-G2</code>, …), success metrics, and stakeholders. Exactly one per product; all PRDs must justify against BRD goals.</span><span class="vi">Business Requirements Document. BRD duy nhất chứa mục tiêu kinh doanh (<code>BRD-G1</code>, <code>BRD-G2</code>, …), chỉ số thành công, và stakeholder. Đúng một cái mỗi sản phẩm; mọi PRD phải lý giải dựa trên mục tiêu BRD.</span></td>
+          <td><span class="x"><span class="en">multiple BRDs per product; calling a BRD a "PRD"</span><span class="vi">nhiều BRD cho một sản phẩm; gọi BRD là "PRD"</span></span></td>
+          <td><code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>PRD</code></td>
+          <td><span class="en">Product Requirements Document. One PRD per feature area. Contains epics and traces to BRD goals. ID is slug-based (e.g. <code>PRD-AUTH</code>). Multiple PRDs per product are expected.</span><span class="vi">Product Requirements Document. Một PRD mỗi vùng tính năng. Chứa các epic và truy ngược về mục tiêu BRD. ID theo slug (ví dụ <code>PRD-AUTH</code>). Một sản phẩm có nhiều PRD là bình thường.</span></td>
+          <td><span class="x"><span class="en">one monolithic PRD for the whole product</span><span class="vi">một PRD nguyên khối cho toàn bộ sản phẩm</span></span></td>
+          <td><code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>Epic</code></td>
+          <td><span class="en">A deliverable slice of a PRD — large enough to span multiple stories, small enough to ship incrementally. ID is parent-scoped: <code>PRD-AUTH-E1</code>. Each epic contains one or more stories.</span><span class="vi">Một lát deliverable của PRD — đủ lớn để trải nhiều story, đủ nhỏ để ship từng bước. ID theo phạm vi parent: <code>PRD-AUTH-E1</code>. Mỗi epic chứa một hoặc nhiều story.</span></td>
+          <td><span class="x"><span class="en">equating an epic with a user story</span><span class="vi">đồng nhất epic với user story</span></span></td>
+          <td><code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>Story</code></td>
+          <td><span class="en">A user-facing unit of work with acceptance criteria (AC). ID: <code>PRD-AUTH-E1-S1</code>. Must be INVEST-compliant (Independent / Negotiable / Valuable / Estimable / Small / Testable). Size is <code>S | M | L</code> — no story points or hours.</span><span class="vi">Đơn vị công việc hướng người dùng kèm tiêu chí chấp nhận (AC). ID: <code>PRD-AUTH-E1-S1</code>. Phải tuân thủ INVEST (Độc lập / Thương lượng được / Có giá trị / Ước lượng được / Nhỏ / Có thể kiểm thử). Kích thước là <code>S | M | L</code> — không có story point hay giờ.</span></td>
+          <td><span class="x"><span class="en">story points; hour estimates; "task" (implies no user value)</span><span class="vi">story point; ước lượng giờ; "task" (ngụ ý không có giá trị người dùng)</span></span></td>
+          <td><code>product-spec</code> SKILL.md</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── B. Spec governance concepts ── -->
+    <h2 class="sectitle" id="gl-governance"><span class="en">Spec governance</span><span class="vi">Quản trị spec</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">How the harness guards approved content, tracks decisions, and records outcomes.</span><span class="vi">Cách harness bảo vệ nội dung đã duyệt, theo dõi quyết định, và ghi kết quả.</span></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>status: approved</code></td>
+          <td><span class="en">YAML frontmatter status value meaning the artifact has been explicitly signed off by the PO with an owner and date. Requires a named owner and date — never set by the harness autonomously.</span><span class="vi">Giá trị trạng thái frontmatter YAML nghĩa là artifact đã được PO ký duyệt rõ ràng kèm owner và ngày. Yêu cầu owner và ngày cụ thể — harness không bao giờ tự đặt.</span></td>
+          <td><span class="x"><span class="en">"looks good, marking approved"; setting approved without owner + date</span><span class="vi">"trông ổn, đánh dấu approved"; đặt approved không có owner + ngày</span></span></td>
+          <td>GATE-NEVER-ASSUME (CLAUDE.md)</td>
+        </tr>
+        <tr>
+          <td><code>DEC-&lt;n&gt;</code></td>
+          <td><span class="en">A recorded PO ruling in <code>decisions.md</code>. Created when the PO resolves a contradiction, approves a critique finding, or makes a scope call. Authoritative home for ruled drift — prevents re-litigating settled calls. Status: <code>active</code> or <code>superseded</code>.</span><span class="vi">Một phán quyết PO đã ghi trong <code>decisions.md</code>. Được tạo khi PO giải quyết mâu thuẫn, duyệt phát hiện critique, hoặc đưa ra quyết định phạm vi. Nơi lưu trữ chính thức cho drift đã giải quyết — ngăn tranh luận lại các cuộc đã chốt. Trạng thái: <code>active</code> hoặc <code>superseded</code>.</span></td>
+          <td><span class="x"><span class="en">calling a DEC a "note" or "comment"; auto-creating a DEC without PO confirm</span><span class="vi">gọi DEC là "ghi chú" hay "comment"; tự tạo DEC mà không có xác nhận PO</span></span></td>
+          <td><code>--decision</code> flag; GATE-NO-SILENT-REVERSAL</td>
+        </tr>
+        <tr>
+          <td><code>OUT-&lt;n&gt;</code></td>
+          <td><span class="en">An outcome record in <code>outcomes.md</code>. Created via <code>--learn</code> to capture a PO-declared measurement of a BRD goal (target vs actual). A <code>miss</code> on an approved goal is surfaced; never auto-edited.</span><span class="vi">Bản ghi kết quả trong <code>outcomes.md</code>. Được tạo qua <code>--learn</code> để ghi lại đo lường do PO khai của một mục tiêu BRD (mục tiêu so với thực tế). Một <code>miss</code> trên mục tiêu đã duyệt được nêu ra; không bao giờ tự sửa.</span></td>
+          <td><span class="x"><span class="en">using OUT-n as a market-success metric (it is PO-declared, offline)</span><span class="vi">dùng OUT-n làm chỉ số thành công thị trường (nó do PO khai, offline)</span></span></td>
+          <td><code>--learn</code> flag; <code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>no-silent-reversal</code></td>
+          <td><span class="en">The rule that a new claim contradicting an <code>approved</code> artifact is a stop point. The harness surfaces the contradiction verbatim and offers three choices — Keep · Change (re-approve, owner + date) · Hybrid — never auto-flipping. Backed by GATE-NO-SILENT-REVERSAL in CLAUDE.md.</span><span class="vi">Quy tắc rằng một khẳng định mới mâu thuẫn với artifact <code>approved</code> là điểm dừng. Harness nêu mâu thuẫn nguyên văn và đưa ra ba lựa chọn — Giữ · Đổi (duyệt lại, owner + ngày) · Kết hợp — không bao giờ tự đảo. Được bảo vệ bởi GATE-NO-SILENT-REVERSAL trong CLAUDE.md.</span></td>
+          <td><span class="x"><span class="en">"I'll fix the contradiction"; "tidying up approved wording"</span><span class="vi">"Tôi sẽ sửa mâu thuẫn"; "chỉnh văn đã duyệt cho gọn"</span></span></td>
+          <td>GATE-NO-SILENT-REVERSAL (CLAUDE.md)</td>
+        </tr>
+        <tr>
+          <td><code>frontmatter-as-source-of-truth</code></td>
+          <td><span class="en">Operating Principle 1: scripts parse YAML frontmatter to determine structure, status, IDs, and relationships. The LLM never infers structure from headings or prose layout. Frontmatter wins over headings when they conflict.</span><span class="vi">Nguyên tắc vận hành 1: script phân tích frontmatter YAML để xác định cấu trúc, trạng thái, ID và mối quan hệ. LLM không bao giờ suy cấu trúc từ tiêu đề hay bố cục văn. Frontmatter thắng tiêu đề khi chúng mâu thuẫn.</span></td>
+          <td><span class="x"><span class="en">"the heading says…" as a structural claim; inferring status from section titles</span><span class="vi">"tiêu đề ghi…" như khẳng định cấu trúc; suy trạng thái từ tiêu đề mục</span></span></td>
+          <td>Principle 1 (CLAUDE.md)</td>
+        </tr>
+        <tr>
+          <td><code>validate</code></td>
+          <td><span class="en">The two-pass check run by <code>--validate</code>: (1) structural scripts (orphans, missing AC, ID integrity, broken trace, timing drift) → (2) LLM judgment (INVEST quality, vagueness, core-value drift, duplication, contradiction). Deterministic and reproducible — used as a CI gate.</span><span class="vi">Kiểm tra hai lượt do <code>--validate</code> chạy: (1) script cấu trúc (mồ côi, thiếu AC, tính toàn vẹn ID, truy vết hỏng, lệch thời gian) → (2) nhận định LLM (chất lượng INVEST, mơ hồ, lệch core-value, trùng lặp, mâu thuẫn). Tất định và có thể tái tạo — dùng làm cổng CI.</span></td>
+          <td><span class="x"><span class="en">conflating validate with critique (validate = structure; critique = opinion)</span><span class="vi">trộn validate với critique (validate = cấu trúc; critique = quan điểm)</span></span></td>
+          <td><code>--validate</code> flag; <code>product-spec</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>core-value</code></td>
+          <td><span class="en">The central value proposition a story or epic must deliver to be worth building — a key concept in LLM-layer validation and critique. Drift from core-value is a findable violation in both <code>--validate</code> and all four critique lenses.</span><span class="vi">Đề xuất giá trị trung tâm mà một story hoặc epic phải mang lại để đáng xây dựng — khái niệm then chốt trong lớp nhận định LLM và critique. Lệch khỏi core-value là vi phạm có thể phát hiện trong cả <code>--validate</code> lẫn bốn lăng kính critique.</span></td>
+          <td><span class="x"><span class="en">unmeasurable adjectives like "great", "excellent", "best-in-class" as core-value evidence</span><span class="vi">tính từ không đo được như "tuyệt vời", "xuất sắc", "tốt nhất" làm bằng chứng core-value</span></span></td>
+          <td><code>product-spec</code> SKILL.md; GATE-NEVER-ASSUME</td>
+        </tr>
+        <tr>
+          <td><code>in / out scope</code></td>
+          <td><span class="en">Frontmatter <code>scope:</code> field values: <code>in</code> (committed), <code>out</code> (deliberately excluded), or <code>core-value</code> (must-have for the central value prop). Scope is always the PO's call — the harness never sets it autonomously.</span><span class="vi">Giá trị trường <code>scope:</code> trong frontmatter: <code>in</code> (đã cam kết), <code>out</code> (loại trừ có chủ ý), hoặc <code>core-value</code> (bắt buộc cho đề xuất giá trị trung tâm). Phạm vi luôn là quyết định của PO — harness không bao giờ tự đặt.</span></td>
+          <td><span class="x"><span class="en">"scope is obvious, I'll set it"; assuming in/out without explicit PO answer</span><span class="vi">"phạm vi rõ rồi, tôi sẽ đặt"; giả định in/out không có câu trả lời rõ ràng từ PO</span></span></td>
+          <td>GATE-NEVER-ASSUME (CLAUDE.md)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── C. Critique concepts ── -->
+    <h2 class="sectitle" id="gl-critique"><span class="en">Critique concepts</span><span class="vi">Khái niệm critique</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">The opinion layer: non-deterministic, never gates CI, never edits the spec.</span><span class="vi">Lớp quan điểm: không tất định, không bao giờ là cổng CI, không bao giờ sửa spec.</span></td></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>critique lens</code></td>
+          <td><span class="en">One of four read-only sub-agent perspectives that each critique a spec from a different angle: <b>product</b> (JTBD / Kano / RICE), <b>tech</b> (INVEST / NFRs / testability), <b>market</b> (competitive landscape / moat / unit-economics), <b>craft</b> (writing quality / term drift / vague adjectives). All four run in parallel; a consolidator merges them.</span><span class="vi">Một trong bốn góc nhìn sub-agent chỉ-đọc, mỗi cái critique spec từ một góc độ khác: <b>product</b> (JTBD / Kano / RICE), <b>tech</b> (INVEST / NFR / có thể kiểm thử), <b>market</b> (cạnh tranh / lợi thế / kinh tế đơn vị), <b>craft</b> (chất lượng viết / trôi thuật ngữ / tính từ mơ hồ). Cả bốn chạy song song; một consolidator hợp nhất chúng.</span></td>
+          <td><span class="x"><span class="en">mixing lens output into the spec directly; calling a lens finding a "validation error"</span><span class="vi">trộn đầu ra lăng kính vào spec trực tiếp; gọi phát hiện lăng kính là "lỗi validate"</span></span></td>
+          <td><code>product-spec-critique</code> SKILL.md</td>
+        </tr>
+        <tr>
+          <td><code>voice level</code></td>
+          <td><span class="en">A 1–9 intensity scale for the critique's sarcasm and register. Default 5 (<code>--no-mercy</code>). Levels 1–4: artifact-only, no personal attack. Level 5: brutal but grounded. Levels 6–9: opt-in danger gate — 6 attacks the author, 7–9 escalate Vietnamese register (<code>ông/tôi</code> → <code>mày/tao</code>); level 9 adds work-targeted profanity and re-confirms on every run.</span><span class="vi">Thang cường độ 1–9 cho sự châm biếm và giọng điệu của critique. Mặc định 5 (<code>--no-mercy</code>). Mức 1–4: chỉ nhắm artifact, không công kích cá nhân. Mức 5: gắt nhưng có căn cứ. Mức 6–9: cổng nguy hiểm opt-in — 6 tấn công tác giả, 7–9 leo thang đại từ tiếng Việt (<code>ông/tôi</code> → <code>mày/tao</code>); mức 9 thêm chửi thề nhắm-vào-công-việc và hỏi lại mỗi lần chạy.</span></td>
+          <td><span class="x"><span class="en">"dialing up the voice" without triggering the danger gate; treating voice level as a setting that can skip the confirm</span><span class="vi">"tăng mức giọng" không qua cổng nguy hiểm; coi voice level là cài đặt có thể bỏ xác nhận</span></span></td>
+          <td><code>product-spec-critique</code> SKILL.md; <code>--level</code> flag</td>
+        </tr>
+        <tr>
+          <td><code>universal-harm floor</code></td>
+          <td><span class="en">The non-removable safety boundary that applies at ALL voice levels, even 9, even with PO consent. The critique attacks the <b>work</b> — never the person. Out at every level: real violence threats, protected-characteristic slurs, self-harm content, sexual content, family-targeted profanity. The target of the line — work vs person — is the criterion, not the harshness.</span><span class="vi">Ranh giới an toàn không-gỡ-được áp dụng ở MỌI mức giọng, kể cả 9, kể cả khi PO đồng ý. Critique nhắm <b>công việc</b> — không bao giờ nhắm người. Bị loại ở mọi mức: đe dọa bạo lực thật, lăng mạ đặc điểm được bảo vệ, nội dung tự hại, nội dung tình dục, chửi thề nhắm gia đình. Đối tượng của dòng chữ — công việc vs con người — mới là tiêu chí, không phải độ gay gắt.</span></td>
+          <td><span class="x"><span class="en">"the floor is lowerable at level 9 with consent"; treating family-target or slurs as work-criticism</span><span class="vi">"floor có thể hạ ở mức 9 nếu đồng ý"; coi lăng mạ gia đình hay phân biệt chủng tộc là phê bình công việc</span></span></td>
+          <td><code>product-spec-critique</code> SKILL.md; <code>references/voice-and-tone.md</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── D. Release concepts ── -->
+    <h2 class="sectitle" id="gl-release"><span class="en">Release concepts</span><span class="vi">Khái niệm release</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">How the harness packs, fingerprints, and ships the bundle — determinism and the safety filter.</span><span class="vi">Cách harness đóng gói, lấy vân tay và ship bundle — tính tất định và bộ lọc an toàn.</span></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>deterministic pack</code></td>
+          <td><span class="en">The guarantee that the same inputs produce a byte-identical <code>tar.gz</code> regardless of when or where it is built. Achieved by: PAX format, sorted walk, <code>mtime=0</code>, <code>uid=gid=0</code>, gzip header <code>mtime=0</code>. A <code>.sha256</code> sidecar accompanies every bundle for verification. Pinned to commit via <code>SOURCE_DATE_EPOCH</code> in CI.</span><span class="vi">Đảm bảo rằng cùng đầu vào tạo ra <code>tar.gz</code> byte-identical bất kể xây dựng khi nào hay ở đâu. Đạt được bằng: định dạng PAX, duyệt có sắp xếp, <code>mtime=0</code>, <code>uid=gid=0</code>, gzip header <code>mtime=0</code>. Một sidecar <code>.sha256</code> đi kèm mọi bundle để xác minh. Ghim theo commit qua <code>SOURCE_DATE_EPOCH</code> trong CI.</span></td>
+          <td><span class="x"><span class="en">"should be the same" (without the structural guarantees above); manually running <code>gh release create</code> (SHA differs from CI build)</span><span class="vi">"nên giống nhau" (không có đảm bảo cấu trúc trên); chạy thủ công <code>gh release create</code> (SHA khác build CI)</span></span></td>
+          <td><code>release</code> SKILL.md; Determinism section</td>
+        </tr>
+        <tr>
+          <td><code>safety filter</code></td>
+          <td><span class="en">The always-on layer inside the pack builder that unconditionally drops <code>.env</code> files, secrets, private keys, <code>.git/</code>, runtime caches, and session state from any bundle — regardless of what manifest or flags request. Non-removable via any flag.</span><span class="vi">Lớp luôn-bật bên trong pack builder luôn loại bỏ vô điều kiện các file <code>.env</code>, secrets, khóa riêng tư, <code>.git/</code>, bộ nhớ đệm runtime, và trạng thái phiên khỏi mọi bundle — bất kể manifest hay cờ yêu cầu gì. Không thể gỡ bỏ bằng bất kỳ cờ nào.</span></td>
+          <td><span class="x"><span class="en">"I'll include the .env for convenience"; a flag that disables the safety filter</span><span class="vi">"Tôi sẽ thêm .env cho tiện"; một cờ tắt bộ lọc an toàn</span></span></td>
+          <td><code>release</code> SKILL.md; <code>references/safety-rules.md</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── E. Telemetry concepts ── -->
+    <h2 class="sectitle" id="gl-telemetry"><span class="en">Telemetry concepts</span><span class="vi">Khái niệm telemetry</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">What telemetry measures, what it deliberately does not, and the honesty boundary it must keep.</span><span class="vi">Những gì telemetry đo, những gì nó cố ý không đo, và ranh giới trung thực nó phải giữ.</span></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>telemetry lens</code></td>
+          <td><span class="en">One of 11 named read-only views over local telemetry sinks: <code>usage</code> · <code>session</code> · <code>health</code> · <code>reliability</code> · <code>workflow</code> · <code>validate</code> · <code>memory</code> · <code>product_memory</code> · <code>artifact_heat</code> · <code>forensics</code> · <code>all</code>. Each lens reads from specific <code>.jsonl</code> sinks and surfaces a narrated report. Below ~5 data points a lens shows raw counts + "chưa đủ dữ liệu" and suppresses recommendations.</span><span class="vi">Một trong 11 góc nhìn chỉ-đọc đã đặt tên trên các sink telemetry cục bộ: <code>usage</code> · <code>session</code> · <code>health</code> · <code>reliability</code> · <code>workflow</code> · <code>validate</code> · <code>memory</code> · <code>product_memory</code> · <code>artifact_heat</code> · <code>forensics</code> · <code>all</code>. Mỗi lăng kính đọc từ các sink <code>.jsonl</code> cụ thể và hiển thị báo cáo được diễn giải. Dưới ~5 điểm dữ liệu một lăng kính hiện đếm thô + "chưa đủ dữ liệu" và không đưa ra gợi ý.</span></td>
+          <td><span class="x"><span class="en">inventing a trend when data is sparse; calling a lens a "report generator"</span><span class="vi">bịa ra xu hướng khi dữ liệu ít; gọi lăng kính là "bộ tạo báo cáo"</span></span></td>
+          <td><code>telemetry</code> SKILL.md; Low-volume gate section</td>
+        </tr>
+        <tr>
+          <td><code>validate proxy</code></td>
+          <td><span class="en">What the <code>--lens validate</code> actually measures: "did the last <code>--validate</code> run pass?" — an internal structural quality signal. It does NOT mean "users adopted the feature" or "the product is succeeding in the market". The proxy label is mandatory in every telemetry narration.</span><span class="vi">Những gì <code>--lens validate</code> thực sự đo: "lần chạy <code>--validate</code> cuối có pass không?" — tín hiệu chất lượng cấu trúc nội bộ. Nó KHÔNG có nghĩa là "người dùng đã chấp nhận tính năng" hay "sản phẩm đang thành công trên thị trường". Nhãn proxy là bắt buộc trong mọi diễn giải telemetry.</span></td>
+          <td><span class="x"><span class="en">"validate passed means the product is working"; equating structural pass with market success</span><span class="vi">"validate pass nghĩa là sản phẩm đang hoạt động"; đồng nhất pass cấu trúc với thành công thị trường</span></span></td>
+          <td><code>telemetry</code> SKILL.md; Narration &amp; honesty gate</td>
+        </tr>
+        <tr>
+          <td><code>fail-open</code></td>
+          <td><span class="en">Telemetry hook behaviour: on any internal error, the hook stays silent and always continues — never blocks a tool call or session. The 5 telemetry sink hooks are fail-open by design; the 2 enforcement hooks are fail-closed (they block on violation).</span><span class="vi">Hành vi hook telemetry: khi xảy ra lỗi nội bộ, hook giữ im lặng và luôn tiếp tục — không bao giờ chặn lời gọi công cụ hay phiên. 5 sink hook telemetry là fail-open theo thiết kế; 2 hook thực thi là fail-closed (chúng chặn khi vi phạm).</span></td>
+          <td><span class="x"><span class="en">a telemetry hook that exits non-zero on data error</span><span class="vi">một hook telemetry thoát non-zero khi có lỗi dữ liệu</span></span></td>
+          <td><code>telemetry</code> SKILL.md; Hook config section</td>
+        </tr>
+        <tr>
+          <td><code>chưa đủ dữ liệu</code></td>
+          <td><span class="en">Telemetry's mandatory low-volume gate phrase. When fewer than ~5 data points exist for a lens, the skill shows raw counts and this phrase, and suppresses all recommendations. On a new or thin repo, most lenses will be gated — the skill says so plainly rather than inventing trends.</span><span class="vi">Cụm từ cổng khối lượng thấp bắt buộc của telemetry. Khi có ít hơn ~5 điểm dữ liệu cho một lăng kính, skill hiện đếm thô và cụm từ này, và bỏ mọi gợi ý. Trên repo mới hay mỏng, hầu hết lăng kính sẽ bị gated — skill nói thẳng như vậy thay vì bịa ra xu hướng.</span></td>
+          <td><span class="x"><span class="en">extrapolating a pattern from 1–2 data points; soft-framing sparse data as a "trend"</span><span class="vi">suy ra xu hướng từ 1–2 điểm dữ liệu; gọi nhẹ dữ liệu thưa là "xu hướng"</span></span></td>
+          <td><code>telemetry</code> SKILL.md; Low-volume gate section</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ── F. Structural principles ── -->
+    <h2 class="sectitle" id="gl-principles"><span class="en">Structural principles</span><span class="vi">Các nguyên tắc cấu trúc</span></h2>
+    <p class="muted" style="margin:-4px 0 14px"><span class="en">The five operating principles from CLAUDE.md that shape how all four skills behave.</span><span class="vi">Năm nguyên tắc vận hành từ CLAUDE.md định hình cách tất cả bốn skill hoạt động.</span></p>
+    <table class="modetable gloss" style="--ac:var(--rel)">
+      <thead><tr><th><span class="en">Term</span><span class="vi">Thuật ngữ</span></th><th><span class="en">Definition</span><span class="vi">Định nghĩa</span></th><th><span class="en">Forbidden wording</span><span class="vi">Cách nói bị cấm</span></th><th><span class="en">Backing</span><span class="vi">Chỗ dựa</span></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>script vs LLM split</code></td>
+          <td><span class="en">Principle 3: scripts handle graph traversal, orphan detection, ID integrity, and structural counts (deterministic, reproducible). The LLM judges prose and alignment: INVEST quality, vagueness, core-value drift, duplication, contradiction. Scripts run first; the LLM never recomputes a structural count.</span><span class="vi">Nguyên tắc 3: script xử lý duyệt đồ thị, phát hiện mồ côi, tính toàn vẹn ID và đếm cấu trúc (tất định, có thể tái tạo). LLM nhận định văn và căn chỉnh: chất lượng INVEST, mơ hồ, lệch core-value, trùng lặp, mâu thuẫn. Script chạy trước; LLM không bao giờ tính lại số đếm cấu trúc.</span></td>
+          <td><span class="x"><span class="en">"the LLM counted N orphans" (counts are the script's job)</span><span class="vi">"LLM đếm được N mồ côi" (đếm là việc của script)</span></span></td>
+          <td>Principle 3 (CLAUDE.md)</td>
+        </tr>
+        <tr>
+          <td><code>DRY — one home per fact</code></td>
+          <td><span class="en">Principle 2: every fact has one authoritative home in the spec tree. Cross-reference by ID; never duplicate prose across artifacts. The BRD goal metric lives in <code>brd.md</code>, not restated in each PRD.</span><span class="vi">Nguyên tắc 2: mỗi sự kiện có một nơi chính thống trong cây spec. Tham chiếu chéo bằng ID; không bao giờ nhân đôi văn xuôi giữa các artifact. Chỉ số mục tiêu BRD nằm trong <code>brd.md</code>, không được nhắc lại trong từng PRD.</span></td>
+          <td><span class="x"><span class="en">copy-pasting a goal metric into every PRD; maintaining "convenience copies" of approved text</span><span class="vi">sao chép-dán chỉ số mục tiêu vào mọi PRD; duy trì "bản sao tiện lợi" của văn đã duyệt</span></span></td>
+          <td>Principle 2 (CLAUDE.md)</td>
+        </tr>
+        <tr>
+          <td><code>never overwrite PO prose</code></td>
+          <td><span class="en">Principle 4: on <code>--update</code>, the harness computes the downstream affected set, flags those nodes for PO review, and never auto-rewrites prose. Regeneration is opt-in per node, after the PO sees the flag.</span><span class="vi">Nguyên tắc 4: khi <code>--update</code>, harness tính tập node xuôi chiều bị ảnh hưởng, gắn cờ các node đó cho PO xem, và không bao giờ tự ghi lại văn. Tái tạo là opt-in theo từng node, sau khi PO thấy cờ.</span></td>
+          <td><span class="x"><span class="en">"I'll tidy up their wording"; silently regenerating an approved section</span><span class="vi">"Tôi sẽ chỉnh văn của họ"; tự tạo lại một mục đã duyệt ngầm</span></span></td>
+          <td>Principle 4 (CLAUDE.md)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="honest" style="margin-top:30px">
+      <div class="h">⚖️ <span class="en">Why a forbidden-wording column</span><span class="vi">Vì sao có cột cách-nói-bị-cấm</span></div>
+      <ul>
+        <li><span class="en">Each banned phrase once caused a real operational problem — approving without a date, writing telemetry as "the product is working", treating voice level 9 as having no floor. The wrong word invites the wrong trust.</span><span class="vi">Mỗi cụm từ bị cấm từng gây ra vấn đề vận hành thực sự — duyệt không có ngày, viết telemetry kiểu "sản phẩm đang hoạt động", coi voice level 9 là không có ranh giới. Từ sai mời gọi niềm tin sai.</span></li>
+        <li><span class="en">Evidence (IDs, file names, GATE names) is never translated — it points at the same line of source in any language.</span><span class="vi">Bằng chứng (ID, tên file, tên GATE) không bao giờ được dịch — nó trỏ về cùng một dòng nguồn ở mọi ngôn ngữ.</span></li>
+      </ul>
+    </div>
+
+    <div class="faq" style="--ac:var(--rel);margin-top:28px">
+      <details><summary><span class="en">What is the difference between validate and critique?</span><span class="vi">Validate và critique khác nhau thế nào?</span></summary><div class="fa"><span class="en"><code>--validate</code> is deterministic and reproducible — it checks structure (orphans, AC, ID integrity) then layers LLM judgment (INVEST, core-value drift). It is the CI gate. <code>product-spec-critique</code> is opinionated and non-deterministic — it says whether the spec is any <i>good</i>: why it would die in the market, whether it is a me-too, whether the writing holds up. It never gates CI.</span><span class="vi"><code>--validate</code> tất định và có thể tái tạo — nó kiểm tra cấu trúc (mồ côi, AC, tính toàn vẹn ID) rồi thêm nhận định LLM (INVEST, lệch core-value). Đây là cổng CI. <code>product-spec-critique</code> có quan điểm và không tất định — nó nói spec có <i>tốt</i> không: vì sao nó sẽ chết trên thị trường, nó có phải me-too không, chữ nghĩa có vững không. Không bao giờ là cổng CI.</span></div></details>
+      <details><summary><span class="en">When does a DEC get created?</span><span class="vi">Khi nào DEC được tạo?</span></summary><div class="fa"><span class="en">A <code>DEC-&lt;n&gt;</code> is written to <code>decisions.md</code> via <code>decision_register.py</code> when: (1) the PO uses <code>--decision</code> to log a call, (2) a no-silent-reversal stop resolves with Keep/Change/Hybrid, or (3) the PO confirms a DEC-worthy finding from a <code>product-spec-critique</code> report during <code>--apply-critique</code>. The harness never auto-writes a DEC.</span><span class="vi">Một <code>DEC-&lt;n&gt;</code> được ghi vào <code>decisions.md</code> qua <code>decision_register.py</code> khi: (1) PO dùng <code>--decision</code> để ghi một phán quyết, (2) một điểm dừng không-đảo-ngầm giải quyết bằng Giữ/Đổi/Kết hợp, hoặc (3) PO xác nhận một phát hiện xứng đáng-DEC từ báo cáo <code>product-spec-critique</code> trong <code>--apply-critique</code>. Harness không bao giờ tự ghi DEC.</span></div></details>
+      <details><summary><span class="en">Why does telemetry always end with "Cái này KHÔNG đo được"?</span><span class="vi">Vì sao telemetry luôn kết thúc bằng "Cái này KHÔNG đo được"?</span></summary><div class="fa"><span class="en">The honesty gate in <code>references/narration-contract.md</code> mandates it. Telemetry measures <i>machinery health</i> — invocations, script error rates, subagent outcomes. It does not and cannot measure whether the product is winning in the market, whether users adopted a feature, or whether a decision was correct. Naming the boundary prevents the PO from over-reading the numbers.</span><span class="vi">Cổng trung thực trong <code>references/narration-contract.md</code> bắt buộc điều này. Telemetry đo <i>sức khỏe máy móc</i> — số lần gọi, tỷ lệ lỗi script, kết quả subagent. Nó không thể và không đo được liệu sản phẩm có đang thắng trên thị trường không, liệu người dùng có chấp nhận tính năng không, hay liệu một quyết định có đúng không. Nêu rõ ranh giới ngăn PO đọc quá mức các con số.</span></div></details>
+    </div>
+  </div>
+</section>

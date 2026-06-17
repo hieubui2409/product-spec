@@ -1,0 +1,303 @@
+<!-- ===================== JOURNEY ===================== -->
+<section id="journey-intro">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--gold)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <path d="M8 32 L20 8 L32 32" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M13 24h14" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="20" cy="8" r="3" fill="var(--gold)"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who"><span class="en">Define → Validate → Critique → Ship → Observe → back again</span><span class="vi">Định nghĩa → Kiểm tra → Phản biện → Đóng gói → Quan sát → quay lại</span></div>
+        <h2><span class="en">The full journey</span><span class="vi">Hành trình đầy đủ</span></h2>
+      </div>
+    </div>
+    <div class="divider" style="--ac:var(--gold)"></div>
+    <p class="lead"><span class="en">This page follows <code>acme-shop</code> — the sample e-commerce spec — through every stage of the harness loop: from a blank canvas to a validated, critiqued, packaged, and observed spec. Each stage shows what fires under the hood, what artifact it produces, and what the honest limits of the check are.</span><span class="vi">Trang này theo <code>acme-shop</code> — spec thương mại điện tử mẫu — qua từng giai đoạn của vòng lặp harness: từ canvas trống đến spec đã kiểm tra, phản biện, đóng gói, và quan sát. Mỗi giai đoạn cho thấy cái gì kích hoạt bên trong, nó tạo ra artifact gì, và giới hạn trung thực của kiểm tra là gì.</span></p>
+  </div>
+</section>
+
+<!-- ===== The loop ===== -->
+<section id="journey-the-loop">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">THE CLOSED LOOP</span><span class="vi">VÒNG KHÉP KÍN</span></div>
+    <h2 class="sectitle" id="the-loop"><span class="en">One pipeline, one feedback loop</span><span class="vi">Một quy trình, một vòng phản hồi</span></h2>
+    <p><span class="en">Raw ideas enter the pipeline as a Vision statement. They exit as a structured, traceable, validated, critiqued, and packaged spec. The loop does not end at Ship — telemetry reads the rig's health back, and critique findings flow back into recorded decisions via <code>--apply-critique</code>. <code>--learn</code> closes the outermost ring: spec → build → measure → learn.</span><span class="vi">Ý tưởng thô đi vào quy trình dưới dạng tuyên bố Vision. Chúng ra ngoài dưới dạng spec có cấu trúc, có truy vết, đã kiểm tra, bị phản biện, và đã đóng gói. Vòng lặp không kết thúc ở Ship — telemetry đọc sức khỏe của bộ máy ngược về, và phát hiện phản biện chảy ngược vào các quyết định được ghi qua <code>--apply-critique</code>. <code>--learn</code> khép vòng ngoài cùng: spec → build → đo → học.</span></p>
+
+    <div class="stats" style="margin-top:22px">
+      <div class="stat"><div class="n" data-count="5">5</div><div class="l"><span class="en">pipeline stages</span><span class="vi">giai đoạn quy trình</span></div></div>
+      <div class="stat"><div class="n" data-count="4">4</div><div class="l"><span class="en">coordinated skills</span><span class="vi">skill phối hợp</span></div></div>
+      <div class="stat"><div class="n" data-count="7">7</div><div class="l"><span class="en">critique sub-agents</span><span class="vi">sub-agent phản biện</span></div></div>
+      <div class="stat"><div class="n" data-count="0">0</div><div class="l"><span class="en">network calls at runtime</span><span class="vi">lần gọi mạng khi chạy</span></div></div>
+    </div>
+
+    <div class="walk" style="margin-top:24px">
+      <div class="wstep v">
+        <span class="wtag">01</span>
+        <div class="wt"><span class="en">Define</span><span class="vi">Định nghĩa</span></div>
+        <div class="wd"><span class="en">product-spec interview → <code>docs/product/</code></span><span class="vi">phỏng vấn product-spec → <code>docs/product/</code></span></div>
+      </div>
+      <div class="wstep b">
+        <span class="wtag">02</span>
+        <div class="wt"><span class="en">Validate</span><span class="vi">Kiểm tra</span></div>
+        <div class="wd"><span class="en">scripts + LLM → structural + judgment gate</span><span class="vi">script + LLM → cổng cấu trúc + nhận định</span></div>
+      </div>
+      <div class="wstep p">
+        <span class="wtag">03</span>
+        <div class="wt"><span class="en">Critique</span><span class="vi">Phản biện</span></div>
+        <div class="wd"><span class="en">4 lens sub-agents → one critique report</span><span class="vi">4 sub-agent lăng kính → một báo cáo phản biện</span></div>
+      </div>
+      <div class="wstep e">
+        <span class="wtag">04</span>
+        <div class="wt"><span class="en">Ship</span><span class="vi">Đóng gói</span></div>
+        <div class="wd"><span class="en">release → deterministic tar.gz + SHA-256</span><span class="vi">release → tar.gz tất định + SHA-256</span></div>
+      </div>
+      <div class="wstep s">
+        <span class="wtag">05</span>
+        <div class="wt"><span class="en">Observe</span><span class="vi">Quan sát</span></div>
+        <div class="wd"><span class="en">telemetry → usage + health narration</span><span class="vi">telemetry → tường thuật mức dùng + sức khỏe</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Stage 01: Define ===== -->
+<section id="journey-define">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STAGE 01</span><span class="vi">GIAI ĐOẠN 01</span></div>
+    <h2 class="sectitle" id="stage-define"><span class="en">Define — Vision → BRD → PRD → Epic → Story</span><span class="vi">Định nghĩa — Vision → BRD → PRD → Epic → Story</span></h2>
+    <p><span class="en">The <a href="@product-spec">product-spec</a> skill runs a phased interview. For <code>acme-shop</code>, the PO answers questions about the north-star goal, the business objective, and the checkout feature area — and the skill builds the full five-layer hierarchy, each node traceable to its parent. Output lands entirely in <code>docs/product/</code>; the skill never writes outside that folder.</span><span class="vi">Skill <a href="@product-spec">product-spec</a> chạy một cuộc phỏng vấn theo giai đoạn. Với <code>acme-shop</code>, PO trả lời câu hỏi về mục tiêu north-star, mục tiêu kinh doanh, và vùng tính năng checkout — và skill xây dựng cây năm tầng đầy đủ, mỗi node có thể truy ngược đến cha. Đầu ra hoàn toàn ở <code>docs/product/</code>; skill không bao giờ ghi ra ngoài thư mục đó.</span></p>
+
+    <div class="cmdline" style="margin-top:14px"><code>/cleanmatic:product-spec</code></div>
+
+    <p class="muted" style="margin-top:16px;font-size:.9rem"><span class="en">The tree below is the <code>acme-shop</code> spec after the Define stage — built from the real example in <code>examples/acme-shop</code> via <code>--viz tree --format ascii</code>:</span><span class="vi">Cây bên dưới là spec <code>acme-shop</code> sau giai đoạn Định nghĩa — được xây từ ví dụ thật trong <code>examples/acme-shop</code> qua <code>--viz tree --format ascii</code>:</span></p>
+    <div class="term">
+      <div class="tbar"><i></i><i></i><i></i><span class="tcmd">visualize.py --root examples/acme-shop --view tree --format ascii</span></div>
+      <!--VIZ_TREE-->
+    </div>
+
+    <div class="honest" style="margin-top:16px">
+      <div class="h">⚖️ <span class="en">Honest limit</span><span class="vi">Giới hạn trung thực</span></div>
+      <ul>
+        <li><span class="en">The skill never sets <code>status: approved</code> on its own — that requires explicit PO sign-off with owner + date.</span><span class="vi">Skill không bao giờ tự đặt <code>status: approved</code> — điều đó đòi hỏi PO ký duyệt rõ ràng với chủ + ngày.</span></li>
+        <li><span class="en">It never overwrites PO prose on <code>--update</code> — it flags affected nodes and asks first.</span><span class="vi">Nó không bao giờ ghi đè văn PO khi <code>--update</code> — nó gắn cờ node bị ảnh hưởng và hỏi trước.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Stage 02: Validate ===== -->
+<section id="journey-validate">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STAGE 02</span><span class="vi">GIAI ĐOẠN 02</span></div>
+    <h2 class="sectitle" id="stage-validate"><span class="en">Validate — scripts first, LLM judges</span><span class="vi">Kiểm tra — script trước, LLM nhận định</span></h2>
+    <p><span class="en">Validation runs in two passes. Deterministic scripts catch the structural failures that do not require judgment: orphaned nodes, missing acceptance criteria, broken ID traces, persona drift. The LLM layer then adds the judgment a script cannot: INVEST compliance, vague requirements, core-value drift, hidden duplicates. See the <a href="@validation">validation</a> page for the full rule list.</span><span class="vi">Kiểm tra chạy theo hai lượt. Script tất định bắt lỗi cấu trúc không cần nhận định: node mồ côi, thiếu tiêu chí chấp nhận, truy vết ID gãy, lệch persona. Lớp LLM sau đó thêm nhận định mà script không làm được: tuân thủ INVEST, yêu cầu mơ hồ, lệch giá trị cốt lõi, trùng lặp ẩn. Xem trang <a href="@validation">validation</a> để biết danh sách quy tắc đầy đủ.</span></p>
+
+    <div class="cmdline" style="margin-top:14px"><code>/cleanmatic:product-spec --validate</code></div>
+
+    <div class="cards grid-2" style="margin-top:18px">
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Structural (scripts — deterministic)</span><span class="vi">Cấu trúc (script — tất định)</span></h3>
+        <div class="chipgroup" style="margin-top:8px">
+          <div class="chips">
+            <span class="chip">orphans</span>
+            <span class="chip">missing AC</span>
+            <span class="chip">ID integrity</span>
+            <span class="chip">broken trace</span>
+            <span class="chip">timing drift</span>
+            <span class="chip">undescribed persona</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Judgment (LLM — advisory)</span><span class="vi">Nhận định (LLM — advisory)</span></h3>
+        <div class="chipgroup" style="margin-top:8px">
+          <div class="chips">
+            <span class="chip">INVEST</span>
+            <span class="chip">vagueness</span>
+            <span class="chip">core-value drift</span>
+            <span class="chip">duplication</span>
+            <span class="chip">contradiction</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gate" style="margin-top:18px">
+      <b><span class="en">No-silent-reversal gate.</span><span class="vi">Cổng không-đảo-ngầm.</span></b>
+      <span class="en"> A new claim contradicting an <code>approved</code> artifact is surfaced verbatim — the harness never auto-fixes it. The PO chooses:</span>
+      <span class="vi"> Một khẳng định mới mâu thuẫn với tài liệu <code>approved</code> được nêu nguyên văn — harness không bao giờ tự sửa. PO chọn:</span>
+      <div class="tri"><span class="keep">Keep</span><span class="change">Change + re-approve</span><span class="hybrid">Hybrid</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Stage 03: Critique ===== -->
+<section id="journey-critique">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STAGE 03</span><span class="vi">GIAI ĐOẠN 03</span></div>
+    <h2 class="sectitle" id="stage-critique"><span class="en">Critique — four lenses, one report</span><span class="vi">Phản biện — bốn lăng kính, một báo cáo</span></h2>
+    <p><span class="en"><code>--validate</code> tells you the spec is structurally sound. <a href="@critique">product-spec-critique</a> tells you whether it is any <em>good</em>. Four specialist sub-agents work in parallel, each reading the same spec through a different lens, then a consolidator merges their findings into one report — deduplicated, severity-ranked, with a concrete fix per finding. Every finding cites a real <code>ID:line</code>.</span><span class="vi"><code>--validate</code> nói spec vững về cấu trúc. <a href="@critique">product-spec-critique</a> nói nó có <em>tốt</em> không. Bốn sub-agent chuyên biệt làm việc song song, mỗi cái đọc cùng spec qua lăng kính khác nhau, rồi một consolidator gộp phát hiện của chúng thành một báo cáo — đã loại trùng, xếp hạng theo mức độ nghiêm trọng, kèm cách sửa cụ thể cho mỗi phát hiện. Mọi phát hiện trích dẫn <code>ID:dòng</code> thật.</span></p>
+
+    <div class="cmdline" style="margin-top:14px"><code>/cleanmatic:product-spec-critique</code></div>
+
+    <div class="lenses" style="margin-top:20px">
+      <div class="lens p">
+        <span class="lic">🎯</span>
+        <h4><span class="en">Product</span><span class="vi">Sản phẩm</span></h4>
+        <p class="fw"><span class="en">JTBD, Value Prop Canvas, Kano, RICE-integrity, riskiest assumption, opportunity-solution tree. Catches features nobody needs, fake personas, gold-plating.</span><span class="vi">JTBD, Value Prop Canvas, Kano, RICE-integrity, giả định rủi ro nhất, cây cơ hội-giải pháp. Bắt tính năng không ai cần, persona giả, gold-plating.</span></p>
+      </div>
+      <div class="lens t">
+        <span class="lic">⚙️</span>
+        <h4><span class="en">Tech</span><span class="vi">Kỹ thuật</span></h4>
+        <p class="fw"><span class="en">INVEST, Given-When-Then testability, hidden dependencies, complexity-vs-value, NFR gaps. Catches untestable AC and assume-success specs.</span><span class="vi">INVEST, testability Given-When-Then, phụ thuộc ẩn, complexity-vs-value, thiếu NFR. Bắt AC không kiểm thử được và spec giả định thành công.</span></p>
+      </div>
+      <div class="lens m">
+        <span class="lic">📈</span>
+        <h4><span class="en">Market</span><span class="vi">Thị trường</span></h4>
+        <p class="fw"><span class="en">Lean Canvas, Porter-light, Blue Ocean, unit-economics, JTBD-competition. Catches me-too features, no revenue path, no moat.</span><span class="vi">Lean Canvas, Porter-light, Blue Ocean, unit-economics, JTBD-competition. Bắt tính năng me-too, không có đường doanh thu, không có hào.</span></p>
+      </div>
+      <div class="lens c">
+        <span class="lic">✍️</span>
+        <h4><span class="en">Craft</span><span class="vi">Văn phong</span></h4>
+        <p class="fw"><span class="en">CSI-4Cs (clear/concise/consistent/correct), terminology drift, unmeasurable adjectives, show-don't-tell, typos. Catches wall-of-text and vague wording.</span><span class="vi">CSI-4Cs (rõ/súc tích/nhất quán/chính xác), drift thuật ngữ, tính từ không đo được, show-don't-tell, lỗi đánh máy. Bắt tường văn và từ ngữ mơ hồ.</span></p>
+      </div>
+    </div>
+
+    <div class="callout" style="--ac:var(--crit);margin-top:20px">
+      <span class="ci">🔁</span>
+      <div><span class="en"><b>Re-runs are cheap.</b> Critique the same scope twice and it reuses prior work — no spec change means nothing is re-analysed; a <code>--level</code> bump alone only re-renders the voice without re-running sub-agents. Use <code>--fresh</code> to force a full rebuild. See <a href="@critique">critique</a> and <a href="@voice-levels">voice levels</a> for the full contract.</span><span class="vi"><b>Chạy lại rẻ.</b> Phản biện cùng phạm vi hai lần thì nó tái dùng kết quả cũ — không đổi spec là không phân tích lại; chỉ tăng <code>--level</code> thì chỉ render lại giọng mà không chạy lại sub-agent. Dùng <code>--fresh</code> để buộc rebuild hoàn toàn. Xem <a href="@critique">critique</a> và <a href="@voice-levels">mức giọng</a> để biết hợp đồng đầy đủ.</span></div>
+    </div>
+
+    <div class="honest" style="margin-top:16px">
+      <div class="h">⚖️ <span class="en">Honest limit</span><span class="vi">Giới hạn trung thực</span></div>
+      <ul>
+        <li><span class="en">Critique never edits the spec — it writes one report, the spec stays untouched.</span><span class="vi">Phản biện không bao giờ sửa spec — nó chỉ ghi một báo cáo, spec không bị đụng đến.</span></li>
+        <li><span class="en">It is never a CI gate — it is opinionated and non-deterministic by design. <code>--validate</code> stays the reproducible gate.</span><span class="vi">Nó không bao giờ là cổng CI — về thiết kế nó có quan điểm và không tất định. <code>--validate</code> vẫn là cổng tái lập được.</span></li>
+        <li><span class="en">A finding only becomes a recorded decision (<code>DEC-&lt;n&gt;</code>) if the PO confirms it — critique never writes to memory on its own.</span><span class="vi">Một phát hiện chỉ trở thành quyết định được ghi (<code>DEC-&lt;n&gt;</code>) nếu PO xác nhận — phản biện không bao giờ tự ghi vào bộ nhớ.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Stage 04: Ship ===== -->
+<section id="journey-ship">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STAGE 04</span><span class="vi">GIAI ĐOẠN 04</span></div>
+    <h2 class="sectitle" id="stage-ship"><span class="en">Ship — deterministic, hashed, manifest-first</span><span class="vi">Đóng gói — tất định, có hash, manifest trước</span></h2>
+    <p><span class="en">The <a href="@release">release</a> skill bundles a curated subset of <code>.claude/</code> — skills, agents, hooks, rules, the shared eval-gate — into a versioned, deterministic tar.gz. The safety filter drops secrets, <code>.env</code> files, <code>.git/</code>, runtime caches, and session state unconditionally: no flag re-admits them. Each bundle ships with a <code>MANIFEST.json</code> (per-file SHA-256), an <code>INSTALL.md</code>, and multiplatform installers so the recipient runs once and is done.</span><span class="vi">Skill <a href="@release">release</a> bundle một tập con chọn lọc của <code>.claude/</code> — skill, agent, hook, rule, eval-gate dùng chung — thành tar.gz versioned, tất định. Bộ lọc an toàn loại secret, file <code>.env</code>, <code>.git/</code>, cache runtime, và session state vô điều kiện: không cờ nào đưa chúng lại. Mỗi bundle kèm <code>MANIFEST.json</code> (SHA-256 per file), <code>INSTALL.md</code>, và installer đa nền tảng để người nhận chạy một lần là xong.</span></p>
+
+    <div class="steps" style="margin-top:16px">
+      <div class="step">
+        <h4><span class="en">Preview the bundle — no tarball written</span><span class="vi">Xem trước bundle — không ghi tarball</span></h4>
+        <div class="cmdline"><code>/cleanmatic:release -m pack --manifest .claude/pack.manifest.yaml --dry-run</code></div>
+        <div class="term" style="margin-top:10px">
+          <div class="tbar"><i></i><i></i><i></i><span class="tcmd">release -m pack --manifest .claude/pack.manifest.yaml --dry-run --compute-sha</span></div>
+          <!--RELEASE_DRYRUN-->
+        </div>
+      </div>
+      <div class="step">
+        <h4><span class="en">Build the real bundle</span><span class="vi">Build bundle thật</span></h4>
+        <div class="cmdline"><code>/cleanmatic:release -m pack --manifest .claude/pack.manifest.yaml</code></div>
+        <p class="muted" style="font-size:.88rem;margin-top:6px"><span class="en">Output lands in <code>dist/product-spec-{version}.tar.gz</code> + a <code>.sha256</code> sidecar. The <code>dist/</code> directory is gitignored — tarballs are reproducible artifacts, not source. Same inputs always produce byte-identical output.</span><span class="vi">Đầu ra ở <code>dist/product-spec-{version}.tar.gz</code> + sidecar <code>.sha256</code>. Thư mục <code>dist/</code> bị gitignore — tarball là artifact tái lập, không phải source. Cùng đầu vào luôn tạo ra đầu ra giống nhau từng byte.</span></p>
+      </div>
+    </div>
+
+    <div class="honest" style="margin-top:18px">
+      <div class="h">⚖️ <span class="en">Honest limit</span><span class="vi">Giới hạn trung thực</span></div>
+      <ul>
+        <li><span class="en">No remote upload — use <code>gh release upload</code> or your CI pipeline after the tarball is built.</span><span class="vi">Không upload từ xa — dùng <code>gh release upload</code> hoặc CI pipeline sau khi tarball được build.</span></li>
+        <li><span class="en">No GPG signing in v1 — SHA-256 sidecar only.</span><span class="vi">Không ký GPG ở v1 — chỉ sidecar SHA-256.</span></li>
+        <li><span class="en">Determinism is a contract: <code>SOURCE_DATE_EPOCH</code> pins the timestamp; without it, mtime varies. CI builds should always set it.</span><span class="vi">Tính tất định là hợp đồng: <code>SOURCE_DATE_EPOCH</code> ghim timestamp; không có nó, mtime thay đổi. Build CI luôn nên đặt giá trị này.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Stage 05: Observe ===== -->
+<section id="journey-observe">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">STAGE 05</span><span class="vi">GIAI ĐOẠN 05</span></div>
+    <h2 class="sectitle" id="stage-observe"><span class="en">Observe — usage &amp; health, never market effectiveness</span><span class="vi">Quan sát — mức dùng &amp; sức khỏe, không phải hiệu quả thị trường</span></h2>
+    <p><span class="en">After running the harness for a while, <a href="@telemetry">telemetry</a> tells you — in plain Vietnamese — how the tooling is actually performing. Eight lenses cover skill invocation counts, script error rates, sub-agent success/fail, last validate result, and memory tidiness. A script gathers deterministic counts; the skill narrates them and always ends with a "what this does <em>not</em> measure" section. On a thin or new repo, most lenses say <strong>"chưa đủ dữ liệu"</strong> and suppress recommendations rather than inventing trends.</span><span class="vi">Sau khi dùng harness một thời gian, <a href="@telemetry">telemetry</a> cho bạn biết — bằng tiếng Việt thuần — bộ đồ nghề đang hoạt động thế nào. Tám lăng kính bao gồm số lần gọi skill, tỷ lệ lỗi script, sub-agent thành/thất bại, kết quả validate cuối, và độ gọn của bộ nhớ. Script thu thập số liệu tất định; skill diễn giải chúng và luôn kết thúc bằng mục "Cái này KHÔNG đo được". Trên repo mỏng hoặc mới, hầu hết lăng kính nói <strong>"chưa đủ dữ liệu"</strong> và tắt gợi ý thay vì bịa xu hướng.</span></p>
+
+    <div class="cmdline" style="margin-top:14px"><code>/cleanmatic:telemetry</code></div>
+
+    <div class="term" style="margin-top:14px">
+      <div class="tbar"><i></i><i></i><i></i><span class="tcmd">telemetry --lens all --format ascii</span></div>
+      <!--TEL_ASCII-->
+    </div>
+
+    <div class="cards grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Eight lenses</span><span class="vi">Tám lăng kính</span></h3>
+        <div class="chipgroup" style="margin-top:8px">
+          <div class="chips">
+            <span class="chip">usage</span>
+            <span class="chip">session</span>
+            <span class="chip">health</span>
+            <span class="chip">reliability</span>
+            <span class="chip">workflow</span>
+            <span class="chip">validate</span>
+            <span class="chip">memory</span>
+            <span class="chip">forensics</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="pin"></span><span class="en">Four output formats</span><span class="vi">Bốn định dạng đầu ra</span></h3>
+        <div class="chipgroup" style="margin-top:8px">
+          <div class="chips">
+            <span class="chip">ascii</span>
+            <span class="chip">md</span>
+            <span class="chip">mermaid</span>
+            <span class="chip">json</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="honest" style="margin-top:18px">
+      <div class="h">⚖️ <span class="en">Honest limit</span><span class="vi">Giới hạn trung thực</span></div>
+      <ul>
+        <li><span class="en">Telemetry measures <em>whether the machinery runs</em>, not <em>whether the product wins in the market</em>. The <code>validate</code> proxy means "spec is well-formed" — not "users adopted it".</span><span class="vi">Telemetry đo <em>máy móc có chạy không</em>, không phải <em>sản phẩm có thắng thị trường không</em>. Proxy <code>validate</code> nghĩa là "spec đúng cấu trúc" — không phải "người dùng đã chấp nhận".</span></li>
+        <li><span class="en">Token weight and duration figures are directional approximations, labelled "ước lượng" — not billing-exact.</span><span class="vi">Trọng số token và số liệu thời gian là ước tính định hướng, được ghi nhãn "ước lượng" — không chính xác theo hóa đơn.</span></li>
+        <li><span class="en">Telemetry is read-only — it never edits specs, code, the catalog, or memory, and has no <code>--apply</code>.</span><span class="vi">Telemetry chỉ-đọc — không bao giờ sửa spec, code, catalog, hay bộ nhớ, và không có <code>--apply</code>.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== The return edge ===== -->
+<section id="journey-return">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">THE RETURN EDGE</span><span class="vi">CẠNH QUAY VỀ</span></div>
+    <h2 class="sectitle" id="return-edge"><span class="en">The return edge — critique back into decisions, <code>--learn</code> closes the loop</span><span class="vi">Cạnh quay về — phản biện ngược vào quyết định, <code>--learn</code> khép vòng</span></h2>
+    <p><span class="en">The pipeline is not linear — it has two explicit return paths that close the loop and make the harness self-improving over time.</span><span class="vi">Quy trình không tuyến tính — nó có hai đường quay về rõ ràng giúp khép vòng và làm harness tự cải thiện theo thời gian.</span></p>
+
+    <div class="steps" style="margin-top:18px">
+      <div class="step">
+        <h4><span class="en">Critique → recorded decisions via <code>--apply-critique</code></span><span class="vi">Phản biện → quyết định được ghi qua <code>--apply-critique</code></span></h4>
+        <p><span class="en">After a critique report is generated, the PO reviews the findings. Accepted findings become <code>DEC-&lt;n&gt;</code> entries in the <a href="@decision-register">Decision Register</a> — so they are not re-litigated in future critique runs and guide the next iteration of the spec. Run <code>--apply-critique &lt;report&gt;</code> to feed a report back into the spec workflow.</span><span class="vi">Sau khi báo cáo phản biện được tạo, PO xem xét các phát hiện. Phát hiện được chấp nhận trở thành mục <code>DEC-&lt;n&gt;</code> trong <a href="@decision-register">Sổ Quyết định</a> — để chúng không bị tranh luận lại trong các lần phản biện tương lai và định hướng vòng lặp tiếp theo của spec. Chạy <code>--apply-critique &lt;report&gt;</code> để đưa báo cáo ngược vào workflow spec.</span></p>
+        <div class="cmdline"><code>/cleanmatic:product-spec --apply-critique &lt;path-to-critique-report&gt;</code></div>
+      </div>
+      <div class="step">
+        <h4><span class="en"><code>--learn</code> — spec → build → measure → learn</span><span class="vi"><code>--learn</code> — spec → build → đo → học</span></h4>
+        <p><span class="en"><code>--learn</code> closes the outermost ring. After a feature is built and measured, <code>--learn</code> takes outcome notes (what was observed post-build) and propagates them back into the spec's learning views — so the spec captures not just what was intended but what was learned. This feeds the <code>--viz learning</code> and <code>--viz outcome-trend</code> views.</span><span class="vi"><code>--learn</code> khép vòng ngoài cùng. Sau khi một tính năng được build và đo, <code>--learn</code> nhận ghi chú kết quả (những gì quan sát được sau build) và lan truyền chúng ngược vào khung nhìn học của spec — để spec ghi lại không chỉ những gì đã dự định mà còn những gì đã học được. Điều này cung cấp cho các khung nhìn <code>--viz learning</code> và <code>--viz outcome-trend</code>.</span></p>
+        <div class="cmdline"><code>/cleanmatic:product-spec --learn</code></div>
+      </div>
+    </div>
+
+    <div class="callout" style="--ac:var(--gold);margin-top:20px">
+      <span class="ci">🔄</span>
+      <div><span class="en"><b>The full loop in one line:</b> <code>product-spec</code> defines and validates → <code>product-spec-critique</code> challenges → <code>--apply-critique</code> records decisions → the build team builds → <code>--learn</code> feeds outcomes back → <code>telemetry</code> reads health — and the next spec iteration starts better than the last.</span><span class="vi"><b>Vòng lặp đầy đủ trong một dòng:</b> <code>product-spec</code> định nghĩa và kiểm tra → <code>product-spec-critique</code> thách thức → <code>--apply-critique</code> ghi quyết định → đội build xây dựng → <code>--learn</code> đưa kết quả ngược về → <code>telemetry</code> đọc sức khỏe — và vòng lặp spec tiếp theo bắt đầu tốt hơn lần trước.</span></div>
+    </div>
+
+    <div class="cta-row" style="margin-top:28px">
+      <a class="btn-cta primary" href="@quickstart"><span class="en">Start in 60 seconds</span><span class="vi">Bắt đầu trong 60 giây</span></a>
+      <a class="btn-cta ghost" href="@guides"><span class="en">All guides</span><span class="vi">Mục lục</span></a>
+    </div>
+  </div>
+</section>

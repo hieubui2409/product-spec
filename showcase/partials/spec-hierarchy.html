@@ -1,0 +1,220 @@
+<!-- ===================== SPEC HIERARCHY ===================== -->
+<section id="spec-hierarchy-intro">
+  <div class="wrap reveal">
+    <div class="skill-head" style="--ac:var(--spec)">
+      <div class="badge">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <path d="M20 6 L34 14 L34 26 L20 34 L6 26 L6 14 Z" stroke="var(--spec)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+          <path d="M12 17h6M12 21h10M12 25h7" stroke="var(--spec)" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="28" cy="13" r="4" stroke="var(--spec)" stroke-width="1.8" fill="none"/>
+          <path d="M26.5 13l1.2 1.2L30 11.5" stroke="var(--spec)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="ttl">
+        <div class="who"><span class="en">The backbone of every spec — Vision to Story</span><span class="vi">Xương sống của mọi spec — từ Vision đến Story</span></div>
+        <h2><span class="en">Spec Hierarchy</span><span class="vi">Phân cấp Spec</span></h2>
+      </div>
+      <div class="ver">5 levels · parent-scoped IDs</div>
+    </div>
+    <div class="divider" style="--ac:var(--spec)"></div>
+
+    <p class="lead"><span class="en">Every spec is a single directed tree: one Vision anchors one BRD which spawns many PRDs, each PRD owns Epics, each Epic owns Stories. IDs encode lineage — a script can resolve any Story all the way up to its BRD goal without reading prose. Frontmatter is always the source of truth; the LLM never infers structure from headings.</span><span class="vi">Mọi spec là một cây có hướng duy nhất: một Vision neo một BRD, BRD sinh ra nhiều PRD, mỗi PRD sở hữu Epic, mỗi Epic sở hữu Story. ID mã hóa dòng dõi — script có thể giải ngược bất kỳ Story nào lên đến mục tiêu BRD mà không cần đọc văn bản. Frontmatter luôn là nguồn sự thật; LLM không bao giờ suy ra cấu trúc từ tiêu đề.</span></p>
+  </div>
+</section>
+
+<section id="spec-hierarchy-five-levels">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">THE FIVE LEVELS</span><span class="vi">NĂM CẤP ĐỘ</span></div>
+    <h2 class="sectitle" id="five-levels"><span class="en">Vision → BRD → PRD → Epic → Story</span><span class="vi">Vision → BRD → PRD → Epic → Story</span></h2>
+
+    <p><span class="en">Each level has a single, non-overlapping job. A product owner authors each node in conversation with the skill; the skill never invents scope or personas.</span><span class="vi">Mỗi cấp có một nhiệm vụ duy nhất, không chồng chéo. Product owner soạn từng node trong cuộc hội thoại với skill; skill không bao giờ tự đặt phạm vi hay personas.</span></p>
+
+    <div class="tree">
+      <div class="tnode lvl-v">
+        <span class="tg">VISION</span>
+        <span class="tt"><span class="en">North-star + personas</span><span class="vi">Định hướng dài hạn + personas</span></span>
+        <span class="td"><span class="en">One narrative statement of what the product is, who it serves, and what core value it delivers. Home for persona labels that all downstream nodes inherit. One per product.</span><span class="vi">Một tuyên bố mô tả sản phẩm là gì, phục vụ ai, và giá trị cốt lõi là gì. Nơi lưu nhãn persona mà tất cả node bên dưới kế thừa. Mỗi sản phẩm có đúng một Vision.</span></span>
+      </div>
+      <div class="tconn"></div>
+      <div class="tnode lvl-b">
+        <span class="tg">BRD</span>
+        <span class="tt"><span class="en">Business goals + success metrics</span><span class="vi">Mục tiêu kinh doanh + chỉ số thành công</span></span>
+        <span class="td"><span class="en">A single Business Requirements Document that lists measurable goals (<code>BRD-G1</code>, <code>BRD-G2</code>, …). Each goal carries ≥1 metric slug. PRDs must link back to at least one BRD goal. One per product.</span><span class="vi">Một tài liệu yêu cầu nghiệp vụ duy nhất liệt kê các mục tiêu đo lường được (<code>BRD-G1</code>, <code>BRD-G2</code>, …). Mỗi mục tiêu cần ít nhất 1 metric slug. PRD phải liên kết về ít nhất một mục tiêu BRD. Mỗi sản phẩm có đúng một BRD.</span></span>
+      </div>
+      <div class="tconn"></div>
+      <div class="tnode lvl-p">
+        <span class="tg">PRD</span>
+        <span class="tt"><span class="en">Feature-area scope + requirements</span><span class="vi">Phạm vi tính năng + yêu cầu</span></span>
+        <span class="td"><span class="en">One Product Requirements Document per feature area (e.g. <code>PRD-AUTH</code>, <code>PRD-CATALOG</code>). Declares <code>scope</code>, <code>moscow</code>, personas, and links to its BRD goals. Many PRDs per BRD.</span><span class="vi">Một tài liệu yêu cầu sản phẩm cho mỗi vùng tính năng (ví dụ <code>PRD-AUTH</code>, <code>PRD-CATALOG</code>). Khai báo <code>scope</code>, <code>moscow</code>, personas và liên kết về mục tiêu BRD. Mỗi BRD có nhiều PRD.</span></span>
+      </div>
+      <div class="tconn"></div>
+      <div class="tnode lvl-e">
+        <span class="tg">EPIC</span>
+        <span class="tt"><span class="en">A deliverable slice of a PRD</span><span class="vi">Một lát bàn giao được của PRD</span></span>
+        <span class="td"><span class="en">A coherent chunk of work that delivers standalone value. Owns a <code>target_date</code>, <code>horizon</code>, and optional <code>risks</code>. ID is parent-scoped: <code>PRD-AUTH-E1</code>, <code>PRD-AUTH-E2</code>. Many epics per PRD.</span><span class="vi">Một khối công việc có giá trị bàn giao độc lập. Sở hữu <code>target_date</code>, <code>horizon</code> và <code>risks</code> tùy chọn. ID có phạm vi cha: <code>PRD-AUTH-E1</code>, <code>PRD-AUTH-E2</code>. Mỗi PRD có nhiều epic.</span></span>
+      </div>
+      <div class="tconn"></div>
+      <div class="tnode lvl-s">
+        <span class="tg">STORY</span>
+        <span class="tt"><span class="en">Atomic unit with acceptance criteria</span><span class="vi">Đơn vị nguyên tử kèm tiêu chí chấp nhận</span></span>
+        <span class="td"><span class="en">The build team's direct input. Must carry ≥1 acceptance criterion in Given-When-Then form. ID is parent-scoped: <code>PRD-AUTH-E1-S1</code>. Many stories per epic.</span><span class="vi">Đầu vào trực tiếp cho đội phát triển. Phải có ít nhất 1 tiêu chí chấp nhận dạng Given-When-Then. ID có phạm vi cha: <code>PRD-AUTH-E1-S1</code>. Mỗi epic có nhiều story.</span></span>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:22px;font-size:.9rem"><span class="en">The full acme-shop tree, rendered from <code>--viz tree --format ascii</code>:</span><span class="vi">Cây acme-shop đầy đủ, render từ <code>--viz tree --format ascii</code>:</span></p>
+    <div class="term">
+      <div class="tbar"><i></i><i></i><i></i><span class="tcmd">visualize.py --root examples/acme-shop --view tree --format ascii</span></div>
+      <!--VIZ_TREE-->
+    </div>
+  </div>
+</section>
+
+<section id="spec-hierarchy-ids">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">HOW IDS ARE FORMED</span><span class="vi">CÁCH HÌNH THÀNH ID</span></div>
+    <h2 class="sectitle" id="ids"><span class="en">Parent-scoped, lineage-readable, no central allocator</span><span class="vi">Phạm vi cha, đọc được dòng dõi, không cần bộ cấp phát trung tâm</span></h2>
+
+    <p><span class="en">Every ID encodes its full ancestry. A script that reads <code>PRD-AUTH-E1-S1</code> knows the story belongs to epic E1, which belongs to PRD-AUTH, which belongs to the BRD — without opening a single file.</span><span class="vi">Mỗi ID mã hóa toàn bộ tổ tiên. Script đọc <code>PRD-AUTH-E1-S1</code> biết ngay story thuộc epic E1, epic thuộc PRD-AUTH, PRD thuộc BRD — mà không cần mở bất kỳ file nào.</span></p>
+
+    <table class="modetable" style="--ac:var(--spec);margin-top:18px">
+      <thead>
+        <tr>
+          <th><span class="en">Artifact</span><span class="vi">Tài liệu</span></th>
+          <th><span class="en">Pattern</span><span class="vi">Mẫu</span></th>
+          <th><span class="en">Example</span><span class="vi">Ví dụ</span></th>
+          <th><span class="en">Slug rules</span><span class="vi">Quy tắc slug</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="en">BRD goal</span><span class="vi">Mục tiêu BRD</span></td>
+          <td><code>BRD-G&lt;n&gt;</code></td>
+          <td><code>BRD-G1</code>, <code>BRD-G2</code></td>
+          <td><span class="en">Next free integer in BRD</span><span class="vi">Số nguyên kế tiếp trong BRD</span></td>
+        </tr>
+        <tr>
+          <td>PRD</td>
+          <td><code>PRD-&lt;SLUG&gt;</code></td>
+          <td><code>PRD-AUTH</code>, <code>PRD-BILLING</code></td>
+          <td><span class="en">Uppercase, ≤16 chars; regex <code>^[A-Z][A-Z0-9-]{0,15}$</code></span><span class="vi">Chữ hoa, ≤16 ký tự; regex <code>^[A-Z][A-Z0-9-]{0,15}$</code></span></td>
+        </tr>
+        <tr>
+          <td>Epic</td>
+          <td><code>PRD-&lt;SLUG&gt;-E&lt;n&gt;</code></td>
+          <td><code>PRD-AUTH-E1</code>, <code>PRD-AUTH-E2</code></td>
+          <td><span class="en">Next free integer within that PRD</span><span class="vi">Số nguyên kế tiếp trong PRD đó</span></td>
+        </tr>
+        <tr>
+          <td>Story</td>
+          <td><code>PRD-&lt;SLUG&gt;-E&lt;n&gt;-S&lt;n&gt;</code></td>
+          <td><code>PRD-AUTH-E1-S1</code></td>
+          <td><span class="en">Next free integer within that epic</span><span class="vi">Số nguyên kế tiếp trong epic đó</span></td>
+        </tr>
+        <tr>
+          <td>Decision</td>
+          <td><code>DEC-&lt;n&gt;</code></td>
+          <td><code>DEC-1</code>, <code>DEC-2</code></td>
+          <td><span class="en">Globally monotonic; never reused</span><span class="vi">Toàn cục đơn điệu tăng; không bao giờ tái sử dụng</span></td>
+        </tr>
+        <tr>
+          <td>Outcome</td>
+          <td><code>OUT-&lt;n&gt;</code></td>
+          <td><code>OUT-1</code>, <code>OUT-2</code></td>
+          <td><span class="en">Globally monotonic; never reused</span><span class="vi">Toàn cục đơn điệu tăng; không bao giờ tái sử dụng</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout" style="--ac:var(--spec);margin-top:18px">
+      <span class="ci">📌</span>
+      <div><span class="en"><b>The slug is permanent.</b> Renaming a PRD does not update existing epic/story IDs — they keep the original lineage. IDs and frontmatter keys always stay English even when the content language is Vietnamese.</span><span class="vi"><b>Slug là cố định.</b> Đổi tên một PRD không cập nhật ID của epic/story hiện có — chúng giữ nguyên dòng dõi gốc. ID và khóa frontmatter luôn là tiếng Anh kể cả khi ngôn ngữ nội dung là tiếng Việt.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="spec-hierarchy-frontmatter">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">FRONTMATTER IS SOURCE OF TRUTH</span><span class="vi">FRONTMATTER LÀ NGUỒN SỰ THẬT</span></div>
+    <h2 class="sectitle" id="frontmatter"><span class="en">Parse YAML — never infer structure from headings</span><span class="vi">Phân tích YAML — không bao giờ suy cấu trúc từ tiêu đề</span></h2>
+
+    <p><span class="en">This is Operating Principle 1. Every artifact carries a YAML frontmatter block at the top of the file. Scripts parse it exclusively. The prose body below the frontmatter is for human readers only — the skill never reads headings to decide what type of artifact something is or what its status is.</span><span class="vi">Đây là Nguyên lý Vận hành thứ 1. Mỗi tài liệu đều có khối YAML frontmatter ở đầu file. Script chỉ phân tích phần này. Phần văn xuôi bên dưới frontmatter chỉ dành cho người đọc — skill không bao giờ đọc tiêu đề để xác định loại hoặc trạng thái của tài liệu.</span></p>
+
+    <div class="cards grid-2" style="margin-top:16px">
+      <div class="card" style="--ac:var(--spec)">
+        <h3><span class="pin"></span><span class="en">Universal frontmatter fields</span><span class="vi">Trường frontmatter chung</span></h3>
+        <div class="chips" style="margin-top:8px">
+          <span class="chip">id</span>
+          <span class="chip">type</span>
+          <span class="chip">status <span class="x">draft|review|approved</span></span>
+          <span class="chip">lang <span class="x">en|vi</span></span>
+          <span class="chip">owner</span>
+          <span class="chip">created</span>
+          <span class="chip">updated</span>
+          <span class="chip">version</span>
+        </div>
+      </div>
+      <div class="card" style="--ac:var(--spec)">
+        <h3><span class="pin"></span><span class="en">Parent-link fields</span><span class="vi">Trường liên kết cha</span></h3>
+        <div class="chips" style="margin-top:8px">
+          <span class="chip">story → <code>epic: PRD-AUTH-E1</code></span>
+          <span class="chip">epic → <code>prd: PRD-AUTH</code></span>
+          <span class="chip">prd → <code>brd_goals: [BRD-G1]</code></span>
+        </div>
+        <p class="muted" style="font-size:.84rem;margin-top:10px"><span class="en">A missing referent is a <code>dangling_link</code> error at validate time.</span><span class="vi">Một tham chiếu không tồn tại là lỗi <code>dangling_link</code> khi validate.</span></p>
+      </div>
+    </div>
+
+    <div class="floor" style="margin-top:16px">
+      <span class="en"><b>Anti-rationalization:</b> "The heading says APPROVED" is not evidence. Only <code>status: approved</code> in frontmatter counts. "The file tree shows graph state" is not evidence. Run the scripts first.</span><span class="vi"><b>Chống tự hợp lý hóa:</b> "Tiêu đề ghi APPROVED" không phải bằng chứng. Chỉ có <code>status: approved</code> trong frontmatter mới được tính. "Cây file thể hiện trạng thái đồ thị" không phải bằng chứng. Chạy script trước.</span>
+    </div>
+  </div>
+</section>
+
+<section id="spec-hierarchy-scope">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="en">SCOPE &amp; CORE VALUE</span><span class="vi">PHẠM VI &amp; GIÁ TRỊ CỐT LÕI</span></div>
+    <h2 class="sectitle" id="scope"><span class="en">Every node declares its scope — PO decides, never the skill</span><span class="vi">Mỗi node khai báo phạm vi — PO quyết, không bao giờ là skill</span></h2>
+
+    <p><span class="en">Scope is the PO's call. The skill surfaces the question during the interview and records the answer in frontmatter. It never assumes or defaults a scope. The three values are:</span><span class="vi">Phạm vi là quyết định của PO. Skill đặt câu hỏi trong buổi phỏng vấn và ghi lại câu trả lời trong frontmatter. Skill không bao giờ giả định hoặc mặc định phạm vi. Ba giá trị là:</span></p>
+
+    <table class="modetable" style="--ac:var(--spec);margin-top:14px">
+      <thead>
+        <tr>
+          <th><span class="en">Value</span><span class="vi">Giá trị</span></th>
+          <th><span class="en">Meaning</span><span class="vi">Ý nghĩa</span></th>
+          <th><span class="en">LLM check</span><span class="vi">Kiểm tra LLM</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="keepish">in</code></td>
+          <td><span class="en">In scope for the current release</span><span class="vi">Trong phạm vi phát hành hiện tại</span></td>
+          <td><span class="en">Core-value alignment scored: <code>aligned</code> / <code>weak</code> / <code>off</code></span><span class="vi">Chấm điểm tương thích giá trị cốt lõi: <code>aligned</code> / <code>weak</code> / <code>off</code></span></td>
+        </tr>
+        <tr>
+          <td><code class="outish">out</code></td>
+          <td><span class="en">Explicitly out of scope; excluded from most views</span><span class="vi">Rõ ràng ngoài phạm vi; bị loại khỏi hầu hết các khung nhìn</span></td>
+          <td><span class="en">—</span><span class="vi">—</span></td>
+        </tr>
+        <tr>
+          <td><code>core-value</code></td>
+          <td><span class="en">PO's claim: this is part of the stated core value proposition</span><span class="vi">Tuyên bố của PO: đây là phần của đề xuất giá trị cốt lõi đã khai báo</span></td>
+          <td><span class="en">Highest alignment bar; competitive-drift check applies when ≥2 competitors tracked</span><span class="vi">Ngưỡng tương thích cao nhất; kiểm tra competitive-drift áp dụng khi theo dõi ≥2 đối thủ</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout" style="--ac:var(--spec);margin-top:16px">
+      <span class="ci">⚖️</span>
+      <div>
+        <span class="en"><b>GATE-NEVER-ASSUME:</b> the skill never sets <code>scope: core-value</code> on the PO's behalf. It also never defaults <code>scope</code> when the PO is ambiguous — it asks. Scope is PO's call, non-negotiable.</span>
+        <span class="vi"><b>GATE-NEVER-ASSUME:</b> skill không bao giờ đặt <code>scope: core-value</code> thay cho PO. Skill cũng không mặc định <code>scope</code> khi PO chưa rõ — nó hỏi. Phạm vi là quyết định của PO, không thương lượng được.</span>
+      </div>
+    </div>
+
+    <div class="cta-row" style="margin-top:24px">
+      <a class="btn-cta primary" href="@validation"><span class="en">How specs are validated →</span><span class="vi">Cách validate spec →</span></a>
+      <a class="btn-cta ghost" href="@product-spec"><span class="en">product-spec skill</span><span class="vi">Skill product-spec</span></a>
+    </div>
+  </div>
+</section>
