@@ -31,6 +31,10 @@ jobs:
       - name: Build the showcase (stdlib only)
         run: python3 showcase/build.py
       - uses: actions/configure-pages@v5
+        # Auto-provision Pages if it's ever disabled (e.g. repo reset) so the
+        # first run doesn't fail on "Get Pages site failed".
+        with:
+          enablement: true
       - name: Upload showcase/ as the Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
